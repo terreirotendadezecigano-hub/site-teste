@@ -865,10 +865,12 @@
       return `${day}/${month}/${year}`;
     }
 
-    // FUNÇÃO CORRIGIDA DE FORMATAÇÃO DE DATA EM YYYY-MM-DD EXATA PARA INPUTS HTML
+    // FORMATAÇÃO DE DATA EM YYYY-MM-DD EXATA PARA INPUTS HTML (Compatível AppSheet/Google Sheets)
     function formatDateForInput(dateStr) {
       if (!dateStr) return '';
       let s = dateStr.toString().trim();
+      if (!s || s === 'NaT' || s === 'undefined' || s === 'null') return '';
+      
       if (s.includes('T')) s = s.split('T')[0];
       if (s.includes(' ')) s = s.split(' ')[0];
       
@@ -876,13 +878,11 @@
       if (s.includes('/')) {
         const p = s.split('/');
         if (p.length === 3) {
-          // Se o ano estiver no fim
           if (p[2].length === 4) return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
-          // Se o ano estiver no início
           if (p[0].length === 4) return `${p[0]}-${p[1].padStart(2,'0')}-${p[2].padStart(2,'0')}`;
         }
       }
-      return s; // Já deve estar em YYYY-MM-DD
+      return s; // Já está no formato AAAA-MM-DD
     }
 
     function formatKeyName(key) {
@@ -1351,7 +1351,7 @@
       document.getElementById('membroId').value = m.ID_Filho || m.id || '';
       document.getElementById('membroNome').value = m.Nome_Completo || m.Nome || '';
       
-      // BUSCA INTELIGENTE DE DATA DE NASCIMENTO (Ano-Mês-Dia exato)
+      // BUSCA DINÂMICA DE DATA DE NASCIMENTO
       let dataNascVal = '';
       for (let key in m) {
         let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
@@ -1366,7 +1366,7 @@
       document.getElementById('membroEmail').value = m.Email || m['E-mail'] || '';
       document.getElementById('membroEndereco').value = m.Endereco || '';
       
-      // BUSCA INTELIGENTE DE DATA DE ENTRADA (Ano-Mês-Dia exato)
+      // BUSCA DINÂMICA DE DATA DE ENTRADA
       let dataEntradaVal = '';
       for (let key in m) {
         let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');

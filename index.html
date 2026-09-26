@@ -11,8 +11,6 @@
       --bg-card: #141414;
       --gold-primary: #d4af37;
       --gold-light: #f3e5ab;
-      --red-logo: #800000;
-      --red-logo-dark: #3a0005;
       --text-main: #ffffff;
       --text-muted: #aaaaaa;
       --border-color: #2a2a2a;
@@ -58,7 +56,6 @@
       text-align: center;
       margin-top: 0;
       margin-bottom: 25px;
-      font-size: 1.5rem;
     }
 
     .form-group {
@@ -69,7 +66,6 @@
       display: block;
       margin-bottom: 8px;
       color: var(--text-muted);
-      font-size: 0.95rem;
     }
 
     .form-group input {
@@ -98,7 +94,6 @@
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      transition: background 0.3s;
       margin-top: 10px;
     }
 
@@ -110,7 +105,6 @@
       margin-top: 20px;
       text-align: center;
       font-weight: bold;
-      font-size: 1rem;
     }
   </style>
 </head>
@@ -151,7 +145,7 @@
   </div>
 
   <script>
-    // URL configurada do seu Google Apps Script
+    // URL gerada pelo Google Apps Script
     const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbyFje_ocF7a0S7Tq4EYQmM5W3hv9SmHZqxJmWLhPKdkVfudzW-Q3EEbM66U9BiwdBZOJw/exec';
 
     document.getElementById('formCadastroMembro').addEventListener('submit', async function(e) {
@@ -169,17 +163,17 @@
       status.style.color = '#e0a800';
       status.innerText = '⏳ Salvando cadastro na planilha...';
 
-      // Gera um ID aleatório simples para a Coluna A (ex: ID_Filho)
+      // Gera um ID simples e captura a data atual
       const idGerado = Math.random().toString(36).substring(2, 9);
       const dataHoje = new Date().toLocaleDateString('pt-BR');
 
-      // Mapeamento correto para as colunas da aba Cadastro_Filhos
+      // Mapeamento idêntico às colunas da aba Cadastro_Filhos (Colunas A até J)
       const payload = {
         nomeAba: "Cadastro_Filhos",
         valores: [
           idGerado,   // Coluna A: ID_Filho
           nome,       // Coluna B: Nome_Completo
-          "",         // Coluna C: Data_Nascimento (vazio por enquanto)
+          "",         // Coluna C: Data_Nascimento
           telefone,   // Coluna D: Telefone
           email,      // Coluna E: Email
           "",         // Coluna F: Endereco

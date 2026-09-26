@@ -167,90 +167,90 @@
       </div>
     </div>
     
-    <!-- Área do Usuário: Garantido que inicia deslogado -->
-    <div id="userArea">
-      <button class="btn-membros" onclick="fazerLogin()"><i class="fa-solid fa-lock"></i> Membros</button>
-    </div>
-  </header>
+  // =================================================================
+// 1. GARANTIR QUE O SITE INICIE SEMPRE DESLOGADO
+// =================================================================
+window.addEventListener('DOMContentLoaded', () => {
+  // Limpa sessões salvas no navegador
+  localStorage.clear();
+  sessionStorage.clear();
 
-  <div class="container">
-    
-    <!-- Campo de Pesquisa de Membros / Filhos de Santo -->
-    <div class="search-container">
-      <i class="fa-solid fa-magnifying-glass"></i>
-      <input 
-        type="text" 
-        id="inputPesquisa" 
-        class="search-input" 
-        placeholder="Pesquisar filho de santo por nome ou cargo..."
-        onkeyup="filtrarMembros()"
-      >
-    </div>
+  // Se o Firebase Auth estiver carregado, desconecta o usuário ativo
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().signOut().then(() => {
+      console.log("Sessão encerrada com sucesso.");
+    }).catch((err) => {
+      console.error("Erro ao desconectar:", err);
+    });
+  }
+});
 
-    <!-- Seção Principal de Membros -->
-    <div class="section-title">
-      <i class="fa-solid fa-users"></i>
-      <span>Filhos de Santo & Membros</span>
-    </div>
 
-    <!-- Indicador de Carregamento -->
-    <div id="loadingStatus" class="loading-box">
-      <i class="fa-solid fa-spinner fa-spin"></i>
-      <p>Buscando dados...</p>
-    </div>
+// =================================================================
+// 2. FUNÇÃO DE PESQUISA / FILTRO DE MEMBROS
+// =================================================================
+function filtrarMembros() {
+  const input = document.getElementById('inputPesquisa');
+  if (!input) return;
 
-    <!-- Grid onde a lista de membros é exibida -->
-    <div id="membrosGrid" class="membros-grid" style="display: none;"></div>
+  const termo = input.value.toLowerCase().trim();
+  // Seleciona os cartões ou linhas da tabela de membros do seu layout
+  const cards = document.querySelectorAll('.membro-card, .card-membro, .linha-membro');
 
-    <!-- Mensagem caso nenhum membro seja encontrado no filtro -->
-    <div id="mensagemVazia" class="no-results" style="display: none;">
-      <p>Nenhum filho de santo encontrado com essa pesquisa.</p>
-    </div>
-
-  </div>
-
-  <script>
-    // 1. GARANTIR QUE INICIA SEM NINGUÉM LOGADO
-    let usuarioLogado = null; 
-    localStorage.removeItem('usuarioSessao'); // Limpa qualquer sessão salva anteriormente
-
-    // Dados de exemplo (Substitua pela chamada da sua API/Firebase)
-    const listaMembrosExemplo = [
-      { id: 1, nome: "Pai Zé", cargo: "Sacerdote" },
-      { id: 2, nome: "Maria de Oxum", cargo: "Filha de Santo" },
-      { id: 3, nome: "João de Ogum", cargo: "Filho de Santo" },
-      { id: 4, nome: "Carlos de Oxóssi", cargo: "Cambone" },
-      { id: 5, nome: "Ana de Iemanjá", cargo: "Filha de Santo" }
-    ];
-
-    // 2. FUNÇÃO PARA CARREGAR OS DADOS
-    function carregarDados() {
-      // Simula uma requisição assíncrona (como do Firebase ou Fetch)
-      setTimeout(() => {
-        renderizarMembros(listaMembrosExemplo);
-        
-        // Esconde o "Buscando dados..." e exibe o grid
-        document.getElementById('loadingStatus').style.display = 'none';
-        document.getElementById('membrosGrid').style.display = 'grid';
-      }, 1000);
+  cards.forEach(card => {
+    const texto = card.textContent.toLowerCase();
+    if (texto.includes(termo)) {
+      card.style.display = ""; // Exibe o membro
+    } else {
+      card.style.display = "none"; // Oculta se não corresponder à busca
     }
+  });
+}
 
-    // 3. FUNÇÃO PARA RENDERIZAR OS MEMBROS NO HTML
-    function renderizarMembros(membros) {
-      const grid = document.getElementById('membrosGrid');
-      grid.innerHTML = '';
 
-      membros.forEach(membro => {
-        const card = document.createElement('div');
-        card.className = 'membro-card';
-        card.innerHTML = `
-          <h3>${membro.nome}</h3>
-          <p>${membro.cargo}</p>
-        `;
-        grid.appendChild(card);
-      });
-    }
+// =================================================================
+// 3. FUNÇÃO PARA EDITAR MEMBRO (PREENCHIMENTO AUTOMÁTICO)
+// =================================================================
+// Exemplo de lista de membros (ou use os dados carregados do seu banco/Firebase)
+let listaMembros = [
+  { id: '1', nome: 'João de Ogum', cargo: 'Filho de Santo', telefone: '(31) 99999-0001' },
+  { id: '2', nome: 'Maria de Oxum', cargo: 'Filha de Santo', telefone: '(31) 99999-0002' }
+];
 
+function editarMembro(idMembro) {
+  // Busca o membro na lista pelo ID
+  const membro = listaMembros.find(m => m.id === idMembro || m.id === String(idMembro));
+
+  if (!membro) {
+    console.error("Membro não encontrado para o ID:", idMembro);
+    return;
+  }
+
+  // Preenche os campos do formulário de edição com os dados existentes
+  const campoId = document.getElementById('editMembroId');
+  const campoNome = document.getElementById('editMembroNome');
+  const campoCargo = document.getElementById('editMembroCargo');
+  const campoTelefone = document.getElementById('editMembroTelefone');
+
+  if (campoId) campoId.value = membro.id;
+  if (campoNome) campoNome.value = membro.nome || '';
+  if (campoCargo) campoCargo.value = membro.cargo || '';
+  if (campoTelefone) campoTelefone.value = membro.telefone || '';
+
+  // Abre a tela/modal de edição (ajuste o ID 'modalEditarMembro' se o seu modal tiver outro nome)
+  const modal = document.getElementById('modalEditarMembro');
+  if (modal) {
+    modal.style.display = 'block'; // ou adicione a classe de exibição do seu tema
+  }
+}
+
+// Função para fechar o modal de edição
+function fecharModalEdicao() {
+  const modal = document.getElementById('modalEditarMembro');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
     // 4. FUNÇÃO DE FILTRO/PESQUISA EM TEMPO REAL
     function filtrarMembros() {
       const termo = document.getElementById('inputPesquisa').value.toLowerCase().trim();

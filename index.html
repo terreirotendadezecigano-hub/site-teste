@@ -145,10 +145,10 @@
   </div>
 
   <script>
-    // URL gerada pelo Google Apps Script
+    // Link direto atualizado da Web App do Google Apps Script
     const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbyFje_ocF7a0S7Tq4EYQmM5W3hv9SmHZqxJmWLhPKdkVfudzW-Q3EEbM66U9BiwdBZOJw/exec';
 
-    document.getElementById('formCadastroMembro').addEventListener('submit', async function(e) {
+    document.getElementById('formCadastroMembro').addEventListener('submit', function(e) {
       e.preventDefault();
 
       const btn = document.getElementById('btnSalvarMembro');
@@ -163,11 +163,10 @@
       status.style.color = '#e0a800';
       status.innerText = '⏳ Salvando cadastro na planilha...';
 
-      // Gera um ID simples e captura a data atual
       const idGerado = Math.random().toString(36).substring(2, 9);
       const dataHoje = new Date().toLocaleDateString('pt-BR');
 
-      // Mapeamento idêntico às colunas da aba Cadastro_Filhos (Colunas A até J)
+      // Estrutura para a aba Cadastro_Filhos
       const payload = {
         nomeAba: "Cadastro_Filhos",
         valores: [
@@ -184,25 +183,28 @@
         ]
       };
 
-      try {
-        await fetch(https://script.google.com/macros/s/AKfycbyFje_ocF7a0S7Tq4EYQmM5W3hv9SmHZqxJmWLhPKdkVfudzW-Q3EEbM66U9BiwdBZOJw/exec, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
+      // Envio via fetch POST com texto estruturado para garantir compatibilidade com Apps Script
+      fetch(URL_APPS_SCRIPT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(response => {
         status.style.color = '#28a745';
         status.innerText = '✅ Membro cadastrado com sucesso na planilha!';
         document.getElementById('formCadastroMembro').reset();
-      } catch (err) {
-        console.error("Erro no cadastro:", err);
+      })
+      .catch(error => {
+        console.error("Erro no envio:", error);
         status.style.color = '#dc3545';
         status.innerText = '❌ Erro ao enviar dados. Tente novamente.';
-      } finally {
+      })
+      .finally(() => {
         btn.disabled = false;
         btn.style.opacity = '1';
-      }
+      });
     });
   </script>
 </body>

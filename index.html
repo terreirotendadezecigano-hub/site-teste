@@ -40,12 +40,11 @@
     }
 
     .container {
-      max-width: 800px;
+      max-width: 600px;
       margin: 30px auto;
       padding: 20px;
     }
 
-    /* ESTILO DO FORMULÁRIO DE CADASTRO */
     .form-card {
       background: var(--bg-card);
       border: 1px solid var(--border-color);
@@ -123,7 +122,6 @@
   </header>
 
   <div class="container">
-    <!-- FORMULÁRIO DE CADASTRO INTEGRADO COM A PLANILHA -->
     <div class="form-card">
       <h2><i class="fas fa-user-plus"></i> Cadastro de Filho da Casa</h2>
 
@@ -153,8 +151,8 @@
   </div>
 
   <script>
-    // ⚠️ SUBSTITUA PELA SUA URL DO GOOGLE APPS SCRIPT
-    const URL_APPS_SCRIPT = 'SUA_URL_DO_WEB_APP_AQUI';
+    // URL configurada do seu Google Apps Script
+    const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbyFje_ocF7a0S7Tq4EYQmM5W3hv9SmHZqxJmWLhPKdkVfudzW-Q3EEbM66U9BiwdBZOJw/exec';
 
     document.getElementById('formCadastroMembro').addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -166,29 +164,34 @@
       const telefone = document.getElementById('cadTelefone').value.trim();
       const email = document.getElementById('cadEmail').value.trim();
 
-      if (URL_APPS_SCRIPT === 'SUA_URL_DO_WEB_APP_AQUI') {
-        alert('Atenção: Você precisa colar a URL do Apps Script na linha 116 do código!');
-        return;
-      }
-
       btn.disabled = true;
       btn.style.opacity = '0.6';
       status.style.color = '#e0a800';
       status.innerText = '⏳ Salvando cadastro na planilha...';
 
-      // Dados estruturados para a aba CADASTRO_FILHOS
+      // Gera um ID aleatório simples para a Coluna A (ex: ID_Filho)
+      const idGerado = Math.random().toString(36).substring(2, 9);
+      const dataHoje = new Date().toLocaleDateString('pt-BR');
+
+      // Mapeamento correto para as colunas da aba Cadastro_Filhos
       const payload = {
-        nomeAba: "CADASTRO_FILHOS",
+        nomeAba: "Cadastro_Filhos",
         valores: [
-          nome,
-          telefone,
-          email,
-          new Date().toLocaleDateString('pt-BR')
+          idGerado,   // Coluna A: ID_Filho
+          nome,       // Coluna B: Nome_Completo
+          "",         // Coluna C: Data_Nascimento (vazio por enquanto)
+          telefone,   // Coluna D: Telefone
+          email,      // Coluna E: Email
+          "",         // Coluna F: Endereco
+          dataHoje,   // Coluna G: Data_Entrada
+          "",         // Coluna H: Cargo_Funcao
+          "",         // Coluna I: Orixa_Frente
+          "Ativo"     // Coluna J: Status_Ativo
         ]
       };
 
       try {
-        await fetch(https://script.google.com/macros/s/AKfycbyFje_ocF7a0S7Tq4EYQmM5W3hv9SmHZqxJmWLhPKdkVfudzW-Q3EEbM66U9BiwdBZOJw/execT, {
+        await fetch(https://script.google.com/macros/s/AKfycbyFje_ocF7a0S7Tq4EYQmM5W3hv9SmHZqxJmWLhPKdkVfudzW-Q3EEbM66U9BiwdBZOJw/exec, {
           method: 'POST',
           mode: 'no-cors',
           headers: { 'Content-Type': 'application/json' },

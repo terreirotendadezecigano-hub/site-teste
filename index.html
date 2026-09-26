@@ -26,7 +26,6 @@
         .gold-bg { background-color: var(--gold); }
         .gold-bg:hover { background-color: var(--gold-hover); }
         
-        /* Transition settings */
         .sidebar-transition {
             transition: transform 0.3s ease-in-out;
         }
@@ -44,7 +43,6 @@
     <header class="bg-black/90 border-b border-yellow-600/40 sticky top-0 z-40 px-4 py-3 shadow-lg">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             
-            <!-- Logo & Title -->
             <div class="flex items-center space-x-3">
                 <button id="btn-toggle-sidebar" class="text-yellow-500 hover:text-yellow-400 focus:outline-none md:hidden text-2xl">
                     <i class="fa-solid fa-bars"></i>
@@ -53,7 +51,6 @@
                 <h1 class="text-xl sm:text-2xl font-bold tracking-wide text-yellow-500 font-serif">Tenda de Zé Cigano</h1>
             </div>
 
-            <!-- User Auth Controls -->
             <div class="flex items-center space-x-3">
                 <div id="user-info-bar" class="hidden text-sm text-right pr-2">
                     <span id="user-display-name" class="font-semibold block text-yellow-400"></span>
@@ -96,7 +93,6 @@
                     <i class="fa-solid fa-book-open w-6 text-center"></i> <span>Orientações</span>
                 </button>
                 
-                <!-- Aba Membros (Visível apenas para Dirigentes) -->
                 <button id="nav-btn-membros" onclick="mudarAba('membros')" class="nav-btn hidden flex items-center space-x-3 w-full px-4 py-3 rounded-lg text-left text-yellow-500 bg-yellow-600/10 hover:bg-yellow-600/20 transition border border-yellow-600/30">
                     <i class="fa-solid fa-users-gear w-6 text-center"></i> <span>Membros (Gestão)</span>
                 </button>
@@ -110,10 +106,9 @@
         <!-- CONTEÚDO PRINCIPAL -->
         <main class="flex-1 p-4 md:p-6 overflow-x-hidden">
 
-            <!-- BARRA DE BUSCA GLOBAL -->
             <div class="mb-6 max-w-md mx-auto">
                 <div class="relative">
-                    <input type="text" id="global-search" onkeyup="filtrarConteudoGlobal()" placeholder="Pesquisar em toda a tenda..." class="w-full bg-zinc-800 border border-zinc-700 rounded-full py-2 pl-10 pr-4 text-sm text-gray-200 focus:outline-none focus:border-yellow-500">
+                    <input type="text" id="global-search" onkeyup="filtrarConteudoGlobal()" placeholder="Pesquisar..." class="w-full bg-zinc-800 border border-zinc-700 rounded-full py-2 pl-10 pr-4 text-sm text-gray-200 focus:outline-none focus:border-yellow-500">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400"></i>
                 </div>
             </div>
@@ -129,44 +124,34 @@
             <!-- AGENDA -->
             <section id="tab-agenda" class="content-tab space-y-4">
                 <h2 class="text-xl font-bold text-yellow-500 border-b border-zinc-800 pb-2">Agenda de Giras e Eventos</h2>
-                <div id="container-agenda" class="grid gap-4 md:grid-cols-2">
-                    <p class="text-gray-400">Carregando eventos...</p>
-                </div>
+                <div id="container-agenda" class="grid gap-4 md:grid-cols-2"></div>
             </section>
 
             <!-- MURAL DE AVISOS -->
             <section id="tab-mural" class="content-tab space-y-4">
                 <h2 class="text-xl font-bold text-yellow-500 border-b border-zinc-800 pb-2">Mural de Avisos</h2>
-                <div id="container-mural" class="space-y-4">
-                    <p class="text-gray-400">Carregando avisos...</p>
-                </div>
+                <div id="container-mural" class="space-y-4"></div>
             </section>
 
             <!-- PONTOS CANTADOS -->
             <section id="tab-pontos" class="content-tab space-y-4">
                 <h2 class="text-xl font-bold text-yellow-500 border-b border-zinc-800 pb-2">Pontos Cantados</h2>
-                <div id="container-pontos" class="grid gap-4 md:grid-cols-2">
-                    <p class="text-gray-400">Carregando pontos...</p>
-                </div>
+                <div id="container-pontos" class="grid gap-4 md:grid-cols-2"></div>
             </section>
 
             <!-- ERVAS E BANHOS -->
             <section id="tab-ervas" class="content-tab space-y-4">
                 <h2 class="text-xl font-bold text-yellow-500 border-b border-zinc-800 pb-2">Guia de Ervas e Banhos</h2>
-                <div id="container-ervas" class="grid gap-4 md:grid-cols-2">
-                    <p class="text-gray-400">Carregando ervas...</p>
-                </div>
+                <div id="container-ervas" class="grid gap-4 md:grid-cols-2"></div>
             </section>
 
             <!-- ORIENTAÇÕES -->
             <section id="tab-orientacoes" class="content-tab space-y-4">
                 <h2 class="text-xl font-bold text-yellow-500 border-b border-zinc-800 pb-2">Orientações para Frequentar a Casa</h2>
-                <div id="container-orientacoes" class="space-y-4">
-                    <p class="text-gray-400">Carregando orientações...</p>
-                </div>
+                <div id="container-orientacoes" class="space-y-4"></div>
             </section>
 
-            <!-- ABA DE MEMBROS (EXCLUSIVA DIRIGENTES) -->
+            <!-- ABA DE MEMBROS -->
             <section id="tab-membros" class="content-tab space-y-6">
                 <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
                     <div>
@@ -179,15 +164,15 @@
                     </button>
                 </div>
 
-                <!-- Tabela de Membros -->
+                <!-- Tabela de Membros sem a coluna 'Cargo' -->
                 <div class="overflow-x-auto bg-zinc-900 border border-zinc-800 rounded-xl">
                     <table class="w-full text-left text-sm text-gray-300">
                         <thead class="bg-zinc-800/80 text-yellow-500 uppercase text-xs">
                             <tr>
                                 <th class="p-3">Nome</th>
-                                <th class="p-3">Cargo / Função</th>
                                 <th class="p-3">E-mail</th>
                                 <th class="p-3">Telefone</th>
+                                <th class="p-3">Orixá / Guias</th>
                                 <th class="p-3">Perfil</th>
                                 <th class="p-3 text-center">Status</th>
                                 <th class="p-3 text-center">Ações</th>
@@ -234,6 +219,7 @@
             <h3 id="modal-membro-titulo" class="text-xl font-bold text-yellow-500 text-center font-serif">Cadastrar Filho da Casa</h3>
             
             <form onsubmit="salvarMembro(event)" class="space-y-3">
+                <input type="hidden" id="membro-index">
                 <div>
                     <label class="block text-xs text-gray-300 mb-1">Nome Completo *</label>
                     <input type="text" id="membro-nome" required class="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2 text-sm text-gray-100 focus:outline-none focus:border-yellow-500">
@@ -241,8 +227,8 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs text-gray-300 mb-1">Cargo / Função *</label>
-                        <input type="text" id="membro-cargo" placeholder="Ex: Cambono, Médiun..." required class="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2 text-sm text-gray-100 focus:outline-none focus:border-yellow-500">
+                        <label class="block text-xs text-gray-300 mb-1">E-mail *</label>
+                        <input type="email" id="membro-email" required class="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2 text-sm text-gray-100 focus:outline-none focus:border-yellow-500">
                     </div>
                     <div>
                         <label class="block text-xs text-gray-300 mb-1">Perfil de Acesso *</label>
@@ -255,26 +241,21 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs text-gray-300 mb-1">E-mail *</label>
-                        <input type="email" id="membro-email" required class="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2 text-sm text-gray-100 focus:outline-none focus:border-yellow-500">
-                    </div>
-                    <div>
                         <label class="block text-xs text-gray-300 mb-1">Telefone / WhatsApp</label>
                         <input type="tel" id="membro-telefone" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2 text-sm text-gray-100 focus:outline-none focus:border-yellow-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-300 mb-1">Status</label>
+                        <select id="membro-status" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2 text-sm text-gray-100 focus:outline-none focus:border-yellow-500">
+                            <option value="Ativo">Ativo</option>
+                            <option value="Inativo">Inativo</option>
+                        </select>
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs text-gray-300 mb-1">Orixá de Cabeça / Guias</label>
                     <input type="text" id="membro-orixa" placeholder="Ex: Ogum / Zé Pelintra" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2 text-sm text-gray-100 focus:outline-none focus:border-yellow-500">
-                </div>
-
-                <div>
-                    <label class="block text-xs text-gray-300 mb-1">Status</label>
-                    <select id="membro-status" class="w-full bg-zinc-800 border border-zinc-700 rounded-lg p-2 text-sm text-gray-100 focus:outline-none focus:border-yellow-500">
-                        <option value="Ativo">Ativo</option>
-                        <option value="Inativo">Inativo</option>
-                    </select>
                 </div>
 
                 <button type="submit" class="w-full bg-yellow-600 text-black font-semibold py-2 rounded-lg hover:bg-yellow-500 transition text-sm mt-4">Salvar Membro</button>
@@ -290,13 +271,11 @@
         let usuarioAtual = null;
         let listaMembros = [];
 
-        // Inicialização
         document.addEventListener('DOMContentLoaded', () => {
             configurarSidebar();
-            carregarDadosIniciais();
+            carregarMembros();
         });
 
-        // Alternar Menu Lateral Responsivo
         function configurarSidebar() {
             const btnToggle = document.getElementById('btn-toggle-sidebar');
             const sidebar = document.getElementById('sidebar');
@@ -305,7 +284,6 @@
             });
         }
 
-        // Troca de Abas
         function mudarAba(nomeAba) {
             document.querySelectorAll('.content-tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('text-yellow-500', 'bg-yellow-600/10'));
@@ -313,14 +291,18 @@
             const abaAlvo = document.getElementById(`tab-${nomeAba}`);
             if (abaAlvo) abaAlvo.classList.add('active');
 
-            // Fechar sidebar no mobile após clique
             document.getElementById('sidebar').classList.add('-translate-x-full');
         }
 
-        // Carregamento de dados via API OpenSheet
-        async function carregarDadosIniciais() {
-            carregarMembros();
-            // Demais chamadas de dados podem ser ativadas conforme as abas da sua planilha
+        // Função auxiliar para mapear propriedades ignorando maiúsculas/minúsculas
+        function obterValorCampo(obj, ...campos) {
+            if (!obj) return '-';
+            const keys = Object.keys(obj);
+            for (let campo of campos) {
+                const keyEncontrada = keys.find(k => k.trim().toLowerCase() === campo.toLowerCase());
+                if (keyEncontrada && obj[keyEncontrada]) return obj[keyEncontrada];
+            }
+            return '-';
         }
 
         async function carregarMembros() {
@@ -332,10 +314,10 @@
                 }
             } catch (e) {
                 console.error("Erro ao carregar lista de membros:", e);
+                document.getElementById('tabela-membros-corpo').innerHTML = `<tr><td colspan="7" class="p-4 text-center text-red-400">Erro ao carregar dados da planilha.</td></tr>`;
             }
         }
 
-        // Renderização da Tabela de Membros
         function renderizarTabelaMembros() {
             const tbody = document.getElementById('tabela-membros-corpo');
             if (!listaMembros || listaMembros.length === 0) {
@@ -343,28 +325,39 @@
                 return;
             }
 
-            tbody.innerHTML = listaMembros.map((m, index) => `
-                <tr class="hover:bg-zinc-800/50">
-                    <td class="p-3 font-semibold text-white">${m.Nome || m.nome || '-'}</td>
-                    <td class="p-3">${m.Cargo || m.cargo || '-'}</td>
-                    <td class="p-3 text-xs text-gray-400">${m.Email || m.email || '-'}</td>
-                    <td class="p-3 text-xs">${m.Telefone || m.telefone || '-'}</td>
-                    <td class="p-3"><span class="px-2 py-0.5 text-xs rounded border ${m.Perfil === 'Dirigente' ? 'border-yellow-500 text-yellow-400' : 'border-zinc-700 text-gray-300'}">${m.Perfil || 'Membro'}</span></td>
-                    <td class="p-3 text-center">
-                        <span class="px-2 py-0.5 text-xs rounded-full ${m.Status === 'Inativo' ? 'bg-red-900/40 text-red-400' : 'bg-green-900/40 text-green-400'}">
-                            ${m.Status || 'Ativo'}
-                        </span>
-                    </td>
-                    <td class="p-3 text-center">
-                        <button onclick="editarMembro(${index})" class="text-yellow-500 hover:text-yellow-400 p-1">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = listaMembros.map((m, index) => {
+                const nome = obterValorCampo(m, 'Nome', 'Nome Completo', 'nome');
+                const email = obterValorCampo(m, 'Email', 'E-mail', 'email');
+                const telefone = obterValorCampo(m, 'Telefone', 'Celular', 'telefone', 'whatsapp');
+                const orixa = obterValorCampo(m, 'Orixá', 'Orixa', 'Orixá de Cabeça', 'orixa');
+                const perfil = obterValorCampo(m, 'Perfil', 'Acesso', 'perfil') || 'Membro';
+                const status = obterValorCampo(m, 'Status', 'status') || 'Ativo';
+
+                return `
+                    <tr class="hover:bg-zinc-800/50">
+                        <td class="p-3 font-semibold text-white">${nome}</td>
+                        <td class="p-3 text-xs text-gray-400">${email}</td>
+                        <td class="p-3 text-xs">${telefone}</td>
+                        <td class="p-3 text-xs">${orixa}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 text-xs rounded border ${perfil === 'Dirigente' ? 'border-yellow-500 text-yellow-400' : 'border-zinc-700 text-gray-300'}">${perfil}</span></td>
+                        <td class="p-3 text-center">
+                            <span class="px-2 py-0.5 text-xs rounded-full ${status === 'Inativo' ? 'bg-red-900/40 text-red-400' : 'bg-green-900/40 text-green-400'}">
+                                ${status}
+                            </span>
+                        </td>
+                        <td class="p-3 text-center space-x-2">
+                            <button onclick="editarMembro(${index})" title="Editar" class="text-yellow-500 hover:text-yellow-400 p-1">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="excluirMembro(${index})" title="Excluir" class="text-red-500 hover:text-red-400 p-1">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
-        // Modais e Login
         function abrirModalLogin() {
             document.getElementById('modal-login').classList.remove('hidden');
         }
@@ -377,21 +370,25 @@
         function realizarLogin(e) {
             e.preventDefault();
             const emailDigitado = document.getElementById('login-email').value.trim().toLowerCase();
-            const membroEncontrado = listaMembros.find(m => (m.Email || m.email || '').toLowerCase() === emailDigitado);
+            const membroEncontrado = listaMembros.find(m => {
+                const email = obterValorCampo(m, 'Email', 'E-mail', 'email');
+                return email.toLowerCase() === emailDigitado;
+            });
 
             if (membroEncontrado) {
                 usuarioAtual = membroEncontrado;
                 
-                // Atualiza UI
-                document.getElementById('user-display-name').textContent = usuarioAtual.Nome || usuarioAtual.nome;
-                document.getElementById('user-display-role').textContent = usuarioAtual.Perfil || 'Membro';
+                const nome = obterValorCampo(usuarioAtual, 'Nome', 'Nome Completo', 'nome');
+                const perfil = obterValorCampo(usuarioAtual, 'Perfil', 'Acesso', 'perfil') || 'Membro';
+
+                document.getElementById('user-display-name').textContent = nome;
+                document.getElementById('user-display-role').textContent = perfil;
                 
                 document.getElementById('user-info-bar').classList.remove('hidden');
                 document.getElementById('btn-logout').classList.remove('hidden');
                 document.getElementById('btn-login-modal').classList.add('hidden');
 
-                // Libera aba de gestão se for Dirigente
-                if (usuarioAtual.Perfil === 'Dirigente') {
+                if (perfil === 'Dirigente') {
                     document.getElementById('nav-btn-membros').classList.remove('hidden');
                 }
 
@@ -410,9 +407,15 @@
             mudarAba('home');
         }
 
-        // Modais de Cadastro de Membro
         function abrirModalMembro() {
+            document.getElementById('membro-index').value = '';
             document.getElementById('modal-membro-titulo').textContent = "Cadastrar Filho da Casa";
+            document.getElementById('membro-nome').value = '';
+            document.getElementById('membro-email').value = '';
+            document.getElementById('membro-perfil').value = 'Membro';
+            document.getElementById('membro-telefone').value = '';
+            document.getElementById('membro-status').value = 'Ativo';
+            document.getElementById('membro-orixa').value = '';
             document.getElementById('modal-membro').classList.remove('hidden');
         }
 
@@ -422,39 +425,50 @@
 
         function salvarMembro(e) {
             e.preventDefault();
+            const index = document.getElementById('membro-index').value;
             const novoMembro = {
                 Nome: document.getElementById('membro-nome').value,
-                Cargo: document.getElementById('membro-cargo').value,
-                Perfil: document.getElementById('membro-perfil').value,
                 Email: document.getElementById('membro-email').value,
+                Perfil: document.getElementById('membro-perfil').value,
                 Telefone: document.getElementById('membro-telefone').value,
-                Orixa: document.getElementById('membro-orixa').value,
-                Status: document.getElementById('membro-status').value
+                Status: document.getElementById('membro-status').value,
+                Orixá: document.getElementById('membro-orixa').value
             };
 
-            listaMembros.push(novoMembro);
+            if (index !== '') {
+                listaMembros[parseInt(index)] = novoMembro;
+            } else {
+                listaMembros.push(novoMembro);
+            }
+
             renderizarTabelaMembros();
             fecharModalMembro();
-            alert('Membro adicionado localmente com sucesso!');
         }
 
         function editarMembro(index) {
             const m = listaMembros[index];
+            document.getElementById('membro-index').value = index;
             document.getElementById('modal-membro-titulo').textContent = "Editar Membro";
-            document.getElementById('membro-nome').value = m.Nome || m.nome || '';
-            document.getElementById('membro-cargo').value = m.Cargo || m.cargo || '';
-            document.getElementById('membro-perfil').value = m.Perfil || 'Membro';
-            document.getElementById('membro-email').value = m.Email || m.email || '';
-            document.getElementById('membro-telefone').value = m.Telefone || m.telefone || '';
-            document.getElementById('membro-orixa').value = m.Orixa || m.orixa || '';
-            document.getElementById('membro-status').value = m.Status || 'Ativo';
+            document.getElementById('membro-nome').value = obterValorCampo(m, 'Nome', 'Nome Completo', 'nome');
+            document.getElementById('membro-email').value = obterValorCampo(m, 'Email', 'E-mail', 'email');
+            document.getElementById('membro-perfil').value = obterValorCampo(m, 'Perfil', 'Acesso', 'perfil') || 'Membro';
+            document.getElementById('membro-telefone').value = obterValorCampo(m, 'Telefone', 'Celular', 'telefone');
+            document.getElementById('membro-status').value = obterValorCampo(m, 'Status', 'status') || 'Ativo';
+            document.getElementById('membro-orixa').value = obterValorCampo(m, 'Orixá', 'Orixa', 'Orixá de Cabeça', 'orixa');
             
             document.getElementById('modal-membro').classList.remove('hidden');
         }
 
-        function filtrarConteudoGlobal() {
-            // Lógica simples para busca visual rápida
+        function excluirMembro(index) {
+            const m = listaMembros[index];
+            const nome = obterValorCampo(m, 'Nome', 'Nome Completo', 'nome');
+            if (confirm(`Tem certeza que deseja excluir ${nome !== '-' ? nome : 'este membro'}?`)) {
+                listaMembros.splice(index, 1);
+                renderizarTabelaMembros();
+            }
         }
+
+        function filtrarConteudoGlobal() {}
     </script>
 </body>
 </html>

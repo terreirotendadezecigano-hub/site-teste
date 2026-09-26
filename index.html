@@ -31,7 +31,6 @@
 
     * { box-sizing: border-box; }
 
-    /* Header Sticky */
     header.banner {
       background: linear-gradient(135deg, var(--red-logo-dark) 0%, var(--red-logo) 50%, #1a0003 100%);
       border-bottom: 2px solid var(--gold-primary);
@@ -100,7 +99,6 @@
       cursor: pointer;
     }
 
-    /* Menu Lateral */
     aside.sidebar {
       width: 250px;
       max-width: 80vw;
@@ -141,7 +139,6 @@
 
     .nav-item i { width: 20px; text-align: center; font-size: 0.95rem; }
 
-    /* Layout do Conteúdo Principal */
     .container { 
       padding: 12px; 
       max-width: 1200px; 
@@ -165,7 +162,6 @@
 
     .search-bar:focus { border-color: var(--gold-primary); }
 
-    /* Chips de Filtros */
     .category-chips {
       display: flex;
       gap: 6px;
@@ -206,7 +202,6 @@
       gap: 8px; 
     }
 
-    /* Cards Grid */
     .cards-grid { 
       display: grid; 
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
@@ -242,7 +237,6 @@
     .card-datetime { font-size: 0.68rem; color: var(--gold-primary); margin-bottom: 3px; }
     .card-text { font-size: 0.7rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
 
-    /* Estilos do Calendário na Agenda */
     .calendar-container {
       background: var(--bg-card);
       border: 1px solid var(--border-color);
@@ -324,7 +318,6 @@
       margin-top: auto;
     }
 
-    /* Estilos da Tabela de Membros */
     .table-responsive {
       width: 100%;
       overflow-x: auto;
@@ -357,28 +350,24 @@
       background-color: rgba(212, 175, 55, 0.05);
     }
 
-    .btn-edit-membro {
-      background: var(--gold-primary);
-      color: #000;
-      border: none;
-      padding: 4px 8px;
+    /* Botões menores de ação na tabela de membros */
+    .btn-action-icon {
+      background: #222;
+      border: 1px solid var(--border-color);
+      color: var(--gold-light);
+      padding: 4px 7px;
       border-radius: 4px;
       cursor: pointer;
-      font-weight: bold;
-      font-size: 0.72rem;
-      margin-right: 4px;
+      font-size: 0.7rem;
+      margin-right: 3px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.2s;
     }
-
-    .btn-delete-membro {
-      background: #8b0000;
-      color: #fff;
-      border: none;
-      padding: 4px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 0.72rem;
-    }
+    .btn-action-icon:hover { background: var(--gold-primary); color: #000; border-color: var(--gold-primary); }
+    .btn-delete-icon:hover { background: #8b0000; color: #fff; border-color: #8b0000; }
+    .btn-whatsapp-icon:hover { background: #25d366; color: #fff; border-color: #25d366; }
 
     .btn-add-membro {
       background: var(--gold-primary);
@@ -395,7 +384,6 @@
       margin-bottom: 10px;
     }
 
-    /* Modal de Membros em 2 colunas */
     .membros-form-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -431,34 +419,6 @@
       outline: none;
     }
 
-    /* Menu de Ação do Telefone */
-    .phone-menu-dropdown {
-      position: absolute;
-      background: #222;
-      border: 1px solid var(--gold-primary);
-      border-radius: 6px;
-      padding: 4px;
-      z-index: 10000;
-      display: none;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.8);
-    }
-    .phone-menu-item {
-      padding: 6px 10px;
-      font-size: 0.75rem;
-      color: #fff;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      white-space: nowrap;
-      text-decoration: none;
-    }
-    .phone-menu-item:hover {
-      background: rgba(212, 175, 55, 0.2);
-      color: var(--gold-primary);
-    }
-
-    /* Guia de Ervas */
     .ervas-home-container {
       display: flex;
       flex-direction: column;
@@ -530,7 +490,6 @@
       color: #000;
     }
 
-    /* Modal */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; width: 100vw; height: 100vh;
@@ -816,7 +775,7 @@
 
   <!-- Modal Cadastro/Edição de Membro em 2 colunas -->
   <div class="modal-overlay" id="modalMembro">
-    <div class="modal-box" style="max-width:540px;">
+    <div class="modal-box" style="max-width:520px;">
       <div class="modal-header">
         <h3 style="font-size:0.9rem; margin:0;" id="membroModalTitle"><i class="fa-solid fa-user-plus"></i> Cadastrar Membro</h3>
         <button class="modal-close-icon" onclick="closeMembroModal()">&times;</button>
@@ -884,12 +843,6 @@
     </div>
   </div>
 
-  <!-- Menu flutuante de ação rápida para Telefone -->
-  <div class="phone-menu-dropdown" id="phoneMenuDropdown">
-    <a id="btnCallPhone" class="phone-menu-item" target="_blank"><i class="fa-solid fa-phone" style="color:var(--gold-primary);"></i> Ligar</a>
-    <a id="btnWhatsappPhone" class="phone-menu-item" target="_blank"><i class="fa-brands fa-whatsapp" style="color:#25d366;"></i> WhatsApp</a>
-  </div>
-
   <script>
     const SHEET_ID = '1BL978swtEmpF208tfvPOZJuv2YS1ecpujQnw4ZoA3Jk';
     let currentTab = 'Home';
@@ -917,12 +870,6 @@
       updateAuthUI();
       loadGeneralData();
       loadTabData('Home');
-      
-      document.addEventListener('click', function(e) {
-        if (!e.target.closest('#phoneMenuDropdown') && !e.target.closest('.phone-trigger')) {
-          document.getElementById('phoneMenuDropdown').style.display = 'none';
-        }
-      });
     };
 
     window.onscroll = function() {
@@ -1033,6 +980,10 @@
 
     function formatDateBR(dateStr) {
       if (!dateStr) return '';
+      const parts = dateStr.split('T')[0].split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
       const d = new Date(dateStr);
       if (!isNaN(d.getTime())) {
         const day = String(d.getDate()).padStart(2, '0');
@@ -1276,7 +1227,7 @@
     }
 
     // =================================================================
-    // HOME: Filtra eventos passados apenas no destaque inicial
+    // HOME: Filtra apenas eventos futuros no destaque
     // =================================================================
     function buildHomeAgenda(data) {
       const container = document.getElementById('contentContainer');
@@ -1296,12 +1247,12 @@
         const dataStr = item.Data_Evento || item.Data;
         if (!dataStr) return false;
         
-        const d = new Date(dataStr);
+        const d = new Date(dataStr.split('T')[0]);
         d.setHours(0, 0, 0, 0);
         
-        return d >= hoje; // Apenas futuros na Home
+        return d >= hoje;
       }).sort((a, b) => {
-        return new Date(a.Data_Evento || a.Data) - new Date(b.Data_Evento || b.Data);
+        return new Date((a.Data_Evento || a.Data).split('T')[0]) - new Date((b.Data_Evento || b.Data).split('T')[0]);
       });
 
       if (validos.length === 0) {
@@ -1355,7 +1306,7 @@
     }
 
     // =================================================================
-    // AGENDA: Mantém exibição de todos os eventos (passados e futuros)
+    // AGENDA: Exibe todos os eventos no calendário
     // =================================================================
     function buildCalendarAgenda(data) {
       const container = document.getElementById('contentContainer');
@@ -1375,7 +1326,7 @@
         if (!isLoggedIn && !isPublicAccess(item)) return;
         const dStr = item.Data_Evento || item.Data;
         if (!dStr) return;
-        const evDate = new Date(dStr);
+        const evDate = new Date(dStr.split('T')[0]);
         if (evDate.getFullYear() === year && evDate.getMonth() === month) {
           const dayNum = evDate.getDate();
           if (!eventsMap[dayNum]) eventsMap[dayNum] = [];
@@ -1470,7 +1421,7 @@
               <tr>
                 <th>Ações</th>
                 <th>Nome Completo</th>
-                <th>Telefone / WhatsApp</th>
+                <th>Telefone / Contato</th>
               </tr>
             </thead>
             <tbody id="membrosTableBody">
@@ -1489,31 +1440,32 @@
         const id = m.ID_Filho || m.id || m.ID || '';
         const nome = m.Nome_Completo || m.Nome || '';
         const tel = m.Telefone || '';
+        const cleanPhone = tel ? tel.replace(/\D/g, '') : '';
+
+        let actionsContact = 'Não informado';
+        if (cleanPhone) {
+          actionsContact = `
+            <span>${tel}</span>
+            <div style="margin-top: 4px; display: flex; gap: 4px;">
+              <a href="tel:${cleanPhone}" class="btn-action-icon" title="Ligar"><i class="fa-solid fa-phone"></i> Ligar</a>
+              <a href="https://wa.me/${cleanPhone}" target="_blank" class="btn-action-icon btn-whatsapp-icon" title="WhatsApp"><i class="fa-brands fa-whatsapp"></i> Zap</a>
+            </div>
+          `;
+        }
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>
-            <button class="btn-edit-membro" onclick="editarMembro('${id}')"><i class="fa-solid fa-pen-to-square"></i> Editar</button>
-            <button class="btn-delete-membro" onclick="excluirMembro('${id}')"><i class="fa-solid fa-trash"></i> Excluir</button>
+            <div style="display:flex; gap:3px;">
+              <button class="btn-action-icon" onclick="editarMembro('${id}')"><i class="fa-solid fa-pen"></i> Editar</button>
+              <button class="btn-action-icon btn-delete-icon" onclick="excluirMembro('${id}')"><i class="fa-solid fa-trash"></i> Excluir</button>
+            </div>
           </td>
           <td><strong>${nome}</strong></td>
-          <td>${tel ? `<span class="phone-trigger" style="color:var(--gold-light); cursor:pointer; text-decoration:underline;" onclick="openPhoneMenu(event, '${tel}')"><i class="fa-solid fa-phone"></i> ${tel}</span>` : 'Não informado'}</td>
+          <td>${actionsContact}</td>
         `;
         tbody.appendChild(tr);
       });
-    }
-
-    function openPhoneMenu(event, phoneNumber) {
-      event.stopPropagation();
-      const cleanPhone = phoneNumber.replace(/\D/g, '');
-      const dropdown = document.getElementById('phoneMenuDropdown');
-      
-      document.getElementById('btnCallPhone').href = `tel:${cleanPhone}`;
-      document.getElementById('btnWhatsappPhone').href = `https://wa.me/${cleanPhone}`;
-
-      dropdown.style.display = 'block';
-      dropdown.style.top = (event.pageY + 10) + 'px';
-      dropdown.style.left = event.pageX + 'px';
     }
 
     function abrirModalNovoMembro() {
@@ -1545,11 +1497,11 @@
       document.getElementById('membroModalTitle').innerHTML = '<i class="fa-solid fa-user-pen"></i> Editar Membro';
       document.getElementById('membroId').value = m.ID_Filho || m.id || m.ID || '';
       document.getElementById('membroNome').value = m.Nome_Completo || m.Nome || '';
-      document.getElementById('membroDataNasc').value = m.Data_Nascimento || '';
+      document.getElementById('membroDataNasc').value = (m.Data_Nascimento || '').split('T')[0];
       document.getElementById('membroTelefone').value = m.Telefone || '';
       document.getElementById('membroEmail').value = m.Email || m['E-mail'] || '';
       document.getElementById('membroEndereco').value = m.Endereco || '';
-      document.getElementById('membroDataEntrada').value = m.Data_Entrada || '';
+      document.getElementById('membroDataEntrada').value = (m.Data_Entrada || '').split('T')[0];
       document.getElementById('membroCargo').value = m.Cargo_Funcao || m.Cargo || '';
       document.getElementById('membroOrixa').value = m.Orixa_Frente || '';
       document.getElementById('membroStatus').value = m.Status_Ativo || 'Ativo';

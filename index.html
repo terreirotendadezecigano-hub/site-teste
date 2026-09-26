@@ -242,7 +242,7 @@
     .card-datetime { font-size: 0.68rem; color: var(--gold-primary); margin-bottom: 3px; }
     .card-text { font-size: 0.7rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
 
-    /* Estilos Formuário Cadastro de Membros */
+    /* Estilos Formulário Cadastro de Membros */
     .form-card {
       background: var(--bg-card);
       border: 1px solid var(--gold-primary);
@@ -251,6 +251,35 @@
       max-width: 650px;
       margin: 0 auto;
       box-shadow: 0 4px 20px rgba(212, 175, 55, 0.15);
+      position: relative;
+    }
+
+    .form-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+      margin-bottom: 15px;
+    }
+
+    .form-header h3 {
+      margin: 0;
+      color: var(--gold-primary);
+      font-size: 1rem;
+    }
+
+    .btn-close-form {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .btn-close-form:hover {
+      color: #ff5555;
     }
 
     .form-grid {
@@ -289,6 +318,27 @@
       outline: none;
       border-color: var(--gold-primary);
     }
+
+    .form-actions-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .btn-cancel {
+      background: #333;
+      border: 1px solid var(--border-color);
+      color: #fff;
+      font-weight: bold;
+      padding: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      flex: 1;
+      text-align: center;
+    }
+
+    .btn-cancel:hover { background: #444; }
 
     /* Estilos Específicos do Guia de Ervas */
     .ervas-home-container { display: flex; flex-direction: column; gap: 15px; padding-bottom: 20px; }
@@ -420,20 +470,6 @@
     <img id="zoomedImg" src="" alt="Imagem Ampliada">
   </div>
 
-  <!-- Modal Login (Área Restrita) -->
-  <div class="modal-overlay" id="loginModal">
-    <div class="modal-box" style="max-width:320px;">
-      <div class="modal-header">
-        <h3 style="font-size:0.9rem; margin:0;">Área dos Membros</h3>
-        <button class="modal-close-icon" onclick="closeLoginModal()">&times;</button>
-      </div>
-      <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">Digite o e-mail cadastrado no terreiro para acessar.</p>
-      <input type="email" id="loginEmail" class="search-bar" placeholder="Seu e-mail" style="margin-bottom:10px;">
-      <p id="modalMsg" style="color:#ff5555; font-size:0.75rem; margin-bottom:8px;"></p>
-      <button class="btn-submit" onclick="performLogin()">Entrar</button>
-    </div>
-  </div>
-
   <script>
     const SHEET_ID = '1BL978swtEmpF208tfvPOZJuv2YS1ecpujQnw4ZoA3Jk';
     const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbyFje_ocF7a0S7Tq4EYQmM5W3hv9SmHZqxJmWLhPKdkVfudzW-Q3EEbM66U9BiwdBZOJw/exec';
@@ -484,7 +520,12 @@
       isErvasSubpage = false;
       
       document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-      if (element) element.classList.add('active');
+      if (element) {
+        element.classList.add('active');
+      } else {
+        const items = document.querySelectorAll('.nav-item');
+        if (tabName === 'Home' && items[0]) items[0].classList.add('active');
+      }
 
       const generalInfoSection = document.getElementById('generalInfoSection');
       const searchBox = document.getElementById('searchBoxContainer');
@@ -520,6 +561,33 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    /* BUSCA DE ENDEREÇO VIA CEP (VIACEP API) */
+    async function buscarCEP() {
+      const cepInput = document.getElementById('cadCep').value.replace(/\D/g, '');
+      const logradouroInput = document.getElementById('cadLogradouro');
+      const bairroInput = document.getElementById('cadBairro');
+      const cidadeUfInput = document.getElementById('cadCidadeUf');
+
+      if (cepInput.length === 8) {
+        logradouroInput.placeholder = "Buscando...";
+        try {
+          const res = await fetch(`https://viacep.com.br/ws/${cepInput}/json/`);
+          const data = await res.json();
+          if (!data.erro) {
+            logradouroInput.value = data.logradouro || '';
+            bairroInput.value = data.bairro || '';
+            cidadeUfInput.value = `${data.localidade}/${data.uf}`;
+            document.getElementById('cadNumero').focus();
+          } else {
+            alert('CEP não encontrado.');
+            logradouroInput.placeholder = "Rua, Av, etc.";
+          }
+        } catch (e) {
+          logradouroInput.placeholder = "Rua, Av, etc.";
+        }
+      }
+    }
+
     /* RENDERIZA TELA DE LOGIN OU FORMULÁRIO DE CADASTRO */
     function renderCadastroSection() {
       const container = document.getElementById('contentContainer');
@@ -528,20 +596,30 @@
       if (!isLoggedIn) {
         container.innerHTML = `
           <div class="form-card" style="max-width: 380px;">
-            <h3 style="color:var(--gold-primary); text-align:center; margin-top:0;"><i class="fa-solid fa-lock"></i> Acesso Restrito</h3>
+            <div class="form-header">
+              <h3><i class="fa-solid fa-lock"></i> Acesso Restrito</h3>
+              <button class="btn-close-form" onclick="switchTab('Home')" title="Fechar"><i class="fa-solid fa-xmark"></i></button>
+            </div>
             <p style="font-size:0.78rem; color:var(--text-muted); text-align:center;">Informe seu e-mail cadastrado para ter acesso ao cadastro de membros.</p>
             <div class="form-group">
               <label>E-mail de Acesso:</label>
               <input type="email" id="cadLoginEmail" placeholder="seuemail@gmail.com" style="width:100%;">
             </div>
-            <button class="btn-submit" onclick="validarAcessoCadastro()" style="width:100%; margin-top:10px;">Entrar</button>
+            <div class="form-actions-buttons">
+              <button class="btn-cancel" onclick="switchTab('Home')">Cancelar</button>
+              <button class="btn-submit" onclick="validarAcessoCadastro()">Entrar</button>
+            </div>
             <div id="cadLoginMsg" style="margin-top:10px; text-align:center; font-size:0.8rem;"></div>
           </div>
         `;
       } else {
         container.innerHTML = `
           <div class="form-card">
-            <p style="color:var(--gold-light); font-size:0.85rem; margin-top:0; border-bottom:1px solid var(--border-color); padding-bottom:8px;">
+            <div class="form-header">
+              <h3 style="margin:0;"><i class="fa-solid fa-user-plus"></i> Novo Filho / Membro</h3>
+              <button class="btn-close-form" onclick="switchTab('Home')" title="Fechar e Voltar"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p style="color:var(--gold-light); font-size:0.8rem; margin-top:0; margin-bottom:15px; border-bottom:1px solid var(--border-color); padding-bottom:8px;">
               <i class="fa-solid fa-user-check"></i> Usuário conectado: <b>${loggedUser.nome}</b>
             </p>
             <form id="formCadastroMembro">
@@ -562,18 +640,52 @@
                   <label>E-mail</label>
                   <input type="email" id="cadEmail" placeholder="email@exemplo.com">
                 </div>
-                <div class="form-group full-width">
-                  <label>Endereço Completo</label>
-                  <input type="text" id="cadEndereco" placeholder="Rua, Número, Bairro">
+                
+                <!-- Endereço por CEP -->
+                <div class="form-group">
+                  <label>CEP</label>
+                  <input type="text" id="cadCep" placeholder="35160-000" maxlength="9" onkeyup="buscarCEP()">
                 </div>
+                <div class="form-group">
+                  <label>Número</label>
+                  <input type="text" id="cadNumero" placeholder="123">
+                </div>
+                <div class="form-group full-width">
+                  <label>Rua / Logradouro</label>
+                  <input type="text" id="cadLogradouro" placeholder="Rua, Av, etc.">
+                </div>
+                <div class="form-group">
+                  <label>Complemento</label>
+                  <input type="text" id="cadComplemento" placeholder="Apt, Bloco, etc.">
+                </div>
+                <div class="form-group">
+                  <label>Bairro</label>
+                  <input type="text" id="cadBairro" placeholder="Bairro">
+                </div>
+                <div class="form-group full-width">
+                  <label>Cidade / UF</label>
+                  <input type="text" id="cadCidadeUf" placeholder="Ipatinga/MG">
+                </div>
+
                 <div class="form-group">
                   <label>Data de Entrada</label>
                   <input type="date" id="cadEntrada">
                 </div>
+                
+                <!-- Cargo / Função do AppSheet -->
                 <div class="form-group">
                   <label>Cargo / Função</label>
-                  <input type="text" id="cadCargo" placeholder="Ex: Filho(a) de Santo">
+                  <select id="cadCargo">
+                    <option value="Mãe de Santo">Mãe de Santo</option>
+                    <option value="Pai de Santo">Pai de Santo</option>
+                    <option value="Pai Pequeno">Pai Pequeno</option>
+                    <option value="Mãe Pequena">Mãe Pequena</option>
+                    <option value="Filho(a)" selected>Filho(a)</option>
+                    <option value="Cambone">Cambone</option>
+                    <option value="Ogã">Ogã</option>
+                  </select>
                 </div>
+
                 <div class="form-group">
                   <label>Orixá de Frente</label>
                   <input type="text" id="cadOrixa" placeholder="Ex: Ogum, Oxum">
@@ -585,19 +697,27 @@
                     <option value="Inativo">Inativo</option>
                   </select>
                 </div>
-                <div class="form-group">
+
+                <!-- Perfil no Sistema com opção Colaborador -->
+                <div class="form-group full-width">
                   <label>Perfil no Sistema *</label>
                   <select id="cadPerfil">
                     <option value="Filho(a)" selected>Filho(a)</option>
+                    <option value="Colaborador">Colaborador</option>
                     <option value="Dirigente">Dirigente</option>
                   </select>
                 </div>
+
                 <div class="form-group full-width">
                   <label>Observações</label>
                   <textarea id="cadObs" rows="3" placeholder="Anotações adicionais..."></textarea>
                 </div>
               </div>
-              <button type="submit" id="btnSalvarMembro" class="btn-submit" style="width:100%; margin-top:15px;">Salvar Membro</button>
+
+              <div class="form-actions-buttons">
+                <button type="button" class="btn-cancel" onclick="switchTab('Home')">Cancelar</button>
+                <button type="submit" id="btnSalvarMembro" class="btn-submit">Salvar Membro</button>
+              </div>
             </form>
             <div id="statusCadastro" style="margin-top:12px; text-align:center; font-size:0.85rem; font-weight:bold;"></div>
           </div>
@@ -644,9 +764,27 @@
       const nascimento = document.getElementById('cadNascimento').value;
       const telefone = document.getElementById('cadTelefone').value.trim();
       const email = document.getElementById('cadEmail').value.trim();
-      const endereco = document.getElementById('cadEndereco').value.trim();
+
+      // Monta o Endereço Completo
+      const logradouro = document.getElementById('cadLogradouro').value.trim();
+      const numero = document.getElementById('cadNumero').value.trim();
+      const complemento = document.getElementById('cadComplemento').value.trim();
+      const bairro = document.getElementById('cadBairro').value.trim();
+      const cidadeUf = document.getElementById('cadCidadeUf').value.trim();
+      const cep = document.getElementById('cadCep').value.trim();
+
+      let enderecoFormatado = '';
+      if (logradouro) {
+        enderecoFormatado = logradouro;
+        if (numero) enderecoFormatado += `, Nº ${numero}`;
+        if (complemento) enderecoFormatado += ` - ${complemento}`;
+        if (bairro) enderecoFormatado += ` - ${bairro}`;
+        if (cidadeUf) enderecoFormatado += `, ${cidadeUf}`;
+        if (cep) enderecoFormatado += ` (${cep})`;
+      }
+
       const entrada = document.getElementById('cadEntrada').value;
-      const cargo = document.getElementById('cadCargo').value.trim();
+      const cargo = document.getElementById('cadCargo').value;
       const orixa = document.getElementById('cadOrixa').value.trim();
       const statusAtivo = document.getElementById('cadStatus').value;
       const perfil = document.getElementById('cadPerfil').value;
@@ -666,7 +804,7 @@
           formatarData(nascimento),
           telefone,
           email,
-          endereco,
+          enderecoFormatado,
           formatarData(entrada),
           cargo,
           orixa,
@@ -853,53 +991,6 @@
 
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('open');
-    }
-
-    function openLoginModal() {
-      document.getElementById('modalMsg').innerText = '';
-      document.getElementById('loginModal').style.display = 'flex';
-    }
-
-    function closeLoginModal() {
-      document.getElementById('loginModal').style.display = 'none';
-    }
-
-    async function performLogin() {
-      const emailInput = document.getElementById('loginEmail').value.trim().toLowerCase();
-      const msgBox = document.getElementById('modalMsg');
-
-      if (!emailInput) {
-        msgBox.innerText = 'Informe o e-mail.';
-        return;
-      }
-
-      msgBox.innerText = 'Verificando...';
-
-      try {
-        const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/CADASTRO_FILHOS`);
-        const membros = await res.json();
-
-        const filho = membros.find(m => {
-          const mEmail = (m.Email || m['E-mail'] || '').toLowerCase().trim();
-          return mEmail === emailInput;
-        });
-
-        if (filho) {
-          isLoggedIn = true;
-          loggedUser = {
-            nome: filho.Nome_Completo || filho.Nome || 'Membro',
-            email: emailInput
-          };
-          localStorage.setItem('zeCiganoUser', JSON.stringify(loggedUser));
-          updateAuthUI();
-          closeLoginModal();
-          loadTabData(currentTab);
-        } else {
-          msgBox.innerText = 'E-mail não localizado no cadastro.';
-        }
-      } catch (e) {
-        msgBox.innerText = 'Erro ao validar login.';
-      }
     }
 
     function logout() {

@@ -834,7 +834,7 @@
     }
 
     function getCleanImageUrl(item) {
-      const rawImg = item.Arquivo_URL || item.Imagem_URL || item.Imagem || item.Foto || item.Foto_URL || 
+      const rawImg = item.Foto_URL || item.Foto_Ervas || item.Arquivo_URL || item.Imagem_URL || item.Imagem || item.Foto || item.Foto_URL || 
                      item.Imagem_Cartaz || item.Capa || item.Anexo_URL || item['Anexo URL'] || item.Anexo || '';
       if (!rawImg) return '';
       let clean = rawImg.toString().trim();
@@ -865,7 +865,6 @@
       return `${day}/${month}/${year}`;
     }
 
-    // FORMATAÇÃO DE DATA EM YYYY-MM-DD EXATA PARA INPUTS HTML (Compatível AppSheet/Google Sheets)
     function formatDateForInput(dateStr) {
       if (!dateStr) return '';
       let s = dateStr.toString().trim();
@@ -874,7 +873,6 @@
       if (s.includes('T')) s = s.split('T')[0];
       if (s.includes(' ')) s = s.split(' ')[0];
       
-      // Se veio no formato brasileiro DD/MM/YYYY
       if (s.includes('/')) {
         const p = s.split('/');
         if (p.length === 3) {
@@ -882,7 +880,7 @@
           if (p[0].length === 4) return `${p[0]}-${p[1].padStart(2,'0')}-${p[2].padStart(2,'0')}`;
         }
       }
-      return s; // Já está no formato AAAA-MM-DD
+      return s;
     }
 
     function formatKeyName(key) {
@@ -892,7 +890,7 @@
         'modo_preparo': 'Modo de Preparo', 'para_que_serve': 'Para que Serve', 'orixa_linha': 'Orixá / Linha',
         'data_evento': 'Data do Evento', 'data_criacao': 'Data de Criação', 'conteudo_texto': 'Conteúdo / Orientação',
         'horario': 'Horário', 'descricao': 'Descrição', 'categoria': 'Categoria', 'texo_aviso': 'Texto do Aviso',
-        'acesso_publico': 'Acesso'
+        'acesso_publico': 'Acesso', 'nome_erva': 'Nome da Erva', 'nome_popular': 'Nome Popular'
       };
       const cleanKey = key.toLowerCase().trim().replace(/ /g, '_');
       if (dictionary[cleanKey]) return dictionary[cleanKey];
@@ -1351,7 +1349,6 @@
       document.getElementById('membroId').value = m.ID_Filho || m.id || '';
       document.getElementById('membroNome').value = m.Nome_Completo || m.Nome || '';
       
-      // BUSCA DINÂMICA DE DATA DE NASCIMENTO
       let dataNascVal = '';
       for (let key in m) {
         let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
@@ -1366,7 +1363,6 @@
       document.getElementById('membroEmail').value = m.Email || m['E-mail'] || '';
       document.getElementById('membroEndereco').value = m.Endereco || '';
       
-      // BUSCA DINÂMICA DE DATA DE ENTRADA
       let dataEntradaVal = '';
       for (let key in m) {
         let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
@@ -1475,7 +1471,10 @@
       const imagem = getCleanImageUrl(item);
       let info = '';
       for (let key in item) {
-        if (!['ID_Filho', 'Acesso_Publico'].includes(key) && item[key]) info += `<p><strong>${formatKeyName(key)}:</strong> ${item[key]}</p>`;
+        let cleanKeyLower = key.toLowerCase().trim();
+        // Ocultar IDs e colunas de foto redundantes nos detalhes do modal
+        if (['id_filho', 'id_erva', 'acesso_publico', 'foto_url', 'foto_ervas'].includes(cleanKeyLower)) continue;
+        if (item[key]) info += `<p><strong>${formatKeyName(key)}:</strong> ${item[key]}</p>`;
       }
       modalContent.innerHTML = `
         <div class="modal-header"><h3 style="font-size:0.95rem; margin:0;">${titulo}</h3><button class="modal-close-icon" onclick="closeGenericDetail()">&times;</button></div>

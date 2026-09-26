@@ -1577,6 +1577,41 @@
       if (currentTab === 'Ervas_Banhos' && isErvasSubpage) renderErvasGrid(filtered);
       else renderContent(filtered, currentTab);
     }
+
+    function openMuralDetail(item) {
+      const modalContent = document.getElementById('detailModalContent');
+      const categoria = item.Categoria || item.Titulo || 'Aviso do Mural';
+      const dataCriacao = formatDateBR(item.Data_Criacao || item.Data || '');
+      const descricao = item.Texo_Aviso || item.Descricao || item.Observacoes || item.Orientacao || '';
+      const imagem = getCleanImageUrl(item);
+      const rawVideo = getVideoUrlFromItem(item);
+
+      let mediaHtml = '';
+      if (rawVideo) {
+        mediaHtml = `<div class="video-container">${getCleanVideoEmbed(rawVideo)}</div>`;
+      } else if (imagem) {
+        mediaHtml = `<img src="${imagem}" class="modal-banner-img" alt="${categoria}" onclick="openImageZoom('${imagem}')" title="Clique para ampliar">`;
+      }
+
+      modalContent.innerHTML = `
+        <div class="modal-header">
+          <div>
+            <h3 style="font-size:0.95rem; margin:0;"><i class="fa-solid fa-photo-film"></i> ${categoria}</h3>
+            ${dataCriacao ? `<p style="color: var(--gold-light); font-size:0.7rem; margin:2px 0 0 0;"><i class="fa-solid fa-calendar"></i> ${dataCriacao}</p>` : ''}
+          </div>
+          <button class="modal-close-icon" onclick="closeGenericDetail()">&times;</button>
+        </div>
+        <div class="modal-body">
+          ${mediaHtml}
+          ${descricao ? `<div class="modal-details-box"><p style="margin:0;">${descricao}</p></div>` : ''}
+        </div>
+        <div class="modal-actions">
+          <button class="btn-share" onclick="shareOnWhatsapp('${categoria}', '${descricao}')"><i class="fa-brands fa-whatsapp"></i> Enviar</button>
+          <button class="btn-submit" onclick="closeGenericDetail()">Fechar</button>
+        </div>
+      `;
+      showModal();
+    }
   </script>
 </body>
 </html>

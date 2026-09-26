@@ -289,7 +289,7 @@
       background: #121212;
       border: 1px solid var(--border-color);
       border-radius: 6px;
-      min-height: 50px;
+      min-height: 55px;
       padding: 4px;
       display: flex;
       flex-direction: column;
@@ -299,12 +299,12 @@
     }
     .calendar-cell.empty { background: transparent; border: none; }
     .calendar-cell.has-event {
-      background: rgba(212, 175, 55, 0.1);
+      background: rgba(212, 175, 55, 0.12);
       border-color: var(--gold-primary);
       cursor: pointer;
     }
     .calendar-cell.has-event:hover {
-      background: rgba(212, 175, 55, 0.25);
+      background: rgba(212, 175, 55, 0.3);
     }
     .calendar-date-number {
       font-weight: bold;
@@ -409,7 +409,34 @@
       outline: none;
     }
 
-    /* Estilos Específicos para a Página Principal do Guia de Ervas */
+    /* Menu de Ação do Telefone */
+    .phone-menu-dropdown {
+      position: absolute;
+      background: #222;
+      border: 1px solid var(--gold-primary);
+      border-radius: 6px;
+      padding: 4px;
+      z-index: 10000;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.8);
+    }
+    .phone-menu-item {
+      padding: 6px 10px;
+      font-size: 0.75rem;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+    .phone-menu-item:hover {
+      background: rgba(212, 175, 55, 0.2);
+      color: var(--gold-primary);
+    }
+
+    /* Guia de Ervas */
     .ervas-home-container {
       display: flex;
       flex-direction: column;
@@ -481,7 +508,7 @@
       color: #000;
     }
 
-    /* MODAL CENTRALIZADO NA TELA */
+    /* Modal */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; width: 100vw; height: 100vh;
@@ -632,7 +659,6 @@
     .info-link { display: inline-flex; align-items: center; gap: 6px; color: #fff; text-decoration: none; word-break: break-word; }
     .info-link i { color: var(--gold-primary); width: 16px; text-align: center; }
 
-    /* Botão Flutuante Voltar ao Topo */
     .btn-back-to-top {
       position: fixed;
       bottom: 20px;
@@ -766,7 +792,7 @@
     </div>
   </div>
 
-  <!-- Modal Cadastro/Edição de Membro -->
+  <!-- Modal Cadastro/Edição de Membro com todas as colunas -->
   <div class="modal-overlay" id="modalMembro">
     <div class="modal-box" style="max-width:440px;">
       <div class="modal-header">
@@ -780,8 +806,8 @@
           <input type="text" id="membroNome" class="form-control" placeholder="Nome do filho(a)">
         </div>
         <div class="form-group">
-          <label>Cargo / Função</label>
-          <input type="text" id="membroCargo" class="form-control" placeholder="Ex: Filho(a) de Santo, Pai de Santo">
+          <label>Data de Nascimento</label>
+          <input type="date" id="membroDataNasc" class="form-control">
         </div>
         <div class="form-group">
           <label>Telefone / WhatsApp</label>
@@ -792,12 +818,27 @@
           <input type="email" id="membroEmail" class="form-control" placeholder="email@exemplo.com">
         </div>
         <div class="form-group">
-          <label>Data de Nascimento</label>
-          <input type="date" id="membroDataNasc" class="form-control">
+          <label>Endereço</label>
+          <input type="text" id="membroEndereco" class="form-control" placeholder="Endereço completo">
+        </div>
+        <div class="form-group">
+          <label>Data de Entrada</label>
+          <input type="date" id="membroDataEntrada" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Cargo / Função</label>
+          <input type="text" id="membroCargo" class="form-control" placeholder="Ex: Filho(a) de Santo">
         </div>
         <div class="form-group">
           <label>Orixá de Frente</label>
-          <input type="text" id="membroOrixa" class="form-control" placeholder="Ex: Ogum, Oxum">
+          <input type="text" id="membroOrixa" class="form-control" placeholder="Ex: Xangô, Oxum">
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="membroStatus" class="form-control">
+            <option value="Ativo">Ativo</option>
+            <option value="Inativo">Inativo</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Perfil de Acesso</label>
@@ -807,11 +848,8 @@
           </select>
         </div>
         <div class="form-group">
-          <label>Status</label>
-          <select id="membroStatus" class="form-control">
-            <option value="Ativo">Ativo</option>
-            <option value="Inativo">Inativo</option>
-          </select>
+          <label>Observações</label>
+          <textarea id="membroObservacoes" class="form-control" placeholder="Observações..." style="height:60px;"></textarea>
         </div>
       </div>
       <div class="modal-actions">
@@ -819,6 +857,12 @@
         <button class="btn-submit" style="background:#444; color:#fff;" onclick="closeMembroModal()">Cancelar</button>
       </div>
     </div>
+  </div>
+
+  <!-- Menu flutuante de ação rápida para Telefone -->
+  <div class="phone-menu-dropdown" id="phoneMenuDropdown">
+    <a id="btnCallPhone" class="phone-menu-item" target="_blank"><i class="fa-solid fa-phone" style="color:var(--gold-primary);"></i> Ligar</a>
+    <a id="btnWhatsappPhone" class="phone-menu-item" target="_blank"><i class="fa-brands fa-whatsapp" style="color:#25d366;"></i> WhatsApp</a>
   </div>
 
   <script>
@@ -830,7 +874,7 @@
     let loggedUser = null;
     let selectedChip = 'Todos';
     let isErvasSubpage = false;
-    let currentCalendarDate = new Date(); // Controla o mês/ano exibido no calendário
+    let currentCalendarDate = new Date();
 
     function isPublicAccess(item) {
       if (!item) return false;
@@ -848,6 +892,13 @@
       updateAuthUI();
       loadGeneralData();
       loadTabData('Home');
+      
+      // Fecha o menu de telefone ao clicar fora
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('#phoneMenuDropdown') && !e.target.closest('.phone-trigger')) {
+          document.getElementById('phoneMenuDropdown').style.display = 'none';
+        }
+      });
     };
 
     window.onscroll = function() {
@@ -1200,7 +1251,7 @@
     }
 
     // =================================================================
-    // AGENDA NA HOME: Filtra passados, ordena do mais recente/próximo
+    // AGENDA NA HOME: Filtro estrito para ocultar eventos passados
     // =================================================================
     function buildHomeAgenda(data) {
       const container = document.getElementById('contentContainer');
@@ -1213,18 +1264,20 @@
       }
 
       const hoje = new Date();
-      hoje.setHours(0,0,0,0);
+      hoje.setHours(0, 0, 0, 0);
 
-      // Filtra e ordena
       const validos = data.filter(item => {
         if (!isLoggedIn && !isPublicAccess(item)) return false;
         const dataStr = item.Data_Evento || item.Data;
         if (!dataStr) return false;
+        
         const d = new Date(dataStr);
-        d.setHours(0,0,0,0);
-        return d >= hoje; // Remove eventos cujo dia já passou
+        d.setHours(0, 0, 0, 0);
+        
+        // Remove estritamente se a data for anterior ao dia de hoje
+        return d >= hoje;
       }).sort((a, b) => {
-        return new Date(a.Data_Evento || a.Data) - new Date(b.Data_Evento || b.Data); // Do mais próximo/recente para o futuro
+        return new Date(a.Data_Evento || a.Data) - new Date(b.Data_Evento || b.Data);
       });
 
       if (validos.length === 0) {
@@ -1293,7 +1346,6 @@
       const firstDayIndex = new Date(year, month, 1).getDay();
       const totalDays = new Date(year, month + 1, 0).getDate();
 
-      // Mapeia eventos por dia
       const eventsMap = {};
       data.forEach(item => {
         if (!isLoggedIn && !isPublicAccess(item)) return;
@@ -1324,12 +1376,10 @@
             <div class="calendar-day-name">Sáb</div>
       `;
 
-      // Células vazias iniciais
       for (let i = 0; i < firstDayIndex; i++) {
         calendarHTML += `<div class="calendar-cell empty"></div>`;
       }
 
-      // Dias do mês
       for (let day = 1; day <= totalDays; day++) {
         const hasEvents = eventsMap[day] && eventsMap[day].length > 0;
         const cellClass = hasEvents ? 'calendar-cell has-event' : 'calendar-cell';
@@ -1361,11 +1411,6 @@
 
     function showDayEvents(eventsList) {
       if (!eventsList || eventsList.length === 0) return;
-      if (eventsList.length === 1) {
-        openGenericDetail(eventsList[0], 'Agenda');
-        return;
-      }
-      // Se houver mais de um evento no mesmo dia, exibe o primeiro por padrão
       openGenericDetail(eventsList[0], 'Agenda');
     }
 
@@ -1400,14 +1445,8 @@
             <thead>
               <tr>
                 <th>Ações</th>
-                <th>Nome</th>
-                <th>Cargo/Função</th>
-                <th>Telefone</th>
-                <th>E-mail</th>
-                <th>Data Nasc.</th>
-                <th>Orixá</th>
-                <th>Perfil</th>
-                <th>Status</th>
+                <th>Nome Completo</th>
+                <th>Telefone / WhatsApp</th>
               </tr>
             </thead>
             <tbody id="membrosTableBody">
@@ -1418,48 +1457,52 @@
 
       const tbody = document.getElementById('membrosTableBody');
       if (!membros || membros.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:var(--text-muted);">Nenhum membro localizado.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Nenhum membro localizado.</td></tr>';
         return;
       }
 
       membros.forEach(m => {
         const id = m.ID_Filho || m.id || m.ID || '';
         const nome = m.Nome_Completo || m.Nome || '';
-        const cargo = m.Cargo_Funcao || m.Cargo || '';
         const tel = m.Telefone || '';
-        const email = m.Email || m['E-mail'] || '';
-        const dataNasc = formatDateBR(m.Data_Nascimento || m.dataNascimento || '');
-        const orixa = m.Orixa_Frente || m.orixaHead || '';
-        const perfil = m.Perfil || 'Membro';
-        const status = m.Status_Ativo || m.status || 'Ativo';
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td><button class="btn-edit-membro" onclick="editarMembro('${id}')"><i class="fa-solid fa-pen-to-square"></i> Editar</button></td>
           <td><strong>${nome}</strong></td>
-          <td>${cargo}</td>
-          <td>${tel}</td>
-          <td>${email}</td>
-          <td>${dataNasc}</td>
-          <td>${orixa}</td>
-          <td><span class="card-badge">${perfil}</span></td>
-          <td><span class="card-badge" style="background:${status === 'Ativo' ? '#1e4620' : '#4d1e1e'}; color:#fff;">${status}</span></td>
+          <td>${tel ? `<span class="phone-trigger" style="color:var(--gold-light); cursor:pointer; text-decoration:underline;" onclick="openPhoneMenu(event, '${tel}')"><i class="fa-solid fa-phone"></i> ${tel}</span>` : 'Não informado'}</td>
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    function openPhoneMenu(event, phoneNumber) {
+      event.stopPropagation();
+      const cleanPhone = phoneNumber.replace(/\D/g, '');
+      const dropdown = document.getElementById('phoneMenuDropdown');
+      
+      document.getElementById('btnCallPhone').href = `tel:${cleanPhone}`;
+      document.getElementById('btnWhatsappPhone').href = `https://wa.me/${cleanPhone}`;
+
+      dropdown.style.display = 'block';
+      dropdown.style.top = (event.pageY + 10) + 'px';
+      dropdown.style.left = event.pageX + 'px';
     }
 
     function abrirModalNovoMembro() {
       document.getElementById('membroModalTitle').innerHTML = '<i class="fa-solid fa-user-plus"></i> Cadastrar Membro';
       document.getElementById('membroId').value = '';
       document.getElementById('membroNome').value = '';
-      document.getElementById('membroCargo').value = '';
+      document.getElementById('membroDataNasc').value = '';
       document.getElementById('membroTelefone').value = '';
       document.getElementById('membroEmail').value = '';
-      document.getElementById('membroDataNasc').value = '';
+      document.getElementById('membroEndereco').value = '';
+      document.getElementById('membroDataEntrada').value = '';
+      document.getElementById('membroCargo').value = '';
       document.getElementById('membroOrixa').value = '';
-      document.getElementById('membroPerfil').value = 'Membro';
       document.getElementById('membroStatus').value = 'Ativo';
+      document.getElementById('membroPerfil').value = 'Membro';
+      document.getElementById('membroObservacoes').value = '';
 
       document.getElementById('modalMembro').style.display = 'flex';
     }
@@ -1475,13 +1518,16 @@
       document.getElementById('membroModalTitle').innerHTML = '<i class="fa-solid fa-user-pen"></i> Editar Membro';
       document.getElementById('membroId').value = m.ID_Filho || m.id || m.ID || '';
       document.getElementById('membroNome').value = m.Nome_Completo || m.Nome || '';
-      document.getElementById('membroCargo').value = m.Cargo_Funcao || m.Cargo || '';
+      document.getElementById('membroDataNasc').value = m.Data_Nascimento || '';
       document.getElementById('membroTelefone').value = m.Telefone || '';
       document.getElementById('membroEmail').value = m.Email || m['E-mail'] || '';
-      document.getElementById('membroDataNasc').value = m.Data_Nascimento || m.dataNascimento || '';
-      document.getElementById('membroOrixa').value = m.Orixa_Frente || m.orixaHead || '';
+      document.getElementById('membroEndereco').value = m.Endereco || '';
+      document.getElementById('membroDataEntrada').value = m.Data_Entrada || '';
+      document.getElementById('membroCargo').value = m.Cargo_Funcao || m.Cargo || '';
+      document.getElementById('membroOrixa').value = m.Orixa_Frente || '';
+      document.getElementById('membroStatus').value = m.Status_Ativo || 'Ativo';
       document.getElementById('membroPerfil').value = m.Perfil || 'Membro';
-      document.getElementById('membroStatus').value = m.Status_Ativo || m.status || 'Ativo';
+      document.getElementById('membroObservacoes').value = m.Observacoes || '';
 
       document.getElementById('modalMembro').style.display = 'flex';
     }
@@ -1493,13 +1539,16 @@
     function salvarMembro() {
       const id = document.getElementById('membroId').value;
       const nome = document.getElementById('membroNome').value.trim();
-      const cargo = document.getElementById('membroCargo').value.trim();
+      const dataNasc = document.getElementById('membroDataNasc').value;
       const telefone = document.getElementById('membroTelefone').value.trim();
       const email = document.getElementById('membroEmail').value.trim();
-      const dataNasc = document.getElementById('membroDataNasc').value;
+      const endereco = document.getElementById('membroEndereco').value.trim();
+      const dataEntrada = document.getElementById('membroDataEntrada').value;
+      const cargo = document.getElementById('membroCargo').value.trim();
       const orixa = document.getElementById('membroOrixa').value.trim();
-      const perfil = document.getElementById('membroPerfil').value;
       const status = document.getElementById('membroStatus').value;
+      const perfil = document.getElementById('membroPerfil').value;
+      const observacoes = document.getElementById('membroObservacoes').value.trim();
 
       if (!nome) {
         alert("O nome é obrigatório!");
@@ -1510,33 +1559,39 @@
         const index = listaMembros.findIndex(item => String(item.ID_Filho || item.id || item.ID) === String(id));
         if (index !== -1) {
           listaMembros[index].Nome_Completo = nome;
-          listaMembros[index].Cargo_Funcao = cargo;
+          listaMembros[index].Data_Nascimento = dataNasc;
           listaMembros[index].Telefone = telefone;
           listaMembros[index].Email = email;
-          listaMembros[index].Data_Nascimento = dataNasc;
+          listaMembros[index].Endereco = endereco;
+          listaMembros[index].Data_Entrada = dataEntrada;
+          listaMembros[index].Cargo_Funcao = cargo;
           listaMembros[index].Orixa_Frente = orixa;
-          listaMembros[index].Perfil = perfil;
           listaMembros[index].Status_Ativo = status;
+          listaMembros[index].Perfil = perfil;
+          listaMembros[index].Observacoes = observacoes;
         }
       } else {
         const novoId = 'M' + Math.floor(Math.random() * 10000);
         listaMembros.unshift({
           ID_Filho: novoId,
           Nome_Completo: nome,
-          Cargo_Funcao: cargo,
+          Data_Nascimento: dataNasc,
           Telefone: telefone,
           Email: email,
-          Data_Nascimento: dataNasc,
+          Endereco: endereco,
+          Data_Entrada: dataEntrada,
+          Cargo_Funcao: cargo,
           Orixa_Frente: orixa,
+          Status_Ativo: status,
           Perfil: perfil,
-          Status_Ativo: status
+          Observacoes: observacoes
         });
       }
 
       closeMembroModal();
       currentData = listaMembros;
       renderTabelaMembros(listaMembros);
-      alert("Registro de membro salvo na sessão!");
+      alert("Registro de membro salvo com sucesso na sessão!");
     }
 
     function buildErvasHome(data) {

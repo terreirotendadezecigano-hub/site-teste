@@ -834,7 +834,7 @@
     }
 
     function getCleanImageUrl(item) {
-      const rawImg = item.Foto_URL || item.Foto_Ervas || item.Arquivo_URL || item.Imagem_URL || item.Imagem || item.Foto || item.Foto_URL || 
+      const rawImg = item.Foto_URL || item.Foto_Ervas || item.Arquivo_URL || item.Imagem_URL || item.Imagem || item.Foto || 
                      item.Imagem_Cartaz || item.Capa || item.Anexo_URL || item['Anexo URL'] || item.Anexo || '';
       if (!rawImg) return '';
       let clean = rawImg.toString().trim();
@@ -1472,7 +1472,6 @@
       let info = '';
       for (let key in item) {
         let cleanKeyLower = key.toLowerCase().trim();
-        // Ocultar IDs e colunas de foto redundantes nos detalhes do modal
         if (['id_filho', 'id_erva', 'acesso_publico', 'foto_url', 'foto_ervas'].includes(cleanKeyLower)) continue;
         if (item[key]) info += `<p><strong>${formatKeyName(key)}:</strong> ${item[key]}</p>`;
       }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Tenda de Zé Cigano - Testes</title>
+  <title>Tenda de Zé Cigano - Painel Dirigente</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
@@ -32,13 +32,10 @@
       border-bottom: 2px solid var(--gold-primary);
     }
 
-    h1 {
-      color: var(--gold-primary);
-      margin: 0;
-    }
+    h1 { color: var(--gold-primary); margin: 0; }
 
     .container {
-      max-width: 600px;
+      max-width: 500px;
       margin: 30px auto;
       padding: 20px;
     }
@@ -58,9 +55,7 @@
       margin-bottom: 25px;
     }
 
-    .form-group {
-      margin-bottom: 18px;
-    }
+    .form-group { margin-bottom: 18px; }
 
     .form-group label {
       display: block;
@@ -97,14 +92,33 @@
       margin-top: 10px;
     }
 
-    .btn-submit:hover {
-      background: var(--gold-light);
-    }
+    .btn-submit:hover { background: var(--gold-light); }
 
-    #statusCadastro {
-      margin-top: 20px;
+    .status-msg {
+      margin-top: 15px;
       text-align: center;
       font-weight: bold;
+    }
+
+    /* Oculta áreas restritas inicialmente */
+    .oculto { display: none; }
+
+    .user-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .btn-sair {
+      background: #dc3545;
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -112,11 +126,31 @@
 
   <header>
     <h1><i class="fas fa-star"></i> Tenda de Zé Cigano</h1>
-    <p style="color: var(--text-muted); margin-top: 5px;">Ambiente de Testes</p>
+    <p style="color: var(--text-muted); margin-top: 5px;">Painel Administrativo</p>
   </header>
 
   <div class="container">
-    <div class="form-card">
+    
+    <!-- TELA DE LOGIN -->
+    <div id="secaoLogin" class="form-card">
+      <h2><i class="fas fa-lock"></i> Acesso do Dirigente</h2>
+      <form id="formLogin">
+        <div class="form-group">
+          <label for="loginEmail">Digite seu E-mail:</label>
+          <input type="email" id="loginEmail" placeholder="exemplo@gmail.com" required>
+        </div>
+        <button type="submit" id="btnLogin" class="btn-submit">Entrar no Sistema</button>
+      </form>
+      <div id="statusLogin" class="status-msg"></div>
+    </div>
+
+    <!-- TELA DE CADASTRO DE MEMBROS (Inicia oculta) -->
+    <div id="secaoCadastro" class="form-card oculto">
+      <div class="user-bar">
+        <span>Olá, <b id="nomeUsuario" style="color: var(--gold-primary);"></b></span>
+        <button id="btnSair" class="btn-sair"><i class="fas fa-sign-out-alt"></i> Sair</button>
+      </div>
+
       <h2><i class="fas fa-user-plus"></i> Cadastro de Filho da Casa</h2>
 
       <form id="formCadastroMembro">
@@ -131,7 +165,7 @@
         </div>
 
         <div class="form-group">
-          <label for="cadEmail">E-mail:</label>
+          <label for="cadEmail">E-mail do Membro:</label>
           <input type="email" id="cadEmail" placeholder="exemplo@email.com">
         </div>
 
@@ -140,14 +174,62 @@
         </button>
       </form>
 
-      <div id="statusCadastro"></div>
+      <div id="statusCadastro" class="status-msg"></div>
     </div>
+
   </div>
 
   <script>
-    // Link direto atualizado da Web App do Google Apps Script
     const URL_APPS_SCRIPT = 'https://script.google.com/macros/s/AKfycbyFje_ocF7a0S7Tq4EYQmM5W3hv9SmHZqxJmWLhPKdkVfudzW-Q3EEbM66U9BiwdBZOJw/exec';
 
+    // 1. LÓGICA DE LOGIN
+    document.getElementById('formLogin').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const emailInput = document.getElementById('loginEmail').value.trim();
+      const statusLogin = document.getElementById('statusLogin');
+      const btnLogin = document.getElementById('btnLogin');
+
+      btnLogin.disabled = true;
+      statusLogin.style.color = '#e0a800';
+      statusLogin.innerText = '⏳ Verificando permissões...';
+
+      fetch(`${URL_APPS_SCRIPT}?email=${encodeURIComponent(emailInput)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.autorizado) {
+            statusLogin.style.color = '#28a745';
+            statusLogin.innerText = '✅ ' + data.mensagem;
+            
+            setTimeout(() => {
+              document.getElementById('secaoLogin').classList.add('oculto');
+              document.getElementById('secaoCadastro').classList.remove('oculto');
+              document.getElementById('nomeUsuario').innerText = data.nome;
+            }, 800);
+          } else {
+            statusLogin.style.color = '#dc3545';
+            statusLogin.innerText = '❌ ' + data.mensagem;
+            btnLogin.disabled = false;
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          statusLogin.style.color = '#dc3545';
+          statusLogin.innerText = '❌ Erro ao conectar. Tente novamente.';
+          btnLogin.disabled = false;
+        });
+    });
+
+    // 2. BOTÃO SAIR
+    document.getElementById('btnSair').addEventListener('click', function() {
+      document.getElementById('secaoCadastro').classList.add('oculto');
+      document.getElementById('secaoLogin').classList.remove('oculto');
+      document.getElementById('formLogin').reset();
+      document.getElementById('statusLogin').innerText = '';
+      document.getElementById('btnLogin').disabled = false;
+    });
+
+    // 3. LÓGICA DE CADASTRO
     document.getElementById('formCadastroMembro').addEventListener('submit', function(e) {
       e.preventDefault();
 
@@ -166,7 +248,6 @@
       const idGerado = Math.random().toString(36).substring(2, 9);
       const dataHoje = new Date().toLocaleDateString('pt-BR');
 
-      // Estrutura para a aba Cadastro_Filhos
       const payload = {
         nomeAba: "Cadastro_Filhos",
         valores: [
@@ -183,23 +264,20 @@
         ]
       };
 
-      // Envio via fetch POST com texto estruturado para garantir compatibilidade com Apps Script
       fetch(URL_APPS_SCRIPT, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8'
-        },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload)
       })
-      .then(response => {
+      .then(() => {
         status.style.color = '#28a745';
-        status.innerText = '✅ Membro cadastrado com sucesso na planilha!';
+        status.innerText = '✅ Membro cadastrado com sucesso!';
         document.getElementById('formCadastroMembro').reset();
       })
-      .catch(error => {
-        console.error("Erro no envio:", error);
+      .catch(err => {
+        console.error(err);
         status.style.color = '#dc3545';
-        status.innerText = '❌ Erro ao enviar dados. Tente novamente.';
+        status.innerText = '❌ Erro ao cadastrar. Tente novamente.';
       })
       .finally(() => {
         btn.disabled = false;

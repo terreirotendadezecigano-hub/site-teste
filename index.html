@@ -1669,6 +1669,20 @@
         renderContent(filtered, currentTab);
       }
     }
+
+    function filtrarMembros() {
+  const termo = document.getElementById('inputPesquisa').value.toLowerCase();
+  const membros = document.querySelectorAll('.membro-card');
+
+  membros.forEach(membro => {
+    const nome = membro.textContent.toLowerCase();
+    if (nome.includes(termo)) {
+      membro.style.display = "block";
+    } else {
+      membro.style.display = "none";
+    }
+  });
+}
   </script>
 </body>
 </html>

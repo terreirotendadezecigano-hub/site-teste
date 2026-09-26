@@ -1265,26 +1265,18 @@
         return;
       }
 
-      const hoje = new Date();
-      hoje.setHours(0, 0, 0, 0);
-
       const validos = data.filter(item => {
         if (!isLoggedIn && !isPublicAccess(item)) return false;
         const dataStr = item.Data_Evento || item.Data;
-        if (!dataStr) return false;
-        
-        const d = parseLocalDate(dataStr);
-        if (!d) return false;
-        
-        return d >= hoje;
+        return dataStr !== undefined && dataStr !== null;
       }).sort((a, b) => {
-        const dateA = parseLocalDate(a.Data_Evento || a.Data);
-        const dateB = parseLocalDate(b.Data_Evento || b.Data);
+        const dateA = parseLocalDate(a.Data_Evento || a.Data) || new Date(0);
+        const dateB = parseLocalDate(b.Data_Evento || b.Data) || new Date(0);
         return dateA - dateB;
       });
 
       if (validos.length === 0) {
-        container.innerHTML = '<p style="color: var(--text-muted); font-size:0.8rem;">Nenhum evento futuro em destaque no momento.</p>';
+        container.innerHTML = '<p style="color: var(--text-muted); font-size:0.8rem;">Nenhum evento em destaque no momento.</p>';
         return;
       }
 
@@ -1446,6 +1438,7 @@
               <tr>
                 <th>Ações</th>
                 <th>Nome Completo</th>
+                <th>E-mail</th>
                 <th>Telefone / Contato</th>
               </tr>
             </thead>
@@ -1457,13 +1450,14 @@
 
       const tbody = document.getElementById('membrosTableBody');
       if (!membros || membros.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Nenhum membro localizado.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Nenhum membro localizado.</td></tr>';
         return;
       }
 
       membros.forEach(m => {
         const id = m.ID_Filho || m.id || m.ID || '';
         const nome = m.Nome_Completo || m.Nome || '';
+        const email = m.Email || m['E-mail'] || 'Não informado';
         const tel = m.Telefone || '';
         const cleanPhone = tel ? tel.replace(/\D/g, '') : '';
 
@@ -1487,6 +1481,7 @@
             </div>
           </td>
           <td><strong>${nome}</strong></td>
+          <td>${email}</td>
           <td>${actionsContact}</td>
         `;
         tbody.appendChild(tr);
@@ -1527,8 +1522,8 @@
       document.getElementById('membroEmail').value = m.Email || m['E-mail'] || '';
       document.getElementById('membroEndereco').value = m.Endereco || '';
       
-      // Tratamento robusto para carregar a data de entrada
-      const dataEntradaVal = m.Data_Entrada || m.DataEntrada || m['Data de Entrada'] || '';
+      // Mapeamento correto e seguro para a Data de Entrada
+      const dataEntradaVal = m.Data_Entrada || m.DataEntrada || m['Data de Entrada'] || m['Data_de_Entrada'] || '';
       document.getElementById('membroDataEntrada').value = dataEntradaVal ? dataEntradaVal.split('T')[0] : '';
       
       document.getElementById('membroCargo').value = m.Cargo_Funcao || m.Cargo || '';

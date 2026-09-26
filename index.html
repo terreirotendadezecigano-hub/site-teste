@@ -1133,7 +1133,6 @@
     function changeMonth(direction) { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction); buildCalendarAgenda(currentData); }
     function showDayEvents(eventsList) { if (eventsList && eventsList.length > 0) openGenericDetail(eventsList[0]); }
 
-    // --- FILTRO DE ERVAS & BANHOS POR TIPO DE PREPARO ---
     function buildErvasHome(data) {
       const container = document.getElementById('contentContainer');
       const tiposPreparoSet = new Set();
@@ -1261,7 +1260,6 @@
       });
       parentContainer.appendChild(grid);
     }
-    // -----------------------------------------------------
 
     async function carregarEExibirMembros() {
       const loading = document.getElementById('loading');
@@ -1459,7 +1457,6 @@
         const nome = item.Titulo_Ponto || item.Titulo || item.Nome_Evento || item.Categoria || 'Item';
         const imagem = getCleanImageUrl(item);
         
-        // Se for Pontos_Cantados, verificamos se há vídeo para exibir no card/topo do modal se necessário
         card.innerHTML = `${imagem ? `<img src="${imagem}" class="card-img" alt="${nome}">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-folder fa-2x"></i></div>`}<div class="card-body"><h3 class="card-title">${nome}</h3></div>`;
         card.onclick = () => openGenericDetail(item, tabName);
         grid.appendChild(card);
@@ -1475,20 +1472,26 @@
       let info = '';
       let mediaTopContent = '';
 
-      // --- TRATAMENTO ESPECÍFICO PARA PONTOS CANTADOS ---
-      if (tabName === 'Pontos_Cantados' || currentTab === 'Pontos_Cantados') {
-        // Carregar vídeo diretamente no topo do modal se houver URL de vídeo/MP4
-        const videoUrl = item.Video_URL || item.Video || item.MP4 || item.Arquivo_URL || '';
-        if (videoUrl) {
-          let cleanVid = videoUrl.toString().trim();
-          if (cleanVid.includes('drive.google.com') || cleanVid.includes('docs.google.com')) {
-            const match = cleanVid.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanVid.match(/id=([a-zA-Z0-9_-]+)/);
-            if (match && match[1]) cleanVid = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
-          }
-          mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanVid}" type="video/mp4">Seu navegador não suporta vídeos.</video>`;
+      // --- TRATAMENTO CORRIGIDO PARA VÍDEO E ÁUDIO (EM PONTOS CANTADOS OU OUTRAS SEÇÕES) ---
+      const mediaUrl = item.Video_URL || item.Video || item.Audio_URL || item.Audio || item.MP4 || item.Arquivo_URL || '';
+      if (mediaUrl) {
+        let cleanMedia = mediaUrl.toString().trim();
+        if (cleanMedia.includes('drive.google.com') || cleanMedia.includes('docs.google.com')) {
+          const match = cleanMedia.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanMedia.match(/id=([a-zA-Z0-9_-]+)/);
+          if (match && match[1]) cleanMedia = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
         }
+        
+        const lowerMedia = cleanMedia.toLowerCase();
+        const isAudio = lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio') || tabName === 'Audio';
+        
+        if (isAudio) {
+          mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>`;
+        } else {
+          mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
+        }
+      }
 
-        // Exibir apenas Letra do Ponto, remover metadados indesejados, mas mantendo as Observações
+      if (tabName === 'Pontos_Cantados' || currentTab === 'Pontos_Cantados') {
         const letra = item.Letra_Ponto || item.Letra || item.Conteudo_Texto || item.LetraPonto || '';
         const observacoes = item.Observacoes || item.Obs || '';
 
@@ -1496,15 +1499,14 @@
         if (observacoes) info += `<p><strong>Observações:</strong><br>${observacoes}</p>`;
 
       } else {
-        // Demais seções (Agenda, Mural, Orientações, etc.)
         for (let key in item) {
           let cleanKeyLower = key.toLowerCase().trim().replace(/[\s_]/g, '');
           
-          // Ocultar IDs em geral, Destacar Popup, Arquivo URL, Anexo e Anexo URL conforme solicitado
           if (
             cleanKeyLower.includes('id') || 
             cleanKeyLower === 'destacarpopup' || 
             cleanKeyLower === 'arquivourl' || 
+            cleanKeyLower === 'arquivoimagem' || 
             cleanKeyLower === 'anexo' || 
             cleanKeyLower === 'anexourl' || 
             cleanKeyLower === 'acessopublico' || 

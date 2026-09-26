@@ -1305,6 +1305,56 @@
     function closeGenericDetail() { document.getElementById('detailModal').style.display = 'none'; }
     function closeModalOnBackdrop(e) { if (e.target.id === 'detailModal') closeGenericDetail(); }
     function filterCards() {}
+    function salvarMembro() {
+      const id = document.getElementById('membroId').value;
+      const nome_completo = document.getElementById('membroNome').value.trim();
+      const data_nascimento = document.getElementById('membroDataNasc').value;
+      const telefone = document.getElementById('membroTelefone').value.trim();
+      const email = document.getElementById('membroEmail').value.trim();
+      const endereco = document.getElementById('membroEndereco').value.trim();
+      const data_entrada = document.getElementById('membroDataEntrada').value;
+      const cargo_funcao = document.getElementById('membroCargo').value;
+      const orixa_frente = document.getElementById('membroOrixa').value.trim();
+      const status_ativo = document.getElementById('membroStatus').value;
+      const perfil = document.getElementById('membroPerfil').value;
+      const observacoes = document.getElementById('membroObservacoes').value.trim();
+
+      if (!nome_completo || !email) {
+        alert("Preencha ao menos o Nome Completo e o E-mail.");
+        return;
+      }
+
+      const dadosMembro = {
+        id: id,
+        nome_completo: nome_completo,
+        data_nascimento: data_nascimento,
+        telefone: telefone,
+        email: email,
+        endereco: endereco,
+        data_entrada: data_entrada,
+        cargo_funcao: cargo_funcao,
+        orixa_frente: orixa_frente,
+        status_ativo: status_ativo,
+        perfil: perfil,
+        observacoes: observacoes
+      };
+
+      fetch(WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(dadosMembro)
+      })
+      .then(() => {
+        closeMembroModal();
+        if (typeof carregarEExibirMembros === 'function') {
+          carregarEExibirMembros();
+        }
+      })
+      .catch(err => {
+        console.error("Erro ao enviar:", err);
+      });
+    }
   </script>
 </body>
 </html>

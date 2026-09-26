@@ -595,7 +595,7 @@
       </div>
     </div>
     <div class="banner-right" id="authContainer">
-      <button class="btn-login" onclick="openLoginModal()"><i class="fa-solid fa-lock"></i> Membros</button>
+      <button class="btn-login" onclick="openLoginModal()"><i class="fa-solid fa-lock"></i> <span>Membros</span></button>
     </div>
   </header>
 
@@ -743,13 +743,9 @@
     let loggedUser = null;
     let currentCalendarDate = new Date();
 
-    // Verificação estrita baseada na coluna exata "Acesso_Publico"
     function isPublicAccess(item) {
       if (!item) return true;
-      // Busca todas as possíveis variações do nome da coluna na planilha
       const val = (item.Acesso_Publico || item['Acesso_Publico'] || item.Acesso || item.Visibilidade || 'Aberta').toString().trim().toLowerCase();
-      
-      // Se for explicitamente fechada ou restrita, oculta para quem não está logado
       if (val === 'fechada' || val === 'fechado' || val.includes('fechad') || val.includes('restrit')) {
         return isLoggedIn;
       }
@@ -858,7 +854,7 @@
         'indicacao_uso': 'Indicação de Uso', 'contraindicacoes': 'Contraindicações', 'observacoes': 'Observações',
         'modo_preparo': 'Modo de Preparo', 'para_que_serve': 'Para que Serve', 'orixa_linha': 'Orixá / Linha',
         'data_evento': 'Data do Evento', 'data_criacao': 'Data de Criação', 'conteudo_texto': 'Conteúdo / Orientação',
-        'horario': 'Horário', 'descricao': 'Descrição', 'categoria': 'Categoria', 'texo_aviso': 'Texto do Aviso',
+        'horario': 'Hor horário', 'descricao': 'Descrição', 'categoria': 'Categoria', 'texo_aviso': 'Texto do Aviso',
         'acesso_publico': 'Acesso'
       };
       const cleanKey = key.toLowerCase().trim().replace(/ /g, '_');
@@ -1060,7 +1056,7 @@
 
       const eventsMap = {};
       data.forEach(item => {
-        if (!isPublicAccess(item)) return; // Oculta o evento fechado se o usuário não estiver logado
+        if (!isPublicAccess(item)) return;
 
         const dStr = item.Data_Evento || item.Data;
         if (!dStr) return;
@@ -1191,7 +1187,15 @@
       document.getElementById('membroEmail').value = m.Email || m['E-mail'] || '';
       document.getElementById('membroEndereco').value = m.Endereco || '';
       
-      const dataEntradaVal = m.Data_Entrada || m.DataEntrada || m['Data de Entrada'] || m['Data_de_Entrada'] || '';
+      // FUNÇÃO CORRIGIDA: Varre as chaves ignorando maiúsculas/minúsculas e espaços
+      let dataEntradaVal = '';
+      for (let key in m) {
+        let cleanKey = key.toLowerCase().trim().replace(/[\s_]/g, '');
+        if (cleanKey === 'dataentrada' || cleanKey === 'datadeentrada') {
+          dataEntradaVal = m[key];
+          break;
+        }
+      }
       document.getElementById('membroDataEntrada').value = dataEntradaVal ? dataEntradaVal.split('T')[0] : '';
       
       document.getElementById('membroCargo').value = m.Cargo_Funcao || m.Cargo || '';
@@ -1211,100 +1215,6 @@
       }
     }
 
-   function salvarMembro() {
-      const id = document.getElementById('membroId').value;
-      const nome_completo = document.getElementById('membroNome').value.trim();
-      const data_nascimento = document.getElementById('membroDataNasc').value;
-      const telefone = document.getElementById('membroTelefone').value.trim();
-      const email = document.getElementById('membroEmail').value.trim();
-      const endereco = document.getElementById('membroEndereco').value.trim();
-      const data_entrada = document.getElementById('membroDataEntrada').value;
-      const cargo_funcao = document.getElementById('membroCargo').value;
-      const orixa_frente = document.getElementById('membroOrixa').value.trim();
-      const status_ativo = document.getElementById('membroStatus').value;
-      const perfil = document.getElementById('membroPerfil').value;
-      const observacoes = document.getElementById('membroObservacoes').value.trim();
-
-      if (!nome_completo || !email) {
-        alert("Preencha ao menos o Nome Completo e o E-mail.");
-        return;
-      }
-
-      const dadosMembro = {
-        id: id,
-        nome_completo: nome_completo,
-        data_nascimento: data_nascimento,
-        telefone: telefone,
-        email: email,
-        endereco: endereco,
-        data_entrada: data_entrada,
-        cargo_funcao: cargo_funcao,
-        orixa_frente: orixa_frente,
-        status_ativo: status_ativo,
-        perfil: perfil,
-        observacoes: observacoes
-      };
-
-      fetch(WEB_APP_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dadosMembro)
-      })
-      .then(() => {
-        alert("Membro salvo com sucesso!");
-        closeMembroModal();
-        carregarEExibirMembros();
-      })
-      .catch(err => {
-        console.error("Erro ao salvar membro:", err);
-        alert("Erro ao salvar os dados.");
-      });
-    }
-
-    function closeMembroModal() {
-      document.getElementById('modalMembro').style.display = 'none';
-    }
-
-    function renderContent(data, tabName) {
-      if (['Home', 'Agenda', 'Membros'].includes(tabName)) return;
-      const container = document.getElementById('contentContainer');
-      container.innerHTML = '';
-      const grid = document.createElement('div');
-      grid.className = 'cards-grid';
-
-      data.forEach(item => {
-        if (!isPublicAccess(item)) return;
-        const card = document.createElement('div');
-        card.className = 'card';
-        const nome = item.Titulo_Ponto || item.Titulo || item.Nome_Evento || item.Categoria || 'Item';
-        const imagem = getCleanImageUrl(item);
-        card.innerHTML = `${imagem ? `<img src="${imagem}" class="card-img" alt="${nome}">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-folder fa-2x"></i></div>`}<div class="card-body"><h3 class="card-title">${nome}</h3></div>`;
-        card.onclick = () => openGenericDetail(item);
-        grid.appendChild(card);
-      });
-      container.appendChild(grid);
-    }
-
-    function openGenericDetail(item) {
-      const modalContent = document.getElementById('detailModalContent');
-      const titulo = item.Nome_Evento || item.Titulo_Ponto || item.Titulo || item.Nome_Erva || item.Categoria || 'Detalhes';
-      const imagem = getCleanImageUrl(item);
-      let info = '';
-      for (let key in item) {
-        if (!['ID_Filho', 'Acesso_Publico'].includes(key) && item[key]) info += `<p><strong>${formatKeyName(key)}:</strong> ${item[key]}</p>`;
-      }
-      modalContent.innerHTML = `
-        <div class="modal-header"><h3 style="font-size:0.95rem; margin:0;">${titulo}</h3><button class="modal-close-icon" onclick="closeGenericDetail()">&times;</button></div>
-        <div class="modal-body">${imagem ? `<img src="${imagem}" class="modal-banner-img" onclick="openImageZoom('${imagem}')">` : ''}<div class="modal-details-box">${info}</div></div>
-        <div class="modal-actions"><button class="btn-submit" onclick="closeGenericDetail()">Fechar</button></div>
-      `;
-      document.getElementById('detailModal').style.display = 'flex';
-    }
-
-    function closeGenericDetail() { document.getElementById('detailModal').style.display = 'none'; }
-    function closeModalOnBackdrop(e) { if (e.target.id === 'detailModal') closeGenericDetail(); }
-    function filterCards() {}
     function salvarMembro() {
       const id = document.getElementById('membroId').value;
       const nome_completo = document.getElementById('membroNome').value.trim();
@@ -1355,6 +1265,50 @@
         console.error("Erro ao enviar:", err);
       });
     }
+
+    function closeMembroModal() {
+      document.getElementById('modalMembro').style.display = 'none';
+    }
+
+    function renderContent(data, tabName) {
+      if (['Home', 'Agenda', 'Membros'].includes(tabName)) return;
+      const container = document.getElementById('contentContainer');
+      container.innerHTML = '';
+      const grid = document.createElement('div');
+      grid.className = 'cards-grid';
+
+      data.forEach(item => {
+        if (!isPublicAccess(item)) return;
+        const card = document.createElement('div');
+        card.className = 'card';
+        const nome = item.Titulo_Ponto || item.Titulo || item.Nome_Evento || item.Categoria || 'Item';
+        const imagem = getCleanImageUrl(item);
+        card.innerHTML = `${imagem ? `<img src="${imagem}" class="card-img" alt="${nome}">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-folder fa-2x"></i></div>`}<div class="card-body"><h3 class="card-title">${nome}</h3></div>`;
+        card.onclick = () => openGenericDetail(item);
+        grid.appendChild(card);
+      });
+      container.appendChild(grid);
+    }
+
+    function openGenericDetail(item) {
+      const modalContent = document.getElementById('detailModalContent');
+      const titulo = item.Nome_Evento || item.Titulo_Ponto || item.Titulo || item.Nome_Erva || item.Categoria || 'Detalhes';
+      const imagem = getCleanImageUrl(item);
+      let info = '';
+      for (let key in item) {
+        if (!['ID_Filho', 'Acesso_Publico'].includes(key) && item[key]) info += `<p><strong>${formatKeyName(key)}:</strong> ${item[key]}</p>`;
+      }
+      modalContent.innerHTML = `
+        <div class="modal-header"><h3 style="font-size:0.95rem; margin:0;">${titulo}</h3><button class="modal-close-icon" onclick="closeGenericDetail()">&times;</button></div>
+        <div class="modal-body">${imagem ? `<img src="${imagem}" class="modal-banner-img" onclick="openImageZoom('${imagem}')">` : ''}<div class="modal-details-box">${info}</div></div>
+        <div class="modal-actions"><button class="btn-submit" onclick="closeGenericDetail()">Fechar</button></div>
+      `;
+      document.getElementById('detailModal').style.display = 'flex';
+    }
+
+    function closeGenericDetail() { document.getElementById('detailModal').style.display = 'none'; }
+    function closeModalOnBackdrop(e) { if (e.target.id === 'detailModal') closeGenericDetail(); }
+    function filterCards() {}
   </script>
 </body>
 </html>

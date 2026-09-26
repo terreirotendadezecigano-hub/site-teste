@@ -242,6 +242,88 @@
     .card-datetime { font-size: 0.68rem; color: var(--gold-primary); margin-bottom: 3px; }
     .card-text { font-size: 0.7rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
 
+    /* Estilos do Calendário na Agenda */
+    .calendar-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 15px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .calendar-header h3 {
+      color: var(--gold-primary);
+      margin: 0;
+      font-size: 1rem;
+      text-transform: capitalize;
+    }
+    .calendar-nav-btn {
+      background: #1a1a1a;
+      border: 1px solid var(--border-color);
+      color: var(--gold-primary);
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .calendar-nav-btn:hover { background: var(--gold-primary); color: #000; }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      text-align: center;
+    }
+    .calendar-day-name {
+      font-size: 0.7rem;
+      color: var(--gold-light);
+      font-weight: bold;
+      padding-bottom: 8px;
+    }
+    .calendar-cell {
+      background: #121212;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      min-height: 50px;
+      padding: 4px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      font-size: 0.75rem;
+    }
+    .calendar-cell.empty { background: transparent; border: none; }
+    .calendar-cell.has-event {
+      background: rgba(212, 175, 55, 0.1);
+      border-color: var(--gold-primary);
+      cursor: pointer;
+    }
+    .calendar-cell.has-event:hover {
+      background: rgba(212, 175, 55, 0.25);
+    }
+    .calendar-date-number {
+      font-weight: bold;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+    .calendar-event-dot {
+      background: var(--gold-primary);
+      color: #000;
+      font-size: 0.55rem;
+      padding: 1px 3px;
+      border-radius: 3px;
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-top: auto;
+    }
+
     /* Estilos da Tabela de Membros */
     .table-responsive {
       width: 100%;
@@ -587,7 +669,7 @@
 </head>
 <body>
 
-  <!-- Menu Lateral Ajustado com Item Membros para Dirigentes -->
+  <!-- Menu Lateral -->
   <aside class="sidebar" id="sidebar">
     <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 14px 12px 14px; border-bottom: 1px solid var(--border-color);">
       <span style="color:var(--gold-primary); font-weight:bold; font-size:0.9rem;">Navegação</span>
@@ -600,7 +682,6 @@
       <li class="nav-item" onclick="switchTab('Pontos_Cantados', this)"><i class="fa-solid fa-music"></i> Pontos Cantados</li>
       <li class="nav-item" onclick="switchTab('Ervas_Banhos', this)"><i class="fa-solid fa-leaf"></i> Ervas & Banhos</li>
       <li class="nav-item" onclick="switchTab('Guias_Instrucoes', this)"><i class="fa-solid fa-book-open"></i> Orientações</li>
-      <!-- O menu de Membros é injetado via JS se o perfil for Dirigente -->
       <li class="nav-item" id="menuMembros" style="display:none;" onclick="switchTab('Membros', this)"><i class="fa-solid fa-users"></i> Membros</li>
     </ul>
   </aside>
@@ -661,7 +742,7 @@
     <p>© Tenda de Zé Cigano | <span>Axé!</span></p>
   </footer>
 
-  <!-- Modal Detalhes Centralizado -->
+  <!-- Modal Detalhes -->
   <div class="modal-overlay" id="detailModal" onclick="closeModalOnBackdrop(event)">
     <div class="modal-box" id="detailModalContent"></div>
   </div>
@@ -744,13 +825,13 @@
     const SHEET_ID = '1BL978swtEmpF208tfvPOZJuv2YS1ecpujQnw4ZoA3Jk';
     let currentTab = 'Home';
     let currentData = [];
-    let listaMembros = []; // Cache local da planilha de membros
+    let listaMembros = [];
     let isLoggedIn = false;
     let loggedUser = null;
     let selectedChip = 'Todos';
     let isErvasSubpage = false;
+    let currentCalendarDate = new Date(); // Controla o mês/ano exibido no calendário
 
-    // Função auxiliar para validar permissão de acesso aos registros
     function isPublicAccess(item) {
       if (!item) return false;
       const acesso = (item.Acesso_Publico || item.Acesso || item.Visibilidade || 'Sim').toString().toLowerCase().trim();
@@ -758,9 +839,6 @@
       return true;
     }
 
-    // =================================================================
-    // 1. FORÇA O INÍCIO SEMPRE DESLOGADO
-    // =================================================================
     localStorage.removeItem('zeCiganoUser');
     sessionStorage.clear();
     isLoggedIn = false;
@@ -811,7 +889,7 @@
         generalInfoSection.style.display = 'none';
 
         const titles = {
-          'Agenda': '<i class="fa-solid fa-calendar-days"></i> Agenda de Festividades & Giras',
+          'Agenda': '<i class="fa-solid fa-calendar-days"></i> Calendário da Agenda',
           'Mural_Imagens': '<i class="fa-solid fa-photo-film"></i> Mural de Avisos',
           'Pontos_Cantados': '<i class="fa-solid fa-music"></i> Pontos Cantados',
           'Ervas_Banhos': '<i class="fa-solid fa-leaf"></i> Guia Sagrado de Ervas & Banhos',
@@ -1106,7 +1184,11 @@
         currentData = data;
         loading.style.display = 'none';
 
-        if (tabName === 'Ervas_Banhos' && !isErvasSubpage) {
+        if (tabName === 'Home') {
+          buildHomeAgenda(currentData);
+        } else if (tabName === 'Agenda') {
+          buildCalendarAgenda(currentData);
+        } else if (tabName === 'Ervas_Banhos' && !isErvasSubpage) {
           buildErvasHome(currentData);
         } else {
           buildCategoryChips(currentData, tabName);
@@ -1115,6 +1197,176 @@
       } catch (err) {
         loading.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Erro ao carregar dados.';
       }
+    }
+
+    // =================================================================
+    // AGENDA NA HOME: Filtra passados, ordena do mais recente/próximo
+    // =================================================================
+    function buildHomeAgenda(data) {
+      const container = document.getElementById('contentContainer');
+      document.getElementById('chipsContainer').style.display = 'none';
+      container.innerHTML = '';
+
+      if (!data || data.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted); font-size:0.8rem;">Nenhum evento agendado.</p>';
+        return;
+      }
+
+      const hoje = new Date();
+      hoje.setHours(0,0,0,0);
+
+      // Filtra e ordena
+      const validos = data.filter(item => {
+        if (!isLoggedIn && !isPublicAccess(item)) return false;
+        const dataStr = item.Data_Evento || item.Data;
+        if (!dataStr) return false;
+        const d = new Date(dataStr);
+        d.setHours(0,0,0,0);
+        return d >= hoje; // Remove eventos cujo dia já passou
+      }).sort((a, b) => {
+        return new Date(a.Data_Evento || a.Data) - new Date(b.Data_Evento || b.Data); // Do mais próximo/recente para o futuro
+      });
+
+      if (validos.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted); font-size:0.8rem;">Nenhum evento futuro em destaque no momento.</p>';
+        return;
+      }
+
+      const grid = document.createElement('div');
+      grid.className = 'cards-grid';
+
+      validos.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const nome = item.Nome_Evento || item.Evento || item.Titulo || 'Evento';
+        const categoria = item.Categoria || item.Tipo_Gira || 'Geral';
+        const dataItem = formatDateBR(item.Data_Evento || item.Data || '');
+        const descricao = item.Conteudo_Texto || item.Descricao || item.Observacoes || '';
+        const imagem = getCleanImageUrl(item);
+        const videoUrl = getVideoUrlFromItem(item);
+
+        let imgContent = '';
+        if (imagem) {
+          imgContent = `<img src="${imagem}" class="card-img" alt="${nome}" onerror="this.onerror=null; this.src='https://via.placeholder.com/200x120?text=Sem+Imagem';">`;
+        } else {
+          let iconClass = videoUrl ? 'fa-circle-play' : 'fa-calendar-days';
+          imgContent = `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid ${iconClass} fa-2x"></i></div>`;
+        }
+
+        const isRestricted = !isPublicAccess(item);
+        const restrictedBadge = isRestricted ? `<span class="card-badge-restricted"><i class="fa-solid fa-user-lock"></i> Exclusivo</span>` : '';
+
+        card.innerHTML = `
+          ${imgContent}
+          <div class="card-body">
+            <div class="card-badges">
+              <span class="card-badge">${categoria}</span>
+              ${restrictedBadge}
+            </div>
+            <h3 class="card-title">${nome}</h3>
+            ${dataItem ? `<div class="card-datetime"><span><i class="fa-solid fa-calendar"></i> ${dataItem}</span></div>` : ''}
+            ${descricao ? `<p class="card-text">${descricao}</p>` : ''}
+          </div>
+        `;
+
+        card.onclick = () => openGenericDetail(item, 'Agenda');
+        grid.appendChild(card);
+      });
+
+      container.appendChild(grid);
+    }
+
+    // =================================================================
+    // CALENDÁRIO INTERATIVO NA ABA AGENDA
+    // =================================================================
+    function buildCalendarAgenda(data) {
+      const container = document.getElementById('contentContainer');
+      document.getElementById('chipsContainer').style.display = 'none';
+      container.innerHTML = '';
+
+      const year = currentCalendarDate.getFullYear();
+      const month = currentCalendarDate.getMonth();
+
+      const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+      
+      const firstDayIndex = new Date(year, month, 1).getDay();
+      const totalDays = new Date(year, month + 1, 0).getDate();
+
+      // Mapeia eventos por dia
+      const eventsMap = {};
+      data.forEach(item => {
+        if (!isLoggedIn && !isPublicAccess(item)) return;
+        const dStr = item.Data_Evento || item.Data;
+        if (!dStr) return;
+        const evDate = new Date(dStr);
+        if (evDate.getFullYear() === year && evDate.getMonth() === month) {
+          const dayNum = evDate.getDate();
+          if (!eventsMap[dayNum]) eventsMap[dayNum] = [];
+          eventsMap[dayNum].push(item);
+        }
+      });
+
+      let calendarHTML = `
+        <div class="calendar-container">
+          <div class="calendar-header">
+            <button class="calendar-nav-btn" onclick="changeMonth(-1)"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+            <h3>${monthNames[month]} ${year}</h3>
+            <button class="calendar-nav-btn" onclick="changeMonth(1)">Próximo <i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+          <div class="calendar-grid">
+            <div class="calendar-day-name">Dom</div>
+            <div class="calendar-day-name">Seg</div>
+            <div class="calendar-day-name">Ter</div>
+            <div class="calendar-day-name">Qua</div>
+            <div class="calendar-day-name">Qui</div>
+            <div class="calendar-day-name">Sex</div>
+            <div class="calendar-day-name">Sáb</div>
+      `;
+
+      // Células vazias iniciais
+      for (let i = 0; i < firstDayIndex; i++) {
+        calendarHTML += `<div class="calendar-cell empty"></div>`;
+      }
+
+      // Dias do mês
+      for (let day = 1; day <= totalDays; day++) {
+        const hasEvents = eventsMap[day] && eventsMap[day].length > 0;
+        const cellClass = hasEvents ? 'calendar-cell has-event' : 'calendar-cell';
+        
+        let eventDot = '';
+        if (hasEvents) {
+          const evTitle = eventsMap[day][0].Nome_Evento || eventsMap[day][0].Evento || 'Evento';
+          eventDot = `<div class="calendar-event-dot" title="${evTitle}">${evTitle}</div>`;
+        }
+
+        let clickAttr = hasEvents ? `onclick='showDayEvents(${JSON.stringify(eventsMap[day])})'` : '';
+
+        calendarHTML += `
+          <div class="${cellClass}" ${clickAttr}>
+            <span class="calendar-date-number">${day}</span>
+            ${eventDot}
+          </div>
+        `;
+      }
+
+      calendarHTML += `</div></div>`;
+      container.innerHTML = calendarHTML;
+    }
+
+    function changeMonth(direction) {
+      currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction);
+      buildCalendarAgenda(currentData);
+    }
+
+    function showDayEvents(eventsList) {
+      if (!eventsList || eventsList.length === 0) return;
+      if (eventsList.length === 1) {
+        openGenericDetail(eventsList[0], 'Agenda');
+        return;
+      }
+      // Se houver mais de um evento no mesmo dia, exibe o primeiro por padrão
+      openGenericDetail(eventsList[0], 'Agenda');
     }
 
     // =================================================================
@@ -1415,7 +1667,7 @@
       const chipsContainer = document.getElementById('chipsContainer');
       chipsContainer.innerHTML = '';
 
-      if (!data || data.length === 0 || tabName === 'Home' || tabName === 'Ervas_Banhos' || tabName === 'Membros') {
+      if (!data || data.length === 0 || tabName === 'Home' || tabName === 'Agenda' || tabName === 'Ervas_Banhos' || tabName === 'Membros') {
         chipsContainer.style.display = 'none';
         return;
       }
@@ -1457,8 +1709,7 @@
     }
 
     function renderContent(data, tabName) {
-      if (tabName === 'Ervas_Banhos' && !isErvasSubpage) return;
-      if (tabName === 'Membros') return;
+      if (tabName === 'Home' || tabName === 'Agenda' || tabName === 'Ervas_Banhos' || tabName === 'Membros') return;
 
       const container = document.getElementById('contentContainer');
       container.innerHTML = '';
@@ -1610,7 +1861,6 @@
       const rawVideo = getVideoUrlFromItem(item);
 
       let mediaHtml = '';
-      
       if (rawVideo) {
         mediaHtml = `<div class="video-container">${getCleanVideoEmbed(rawVideo)}</div>`;
       } else if (imagem) {
@@ -1739,6 +1989,8 @@
 
       if (currentTab === 'Membros') {
         renderTabelaMembros(filtered);
+      } else if (currentTab === 'Agenda') {
+        buildCalendarAgenda(filtered);
       } else if (currentTab === 'Ervas_Banhos' && isErvasSubpage) {
         renderErvasGrid(filtered);
       } else {

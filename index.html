@@ -350,19 +350,19 @@
       background-color: rgba(212, 175, 55, 0.05);
     }
 
-    /* Estilo exclusivo para botões apenas com ícones (Lápis e Lixeira) */
+    /* Apenas ícones de lápis e lixeira */
     .btn-icon-only {
       background: #222;
       border: 1px solid var(--border-color);
       color: var(--gold-light);
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       border-radius: 4px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       transition: all 0.2s;
     }
     .btn-icon-only:hover { background: var(--gold-primary); color: #000; border-color: var(--gold-primary); }
@@ -789,7 +789,7 @@
     </div>
   </div>
 
-  <!-- Modal Cadastro/Edição de Membro em 2 colunas -->
+  <!-- Modal Cadastro/Edição de Membro -->
   <div class="modal-overlay" id="modalMembro">
     <div class="modal-box" style="max-width:520px;">
       <div class="modal-header">
@@ -1481,7 +1481,7 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>
-            <div style="display:flex; gap:4px;">
+            <div style="display:flex; gap:5px;">
               <button class="btn-icon-only" onclick="editarMembro('${id}')" title="Editar"><i class="fa-solid fa-pen"></i></button>
               <button class="btn-icon-only btn-delete-icon" onclick="excluirMembro('${id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>
             </div>
@@ -1527,7 +1527,7 @@
       document.getElementById('membroEmail').value = m.Email || m['E-mail'] || '';
       document.getElementById('membroEndereco').value = m.Endereco || '';
       
-      // Correção do campo Data de Entrada
+      // Tratamento robusto para carregar a data de entrada
       const dataEntradaVal = m.Data_Entrada || m.DataEntrada || m['Data de Entrada'] || '';
       document.getElementById('membroDataEntrada').value = dataEntradaVal ? dataEntradaVal.split('T')[0] : '';
       

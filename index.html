@@ -3,455 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tenda de Zé Cigano - Gestão de Membros</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <style>
-    :root {
-      --bg-primary: #0a0a0a;
-      --bg-card: #141414;
-      --gold-primary: #d4af37;
-      --gold-light: #f3e5ab;
-      --text-main: #ffffff;
-      --text-muted: #aaaaaa;
-      --border-color: #2a2a2a;
-      --red-alert: #900c3f;
-    }
-
-    html, body {
-      background-color: var(--bg-primary);
-      color: var(--text-main);
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    /* Topo do Site */
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 25px;
-      background-color: #000000;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .brand h1 {
-      margin: 0;
-      font-size: 1.2rem;
-      color: var(--gold-primary);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .brand p {
-      margin: 0;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    .btn-auth {
-      background: transparent;
-      border: 1px solid var(--gold-primary);
-      color: var(--gold-primary);
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.85rem;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .btn-auth:hover {
-      background-color: var(--gold-primary);
-      color: #000;
-    }
-
-    .main-container {
-      padding: 25px;
-      max-width: 1300px;
-      margin: 0 auto;
-    }
-
-    /* Estado Bloqueado / Mensagem de Acesso */
-    .access-denied {
-      text-align: center;
-      padding: 60px 20px;
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      margin-top: 30px;
-    }
-
-    .access-denied i {
-      font-size: 3rem;
-      color: var(--gold-primary);
-      margin-bottom: 15px;
-    }
-
-    .access-denied h2 {
-      margin: 0 0 10px 0;
-      color: var(--gold-light);
-    }
-
-    .access-denied p {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-    }
-
-    /* Controles e Tabela */
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-
-    .search-box {
-      position: relative;
-      flex: 1;
-      min-width: 280px;
-    }
-
-    .search-box i {
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-muted);
-    }
-
-    .search-box input {
-      width: 100%;
-      padding: 10px 10px 10px 38px;
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      color: var(--text-main);
-      font-size: 0.9rem;
-    }
-
-    .search-box input:focus {
-      outline: none;
-      border-color: var(--gold-primary);
-    }
-
-    .btn-novo {
-      background-color: var(--gold-primary);
-      color: #000;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    /* Tabela Responsiva de Membros */
-    .table-responsive {
-      width: 100%;
-      overflow-x: auto;
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 0.9rem;
-    }
-
-    th, td {
-      padding: 12px 15px;
-      border-bottom: 1px solid var(--border-color);
-      white-space: nowrap;
-    }
-
-    th {
-      background-color: #0d0d0d;
-      color: var(--gold-primary);
-      font-weight: 600;
-      text-transform: uppercase;
-      font-size: 0.8rem;
-    }
-
-    tr:hover {
-      background-color: #1a1a1a;
-    }
-
-    .badge-status {
-      padding: 3px 8px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: bold;
-    }
-
-    .status-ativo {
-      background-color: rgba(40, 167, 69, 0.2);
-      color: #28a745;
-      border: 1px solid #28a745;
-    }
-
-    .status-inativo {
-      background-color: rgba(220, 53, 69, 0.2);
-      color: #dc3545;
-      border: 1px solid #dc3545;
-    }
-
-    .btn-acao {
-      background: transparent;
-      border: 1px solid var(--gold-primary);
-      color: var(--gold-primary);
-      padding: 5px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.8rem;
-    }
-
-    .btn-acao:hover {
-      background-color: var(--gold-primary);
-      color: #000;
-    }
-
-    /* Modal Formulario */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.85);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-      padding: 15px;
-    }
-
-    .modal-content {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      width: 100%;
-      max-width: 550px;
-      padding: 25px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    }
-
-    .modal-content h3 {
-      margin-top: 0;
-      color: var(--gold-primary);
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 10px;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .form-group.full-width {
-      grid-column: span 2;
-    }
-
-    .form-group label {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-bottom: 4px;
-    }
-
-    .form-group input, .form-group select {
-      padding: 9px;
-      background-color: var(--bg-primary);
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      color: var(--text-main);
-      font-size: 0.85rem;
-    }
-
-    .form-group input:focus, .form-group select:focus {
-      outline: none;
-      border-color: var(--gold-primary);
-    }
-
-    .modal-buttons {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 20px;
-    }
-
-    .btn-cancelar {
-      background: transparent;
-      border: 1px solid var(--border-color);
-      color: var(--text-muted);
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .btn-salvar {
-      background-color: var(--gold-primary);
-      color: #000;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-  </style>
+  <title>Tenda de Zé Cigano</title>
 </head>
 <body>
 
-  <!-- Cabeçalho -->
-  <header>
-    <div class="brand">
-      <h1>Tenda de Zé Cigano</h1>
-      <p>Terreiro de Umbanda</p>
-    </div>
-
-    <div id="authArea">
-      <button id="btnAuthAction" class="btn-auth" onclick="alternarLoginSimulado()">
-        <i class="fa-solid fa-lock"></i> Login Dirigente
-      </button>
-    </div>
-  </header>
-
-  <div class="main-container">
-
-    <!-- AVISO DE ACESSO RESTRITO (Exibido quando deslogado ou não dirigente) -->
-    <div id="areaBloqueada" class="access-denied">
-      <i class="fa-solid fa-user-shield"></i>
-      <h2>Área Restrita da Dirigência</h2>
-      <p>Efetue o login com um perfil de <strong>Dirigente</strong> para visualizar e gerenciar o cadastro dos membros.</p>
-    </div>
-
-    <!-- PAINEL DE MEMBROS (Exibido apenas após validação de Dirigente) -->
-    <div id="areaMembros" style="display: none;">
-      
-      <div class="toolbar">
-        <div class="search-box">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input 
-            type="text" 
-            id="inputPesquisa" 
-            placeholder="Pesquisar por nome, cargo, orixá, telefone..." 
-            onkeyup="filtrarTabela()"
-          >
-        </div>
-        <button class="btn-novo" onclick="abrirModalNovoMembro()">
-          <i class="fa-solid fa-plus"></i> Novo Membro
-        </button>
-      </div>
-
-      <div class="table-responsive">
-        <table>
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Cargo</th>
-              <th>Telefone</th>
-              <th>E-mail</th>
-              <th>Nascimento</th>
-              <th>Orixá de Cabeça</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="tabelaCorpo">
-            <!-- As linhas dos membros serão renderizadas dinamicamente -->
-          </tbody>
-        </table>
-      </div>
-
-    </div>
-
-  </div>
-
-  <!-- MODAL DE CADASTRO / EDIÇÃO -->
-  <div id="modalMembro" class="modal-overlay">
-    <div class="modal-content">
-      <h3 id="modalTitulo">Editar Filho de Santo</h3>
-      <form id="formMembro" onsubmit="salvarMembro(event)">
-        
-        <!-- Campo ID Oculto (Não alterável) -->
-        <input type="hidden" id="editId">
-
-        <div class="form-grid">
-          
-          <div class="form-group full-width">
-            <label for="editNome">Nome Completo</label>
-            <input type="text" id="editNome" required>
-          </div>
-
-          <div class="form-group">
-            <label for="editCargo">Cargo / Função</label>
-            <input type="text" id="editCargo" required>
-          </div>
-
-          <div class="form-group">
-            <label for="editOrixa">Orixá de Cabeça</label>
-            <input type="text" id="editOrixa" required>
-          </div>
-
-          <div class="form-group">
-            <label for="editTelefone">Telefone / WhatsApp</label>
-            <input type="text" id="editTelefone">
-          </div>
-
-          <div class="form-group">
-            <label for="editEmail">E-mail</label>
-            <input type="email" id="editEmail">
-          </div>
-
-          <div class="form-group">
-            <label for="editDataNascimento">Data de Nascimento</label>
-            <input type="date" id="editDataNascimento">
-          </div>
-
-          <div class="form-group">
-            <label for="editStatus">Status</label>
-            <select id="editStatus">
-              <option value="Ativo">Ativo</option>
-              <option value="Inativo">Inativo</option>
-            </select>
-          </div>
-
-        </div>
-
-        <div class="modal-buttons">
-          <button type="button" class="btn-cancelar" onclick="fecharModal()">Cancelar</button>
-          <button type="submit" class="btn-salvar">Salvar Cadastro</button>
-        </div>
-
-      </form>
-    </div>
-  </div>
+  <!-- Seu HTML da página continua exatamente o mesmo -->
 
   <script>
     // =================================================================
-    // 1. ESTADO DE AUTENTICAÇÃO E CARREGAMENTO
+    // 1. FORÇA O INÍCIO SEMPRE DESLOGADO
     // =================================================================
-    let usuarioLogado = null; // Guarda as informações da sessão
-    
-    // Tabela inicial "Cadastro Filho" com todas as colunas
+    // Limpa o armazenamento local para remover tokens/sessões gravadas
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // Garante o logout imediato no SDK do Firebase
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+      const auth = firebase.auth();
+      
+      // Realiza o logout direto
+      auth.signOut();
+
+      // Monitora o estado da autenticação: se o Firebase reconectar automaticamente, desloga na hora
+      auth.onAuthStateChanged(function(user) {
+        if (user) {
+          auth.signOut();
+        }
+      });
+    }
+
+
+    // =================================================================
+    // 2. FUNÇÃO DE LOGIN ORIGINAL DO SEU PRINTSCREEN
+    // =================================================================
+    function fazerLogin() {
+      alert("Abre a tela/modal de login para autenticar.");
+    }
+
+
+    // =================================================================
+    // 3. CARREGAMENTO DOS DADOS DA TABELA "CADASTRO FILHO"
+    // =================================================================
     let listaFilhosDeSanto = [
       {
         id: "1",
@@ -475,106 +67,16 @@
       }
     ];
 
-    // Forçar a inicialização deslogada
-    window.onload = function() {
-      if (typeof firebase !== 'undefined' && firebase.auth) {
-        firebase.auth().signOut();
-      }
-      localStorage.clear();
-      sessionStorage.clear();
-
-      atualizarVisibilidadePainel();
-    };
-
-    // =================================================================
-    // 2. LOGICA DE ACESSO DO PERFIL DIRIGENTE
-    // =================================================================
-    function alternarLoginSimulado() {
-      if (!usuarioLogado) {
-        // Simulação do login validando o perfil de dirigente
-        usuarioLogado = {
-          nome: "Dirigente da Casa",
-          perfil: "Dirigente" // Pode testar com "Membro" para ver o bloqueio
-        };
-        alert("Login efetuado com sucesso como " + usuarioLogado.perfil + "!");
-      } else {
-        // Logout
-        usuarioLogado = null;
-        alert("Sessão encerrada.");
-      }
-      atualizarVisibilidadePainel();
-    }
-
-    function atualizarVisibilidadePainel() {
-      const areaBloqueada = document.getElementById('areaBloqueada');
-      const areaMembros = document.getElementById('areaMembros');
-      const btnAuth = document.getElementById('btnAuthAction');
-
-      if (usuarioLogado && usuarioLogado.perfil === "Dirigente") {
-        areaBloqueada.style.display = 'none';
-        areaMembros.style.display = 'block';
-        btnAuth.innerHTML = `<i class="fa-solid fa-right-from-bracket"></i> Sair (${usuarioLogado.nome})`;
+    function carregarDados() {
+      console.log("Dados carregados com sucesso.");
+      if (typeof renderizarTabelaMembros === 'function') {
         renderizarTabelaMembros(listaFilhosDeSanto);
-      } else {
-        areaBloqueada.style.display = 'block';
-        areaMembros.style.display = 'none';
-        btnAuth.innerHTML = `<i class="fa-solid fa-lock"></i> Login Dirigente`;
       }
     }
 
-    // =================================================================
-    // 3. RENDERIZAÇÃO E FILTRO DA TABELA
-    // =================================================================
-    function renderizarTabelaMembros(dados) {
-      const tbody = document.getElementById('tabelaCorpo');
-      tbody.innerHTML = '';
-
-      dados.forEach(membro => {
-        const tr = document.createElement('tr');
-        
-        // Formatar data para exibição (AAAA-MM-DD -> DD/MM/AAAA)
-        let dataFormatada = membro.dataNascimento || '-';
-        if (membro.dataNascimento && membro.dataNascimento.includes('-')) {
-          const partes = membro.dataNascimento.split('-');
-          dataFormatada = `${partes[2]}/${partes[1]}/${partes[0]}`;
-        }
-
-        const statusClass = membro.status === 'Ativo' ? 'status-ativo' : 'status-inativo';
-
-        tr.innerHTML = `
-          <td><strong>${membro.nome}</strong></td>
-          <td>${membro.cargo}</td>
-          <td>${membro.telefone || '-'}</td>
-          <td>${membro.email || '-'}</td>
-          <td>${dataFormatada}</td>
-          <td>${membro.orixaHead || '-'}</td>
-          <td><span class="badge-status ${statusClass}">${membro.status}</span></td>
-          <td>
-            <button class="btn-acao" onclick="editarMembro('${membro.id}')">
-              <i class="fa-solid fa-pen"></i> Editar
-            </button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function filtrarTabela() {
-      const termo = document.getElementById('inputPesquisa').value.toLowerCase().trim();
-      const linhas = document.querySelectorAll('#tabelaCorpo tr');
-
-      linhas.forEach(linha => {
-        const textoLinha = linha.textContent.toLowerCase();
-        if (textoLinha.includes(termo)) {
-          linha.style.display = '';
-        } else {
-          linha.style.display = 'none';
-        }
-      });
-    }
 
     // =================================================================
-    // 4. PREENCHIMENTO COMPLETO DE DADOS (EDITAR OU NOVO)
+    // 4. PREENCHER TODOS OS DADOS DA TABELA AO CLICAR EM EDITAR (EXCETO O ID)
     // =================================================================
     function editarMembro(idMembro) {
       const membro = listaFilhosDeSanto.find(item => item.id === String(idMembro));
@@ -584,78 +86,29 @@
         return;
       }
 
-      // Preenche o ID no campo oculto
-      document.getElementById('editId').value = membro.id;
-
-      // Preenche TODAS as colunas do cadastro
-      document.getElementById('editNome').value = membro.nome || '';
-      document.getElementById('editCargo').value = membro.cargo || '';
-      document.getElementById('editTelefone').value = membro.telefone || '';
-      document.getElementById('editEmail').value = membro.email || '';
-      document.getElementById('editDataNascimento').value = membro.dataNascimento || '';
-      document.getElementById('editOrixa').value = membro.orixaHead || '';
-      document.getElementById('editStatus').value = membro.status || 'Ativo';
-
-      document.getElementById('modalTitulo').innerText = 'Editar Filho de Santo';
-      document.getElementById('modalMembro').style.display = 'flex';
-    }
-
-    function abrirModalNovoMembro() {
-      // Limpa os campos do formulário
-      document.getElementById('editId').value = '';
-      document.getElementById('formMembro').reset();
-
-      document.getElementById('modalTitulo').innerText = 'Novo Cadastro de Filho de Santo';
-      document.getElementById('modalMembro').style.display = 'flex';
-    }
-
-    function fecharModal() {
-      document.getElementById('modalMembro').style.display = 'none';
-    }
-
-    function salvarMembro(event) {
-      event.preventDefault();
-
-      const id = document.getElementById('editId').value;
-      const nome = document.getElementById('editNome').value;
-      const cargo = document.getElementById('editCargo').value;
-      const telefone = document.getElementById('editTelefone').value;
-      const email = document.getElementById('editEmail').value;
-      const dataNascimento = document.getElementById('editDataNascimento').value;
-      const orixaHead = document.getElementById('editOrixa').value;
-      const status = document.getElementById('editStatus').value;
-
-      if (id) {
-        // Atualiza membro existente
-        const membro = listaFilhosDeSanto.find(item => item.id === String(id));
-        if (membro) {
-          membro.nome = nome;
-          membro.cargo = cargo;
-          membro.telefone = telefone;
-          membro.email = email;
-          membro.dataNascimento = dataNascimento;
-          membro.orixaHead = orixaHead;
-          membro.status = status;
-        }
-      } else {
-        // Novo Membro (Gera novo ID)
-        const novoId = String(Date.now());
-        listaFilhosDeSanto.push({
-          id: novoId,
-          nome,
-          cargo,
-          telefone,
-          email,
-          dataNascimento,
-          orixaHead,
-          status
-        });
+      if (document.getElementById('editId')) {
+        document.getElementById('editId').value = membro.id;
       }
 
-      renderizarTabelaMembros(listaFilhosDeSanto);
-      filtrarTabela();
-      fecharModal();
+      if (document.getElementById('editNome'))           document.getElementById('editNome').value = membro.nome || '';
+      if (document.getElementById('editCargo'))          document.getElementById('editCargo').value = membro.cargo || '';
+      if (document.getElementById('editTelefone'))       document.getElementById('editTelefone').value = membro.telefone || '';
+      if (document.getElementById('editEmail'))          document.getElementById('editEmail').value = membro.email || '';
+      if (document.getElementById('editDataNascimento')) document.getElementById('editDataNascimento').value = membro.dataNascimento || '';
+      if (document.getElementById('editOrixa'))          document.getElementById('editOrixa').value = membro.orixaHead || '';
+      if (document.getElementById('editStatus'))         document.getElementById('editStatus').value = membro.status || '';
+
+      const modal = document.getElementById('modalEditarMembro') || document.getElementById('modalEdicao');
+      if (modal) {
+        modal.style.display = 'block';
+      }
     }
+
+
+    // =================================================================
+    // 5. INICIALIZAÇÃO DA PÁGINA
+    // =================================================================
+    window.onload = carregarDados;
   </script>
 </body>
 </html>

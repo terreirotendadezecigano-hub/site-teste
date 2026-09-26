@@ -749,6 +749,18 @@
     let selectedChip = 'Todos';
     let isErvasSubpage = false;
 
+    // Mapeamento dos nomes de abas internos para os nomes das abas reais na planilha
+    const SHEET_NAME_MAP = {
+      'Home': ['Agenda Festividades', 'Agenda_Festividades', 'Agenda'],
+      'Agenda': ['Agenda Festividades', 'Agenda_Festividades', 'Agenda'],
+      'Mural_Imagens': ['Mural Imagens', 'Mural_Imagens', 'Mural de Avisos', 'Mural'],
+      'Pontos_Cantados': ['Pontos Cantados', 'Pontos_Cantados', 'Pontos'],
+      'Ervas_Banhos': ['Ervas Banhos', 'Ervas_Banhos', 'Ervas & Banhos', 'Ervas'],
+      'Guias_Instrucoes': ['Guias Instrucoes', 'Guias_Instrucoes', 'Orientações', 'Guias'],
+      'Cadastro_Filhos': ['Cadastro Filhos', 'Cadastro_Filhos', 'Filhos', 'Membros'],
+      'Geral': ['Geral']
+    };
+
     // Inicialização da sessão
     localStorage.removeItem('zeCiganoUser');
     sessionStorage.clear();
@@ -770,35 +782,52 @@
       }
     };
 
-    // Função universal para ler planilhas do Google sem depender do OpenSheet
-    async function fetchSheetData(sheetName) {
-      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
-      const response = await fetch(url);
-      const text = await response.text();
-      
-      const jsonStart = text.indexOf('{');
-      const jsonEnd = text.lastIndexOf('}') + 1;
-      
-      if (jsonStart === -1 || jsonEnd === -1) {
-        throw new Error('Formato retornado inválido.');
+    // Função universal para ler planilhas do Google com fallback de nomes de abas
+    async function fetchSheetData(keyName) {
+      const possibleNames = SHEET_NAME_MAP[keyName] || [keyName];
+      let lastError = null;
+
+      for (const sheetName of possibleNames) {
+        try {
+          const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+          const response = await fetch(url);
+          const text = await response.text();
+          
+          const jsonStart = text.indexOf('{');
+          const jsonEnd = text.lastIndexOf('}') + 1;
+          
+          if (jsonStart === -1 || jsonEnd === -1) {
+            continue;
+          }
+
+          const json = JSON.parse(text.substring(jsonStart, jsonEnd));
+          if (!json.table || !json.table.cols) continue;
+
+          const cols = json.table.cols.map(c => (c ? (c.label || c.id || '') : '').trim());
+          
+          const rows = json.table.rows.map(row => {
+            let obj = {};
+            if (row && row.c) {
+              row.c.forEach((cell, idx) => {
+                const colName = cols[idx] || `col_${idx}`;
+                obj[colName] = cell && cell.v !== null && cell.v !== undefined ? cell.v : '';
+                if (cell && cell.f) {
+                  obj[colName] = cell.f;
+                }
+              });
+            }
+            return obj;
+          });
+
+          if (rows && rows.length >= 0) {
+            return rows;
+          }
+        } catch (e) {
+          lastError = e;
+        }
       }
 
-      const json = JSON.parse(text.substring(jsonStart, jsonEnd));
-      const cols = json.table.cols.map(c => (c.label || c.id || '').trim());
-      
-      const rows = json.table.rows.map(row => {
-        let obj = {};
-        row.c.forEach((cell, idx) => {
-          const colName = cols[idx] || `col_${idx}`;
-          obj[colName] = cell && cell.v !== null && cell.v !== undefined ? cell.v : '';
-          if (cell && cell.f) {
-            obj[colName] = cell.f;
-          }
-        });
-        return obj;
-      });
-
-      return rows;
+      throw lastError || new Error(`Não foi possível carregar os dados da aba: ${keyName}`);
     }
 
     function scrollToTop() {
@@ -1115,10 +1144,8 @@
       loading.style.display = 'block';
       container.innerHTML = '';
 
-      const targetSheet = (tabName === 'Home' || tabName === 'Agenda') ? 'Agenda_Festividades' : tabName;
-
       try {
-        let data = await fetchSheetData(targetSheet);
+        let data = await fetchSheetData(tabName);
 
         currentData = data;
         loading.style.display = 'none';

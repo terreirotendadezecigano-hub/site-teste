@@ -1395,5 +1395,85 @@
       }
     }
   </script>
+  <script>
+  // Cole aqui a URL gerada no Google Apps Script
+  const URL_APPS_SCRIPT = 'SUA_URL_DO_WEB_APP_AQUI';
+
+  document.getElementById('formCadastroMembro').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const btn = document.getElementById('btnSalvarMembro');
+    const status = document.getElementById('statusCadastro');
+
+    const nome = document.getElementById('cadNome').value.trim();
+    const telefone = document.getElementById('cadTelefone').value.trim();
+    const email = document.getElementById('cadEmail').value.trim();
+
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    status.style.color = '#e0a800';
+    status.innerText = '⏳ Salvando cadastro na planilha...';
+
+    // Organiza os dados que correspondem às colunas da sua aba CADASTRO_FILHOS
+    const payload = {
+      nomeAba: "CADASTRO_FILHOS",
+      valores: [
+        nome,
+        telefone,
+        email,
+        new Date().toLocaleDateString('pt-BR') // Registra a data do cadastro
+      ]
+    };
+
+    try {
+      await fetch(https://script.google.com/macros/s/AKfycbyFje_ocF7a0S7Tq4EYQmM5W3hv9SmHZqxJmWLhPKdkVfudzW-Q3EEbM66U9BiwdBZOJw/exec, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      status.style.color = '#28a745';
+      status.innerText = '✅ Membro cadastrado com sucesso!';
+      document.getElementById('formCadastroMembro').reset();
+    } catch (err) {
+      console.error("Erro no cadastro:", err);
+      status.style.color = '#dc3545';
+      status.innerText = '❌ Erro ao enviar dados. Tente novamente.';
+    } finally {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
+  });
+</script>
 </body>
+ <!-- SEÇÃO DE CADASTRO DE NOVO FILHO DA CASA -->
+<section id="secao-cadastro-membro" style="max-width: 600px; margin: 40px auto; padding: 25px; background: var(--bg-card, #141414); border: 1px solid var(--border-color, #2a2a2a); border-radius: 12px; color: #fff;">
+  <h2 style="color: var(--gold-primary, #d4af37); text-align: center; margin-bottom: 20px;">
+    <i class="fas fa-user-plus"></i> Cadastro de Filho da Casa
+  </h2>
+
+  <form id="formCadastroMembro" style="display: flex; flex-direction: column; gap: 15px;">
+    <div>
+      <label style="display: block; margin-bottom: 5px; color: var(--text-muted, #aaaaaa);">Nome Completo:</label>
+      <input type="text" id="cadNome" required style="width: 100%; padding: 10px; background: #222; border: 1px solid #444; border-radius: 6px; color: #fff;">
+    </div>
+
+    <div>
+      <label style="display: block; margin-bottom: 5px; color: var(--text-muted, #aaaaaa);">Telefone / WhatsApp:</label>
+      <input type="tel" id="cadTelefone" required placeholder="(31) 99999-9999" style="width: 100%; padding: 10px; background: #222; border: 1px solid #444; border-radius: 6px; color: #fff;">
+    </div>
+
+    <div>
+      <label style="display: block; margin-bottom: 5px; color: var(--text-muted, #aaaaaa);">E-mail:</label>
+      <input type="email" id="cadEmail" style="width: 100%; padding: 10px; background: #222; border: 1px solid #444; border-radius: 6px; color: #fff;">
+    </div>
+
+    <button type="submit" id="btnSalvarMembro" style="padding: 12px; background: var(--gold-primary, #d4af37); color: #000; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; transition: 0.3s; margin-top: 10px;">
+      Cadastrar Membro
+    </button>
+  </form>
+
+  <div id="statusCadastro" style="margin-top: 15px; text-align: center; font-weight: bold;"></div>
+</section>
 </html>

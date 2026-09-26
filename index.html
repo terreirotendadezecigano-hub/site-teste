@@ -275,9 +275,25 @@
       background-color: rgba(212, 175, 55, 0.05);
     }
 
+    .action-buttons {
+      display: flex;
+      gap: 6px;
+    }
+
     .btn-edit-membro {
       background: var(--gold-primary);
       color: #000;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.72rem;
+    }
+
+    .btn-delete-membro {
+      background: #8b0000;
+      color: #fff;
       border: none;
       padding: 4px 8px;
       border-radius: 4px;
@@ -327,76 +343,13 @@
       outline: none;
     }
 
-    /* Estilos Específicos para a Página Principal do Guia de Ervas */
-    .ervas-home-container {
+    .form-row {
       display: flex;
-      flex-direction: column;
-      gap: 15px;
-      padding-bottom: 20px;
-    }
-    .ervas-intro-box {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 15px;
-      text-align: center;
-    }
-    .ervas-intro-box h3 {
-      color: var(--gold-primary);
-      margin-top: 0;
-      font-size: 1.05rem;
-    }
-    .ervas-intro-box p {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-bottom: 12px;
-    }
-    .ervas-categories-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 10px;
     }
-    .erva-category-card {
-      background: #161616;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 15px 10px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .erva-category-card:hover {
-      border-color: var(--gold-primary);
-      background: rgba(212, 175, 55, 0.05);
-      transform: translateY(-2px);
-    }
-    .erva-category-card i {
-      font-size: 1.8rem;
-      color: var(--gold-primary);
-      margin-bottom: 8px;
-    }
-    .erva-category-card h4 {
-      font-size: 0.85rem;
-      color: #fff;
-      margin: 0;
-    }
-    .btn-voltar-guia {
-      background: #1a1a1a;
-      border: 1px solid var(--gold-primary);
-      color: var(--gold-primary);
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 0.78rem;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 12px;
-      font-weight: 600;
-    }
-    .btn-voltar-guia:hover {
-      background: var(--gold-primary);
-      color: #000;
+
+    .form-row .form-group {
+      flex: 1;
     }
 
     /* MODAL CENTRALIZADO NA TELA */
@@ -418,7 +371,7 @@
       border-radius: 12px;
       padding: 14px;
       width: 100%;
-      max-width: 480px;
+      max-width: 520px;
       max-height: 85vh;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
       display: flex;
@@ -587,7 +540,7 @@
 </head>
 <body>
 
-  <!-- Menu Lateral Ajustado com Item Membros para Dirigentes -->
+  <!-- Menu Lateral -->
   <aside class="sidebar" id="sidebar">
     <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 14px 12px 14px; border-bottom: 1px solid var(--border-color);">
       <span style="color:var(--gold-primary); font-weight:bold; font-size:0.9rem;">Navegação</span>
@@ -600,7 +553,7 @@
       <li class="nav-item" onclick="switchTab('Pontos_Cantados', this)"><i class="fa-solid fa-music"></i> Pontos Cantados</li>
       <li class="nav-item" onclick="switchTab('Ervas_Banhos', this)"><i class="fa-solid fa-leaf"></i> Ervas & Banhos</li>
       <li class="nav-item" onclick="switchTab('Guias_Instrucoes', this)"><i class="fa-solid fa-book-open"></i> Orientações</li>
-      <!-- O menu de Membros é injetado via JS se o perfil for Dirigente -->
+      <!-- Menu Membros visível apenas para Dirigentes -->
       <li class="nav-item" id="menuMembros" style="display:none;" onclick="switchTab('Membros', this)"><i class="fa-solid fa-users"></i> Membros</li>
     </ul>
   </aside>
@@ -685,52 +638,79 @@
     </div>
   </div>
 
-  <!-- Modal Cadastro/Edição de Membro -->
+  <!-- Modal Cadastro/Edição Completa de Membro -->
   <div class="modal-overlay" id="modalMembro">
-    <div class="modal-box" style="max-width:440px;">
+    <div class="modal-box">
       <div class="modal-header">
         <h3 style="font-size:0.9rem; margin:0;" id="membroModalTitle"><i class="fa-solid fa-user-plus"></i> Cadastrar Membro</h3>
         <button class="modal-close-icon" onclick="closeMembroModal()">&times;</button>
       </div>
       <div class="modal-body">
         <input type="hidden" id="membroId">
+        
         <div class="form-group">
-          <label>Nome Completo</label>
+          <label>Nome Completo *</label>
           <input type="text" id="membroNome" class="form-control" placeholder="Nome do filho(a)">
         </div>
-        <div class="form-group">
-          <label>Cargo / Função</label>
-          <input type="text" id="membroCargo" class="form-control" placeholder="Ex: Filho(a) de Santo, Pai de Santo">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data de Nascimento</label>
+            <input type="date" id="membroDataNasc" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Data de Entrada</label>
+            <input type="date" id="membroDataEntrada" class="form-control">
+          </div>
         </div>
-        <div class="form-group">
-          <label>Telefone / WhatsApp</label>
-          <input type="text" id="membroTelefone" class="form-control" placeholder="(31) 99999-9999">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Telefone / WhatsApp</label>
+            <input type="text" id="membroTelefone" class="form-control" placeholder="(31) 99999-9999">
+          </div>
+          <div class="form-group">
+            <label>E-mail</label>
+            <input type="email" id="membroEmail" class="form-control" placeholder="email@exemplo.com">
+          </div>
         </div>
+
         <div class="form-group">
-          <label>E-mail</label>
-          <input type="email" id="membroEmail" class="form-control" placeholder="email@exemplo.com">
+          <label>Endereço Completo</label>
+          <input type="text" id="membroEndereco" class="form-control" placeholder="Rua, Número, Bairro, Cidade - UF">
         </div>
-        <div class="form-group">
-          <label>Data de Nascimento</label>
-          <input type="date" id="membroDataNasc" class="form-control">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Cargo / Função</label>
+            <input type="text" id="membroCargo" class="form-control" placeholder="Ex: Filho(a) de Santo, Pai de Santo">
+          </div>
+          <div class="form-group">
+            <label>Orixá de Frente</label>
+            <input type="text" id="membroOrixa" class="form-control" placeholder="Ex: Xangô, Ogum, Oxum">
+          </div>
         </div>
-        <div class="form-group">
-          <label>Orixá de Frente</label>
-          <input type="text" id="membroOrixa" class="form-control" placeholder="Ex: Ogum, Oxum">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Perfil de Acesso</label>
+            <select id="membroPerfil" class="form-control">
+              <option value="Membro">Membro</option>
+              <option value="Dirigente">Dirigente</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="membroStatus" class="form-control">
+              <option value="Ativo">Ativo</option>
+              <option value="Inativo">Inativo</option>
+            </select>
+          </div>
         </div>
+
         <div class="form-group">
-          <label>Perfil de Acesso</label>
-          <select id="membroPerfil" class="form-control">
-            <option value="Membro">Membro</option>
-            <option value="Dirigente">Dirigente</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Status</label>
-          <select id="membroStatus" class="form-control">
-            <option value="Ativo">Ativo</option>
-            <option value="Inativo">Inativo</option>
-          </select>
+          <label>Observações</label>
+          <textarea id="membroObservacoes" class="form-control" rows="2" placeholder="Observações adicionais..."></textarea>
         </div>
       </div>
       <div class="modal-actions">
@@ -744,15 +724,13 @@
     const SHEET_ID = '1BL978swtEmpF208tfvPOZJuv2YS1ecpujQnw4ZoA3Jk';
     let currentTab = 'Home';
     let currentData = [];
-    let listaMembros = []; // Cache local da planilha de membros
+    let listaMembros = [];
     let isLoggedIn = false;
     let loggedUser = null;
     let selectedChip = 'Todos';
     let isErvasSubpage = false;
 
-    // =================================================================
-    // 1. FORÇA O INÍCIO SEMPRE DESLOGADO (REQUISITADO)
-    // =================================================================
+    // Força início deslogado
     localStorage.removeItem('zeCiganoUser');
     sessionStorage.clear();
     isLoggedIn = false;
@@ -1061,7 +1039,6 @@
           </div>
         `;
 
-        // Se o usuário for Dirigente, libera a opção Membros no menu
         if (loggedUser.perfil === 'Dirigente') {
           menuMembros.style.display = 'flex';
         } else {
@@ -1110,7 +1087,7 @@
     }
 
     // =================================================================
-    // GESTÃO DE MEMBROS (EXCLUSIVA PARA PERFIL DIRIGENTE)
+    // GESTÃO DE MEMBROS (EXIBINDO TODAS AS COLUNAS + BOTÃO EXCLUIR)
     // =================================================================
     async function carregarEExibirMembros() {
       const loading = document.getElementById('loading');
@@ -1121,8 +1098,10 @@
       container.innerHTML = '';
 
       try {
-        const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Cadastro_Filhos`);
-        listaMembros = await res.json();
+        if (listaMembros.length === 0) {
+          const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Cadastro_Filhos`);
+          listaMembros = await res.json();
+        }
         currentData = listaMembros;
         loading.style.display = 'none';
         renderTabelaMembros(listaMembros);
@@ -1140,14 +1119,18 @@
             <thead>
               <tr>
                 <th>Ações</th>
-                <th>Nome</th>
-                <th>Cargo/Função</th>
+                <th>ID</th>
+                <th>Nome Completo</th>
+                <th>Data Nasc.</th>
                 <th>Telefone</th>
                 <th>E-mail</th>
-                <th>Data Nasc.</th>
-                <th>Orixá</th>
+                <th>Endereço</th>
+                <th>Data Entrada</th>
+                <th>Cargo / Função</th>
+                <th>Orixá de Frente</th>
                 <th>Perfil</th>
                 <th>Status</th>
+                <th>Observações</th>
               </tr>
             </thead>
             <tbody id="membrosTableBody">
@@ -1158,32 +1141,44 @@
 
       const tbody = document.getElementById('membrosTableBody');
       if (!membros || membros.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:var(--text-muted);">Nenhum membro localizado.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; color:var(--text-muted);">Nenhum membro localizado.</td></tr>';
         return;
       }
 
       membros.forEach(m => {
         const id = m.ID_Filho || m.id || m.ID || '';
         const nome = m.Nome_Completo || m.Nome || '';
-        const cargo = m.Cargo_Funcao || m.Cargo || '';
+        const dataNasc = formatDateBR(m.Data_Nascimento || '');
         const tel = m.Telefone || '';
         const email = m.Email || m['E-mail'] || '';
-        const dataNasc = formatDateBR(m.Data_Nascimento || m.dataNascimento || '');
-        const orixa = m.Orixa_Frente || m.orixaHead || '';
+        const endereco = m.Endereco || m.Endereço || '';
+        const dataEntrada = formatDateBR(m.Data_Entrada || '');
+        const cargo = m.Cargo_Funcao || m.Cargo || '';
+        const orixa = m.Orixa_Frente || '';
         const perfil = m.Perfil || 'Membro';
         const status = m.Status_Ativo || m.status || 'Ativo';
+        const obs = m.Observacoes || m.Observações || '';
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td><button class="btn-edit-membro" onclick="editarMembro('${id}')"><i class="fa-solid fa-pen-to-square"></i> Editar</button></td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn-edit-membro" onclick="editarMembro('${id}')" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+              <button class="btn-delete-membro" onclick="excluirMembro('${id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </td>
+          <td>${id}</td>
           <td><strong>${nome}</strong></td>
-          <td>${cargo}</td>
+          <td>${dataNasc}</td>
           <td>${tel}</td>
           <td>${email}</td>
-          <td>${dataNasc}</td>
+          <td>${endereco}</td>
+          <td>${dataEntrada}</td>
+          <td>${cargo}</td>
           <td>${orixa}</td>
           <td><span class="card-badge">${perfil}</span></td>
           <td><span class="card-badge" style="background:${status === 'Ativo' ? '#1e4620' : '#4d1e1e'}; color:#fff;">${status}</span></td>
+          <td>${obs}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -1193,13 +1188,16 @@
       document.getElementById('membroModalTitle').innerHTML = '<i class="fa-solid fa-user-plus"></i> Cadastrar Membro';
       document.getElementById('membroId').value = '';
       document.getElementById('membroNome').value = '';
-      document.getElementById('membroCargo').value = '';
+      document.getElementById('membroDataNasc').value = '';
+      document.getElementById('membroDataEntrada').value = '';
       document.getElementById('membroTelefone').value = '';
       document.getElementById('membroEmail').value = '';
-      document.getElementById('membroDataNasc').value = '';
+      document.getElementById('membroEndereco').value = '';
+      document.getElementById('membroCargo').value = '';
       document.getElementById('membroOrixa').value = '';
       document.getElementById('membroPerfil').value = 'Membro';
       document.getElementById('membroStatus').value = 'Ativo';
+      document.getElementById('membroObservacoes').value = '';
 
       document.getElementById('modalMembro').style.display = 'flex';
     }
@@ -1215,15 +1213,30 @@
       document.getElementById('membroModalTitle').innerHTML = '<i class="fa-solid fa-user-pen"></i> Editar Membro';
       document.getElementById('membroId').value = m.ID_Filho || m.id || m.ID || '';
       document.getElementById('membroNome').value = m.Nome_Completo || m.Nome || '';
-      document.getElementById('membroCargo').value = m.Cargo_Funcao || m.Cargo || '';
+      document.getElementById('membroDataNasc').value = m.Data_Nascimento || '';
+      document.getElementById('membroDataEntrada').value = m.Data_Entrada || '';
       document.getElementById('membroTelefone').value = m.Telefone || '';
       document.getElementById('membroEmail').value = m.Email || m['E-mail'] || '';
-      document.getElementById('membroDataNasc').value = m.Data_Nascimento || m.dataNascimento || '';
-      document.getElementById('membroOrixa').value = m.Orixa_Frente || m.orixaHead || '';
+      document.getElementById('membroEndereco').value = m.Endereco || m.Endereço || '';
+      document.getElementById('membroCargo').value = m.Cargo_Funcao || m.Cargo || '';
+      document.getElementById('membroOrixa').value = m.Orixa_Frente || '';
       document.getElementById('membroPerfil').value = m.Perfil || 'Membro';
       document.getElementById('membroStatus').value = m.Status_Ativo || m.status || 'Ativo';
+      document.getElementById('membroObservacoes').value = m.Observacoes || m.Observações || '';
 
       document.getElementById('modalMembro').style.display = 'flex';
+    }
+
+    function excluirMembro(idMembro) {
+      const m = listaMembros.find(item => String(item.ID_Filho || item.id || item.ID) === String(idMembro));
+      const nome = m ? (m.Nome_Completo || m.Nome) : 'este membro';
+
+      if (confirm(`Tem certeza que deseja excluir ${nome}?`)) {
+        listaMembros = listaMembros.filter(item => String(item.ID_Filho || item.id || item.ID) !== String(idMembro));
+        currentData = listaMembros;
+        renderTabelaMembros(listaMembros);
+        alert("Membro removido da lista!");
+      }
     }
 
     function closeMembroModal() {
@@ -1233,55 +1246,64 @@
     function salvarMembro() {
       const id = document.getElementById('membroId').value;
       const nome = document.getElementById('membroNome').value.trim();
-      const cargo = document.getElementById('membroCargo').value.trim();
+      const dataNasc = document.getElementById('membroDataNasc').value;
+      const dataEntrada = document.getElementById('membroDataEntrada').value;
       const telefone = document.getElementById('membroTelefone').value.trim();
       const email = document.getElementById('membroEmail').value.trim();
-      const dataNasc = document.getElementById('membroDataNasc').value;
+      const endereco = document.getElementById('membroEndereco').value.trim();
+      const cargo = document.getElementById('membroCargo').value.trim();
       const orixa = document.getElementById('membroOrixa').value.trim();
       const perfil = document.getElementById('membroPerfil').value;
       const status = document.getElementById('membroStatus').value;
+      const observacoes = document.getElementById('membroObservacoes').value.trim();
 
       if (!nome) {
-        alert("O nome é obrigatório!");
+        alert("O campo Nome Completo é obrigatório!");
         return;
       }
 
       if (id) {
-        // Atualiza membro existente no cache local
+        // Atualiza membro existente
         const index = listaMembros.findIndex(item => String(item.ID_Filho || item.id || item.ID) === String(id));
         if (index !== -1) {
           listaMembros[index].Nome_Completo = nome;
-          listaMembros[index].Cargo_Funcao = cargo;
+          listaMembros[index].Data_Nascimento = dataNasc;
+          listaMembros[index].Data_Entrada = dataEntrada;
           listaMembros[index].Telefone = telefone;
           listaMembros[index].Email = email;
-          listaMembros[index].Data_Nascimento = dataNasc;
+          listaMembros[index].Endereco = endereco;
+          listaMembros[index].Cargo_Funcao = cargo;
           listaMembros[index].Orixa_Frente = orixa;
           listaMembros[index].Perfil = perfil;
           listaMembros[index].Status_Ativo = status;
+          listaMembros[index].Observacoes = observacoes;
         }
       } else {
-        // Cadastra novo membro no cache local
-        const novoId = 'M' + Math.floor(Math.random() * 10000);
+        // Cadastra novo membro
+        const novoId = 'M' + Math.floor(10000000 + Math.random() * 90000000).toString(16);
         listaMembros.unshift({
           ID_Filho: novoId,
           Nome_Completo: nome,
-          Cargo_Funcao: cargo,
+          Data_Nascimento: dataNasc,
           Telefone: telefone,
           Email: email,
-          Data_Nascimento: dataNasc,
+          Endereco: endereco,
+          Data_Entrada: dataEntrada,
+          Cargo_Funcao: cargo,
           Orixa_Frente: orixa,
+          Status_Ativo: status,
           Perfil: perfil,
-          Status_Ativo: status
+          Observacoes: observacoes
         });
       }
 
       closeMembroModal();
       currentData = listaMembros;
       renderTabelaMembros(listaMembros);
-      alert("Registro de membro salvo na sessão!");
+      alert("Registro de membro salvo com sucesso!");
     }
 
-    // Cria a Página Principal do Guia de Ervas Organizado por Tipo_preparo
+    // Guia de Ervas Organizado por Categoria
     function buildErvasHome(data) {
       const container = document.getElementById('contentContainer');
       document.getElementById('chipsContainer').style.display = 'none';

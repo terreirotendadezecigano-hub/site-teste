@@ -1211,48 +1211,59 @@
       }
     }
 
-    function closeMembroModal() { document.getElementById('modalMembro').style.display = 'none'; }
-
-    async function salvarMembro() {
+   function salvarMembro() {
       const id = document.getElementById('membroId').value;
-      const nome = document.getElementById('membroNome').value.trim();
-      const dadosMembro = {
-        id: id,
-        nome_completo: nome,
-        data_nascimento: document.getElementById('membroDataNasc').value,
-        telefone: document.getElementById('membroTelefone').value.trim(),
-        email: document.getElementById('membroEmail').value.trim(),
-        endereco: document.getElementById('membroEndereco').value.trim(),
-        data_entrada: document.getElementById('membroDataEntrada').value,
-        cargo_funcao: document.getElementById('membroCargo').value,
-        orixa_frente: document.getElementById('membroOrixa').value.trim(),
-        status_ativo: document.getElementById('membroStatus').value,
-        perfil: document.getElementById('membroPerfil').value,
-        observacoes: document.getElementById('membroObservacoes').value.trim()
-      };
+      const nome_completo = document.getElementById('membroNome').value.trim();
+      const data_nascimento = document.getElementById('membroDataNasc').value;
+      const telefone = document.getElementById('membroTelefone').value.trim();
+      const email = document.getElementById('membroEmail').value.trim();
+      const endereco = document.getElementById('membroEndereco').value.trim();
+      const data_entrada = document.getElementById('membroDataEntrada').value;
+      const cargo_funcao = document.getElementById('membroCargo').value;
+      const orixa_frente = document.getElementById('membroOrixa').value.trim();
+      const status_ativo = document.getElementById('membroStatus').value;
+      const perfil = document.getElementById('membroPerfil').value;
+      const observacoes = document.getElementById('membroObservacoes').value.trim();
 
-      if (!nome) { alert("O nome é obrigatório!"); return; }
-
-      if (WEB_APP_URL && WEB_APP_URL.startsWith('http')) {
-        try {
-          await fetch(WEB_APP_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dadosMembro)
-          });
-          alert("Membro salvo com sucesso na Google Planilha!");
-          closeMembroModal();
-          carregarEExibirMembros();
-          return;
-        } catch (err) {
-          alert("Erro ao gravar na planilha. Salvando apenas localmente.");
-        }
+      if (!nome_completo || !email) {
+        alert("Preencha ao menos o Nome Completo e o E-mail.");
+        return;
       }
 
-      alert("Membro salvo na sessão!");
-      closeMembroModal();
-      carregarEExibirMembros();
+      const dadosMembro = {
+        id: id,
+        nome_completo: nome_completo,
+        data_nascimento: data_nascimento,
+        telefone: telefone,
+        email: email,
+        endereco: endereco,
+        data_entrada: data_entrada,
+        cargo_funcao: cargo_funcao,
+        orixa_frente: orixa_frente,
+        status_ativo: status_ativo,
+        perfil: perfil,
+        observacoes: observacoes
+      };
+
+      fetch(WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dadosMembro)
+      })
+      .then(() => {
+        alert("Membro salvo com sucesso!");
+        closeMembroModal();
+        carregarEExibirMembros();
+      })
+      .catch(err => {
+        console.error("Erro ao salvar membro:", err);
+        alert("Erro ao salvar os dados.");
+      });
+    }
+
+    function closeMembroModal() {
+      document.getElementById('modalMembro').style.display = 'none';
     }
 
     function renderContent(data, tabName) {

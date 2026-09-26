@@ -162,16 +162,6 @@
 
     .search-bar:focus { border-color: var(--gold-primary); }
 
-    .category-chips {
-      display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      padding-bottom: 8px;
-      margin-bottom: 12px;
-      scrollbar-width: none;
-    }
-    .category-chips::-webkit-scrollbar { display: none; }
-
     .section-title { 
       font-size: 1rem; 
       color: var(--gold-primary); 
@@ -218,6 +208,33 @@
     .card-title { font-size: 0.82rem; color: #fff; margin: 0 0 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
     .card-datetime { font-size: 0.68rem; color: var(--gold-primary); margin-bottom: 3px; }
     .card-text { font-size: 0.7rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
+
+    /* Estilos do Guia de Ervas */
+    .ervas-home-container { display: flex; flex-direction: column; gap: 15px; width: 100%; }
+    .ervas-intro-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 15px; text-align: center; width: 100%; }
+    .ervas-intro-box h3 { color: var(--gold-primary); margin-top: 0; font-size: 1rem; }
+    .ervas-intro-box p { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px; }
+    .ervas-categories-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; width: 100%; }
+    .erva-category-card { background: #161616; border: 1px solid var(--border-color); border-radius: 8px; padding: 14px 10px; text-align: center; cursor: pointer; transition: all 0.2s ease; }
+    .erva-category-card:hover { border-color: var(--gold-primary); background: rgba(212, 175, 55, 0.05); transform: translateY(-2px); }
+    .erva-category-card i { font-size: 1.8rem; color: var(--gold-primary); margin-bottom: 6px; }
+    .erva-category-card h4 { font-size: 0.85rem; color: #fff; margin: 0; }
+    
+    .btn-voltar-guia {
+      background: #1a1a1a;
+      border: 1px solid var(--gold-primary);
+      color: var(--gold-primary);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    .btn-voltar-guia:hover { background: var(--gold-primary); color: #000; }
 
     .calendar-container {
       background: var(--bg-card);
@@ -595,7 +612,7 @@
       </div>
     </div>
     <div class="banner-right" id="authContainer">
-      <button class="btn-login" onclick="openLoginModal()"><i class="fa-solid fa-lock"></i> <span>Membros</span></button>
+      <button class="btn-login" onclick="openLoginModal()"><i class="fa-solid fa-lock"></i> Membros</button>
     </div>
   </header>
 
@@ -604,8 +621,6 @@
     <div class="search-container">
       <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Pesquisar..." onkeyup="filterCards()">
     </div>
-
-    <div class="category-chips" id="chipsContainer" style="display:none;"></div>
 
     <div id="generalInfoSection" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:12px;">
       <div class="general-card">
@@ -742,6 +757,7 @@
     let isLoggedIn = false;
     let loggedUser = null;
     let currentCalendarDate = new Date();
+    let isErvasSubpage = false;
 
     function isPublicAccess(item) {
       if (!item) return true;
@@ -782,6 +798,7 @@
 
     function switchTab(tabName, element) {
       currentTab = tabName;
+      isErvasSubpage = false;
       document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
       if (element) element.classList.add('active');
 
@@ -846,6 +863,26 @@
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const year = d.getFullYear();
       return `${day}/${month}/${year}`;
+    }
+
+    // FUNÇÃO CORRIGIDA DE FORMATAÇÃO DE DATA EM YYYY-MM-DD EXATA PARA INPUTS HTML
+    function formatDateForInput(dateStr) {
+      if (!dateStr) return '';
+      let s = dateStr.toString().trim();
+      if (s.includes('T')) s = s.split('T')[0];
+      if (s.includes(' ')) s = s.split(' ')[0];
+      
+      // Se veio no formato brasileiro DD/MM/YYYY
+      if (s.includes('/')) {
+        const p = s.split('/');
+        if (p.length === 3) {
+          // Se o ano estiver no fim
+          if (p[2].length === 4) return `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+          // Se o ano estiver no início
+          if (p[0].length === 4) return `${p[0]}-${p[1].padStart(2,'0')}-${p[2].padStart(2,'0')}`;
+        }
+      }
+      return s; // Já deve estar em YYYY-MM-DD
     }
 
     function formatKeyName(key) {
@@ -959,7 +996,7 @@
         if (loggedUser.perfil === 'Dirigente') menuMembros.style.display = 'flex';
         else menuMembros.style.display = 'none';
       } else {
-        container.innerHTML = `<button class="btn-login" onclick="openLoginModal()"><i class="fa-solid fa-lock"></i> <span>Membros</span></button>`;
+        container.innerHTML = `<button class="btn-login" onclick="openLoginModal()"><i class="fa-solid fa-lock"></i> Membros</button>`;
         menuMembros.style.display = 'none';
       }
     }
@@ -981,6 +1018,7 @@
 
         if (tabName === 'Home') buildHomeAgenda(currentData);
         else if (tabName === 'Agenda') buildCalendarAgenda(currentData);
+        else if (tabName === 'Ervas_Banhos' && !isErvasSubpage) buildErvasHome(currentData);
         else renderContent(currentData, tabName);
       } catch (err) {
         loading.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Erro ao carregar dados.';
@@ -1097,6 +1135,136 @@
     function changeMonth(direction) { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction); buildCalendarAgenda(currentData); }
     function showDayEvents(eventsList) { if (eventsList && eventsList.length > 0) openGenericDetail(eventsList[0]); }
 
+    // --- FILTRO DE ERVAS & BANHOS POR TIPO DE PREPARO ---
+    function buildErvasHome(data) {
+      const container = document.getElementById('contentContainer');
+      const tiposPreparoSet = new Set();
+
+      data.forEach(item => {
+        let tipoPreparo = '';
+        for (let key in item) {
+          if (key.toLowerCase().trim().replace(/[\s_]/g, '') === 'tipopreparo') {
+            tipoPreparo = item[key];
+            break;
+          }
+        }
+        if (tipoPreparo && tipoPreparo.toString().trim() !== '') {
+          tiposPreparoSet.add(tipoPreparo.toString().trim());
+        }
+      });
+
+      let cardsHtml = '';
+      tiposPreparoSet.forEach(preparo => {
+        let icon = 'fa-mortar-pestle';
+        const lower = preparo.toLowerCase();
+        if (lower.includes('infus') || lower.includes('chá')) icon = 'fa-mug-hot';
+        else if (lower.includes('coz') || lower.includes('decoc')) icon = 'fa-fire-burner';
+        else if (lower.includes('macer') || lower.includes('fria')) icon = 'fa-droplet';
+        else if (lower.includes('banho')) icon = 'fa-shower';
+        else if (lower.includes('defum')) icon = 'fa-smog';
+
+        cardsHtml += `
+          <div class="erva-category-card" onclick="openErvasSubpage('${preparo}')">
+            <i class="fa-solid ${icon}"></i>
+            <h4>${preparo}</h4>
+          </div>
+        `;
+      });
+
+      if (tiposPreparoSet.size === 0) {
+        container.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem; text-align:center;">Nenhum Modo de Preparo encontrado na coluna Tipo_Preparo.</p>';
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="ervas-home-container">
+          <div class="ervas-intro-box">
+            <h3><i class="fa-solid fa-mortar-pestle"></i> Selecione o Tipo de Preparo</h3>
+            <p>Escolha abaixo a forma de preparo para visualizar as ervas sagradas:</p>
+            <div class="ervas-categories-grid">${cardsHtml}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function openErvasSubpage(tipoPreparo) {
+      isErvasSubpage = true;
+      document.getElementById('pageTitle').innerHTML = `<i class="fa-solid fa-leaf"></i> Ervas por Preparo: ${tipoPreparo}`;
+      
+      const container = document.getElementById('contentContainer');
+      container.innerHTML = `
+        <button class="btn-voltar-guia" onclick="voltarGuiaPrincipal()"><i class="fa-solid fa-arrow-left"></i> Voltar aos Tipos de Preparo</button>
+        <div id="subpageGridContainer"></div>
+      `;
+
+      const filtered = currentData.filter(item => {
+        let p = '';
+        for (let key in item) {
+          if (key.toLowerCase().trim().replace(/[\s_]/g, '') === 'tipopreparo') {
+            p = item[key] || '';
+            break;
+          }
+        }
+        return p.toString().trim().toLowerCase() === tipoPreparo.toLowerCase();
+      });
+
+      renderErvasGrid(filtered);
+    }
+
+    function voltarGuiaPrincipal() {
+      isErvasSubpage = false;
+      document.getElementById('pageTitle').innerHTML = '<i class="fa-solid fa-leaf"></i> Guia Sagrado de Ervas & Banhos';
+      buildErvasHome(currentData);
+    }
+
+    function renderErvasGrid(data) {
+      const parentContainer = document.getElementById('subpageGridContainer');
+      if (!parentContainer) return;
+      parentContainer.innerHTML = '';
+
+      if (!data || data.length === 0) {
+        parentContainer.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">Nenhuma erva encontrada para este tipo de preparo.</p>';
+        return;
+      }
+
+      const grid = document.createElement('div');
+      grid.className = 'cards-grid';
+
+      data.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        const nome = item.Nome_Erva || item.Nome_Popular || item.Nome || 'Erva';
+        let tipoLabel = 'Erva';
+        for (let key in item) {
+          if (key.toLowerCase().trim().replace(/[\s_]/g, '') === 'tipopreparo') {
+            tipoLabel = item[key];
+            break;
+          }
+        }
+        const descricao = item.Indicacao_Uso || item.Para_Que_Serve || item.Indicacao || '';
+        const imagem = getCleanImageUrl(item);
+        const acessoPublico = (item.Acesso_Publico || item.Acesso || 'Sim').toLowerCase();
+
+        if (!isLoggedIn && !acessoPublico.includes('sim') && !acessoPublico.includes('público')) return;
+
+        let imgHtml = imagem ? `<img src="${imagem}" class="card-img" alt="${nome}">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-leaf fa-2x"></i></div>`;
+        const restricted = (!acessoPublico.includes('sim') && !acessoPublico.includes('público')) ? `<span class="card-badge-restricted">Exclusivo</span>` : '';
+
+        card.innerHTML = `
+          ${imgHtml}
+          <div class="card-body">
+            <div class="card-badges"><span class="card-badge">${tipoLabel}</span>${restricted}</div>
+            <h3 class="card-title">${nome}</h3>
+            ${descricao ? `<p class="card-text">${descricao}</p>` : ''}
+          </div>
+        `;
+        card.onclick = () => openGenericDetail(item);
+        grid.appendChild(card);
+      });
+      parentContainer.appendChild(grid);
+    }
+    // -----------------------------------------------------
+
     async function carregarEExibirMembros() {
       const loading = document.getElementById('loading');
       const container = document.getElementById('contentContainer');
@@ -1182,21 +1350,32 @@
       document.getElementById('membroModalTitle').innerHTML = '<i class="fa-solid fa-user-pen"></i> Editar Membro';
       document.getElementById('membroId').value = m.ID_Filho || m.id || '';
       document.getElementById('membroNome').value = m.Nome_Completo || m.Nome || '';
-      document.getElementById('membroDataNasc').value = (m.Data_Nascimento || '').split('T')[0];
+      
+      // BUSCA INTELIGENTE DE DATA DE NASCIMENTO (Ano-Mês-Dia exato)
+      let dataNascVal = '';
+      for (let key in m) {
+        let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
+        if (ck === 'datanascimento' || ck === 'nascimento') {
+          dataNascVal = m[key];
+          break;
+        }
+      }
+      document.getElementById('membroDataNasc').value = formatDateForInput(dataNascVal);
+
       document.getElementById('membroTelefone').value = m.Telefone || '';
       document.getElementById('membroEmail').value = m.Email || m['E-mail'] || '';
       document.getElementById('membroEndereco').value = m.Endereco || '';
       
-      // FUNÇÃO ROBUSTA: Varre as chaves ignorando maiúsculas/minúsculas e espaços
+      // BUSCA INTELIGENTE DE DATA DE ENTRADA (Ano-Mês-Dia exato)
       let dataEntradaVal = '';
       for (let key in m) {
-        let cleanKey = key.toLowerCase().trim().replace(/[\s_]/g, '');
-        if (cleanKey === 'dataentrada' || cleanKey === 'datadeentrada') {
+        let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
+        if (ck === 'dataentrada' || ck === 'datadeentrada') {
           dataEntradaVal = m[key];
           break;
         }
       }
-      document.getElementById('membroDataEntrada').value = dataEntradaVal ? dataEntradaVal.split('T')[0] : '';
+      document.getElementById('membroDataEntrada').value = formatDateForInput(dataEntradaVal);
       
       document.getElementById('membroCargo').value = m.Cargo_Funcao || m.Cargo || '';
       document.getElementById('membroOrixa').value = m.Orixa_Frente || '';
@@ -1256,13 +1435,13 @@
         body: JSON.stringify(dadosMembro)
       })
       .then(() => {
+        alert("Membro salvo com sucesso!");
         closeMembroModal();
-        if (typeof carregarEExibirMembros === 'function') {
-          carregarEExibirMembros();
-        }
+        carregarEExibirMembros();
       })
       .catch(err => {
-        console.error("Erro ao enviar:", err);
+        console.error("Erro ao salvar:", err);
+        alert("Erro ao salvar os dados.");
       });
     }
 
@@ -1271,7 +1450,7 @@
     }
 
     function renderContent(data, tabName) {
-      if (['Home', 'Agenda', 'Membros'].includes(tabName)) return;
+      if (['Home', 'Agenda', 'Membros', 'Ervas_Banhos'].includes(tabName)) return;
       const container = document.getElementById('contentContainer');
       container.innerHTML = '';
       const grid = document.createElement('div');
@@ -1308,7 +1487,13 @@
 
     function closeGenericDetail() { document.getElementById('detailModal').style.display = 'none'; }
     function closeModalOnBackdrop(e) { if (e.target.id === 'detailModal') closeGenericDetail(); }
-    function filterCards() {}
+
+    function filterCards() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = currentData.filter(item => Object.values(item).some(val => val && val.toString().toLowerCase().includes(query)));
+      if (currentTab === 'Ervas_Banhos' && isErvasSubpage) renderErvasGrid(filtered);
+      else renderContent(filtered, currentTab);
+    }
   </script>
 </body>
 </html>

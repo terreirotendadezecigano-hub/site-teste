@@ -350,7 +350,6 @@
       background-color: rgba(212, 175, 55, 0.05);
     }
 
-    /* Botões menores de ação na tabela de membros */
     .btn-action-icon {
       background: #222;
       border: 1px solid var(--border-color);
@@ -978,20 +977,24 @@
       return `<iframe src="${clean}" allowfullscreen></iframe>`;
     }
 
-    function formatDateBR(dateStr) {
-      if (!dateStr) return '';
-      const parts = dateStr.split('T')[0].split('-');
+    function parseLocalDate(dateStr) {
+      if (!dateStr) return null;
+      const cleanStr = dateStr.toString().split('T')[0];
+      const parts = cleanStr.split('-');
       if (parts.length === 3) {
-        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
       }
       const d = new Date(dateStr);
-      if (!isNaN(d.getTime())) {
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const year = d.getFullYear();
-        return `${day}/${month}/${year}`;
-      }
-      return dateStr;
+      return isNaN(d.getTime()) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    }
+
+    function formatDateBR(dateStr) {
+      const d = parseLocalDate(dateStr);
+      if (!d) return dateStr;
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}/${month}/${year}`;
     }
 
     function formatKeyName(key) {
@@ -1227,7 +1230,7 @@
     }
 
     // =================================================================
-    // HOME: Filtra apenas eventos futuros no destaque
+    // HOME: Filtra e ordena perfeitamente por data (mais próximo primeiro)
     // =================================================================
     function buildHomeAgenda(data) {
       const container = document.getElementById('contentContainer');
@@ -1247,12 +1250,14 @@
         const dataStr = item.Data_Evento || item.Data;
         if (!dataStr) return false;
         
-        const d = new Date(dataStr.split('T')[0]);
-        d.setHours(0, 0, 0, 0);
+        const d = parseLocalDate(dataStr);
+        if (!d) return false;
         
-        return d >= hoje;
+        return d >= hoje; // Apenas eventos de hoje em diante
       }).sort((a, b) => {
-        return new Date((a.Data_Evento || a.Data).split('T')[0]) - new Date((b.Data_Evento || b.Data).split('T')[0]);
+        const dateA = parseLocalDate(a.Data_Evento || a.Data);
+        const dateB = parseLocalDate(b.Data_Evento || b.Data);
+        return dateA - dateB; // Do mais próximo/recente para o futuro
       });
 
       if (validos.length === 0) {
@@ -1306,7 +1311,7 @@
     }
 
     // =================================================================
-    // AGENDA: Exibe todos os eventos no calendário
+    // AGENDA: Calendário corrigido para mapear cada dia sem repetições
     // =================================================================
     function buildCalendarAgenda(data) {
       const container = document.getElementById('contentContainer');
@@ -1326,8 +1331,8 @@
         if (!isLoggedIn && !isPublicAccess(item)) return;
         const dStr = item.Data_Evento || item.Data;
         if (!dStr) return;
-        const evDate = new Date(dStr.split('T')[0]);
-        if (evDate.getFullYear() === year && evDate.getMonth() === month) {
+        const evDate = parseLocalDate(dStr);
+        if (evDate && evDate.getFullYear() === year && evDate.getMonth() === month) {
           const dayNum = evDate.getDate();
           if (!eventsMap[dayNum]) eventsMap[dayNum] = [];
           eventsMap[dayNum].push(item);

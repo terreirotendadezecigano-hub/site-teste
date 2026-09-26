@@ -1541,8 +1541,8 @@
       if (currentTab === 'Ervas_Banhos' && isErvasSubpage) renderErvasGrid(filtered);
       else renderContent(filtered, currentTab);
     }
-  </script>
-  function openMuralDetail(item) {
+  
+    function openMuralDetail(item) {
       const modalContent = document.getElementById('detailModalContent');
       const categoria = item.Categoria || item.Titulo || 'Aviso do Mural';
       const dataCriacao = formatDateBR(item.Data_Criacao || item.Data || '');
@@ -1609,4 +1609,5 @@
       showModal();
     }
 </body>
+  </script>
 </html>

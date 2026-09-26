@@ -1,136 +1,34 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tenda de Zé Cigano - Terreiro de Umbanda</title>
-    <style>
-        :root {
-            --primary-color: #8b0000;
-            --secondary-color: #d4af37;
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #f5f5f5;
-        }
+function openMuralDetail(item) {
+      const modalContent = document.getElementById('detailModalContent');
+      const categoria = item.Categoria || item.Titulo || 'Aviso do Mural';
+      const dataCriacao = formatDateBR(item.Data_Criacao || item.Data || '');
+      const descricao = item.Texo_Aviso || item.Descricao || item.Observacoes || item.Orientacao || '';
+      const imagem = getCleanImageUrl(item);
+      const rawVideo = getVideoUrlFromItem(item);
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 0;
-        }
+      let mediaHtml = '';
+      if (rawVideo) {
+        mediaHtml = `<div class="video-container">${getCleanVideoEmbed(rawVideo)}</div>`;
+      } else if (imagem) {
+        mediaHtml = `<img src="${imagem}" class="modal-banner-img" alt="${categoria}" onclick="openImageZoom('${imagem}')" title="Clique para ampliar">`;
+      }
 
-        header {
-            background-color: var(--primary-color);
-            border-bottom: 2px solid var(--secondary-color);
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        h1, h2, h3 {
-            color: var(--secondary-color);
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--secondary-color);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        /* Estilos dos Modais Limpos */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.8);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background-color: var(--card-bg);
-            border: 2px solid var(--secondary-color);
-            padding: 2rem;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .btn-fechar {
-            background-color: var(--secondary-color);
-            color: #000;
-            border: none;
-            padding: 0.5rem 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 4px;
-            margin-top: 1rem;
-            width: 100%;
-        }
-
-        .btn-fechar:hover {
-            opacity: 0.9;
-        }
-    </style>
-</head>
-<body>
-
-    <header>
-        <div class="logo-container">
-            <h1>Tenda de Zé Cigano</h1>
+      modalContent.innerHTML = `
+        <div class="modal-header">
+          <div>
+            <h3 style="font-size:0.95rem; margin:0;"><i class="fa-solid fa-photo-film"></i> ${categoria}</h3>
+            ${dataCriacao ? `<p style="color: var(--gold-light); font-size:0.7rem; margin:2px 0 0 0;"><i class="fa-solid fa-calendar"></i> ${dataCriacao}</p>` : ''}
+          </div>
+          <button class="modal-close-icon" onclick="closeGenericDetail()">&times;</button>
         </div>
-    </header>
-
-    <div class="container">
-        <section class="card">
-            <h2>Bem-vindo ao Terreiro</h2>
-            <p>Nossa casa atua com caridade, respeito, amor e sob a luz de Deus e a orientação do Povo Cigano.</p>
-            <p><strong>Endereço:</strong> Coronel Fabriciano - Minas Gerais, Brasil</p>
-        </section>
-
-        <!-- Seções dinâmicas limpas de IDs conforme solicitado -->
-        <div id="conteudo-dinamico">
-            <!-- Os modais e conteúdos atualizados são gerados dinamicamente via script sem os IDs visíveis -->
+        <div class="modal-body">
+          ${mediaHtml}
+          ${descricao ? `<div class="modal-details-box"><p style="margin:0;">${descricao}</p></div>` : ''}
         </div>
-    </div>
-
-    <div id="modal-generico" class="modal">
-        <div class="modal-content" id="modal-corpo">
-            <!-- Conteúdo dinâmico do modal limpo -->
-            <button class="btn-fechar" onclick="fecharModal()">Fechar</button>
+        <div class="modal-actions">
+          <button class="btn-share" onclick="shareOnWhatsapp('${categoria}', '${descricao}')"><i class="fa-brands fa-whatsapp"></i> Enviar</button>
+          <button class="btn-submit" onclick="closeGenericDetail()">Fechar</button>
         </div>
-    </div>
-
-    <script>
-        // Função para simular o fechamento do modal sem exibição de IDs
-        function fecharModal() {
-            document.getElementById('modal-generico').style.display = 'none';
-        }
-
-        // Script limpo de elementos de ID para Agenda, Avisos, Pontos Cantados e Orientações.
-        console.log("Script atualizado com sucesso: IDs e campos extras removidos conforme diretrizes[cite: 1].");
-    </script>
-</body>
-</html>
+      `;
+      showModal();
+    }

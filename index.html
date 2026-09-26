@@ -350,6 +350,24 @@
       background-color: rgba(212, 175, 55, 0.05);
     }
 
+    /* Estilo exclusivo para botões apenas com ícones (Lápis e Lixeira) */
+    .btn-icon-only {
+      background: #222;
+      border: 1px solid var(--border-color);
+      color: var(--gold-light);
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      transition: all 0.2s;
+    }
+    .btn-icon-only:hover { background: var(--gold-primary); color: #000; border-color: var(--gold-primary); }
+    .btn-delete-icon:hover { background: #8b0000; color: #fff; border-color: #8b0000; }
+    
     .btn-action-icon {
       background: #222;
       border: 1px solid var(--border-color);
@@ -365,7 +383,6 @@
       transition: all 0.2s;
     }
     .btn-action-icon:hover { background: var(--gold-primary); color: #000; border-color: var(--gold-primary); }
-    .btn-delete-icon:hover { background: #8b0000; color: #fff; border-color: #8b0000; }
     .btn-whatsapp-icon:hover { background: #25d366; color: #fff; border-color: #25d366; }
 
     .btn-add-membro {
@@ -808,7 +825,16 @@
           </div>
           <div class="form-group">
             <label>Cargo / Função</label>
-            <input type="text" id="membroCargo" class="form-control" placeholder="Ex: Filho(a) de Santo">
+            <select id="membroCargo" class="form-control">
+              <option value="">Selecione o Cargo</option>
+              <option value="Mãe de Santo">Mãe de Santo</option>
+              <option value="Pai de Santo">Pai de Santo</option>
+              <option value="Pai Pequeno">Pai Pequeno</option>
+              <option value="Mãe Pequena">Mãe Pequena</option>
+              <option value="Filho(a)">Filho(a)</option>
+              <option value="Cambone">Cambone</option>
+              <option value="Ogã">Ogã</option>
+            </select>
           </div>
           <div class="form-group">
             <label>Orixá de Frente</label>
@@ -1229,9 +1255,6 @@
       }
     }
 
-    // =================================================================
-    // HOME: Filtra e ordena perfeitamente por data (mais próximo primeiro)
-    // =================================================================
     function buildHomeAgenda(data) {
       const container = document.getElementById('contentContainer');
       document.getElementById('chipsContainer').style.display = 'none';
@@ -1253,11 +1276,11 @@
         const d = parseLocalDate(dataStr);
         if (!d) return false;
         
-        return d >= hoje; // Apenas eventos de hoje em diante
+        return d >= hoje;
       }).sort((a, b) => {
         const dateA = parseLocalDate(a.Data_Evento || a.Data);
         const dateB = parseLocalDate(b.Data_Evento || b.Data);
-        return dateA - dateB; // Do mais próximo/recente para o futuro
+        return dateA - dateB;
       });
 
       if (validos.length === 0) {
@@ -1310,9 +1333,6 @@
       container.appendChild(grid);
     }
 
-    // =================================================================
-    // AGENDA: Calendário corrigido para mapear cada dia sem repetições
-    // =================================================================
     function buildCalendarAgenda(data) {
       const container = document.getElementById('contentContainer');
       document.getElementById('chipsContainer').style.display = 'none';
@@ -1461,9 +1481,9 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>
-            <div style="display:flex; gap:3px;">
-              <button class="btn-action-icon" onclick="editarMembro('${id}')"><i class="fa-solid fa-pen"></i> Editar</button>
-              <button class="btn-action-icon btn-delete-icon" onclick="excluirMembro('${id}')"><i class="fa-solid fa-trash"></i> Excluir</button>
+            <div style="display:flex; gap:4px;">
+              <button class="btn-icon-only" onclick="editarMembro('${id}')" title="Editar"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn-icon-only btn-delete-icon" onclick="excluirMembro('${id}')" title="Excluir"><i class="fa-solid fa-trash"></i></button>
             </div>
           </td>
           <td><strong>${nome}</strong></td>
@@ -1506,7 +1526,11 @@
       document.getElementById('membroTelefone').value = m.Telefone || '';
       document.getElementById('membroEmail').value = m.Email || m['E-mail'] || '';
       document.getElementById('membroEndereco').value = m.Endereco || '';
-      document.getElementById('membroDataEntrada').value = (m.Data_Entrada || '').split('T')[0];
+      
+      // Correção do campo Data de Entrada
+      const dataEntradaVal = m.Data_Entrada || m.DataEntrada || m['Data de Entrada'] || '';
+      document.getElementById('membroDataEntrada').value = dataEntradaVal ? dataEntradaVal.split('T')[0] : '';
+      
       document.getElementById('membroCargo').value = m.Cargo_Funcao || m.Cargo || '';
       document.getElementById('membroOrixa').value = m.Orixa_Frente || '';
       document.getElementById('membroStatus').value = m.Status_Ativo || 'Ativo';
@@ -1537,7 +1561,7 @@
       const email = document.getElementById('membroEmail').value.trim();
       const endereco = document.getElementById('membroEndereco').value.trim();
       const dataEntrada = document.getElementById('membroDataEntrada').value;
-      const cargo = document.getElementById('membroCargo').value.trim();
+      const cargo = document.getElementById('membroCargo').value;
       const orixa = document.getElementById('membroOrixa').value.trim();
       const status = document.getElementById('membroStatus').value;
       const perfil = document.getElementById('membroPerfil').value;

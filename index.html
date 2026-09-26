@@ -1491,99 +1491,102 @@
       container.appendChild(grid);
     }
 
-    function openGenericDetail(item, tabName) {
-      const modalContent = document.getElementById('detailModalContent');
-      const actualTab = tabName || currentTab;
-      
-      let titulo = 'Detalhes';
-      if (actualTab === 'Mural_Imagens') {
-        titulo = item.Texo_Aviso || item.Categoria || item.Arquivo || 'Mural de Avisos';
-      } else if (actualTab === 'Pontos_Cantados') {
-        titulo = item.Titulo_Ponto || item.Titulo || item.Nome || 'Ponto Cantado';
-      } else {
-        titulo = item.Nome_Evento || item.Titulo_Ponto || item.Titulo || item.Nome_Erva || item.Categoria || 'Detalhes';
-      }
+    // ==========================================
+// MURAL DE AVISOS E PONTOS CANTADOS
+// ==========================================
 
-      const imagem = getCleanImageUrl(item);
-      let mediaTopContent = '';
+// Função auxiliar para converter links do Google Drive em links de visualização/streaming direto
+function formatDriveUrl(url) {
+    if (!url) return '';
+    // Se for link de compartilhamento do Drive, converte para visualização direta
+    const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+    if (match && match[1]) {
+        const fileId = match[1];
+        // Retorna o link de visualização embutida/direta
+        return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    }
+    return url;
+}
 
-      const videoRaw = item.Arquivo_Video || item.Video_URL || item.Video || '';
-      const audioRaw = item.Arquivo_Audio || item.Audio_URL || item.Audio || '';
-      const tipoMidia = (item.Tipo_de_Midia || '').toString().toLowerCase();
+// Renderização do Mural de Avisos
+function renderMural(avisos) {
+    const container = document.getElementById('mural-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
 
-      if (videoRaw || tipoMidia.includes('video')) {
-        const cleanVideo = getCleanMediaUrl(videoRaw || item.Arquivo_URL);
-        if (cleanVideo) {
-          mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanVideo}">Seu navegador não suporta vídeos.</video>`;
-        }
-      } else if (audioRaw || tipoMidia.includes('audio')) {
-        const cleanAudio = getCleanMediaUrl(audioRaw || item.Arquivo_URL);
-        if (cleanAudio) {
-          mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanAudio}">Seu navegador não suporta áudio.</audio>`;
-        }
-      }
-
-      let info = '';
-      if (actualTab === 'Pontos_Cantados') {
-        const letra = item.Letra_Ponto || item.Letra || item.Conteudo_Texto || item.LetraPonto || '';
-        const observacoes = item.Observacoes || item.Obs || '';
-
-        if (letra) info += `<p><strong>Letra do Ponto:</strong><br><span style="white-space: pre-line;">${letra}</span></p>`;
-        if (observacoes) info += `<p><strong>Observações:</strong><br>${observacoes}</p>`;
-
-      } else if (actualTab === 'Mural_Imagens') {
-        if (item.Texo_Aviso) info += `<p><strong>Aviso:</strong> ${item.Texo_Aviso}</p>`;
-        if (item.Categoria) info += `<p><strong>Categoria:</strong> ${item.Categoria}</p>`;
-        if (item.Data_Criacao) info += `<p><strong>Data de Criação:</strong> ${formatDateBR(item.Data_Criacao)}</p>`;
-        if (item.Link_Externo) {
-          let link = item.Link_Externo.startsWith('http') ? item.Link_Externo : `https://${item.Link_Externo}`;
-          info += `<p><strong>Link Externo:</strong> <a href="${link}" target="_blank" style="color: var(--gold-primary); text-decoration: underline;">Acessar Link</a></p>`;
-        }
-      } else {
-        for (let key in item) {
-          let cleanKeyLower = key.toLowerCase().trim().replace(/[\s_]/g, '');
-          
-          if (
-            cleanKeyLower.includes('id') || 
-            cleanKeyLower === 'destacarpopup' || 
-            cleanKeyLower === 'arquivourl' || 
-            cleanKeyLower === 'arquivoimagem' || 
-            cleanKeyLower === 'arquivovideo' ||
-            cleanKeyLower === 'arquivoaudio' ||
-            cleanKeyLower === 'anexo' || 
-            cleanKeyLower === 'anexourl' || 
-            cleanKeyLower === 'acessopublico' || 
-            cleanKeyLower === 'fotourl' || 
-            cleanKeyLower === 'fotoervas'
-          ) continue;
-
-          if (item[key]) {
-            info += `<p><strong>${formatKeyName(key)}:</strong> ${item[key]}</p>`;
-          }
-        }
-      }
-
-      modalContent.innerHTML = `
-        <div class="modal-header"><h3 style="font-size:0.95rem; margin:0;">${titulo}</h3><button class="modal-close-icon" onclick="closeGenericDetail()">&times;</button></div>
-        <div class="modal-body">
-          ${mediaTopContent}
-          ${(!mediaTopContent && imagem) ? `<img src="${imagem}" class="modal-banner-img" onclick="openImageZoom('${imagem}')" onerror="this.onerror=null; this.style.display='none';">` : ''}
-          <div class="modal-details-box">${info || '<p>Nenhum detalhe disponível.</p>'}</div>
-        </div>
-        <div class="modal-actions"><button class="btn-submit" onclick="closeGenericDetail()">Fechar</button></div>
-      `;
-      document.getElementById('detailModal').style.display = 'flex';
+    if (!avisos || avisos.length === 0) {
+        container.innerHTML = '<p class="text-center text-muted">Nenhum aviso no momento.</p>';
+        return;
     }
 
-    function closeGenericDetail() { document.getElementById('detailModal').style.display = 'none'; }
-    function closeModalOnBackdrop(e) { if (e.target.id === 'detailModal') closeGenericDetail(); }
+    avisos.forEach(aviso => {
+        const card = document.createElement('div');
+        card.className = 'card-mural mb-3 p-3 bg-dark text-light border border-secondary rounded';
+        
+        let mediaContent = '';
+        if (aviso.midia) {
+            const directUrl = formatDriveUrl(aviso.midia);
+            // Verifica o tipo de mídia ou exibe imagem por padrão
+            if (aviso.midia.includes('youtube.com') || aviso.midia.includes('youtu.be')) {
+                // Caso seja vídeo do YouTube
+                mediaContent = `<div class="ratio ratio-16x9 mb-2"><iframe src="${directUrl}" allowfullscreen></iframe></div>`;
+            } else {
+                // Imagem padrão ou link direto
+                mediaContent = `<img src="${directUrl}" class="img-fluid rounded mb-2" alt="Imagem do Aviso" style="max-height: 300px; width: 100%; object-fit: cover;">`;
+            }
+        }
 
-    function filterCards() {
-      const query = document.getElementById('searchInput').value.toLowerCase();
-      const filtered = currentData.filter(item => Object.values(item).some(val => val && val.toString().toLowerCase().includes(query)));
-      if (currentTab === 'Ervas_Banhos' && isErvasSubpage) renderErvasGrid(filtered);
-      else renderContent(filtered, currentTab);
+        card.innerHTML = `
+            <h5 class="text-warning">${aviso.titulo || 'Aviso'}</h5>
+            <small class="text-muted d-block mb-2">${aviso.data || ''}</small>
+            <p class="mb-2">${aviso.descricao || ''}</p>
+            ${mediaContent}
+        `;
+        container.appendChild(card);
+    });
+}
+
+// Renderização de Pontos Cantados
+function renderPontos(pontos) {
+    const container = document.getElementById('pontos-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (!pontos || pontos.length === 0) {
+        container.innerHTML = '<p class="text-center text-muted">Nenhum ponto cantado cadastrado.</p>';
+        return;
     }
-  </script>
+
+    pontos.forEach(ponto => {
+        const card = document.createElement('div');
+        card.className = 'card-ponto mb-3 p-3 bg-dark text-light border border-secondary rounded';
+
+        let audioPlayer = '';
+        if (ponto.audio || ponto.midia) {
+            const audioUrl = formatDriveUrl(ponto.audio || ponto.midia);
+            audioPlayer = `
+                <div class="mt-2">
+                    <audio controls class="w-100">
+                        <source src="${audioUrl}" type="audio/mpeg">
+                        Seu navegador não suporta o elemento de áudio.
+                    </audio>
+                </div>
+            `;
+        }
+
+        card.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="text-warning mb-1">${ponto.titulo || 'Ponto Cantado'}</h5>
+                <span class="badge bg-secondary">${ponto.linha || 'Geral'}</span>
+            </div>
+            <p class="text-muted small mb-2">Entidade: ${ponto.entidade || 'Não especificada'}</p>
+            <pre class="text-light bg-black p-2 rounded" style="white-space: pre-wrap; font-family: inherit;">${ponto.letra || ponto.descricao || ''}</pre>
+            ${audioPlayer}
+        `;
+        container.appendChild(card);
+    });
+}  </script>
 </body>
 </html>

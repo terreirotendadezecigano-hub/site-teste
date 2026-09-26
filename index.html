@@ -366,6 +366,18 @@
       cursor: pointer;
       font-weight: bold;
       font-size: 0.72rem;
+      margin-right: 4px;
+    }
+
+    .btn-delete-membro {
+      background: #8b0000;
+      color: #fff;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.72rem;
     }
 
     .btn-add-membro {
@@ -383,25 +395,35 @@
       margin-bottom: 10px;
     }
 
+    /* Modal de Membros em 2 colunas */
+    .membros-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .membros-form-full {
+      grid-column: span 2;
+    }
+
     .form-group {
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     .form-group label {
       display: block;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: var(--gold-light);
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
 
     .form-control {
       width: 100%;
-      padding: 7px 10px;
+      padding: 6px 8px;
       background: #111;
       border: 1px solid var(--border-color);
       color: #fff;
       border-radius: 6px;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
     }
 
     .form-control:focus {
@@ -527,7 +549,7 @@
       border-radius: 12px;
       padding: 14px;
       width: 100%;
-      max-width: 480px;
+      max-width: 520px;
       max-height: 85vh;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
       display: flex;
@@ -558,7 +580,7 @@
 
     .modal-body {
       overflow-y: auto;
-      max-height: 60vh;
+      max-height: 65vh;
       padding-right: 4px;
       flex-grow: 1;
     }
@@ -792,64 +814,67 @@
     </div>
   </div>
 
-  <!-- Modal Cadastro/Edição de Membro com todas as colunas -->
+  <!-- Modal Cadastro/Edição de Membro em 2 colunas -->
   <div class="modal-overlay" id="modalMembro">
-    <div class="modal-box" style="max-width:440px;">
+    <div class="modal-box" style="max-width:540px;">
       <div class="modal-header">
         <h3 style="font-size:0.9rem; margin:0;" id="membroModalTitle"><i class="fa-solid fa-user-plus"></i> Cadastrar Membro</h3>
         <button class="modal-close-icon" onclick="closeMembroModal()">&times;</button>
       </div>
       <div class="modal-body">
         <input type="hidden" id="membroId">
-        <div class="form-group">
-          <label>Nome Completo</label>
-          <input type="text" id="membroNome" class="form-control" placeholder="Nome do filho(a)">
-        </div>
-        <div class="form-group">
-          <label>Data de Nascimento</label>
-          <input type="date" id="membroDataNasc" class="form-control">
-        </div>
-        <div class="form-group">
-          <label>Telefone / WhatsApp</label>
-          <input type="text" id="membroTelefone" class="form-control" placeholder="(31) 99999-9999">
-        </div>
-        <div class="form-group">
-          <label>E-mail</label>
-          <input type="email" id="membroEmail" class="form-control" placeholder="email@exemplo.com">
-        </div>
-        <div class="form-group">
-          <label>Endereço</label>
-          <input type="text" id="membroEndereco" class="form-control" placeholder="Endereço completo">
-        </div>
-        <div class="form-group">
-          <label>Data de Entrada</label>
-          <input type="date" id="membroDataEntrada" class="form-control">
-        </div>
-        <div class="form-group">
-          <label>Cargo / Função</label>
-          <input type="text" id="membroCargo" class="form-control" placeholder="Ex: Filho(a) de Santo">
-        </div>
-        <div class="form-group">
-          <label>Orixá de Frente</label>
-          <input type="text" id="membroOrixa" class="form-control" placeholder="Ex: Xangô, Oxum">
-        </div>
-        <div class="form-group">
-          <label>Status</label>
-          <select id="membroStatus" class="form-control">
-            <option value="Ativo">Ativo</option>
-            <option value="Inativo">Inativo</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Perfil de Acesso</label>
-          <select id="membroPerfil" class="form-control">
-            <option value="Membro">Membro</option>
-            <option value="Dirigente">Dirigente</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Observações</label>
-          <textarea id="membroObservacoes" class="form-control" placeholder="Observações..." style="height:60px;"></textarea>
+        <div class="membros-form-grid">
+          <div class="form-group membros-form-full">
+            <label>Nome Completo</label>
+            <input type="text" id="membroNome" class="form-control" placeholder="Nome do filho(a)">
+          </div>
+          <div class="form-group">
+            <label>Data de Nascimento</label>
+            <input type="date" id="membroDataNasc" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Telefone / WhatsApp</label>
+            <input type="text" id="membroTelefone" class="form-control" placeholder="(31) 99999-9999">
+          </div>
+          <div class="form-group">
+            <label>E-mail</label>
+            <input type="email" id="membroEmail" class="form-control" placeholder="email@exemplo.com">
+          </div>
+          <div class="form-group">
+            <label>Data de Entrada</label>
+            <input type="date" id="membroDataEntrada" class="form-control">
+          </div>
+          <div class="form-group membros-form-full">
+            <label>Endereço</label>
+            <input type="text" id="membroEndereco" class="form-control" placeholder="Endereço completo">
+          </div>
+          <div class="form-group">
+            <label>Cargo / Função</label>
+            <input type="text" id="membroCargo" class="form-control" placeholder="Ex: Filho(a) de Santo">
+          </div>
+          <div class="form-group">
+            <label>Orixá de Frente</label>
+            <input type="text" id="membroOrixa" class="form-control" placeholder="Ex: Xangô, Oxum">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="membroStatus" class="form-control">
+              <option value="Ativo">Ativo</option>
+              <option value="Inativo">Inativo</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Perfil de Acesso</label>
+            <select id="membroPerfil" class="form-control">
+              <option value="Membro">Membro</option>
+              <option value="Colaborador">Colaborador</option>
+              <option value="Dirigente">Dirigente</option>
+            </select>
+          </div>
+          <div class="form-group membros-form-full">
+            <label>Observações</label>
+            <textarea id="membroObservacoes" class="form-control" placeholder="Observações..." style="height:50px;"></textarea>
+          </div>
         </div>
       </div>
       <div class="modal-actions">
@@ -893,7 +918,6 @@
       loadGeneralData();
       loadTabData('Home');
       
-      // Fecha o menu de telefone ao clicar fora
       document.addEventListener('click', function(e) {
         if (!e.target.closest('#phoneMenuDropdown') && !e.target.closest('.phone-trigger')) {
           document.getElementById('phoneMenuDropdown').style.display = 'none';
@@ -962,7 +986,7 @@
     }
 
     function getCleanImageUrl(item) {
-      const rawImg = item.Imagem_URL || item.Imagem || item.Foto || item.Foto_URL || 
+      const rawImg = item.Arquivo_URL || item.Imagem_URL || item.Imagem || item.Foto || item.Foto_URL || 
                      item.Imagem_Cartaz || item.Capa || item.Anexo_URL || item['Anexo URL'] || 
                      item.Anexo || '';
       if (!rawImg) return '';
@@ -978,7 +1002,7 @@
     }
 
     function getVideoUrlFromItem(item) {
-      return item.Video_URL || item['Video_URL'] || item.Video_Url || item.Video || item.Video_Link || item.Youtube || item.URL_Video || '';
+      return item.Arquivo_Video || item.Video_URL || item['Video_URL'] || item.Video_Url || item.Video || item.Video_Link || item.Youtube || item.URL_Video || '';
     }
 
     function getCleanVideoEmbed(url) {
@@ -1037,7 +1061,8 @@
         'conteudo_texto': 'Conteúdo / Orientação',
         'horario': 'Horário',
         'descricao': 'Descrição',
-        'categoria': 'Categoria'
+        'categoria': 'Categoria',
+        'texo_aviso': 'Texto do Aviso'
       };
 
       const cleanKey = key.toLowerCase().trim().replace(/ /g, '_');
@@ -1251,7 +1276,7 @@
     }
 
     // =================================================================
-    // AGENDA NA HOME: Filtro estrito para ocultar eventos passados
+    // HOME: Filtra eventos passados apenas no destaque inicial
     // =================================================================
     function buildHomeAgenda(data) {
       const container = document.getElementById('contentContainer');
@@ -1274,8 +1299,7 @@
         const d = new Date(dataStr);
         d.setHours(0, 0, 0, 0);
         
-        // Remove estritamente se a data for anterior ao dia de hoje
-        return d >= hoje;
+        return d >= hoje; // Apenas futuros na Home
       }).sort((a, b) => {
         return new Date(a.Data_Evento || a.Data) - new Date(b.Data_Evento || b.Data);
       });
@@ -1331,7 +1355,7 @@
     }
 
     // =================================================================
-    // CALENDÁRIO INTERATIVO NA ABA AGENDA
+    // AGENDA: Mantém exibição de todos os eventos (passados e futuros)
     // =================================================================
     function buildCalendarAgenda(data) {
       const container = document.getElementById('contentContainer');
@@ -1415,7 +1439,7 @@
     }
 
     // =================================================================
-    // GESTÃO DE MEMBROS (EXCLUSIVA PARA PERFIL DIRIGENTE)
+    // GESTÃO DE MEMBROS
     // =================================================================
     async function carregarEExibirMembros() {
       const loading = document.getElementById('loading');
@@ -1468,7 +1492,10 @@
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td><button class="btn-edit-membro" onclick="editarMembro('${id}')"><i class="fa-solid fa-pen-to-square"></i> Editar</button></td>
+          <td>
+            <button class="btn-edit-membro" onclick="editarMembro('${id}')"><i class="fa-solid fa-pen-to-square"></i> Editar</button>
+            <button class="btn-delete-membro" onclick="excluirMembro('${id}')"><i class="fa-solid fa-trash"></i> Excluir</button>
+          </td>
           <td><strong>${nome}</strong></td>
           <td>${tel ? `<span class="phone-trigger" style="color:var(--gold-light); cursor:pointer; text-decoration:underline;" onclick="openPhoneMenu(event, '${tel}')"><i class="fa-solid fa-phone"></i> ${tel}</span>` : 'Não informado'}</td>
         `;
@@ -1530,6 +1557,15 @@
       document.getElementById('membroObservacoes').value = m.Observacoes || '';
 
       document.getElementById('modalMembro').style.display = 'flex';
+    }
+
+    function excluirMembro(idMembro) {
+      if (confirm("Tem certeza que deseja excluir este membro?")) {
+        listaMembros = listaMembros.filter(item => String(item.ID_Filho || item.id || item.ID) !== String(idMembro));
+        currentData = listaMembros;
+        renderTabelaMembros(listaMembros);
+        alert("Membro removido da sessão!");
+      }
     }
 
     function closeMembroModal() {
@@ -1812,7 +1848,7 @@
           nome = item.Categoria || item.Titulo || item.Nome || 'Aviso';
           categoria = item.Tipo_de_Midia || item.Categoria || 'Aviso';
           dataItem = formatDateBR(item.Data_Criacao || item.Data || '');
-          descricao = item.Descricao || item.Observacoes || '';
+          descricao = item.Texo_Aviso || item.Descricao || item.Observacoes || '';
         } else {
           nome = item.Nome_Evento || item.Evento || item.Titulo || item.Categoria || 'Item';
           categoria = item.Categoria || item.Tipo_Gira || item.Tipo_preparo || item.Linha || 'Geral';
@@ -1911,7 +1947,7 @@
       const modalContent = document.getElementById('detailModalContent');
       const categoria = item.Categoria || item.Titulo || 'Aviso do Mural';
       const dataCriacao = formatDateBR(item.Data_Criacao || item.Data || '');
-      const descricao = item.Descricao || item.Observacoes || item.Orientacao || '';
+      const descricao = item.Texo_Aviso || item.Descricao || item.Observacoes || item.Orientacao || '';
       const imagem = getCleanImageUrl(item);
       const rawVideo = getVideoUrlFromItem(item);
 

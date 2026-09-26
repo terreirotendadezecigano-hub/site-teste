@@ -1473,63 +1473,40 @@
       let mediaTopContent = '';
 
       // --- TRATAMENTO CORRIGIDO PARA VÍDEO E ÁUDIO (EM PONTOS CANTADOS OU OUTRAS SEÇÕES) ---
-      const mediaUrl = item.Video_URL || item.Video || item.Audio_URL || item.Audio || item.MP4 || item.Arquivo_URL || '';
-      if (mediaUrl) {
-        let cleanMedia = mediaUrl.toString().trim();
-        if (cleanMedia.includes('drive.google.com') || cleanMedia.includes('docs.google.com')) {
-          const match = cleanMedia.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanMedia.match(/id=([a-zA-Z0-9_-]+)/);
-          if (match && match[1]) cleanMedia = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
-        }
-        
-        const lowerMedia = cleanMedia.toLowerCase();
-        const isAudio = lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio') || tabName === 'Audio';
-        
-        if (isAudio) {
-          mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>`;
-        } else {
-          mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
-        }
-      }
+      function getVideoUrlFromItem(item) {
+      return item.Arquivo_Video || item.Video_URL || item['Video_URL'] || item.Video_Url || item.Video || item.Video_Link || item.Youtube || item.URL_Video || item.Link_Video || '';
+    }
 
-      if (tabName === 'Pontos_Cantados' || currentTab === 'Pontos_Cantados') {
-        const letra = item.Letra_Ponto || item.Letra || item.Conteudo_Texto || item.LetraPonto || '';
-        const observacoes = item.Observacoes || item.Obs || '';
+    function openPontoDetail(item) {
+      const modalContent = document.getElementById('detailModalContent');
+      const nome = item.Titulo_Ponto || item.Titulo || item.Nome || 'Ponto Cantado';
+      const linha = item.Orixa_Linha || item.Linha || 'Umbanda';
+      const letra = item.Letra || item.Letra_Ponto || item.Descricao || 'Letra não informada.';
+      const rawVideo = getVideoUrlFromItem(item);
 
-        if (letra) info += `<p><strong>Letra do Ponto:</strong><br><span style="white-space: pre-line;">${letra}</span></p>`;
-        if (observacoes) info += `<p><strong>Observações:</strong><br>${observacoes}</p>`;
-
-      } else {
-        for (let key in item) {
-          let cleanKeyLower = key.toLowerCase().trim().replace(/[\s_]/g, '');
-          
-          if (
-            cleanKeyLower.includes('id') || 
-            cleanKeyLower === 'destacarpopup' || 
-            cleanKeyLower === 'arquivourl' || 
-            cleanKeyLower === 'arquivoimagem' || 
-            cleanKeyLower === 'anexo' || 
-            cleanKeyLower === 'anexourl' || 
-            cleanKeyLower === 'acessopublico' || 
-            cleanKeyLower === 'fotourl' || 
-            cleanKeyLower === 'fotoervas'
-          ) continue;
-
-          if (item[key]) {
-            info += `<p><strong>${formatKeyName(key)}:</strong> ${item[key]}</p>`;
-          }
-        }
+      let mediaHtml = '';
+      if (rawVideo) {
+        mediaHtml = `<div class="video-container">${getCleanVideoEmbed(rawVideo)}</div>`;
       }
 
       modalContent.innerHTML = `
-        <div class="modal-header"><h3 style="font-size:0.95rem; margin:0;">${titulo}</h3><button class="modal-close-icon" onclick="closeGenericDetail()">&times;</button></div>
-        <div class="modal-body">
-          ${mediaTopContent}
-          ${(!mediaTopContent && imagem) ? `<img src="${imagem}" class="modal-banner-img" onclick="openImageZoom('${imagem}')">` : ''}
-          <div class="modal-details-box">${info || '<p>Nenhum detalhe disponível.</p>'}</div>
+        <div class="modal-header">
+          <div>
+            <h3 style="font-size:0.95rem; margin:0;"><i class="fa-solid fa-music"></i> ${nome}</h3>
+            <p style="color:var(--gold-light); font-size:0.7rem; margin:2px 0 0 0;"><i class="fa-solid fa-layer-group"></i> ${linha}</p>
+          </div>
+          <button class="modal-close-icon" onclick="closeGenericDetail()">&times;</button>
         </div>
-        <div class="modal-actions"><button class="btn-submit" onclick="closeGenericDetail()">Fechar</button></div>
+        <div class="modal-body">
+          ${mediaHtml}
+          <div style="white-space: pre-wrap; background: #111; padding: 10px; border-radius: 6px; border-left: 3px solid var(--gold-primary); font-size: 0.8rem;">${letra}</div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-share" onclick="shareOnWhatsapp('${nome}', '${letra}')"><i class="fa-brands fa-whatsapp"></i> Enviar</button>
+          <button class="btn-submit" onclick="closeGenericDetail()">Fechar</button>
+        </div>
       `;
-      document.getElementById('detailModal').style.display = 'flex';
+      showModal();
     }
 
     function closeGenericDetail() { document.getElementById('detailModal').style.display = 'none'; }

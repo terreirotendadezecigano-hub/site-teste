@@ -833,7 +833,7 @@
     }
 
     function getCleanImageUrl(item) {
-      const rawImg = item.Arquivo_Imagem || item.Arquivo_URL || item.Foto_URL || item.Foto_Ervas || item.Imagem_URL || item.Imagem || item.Foto || 
+      const rawImg = item.Arquivo_Imagem || item.Arquivo_Video || item.Arquivo_Audio || item.Link_Externo || item.Arquivo_URL || item.Foto_URL || item.Foto_Ervas || item.Imagem_URL || item.Imagem || item.Foto || 
                      item.Imagem_Cartaz || item.Capa || item.Anexo_URL || item['Anexo URL'] || item.Anexo || '';
       if (!rawImg) return '';
       let clean = rawImg.toString().trim();
@@ -1507,7 +1507,6 @@
       const imagem = getCleanImageUrl(item);
       let mediaTopContent = '';
 
-      // Identifica mídias específicas (Vídeo ou Áudio) para Mural_Imagens e demais abas
       const videoRaw = item.Arquivo_Video || item.Video_URL || item.Video || '';
       const audioRaw = item.Arquivo_Audio || item.Audio_URL || item.Audio || '';
       const tipoMidia = (item.Tipo_de_Midia || '').toString().toLowerCase();
@@ -1568,7 +1567,7 @@
         <div class="modal-header"><h3 style="font-size:0.95rem; margin:0;">${titulo}</h3><button class="modal-close-icon" onclick="closeGenericDetail()">&times;</button></div>
         <div class="modal-body">
           ${mediaTopContent}
-          ${(!mediaTopContent && imagem) ? `<img src="${imagem}" class="modal-banner-img" onclick="openImageZoom('${imagem}')">` : ''}
+          ${(!mediaTopContent && imagem) ? `<img src="${imagem}" class="modal-banner-img" onclick="openImageZoom('${imagem}')" onerror="this.onerror=null; this.style.display='none';">` : ''}
           <div class="modal-details-box">${info || '<p>Nenhum detalhe disponível.</p>'}</div>
         </div>
         <div class="modal-actions"><button class="btn-submit" onclick="closeGenericDetail()">Fechar</button></div>

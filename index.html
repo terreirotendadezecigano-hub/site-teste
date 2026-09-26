@@ -758,7 +758,7 @@
 
   <script>
     const SHEET_ID = '1BL978swtEmpF208tfvPOZJuv2YS1ecpujQnw4ZoA3Jk';
-    const WEB_APP_URL = 'COLOQUE_AQUI_A_URL_DO_SEU_WEB_APP_DO_APPS_SCRIPT'; // <--- Insira a URL do Web App gerada no Passo 2 aqui
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyFje_ocF7a0S7Tq4EYQmM5W3hv9SmHZqxJmWLhPKdkVfudzW-Q3EEbM66U9BiwdBZOJw/exec';
     let currentTab = 'Home';
     let currentData = [];
     let listaMembros = [];
@@ -1040,7 +1040,7 @@
         if (!dataStr) return false;
         const d = parseLocalDate(dataStr);
         if (!d) return false;
-        return d >= hoje; // Oculta rigorosamente eventos passados
+        return d >= hoje;
       }).sort((a, b) => parseLocalDate(a.Data_Evento || a.Data) - parseLocalDate(b.Data_Evento || b.Data));
 
       if (validos.length === 0) {
@@ -1092,7 +1092,6 @@
 
       const eventsMap = {};
       data.forEach(item => {
-        // Correção: Oculta da agenda eventos restritos se o usuário não estiver logado
         if (!isLoggedIn && !isPublicAccess(item)) return;
 
         const dStr = item.Data_Evento || item.Data;
@@ -1228,7 +1227,8 @@
       document.getElementById('membroEmail').value = m.Email || m['E-mail'] || '';
       document.getElementById('membroEndereco').value = m.Endereco || '';
       
-      const dataEntradaVal = m.Data_Entrada || m.DataEntrada || m['Data de Entrada'] || '';
+      // Correção aplicada para puxar corretamente a Data de Entrada de qualquer variação de chave da planilha
+      const dataEntradaVal = m.Data_Entrada || m.DataEntrada || m['Data de Entrada'] || m['Data_de_Entrada'] || '';
       document.getElementById('membroDataEntrada').value = dataEntradaVal ? dataEntradaVal.split('T')[0] : '';
       
       document.getElementById('membroCargo').value = m.Cargo_Funcao || m.Cargo || '';
@@ -1287,7 +1287,6 @@
         }
       }
 
-      // Fallback local se a URL do Web App não estiver configurada
       alert("Membro salvo na sessão!");
       closeMembroModal();
       carregarEExibirMembros();

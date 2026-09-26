@@ -528,7 +528,6 @@
       flex: 1;
     }
 
-    /* Estilo específico para o botão Enviar no padrão visual dos modais */
     .btn-enviar-modal {
       background: #25d366;
       border: none;
@@ -850,7 +849,7 @@
     }
 
     function getCleanImageUrl(item) {
-      const rawImg = item.Foto_URL || item.Foto_Ervas || item.Arquivo_URL || item.Imagem_URL || item.Imagem || item.Foto || item.Foto_URL || 
+      const rawImg = item.Arquivo_Imagem || item.Foto_URL || item.Foto_Ervas || item.Arquivo_URL || item.Imagem_URL || item.Imagem || item.Foto || 
                      item.Imagem_Cartaz || item.Capa || item.Anexo_URL || item['Anexo URL'] || item.Anexo || '';
       if (!rawImg) return '';
       let clean = rawImg.toString().trim();
@@ -1470,7 +1469,7 @@
         if (!isPublicAccess(item)) return;
         const card = document.createElement('div');
         card.className = 'card';
-        const nome = item.Titulo_Ponto || item.Titulo || item.Nome_Evento || item.Categoria || 'Item';
+        const nome = item.Titulo_Ponto || item.Titulo || item.Nome_Evento || item.Categoria || item.Texo_Aviso || 'Item';
         const imagem = getCleanImageUrl(item);
         
         card.innerHTML = `${imagem ? `<img src="${imagem}" class="card-img" alt="${nome}">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-folder fa-2x"></i></div>`}<div class="card-body"><h3 class="card-title">${nome}</h3></div>`;
@@ -1482,14 +1481,15 @@
 
     function openGenericDetail(item, tabName) {
       const modalContent = document.getElementById('detailModalContent');
-      const titulo = item.Nome_Evento || item.Titulo_Ponto || item.Titulo || item.Nome_Erva || item.Categoria || 'Detalhes';
+      const titulo = item.Nome_Evento || item.Titulo_Ponto || item.Titulo || item.Nome_Erva || item.Categoria || item.Texo_Aviso || 'Detalhes';
       const imagem = getCleanImageUrl(item);
       
       let info = '';
       let mediaTopContent = '';
 
-      // --- SUPORTE A VÍDEOS (YOUTUBE OU ARQUIVO DIRETO) E ÁUDIO ---
-      const mediaUrl = item.Video_URL || item.Video || item.Audio_URL || item.Audio || item.MP4 || item.Arquivo_URL || '';
+      // --- LEITURA DIRETA DAS SUAS COLUNAS DA PLANILHA ---
+      const mediaUrl = item.Arquivo_Video || item.Arquivo_Audio || item.Arquivo_URL || item.Arquivo || item.Link_Externo || '';
+      
       if (mediaUrl) {
         let cleanMedia = mediaUrl.toString().trim();
         
@@ -1513,7 +1513,7 @@
           }
           
           const lowerMedia = cleanMedia.toLowerCase();
-          const isAudio = lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio') || tabName === 'Audio';
+          const isAudio = Boolean(item.Arquivo_Audio) || lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio');
           
           if (isAudio) {
             mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>`;
@@ -1539,6 +1539,8 @@
             cleanKeyLower === 'destacarpopup' || 
             cleanKeyLower === 'arquivourl' || 
             cleanKeyLower === 'arquivoimagem' || 
+            cleanKeyLower === 'arquivovideo' ||
+            cleanKeyLower === 'arquivoaudio' ||
             cleanKeyLower === 'anexo' || 
             cleanKeyLower === 'anexourl' || 
             cleanKeyLower === 'acessopublico' || 
@@ -1552,7 +1554,6 @@
         }
       }
 
-      // Adicionado o botão "Enviar" conforme demonstrado no vídeo
       modalContent.innerHTML = `
         <div class="modal-header"><h3 style="font-size:0.95rem; margin:0;">${titulo}</h3><button class="modal-close-icon" onclick="closeGenericDetail()">&times;</button></div>
         <div class="modal-body">

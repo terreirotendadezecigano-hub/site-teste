@@ -172,24 +172,6 @@
     }
     .category-chips::-webkit-scrollbar { display: none; }
 
-    .chip-btn {
-      background: #1a1a1a;
-      border: 1px solid var(--border-color);
-      color: var(--text-muted);
-      padding: 5px 12px;
-      border-radius: 14px;
-      font-size: 0.75rem;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
-    .chip-btn.active {
-      background: var(--gold-primary);
-      color: #000;
-      border-color: var(--gold-primary);
-      font-weight: 600;
-    }
-
     .section-title { 
       font-size: 1rem; 
       color: var(--gold-primary); 
@@ -517,22 +499,6 @@
       flex-shrink: 0;
     }
 
-    .btn-share {
-      background: #25d366;
-      border: none;
-      color: #fff;
-      font-weight: bold;
-      padding: 9px;
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      font-size: 0.8rem;
-      flex: 1;
-    }
-
     .btn-submit { 
       background: var(--gold-primary); 
       border: none; 
@@ -551,6 +517,17 @@
     .info-list li { margin-bottom: 6px; font-size: 0.8rem; }
     .info-link { display: inline-flex; align-items: center; gap: 6px; color: #fff; text-decoration: none; word-break: break-word; }
     .info-link i { color: var(--gold-primary); width: 16px; text-align: center; }
+
+    .image-zoom-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.9);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 300000;
+    }
+    .image-zoom-overlay img { max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 8px; }
 
     .btn-back-to-top {
       position: fixed;
@@ -764,15 +741,16 @@
     let listaMembros = [];
     let isLoggedIn = false;
     let loggedUser = null;
-    let selectedChip = 'Todos';
-    let isErvasSubpage = false;
     let currentCalendarDate = new Date();
 
+    // Correção: Se o usuário estiver logado, exibe itens restritos e públicos. Se não, apenas públicos.
     function isPublicAccess(item) {
-      if (!item) return false;
+      if (!item) return true;
       const acesso = (item.Acesso_Publico || item.Acesso || item.Visibilidade || 'Sim').toString().toLowerCase().trim();
-      if (acesso.includes('restrit')) return false;
-      return true;
+      if (acesso.includes('restrit') || acesso.includes('não') || acesso.includes('nao') || acesso === 'false') {
+        return isLoggedIn; // Se for restrito, só exibe se estiver logado
+      }
+      return true; // Se for público, exibe para todos
     }
 
     window.onload = function() {
@@ -805,8 +783,6 @@
 
     function switchTab(tabName, element) {
       currentTab = tabName;
-      selectedChip = 'Todos';
-      isErvasSubpage = false;
       document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
       if (element) element.classList.add('active');
 
@@ -851,10 +827,6 @@
         if (match && match[1]) return `https://lh3.googleusercontent.com/d/${match[1]}`;
       }
       return clean;
-    }
-
-    function getVideoUrlFromItem(item) {
-      return item.Arquivo_Video || item.Video_URL || item.Video_Url || item.Video || item.Video_Link || item.Youtube || item.URL_Video || '';
     }
 
     function parseLocalDate(dateStr) {
@@ -942,11 +914,6 @@
       alert('Chave PIX copiada!');
     }
 
-    function shareOnWhatsapp(title, text) {
-      const shareText = `*Tenda de Zé Cigano*\n\n*${title}*\n${text ? text.substring(0, 150) + '...' : ''}`;
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank');
-    }
-
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
     function openLoginModal() { document.getElementById('modalMsg').innerText = ''; document.getElementById('loginModal').style.display = 'flex'; }
     function closeLoginModal() { document.getElementById('loginModal').style.display = 'none'; }
@@ -1014,8 +981,7 @@
 
         if (tabName === 'Home') buildHomeAgenda(currentData);
         else if (tabName === 'Agenda') buildCalendarAgenda(currentData);
-        else if (tabName === 'Ervas_Banhos' && !isErvasSubpage) buildErvasHome(currentData);
-        else { buildCategoryChips(currentData, tabName); renderContent(currentData, tabName); }
+        else renderContent(currentData, tabName);
       } catch (err) {
         loading.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Erro ao carregar dados.';
       }
@@ -1023,7 +989,6 @@
 
     function buildHomeAgenda(data) {
       const container = document.getElementById('contentContainer');
-      document.getElementById('chipsContainer').style.display = 'none';
       container.innerHTML = '';
 
       if (!data || data.length === 0) {
@@ -1035,7 +1000,7 @@
       hoje.setHours(0, 0, 0, 0);
 
       const validos = data.filter(item => {
-        if (!isLoggedIn && !isPublicAccess(item)) return false;
+        if (!isPublicAccess(item)) return false;
         const dataStr = item.Data_Evento || item.Data;
         if (!dataStr) return false;
         const d = parseLocalDate(dataStr);
@@ -1073,7 +1038,7 @@
             ${descricao ? `<p class="card-text">${descricao}</p>` : ''}
           </div>
         `;
-        card.onclick = () => openGenericDetail(item, 'Agenda');
+        card.onclick = () => openGenericDetail(item);
         grid.appendChild(card);
       });
       container.appendChild(grid);
@@ -1081,7 +1046,6 @@
 
     function buildCalendarAgenda(data) {
       const container = document.getElementById('contentContainer');
-      document.getElementById('chipsContainer').style.display = 'none';
       container.innerHTML = '';
 
       const year = currentCalendarDate.getFullYear();
@@ -1092,7 +1056,7 @@
 
       const eventsMap = {};
       data.forEach(item => {
-        if (!isLoggedIn && !isPublicAccess(item)) return;
+        if (!isPublicAccess(item)) return;
 
         const dStr = item.Data_Evento || item.Data;
         if (!dStr) return;
@@ -1131,7 +1095,7 @@
     }
 
     function changeMonth(direction) { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction); buildCalendarAgenda(currentData); }
-    function showDayEvents(eventsList) { if (eventsList && eventsList.length > 0) openGenericDetail(eventsList[0], 'Agenda'); }
+    function showDayEvents(eventsList) { if (eventsList && eventsList.length > 0) openGenericDetail(eventsList[0]); }
 
     // =================================================================
     // GESTÃO DE MEMBROS
@@ -1139,7 +1103,6 @@
     async function carregarEExibirMembros() {
       const loading = document.getElementById('loading');
       const container = document.getElementById('contentContainer');
-      document.getElementById('chipsContainer').style.display = 'none';
       loading.style.display = 'block';
       container.innerHTML = '';
 
@@ -1227,7 +1190,7 @@
       document.getElementById('membroEmail').value = m.Email || m['E-mail'] || '';
       document.getElementById('membroEndereco').value = m.Endereco || '';
       
-      // Correção aplicada para puxar corretamente a Data de Entrada de qualquer variação de chave da planilha
+      // Correção robusta para puxar a Data de Entrada considerando variações de colunas
       const dataEntradaVal = m.Data_Entrada || m.DataEntrada || m['Data de Entrada'] || m['Data_de_Entrada'] || '';
       document.getElementById('membroDataEntrada').value = dataEntradaVal ? dataEntradaVal.split('T')[0] : '';
       
@@ -1292,70 +1255,21 @@
       carregarEExibirMembros();
     }
 
-    function buildErvasHome(data) {
-      const container = document.getElementById('contentContainer');
-      document.getElementById('chipsContainer').style.display = 'none';
-      const cats = new Set();
-      data.forEach(item => { const cat = item.Tipo_preparo || item.Tipo_Preparo || item.Classificacao || item.Categoria || 'Banhos'; if (cat.trim()) cats.add(cat.trim()); });
-
-      let categoriesHtml = '';
-      cats.forEach(cat => {
-        categoriesHtml += `<div class="erva-category-card" onclick="openErvasSubpage('${cat}')"><i class="fa-solid fa-leaf"></i><h4>${cat}</h4></div>`;
-      });
-      container.innerHTML = `<div class="ervas-home-container"><div class="ervas-intro-box"><h3><i class="fa-solid fa-seedling"></i> Guia Sagrado de Ervas</h3><div class="ervas-categories-grid">${categoriesHtml}</div></div></div>`;
-    }
-
-    function openErvasSubpage(categoria) {
-      isErvasSubpage = true;
-      document.getElementById('pageTitle').innerHTML = `<i class="fa-solid fa-leaf"></i> Ervas: ${categoria}`;
-      document.getElementById('contentContainer').innerHTML = `<button class="btn-voltar-guia" onclick="voltarGuiaPrincipal()"><i class="fa-solid fa-arrow-left"></i> Voltar</button><div id="subpageGridContainer"></div>`;
-      const filtered = currentData.filter(item => (item.Tipo_preparo || item.Tipo_Preparo || item.Classificacao || item.Categoria || '').trim().toLowerCase() === categoria.toLowerCase());
-      renderErvasGrid(filtered);
-    }
-
-    function voltarGuiaPrincipal() { isErvasSubpage = false; document.getElementById('pageTitle').innerHTML = '<i class="fa-solid fa-leaf"></i> Guia Sagrado de Ervas & Banhos'; buildErvasHome(currentData); }
-
-    function renderErvasGrid(data) {
-      const parentContainer = document.getElementById('subpageGridContainer');
-      if (!parentContainer) return;
-      parentContainer.innerHTML = '';
-      const grid = document.createElement('div');
-      grid.className = 'cards-grid';
-      data.forEach(item => {
-        if (!isLoggedIn && !isPublicAccess(item)) return;
-        const card = document.createElement('div');
-        card.className = 'card';
-        const nome = item.Nome_Erva || item.Nome_Popular || 'Erva';
-        const imagem = getCleanImageUrl(item);
-        card.innerHTML = `${imagem ? `<img src="${imagem}" class="card-img" alt="${nome}">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-leaf fa-2x"></i></div>`}<div class="card-body"><h3 class="card-title">${nome}</h3></div>`;
-        card.onclick = () => openGenericDetail(item, 'Ervas');
-        grid.appendChild(card);
-      });
-      parentContainer.appendChild(grid);
-    }
-
-    function buildCategoryChips(data, tabName) {
-      const chipsContainer = document.getElementById('chipsContainer');
-      chipsContainer.innerHTML = '';
-      if (!data || data.length === 0 || ['Home', 'Agenda', 'Ervas_Banhos', 'Membros'].includes(tabName)) { chipsContainer.style.display = 'none'; return; }
-      chipsContainer.style.display = 'flex';
-    }
-
     function renderContent(data, tabName) {
-      if (['Home', 'Agenda', 'Ervas_Banhos', 'Membros'].includes(tabName)) return;
+      if (['Home', 'Agenda', 'Membros'].includes(tabName)) return;
       const container = document.getElementById('contentContainer');
       container.innerHTML = '';
       const grid = document.createElement('div');
       grid.className = 'cards-grid';
 
       data.forEach(item => {
-        if (!isLoggedIn && !isPublicAccess(item)) return;
+        if (!isPublicAccess(item)) return;
         const card = document.createElement('div');
         card.className = 'card';
         const nome = item.Titulo_Ponto || item.Titulo || item.Nome_Evento || item.Categoria || 'Item';
         const imagem = getCleanImageUrl(item);
         card.innerHTML = `${imagem ? `<img src="${imagem}" class="card-img" alt="${nome}">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-folder fa-2x"></i></div>`}<div class="card-body"><h3 class="card-title">${nome}</h3></div>`;
-        card.onclick = () => openGenericDetail(item, tabName);
+        card.onclick = () => openGenericDetail(item);
         grid.appendChild(card);
       });
       container.appendChild(grid);

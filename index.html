@@ -854,7 +854,7 @@
         'indicacao_uso': 'Indicação de Uso', 'contraindicacoes': 'Contraindicações', 'observacoes': 'Observações',
         'modo_preparo': 'Modo de Preparo', 'para_que_serve': 'Para que Serve', 'orixa_linha': 'Orixá / Linha',
         'data_evento': 'Data do Evento', 'data_criacao': 'Data de Criação', 'conteudo_texto': 'Conteúdo / Orientação',
-        'horario': 'Hor horário', 'descricao': 'Descrição', 'categoria': 'Categoria', 'texo_aviso': 'Texto do Aviso',
+        'horario': 'Horário', 'descricao': 'Descrição', 'categoria': 'Categoria', 'texo_aviso': 'Texto do Aviso',
         'acesso_publico': 'Acesso'
       };
       const cleanKey = key.toLowerCase().trim().replace(/ /g, '_');
@@ -1187,7 +1187,7 @@
       document.getElementById('membroEmail').value = m.Email || m['E-mail'] || '';
       document.getElementById('membroEndereco').value = m.Endereco || '';
       
-      // FUNÇÃO CORRIGIDA: Varre as chaves ignorando maiúsculas/minúsculas e espaços
+      // FUNÇÃO ROBUSTA: Varre as chaves ignorando maiúsculas/minúsculas e espaços
       let dataEntradaVal = '';
       for (let key in m) {
         let cleanKey = key.toLowerCase().trim().replace(/[\s_]/g, '');

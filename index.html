@@ -1587,10 +1587,9 @@
       const rawVideo = getVideoUrlFromItem(item);
 
       let mediaHtml = '';
-      if (rawVideo) {
-        mediaHtml = `<div class="video-container">${getCleanVideoEmbed(rawVideo)}</div>`;
-      } else if (imagem) {
-        mediaHtml = `<img src="${imagem}" class="modal-banner-img" alt="${categoria}" onclick="openImageZoom('${imagem}')" title="Clique para ampliar">`;
+      if (imagem || rawVideo) {
+        const mediaSource = imagem || rawVideo;
+        mediaHtml = `<img src="${mediaSource}" class="modal-banner-img" alt="${categoria}" onclick="openImageZoom('${mediaSource}')" title="Clique para ampliar">`;
       }
 
       modalContent.innerHTML = `

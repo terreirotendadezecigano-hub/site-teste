@@ -859,7 +859,6 @@
       const generalInfoSection = document.getElementById('generalInfoSection');
       const searchContainerWrapper = document.getElementById('searchContainerWrapper');
 
-      // Ocultar barra de pesquisa geral se estiver na home de Ervas ou Pontos Cantados
       if (tabName === 'Ervas_Banhos' || tabName === 'Pontos_Cantados') {
         searchContainerWrapper.style.display = 'none';
       } else {
@@ -1447,7 +1446,7 @@
       parentContainer.appendChild(grid);
     }
 
-    /* ================= GESTÃO DE MEMBROS (CORRIGIDA E OTIMIZADA) ================= */
+    /* ================= GESTÃO DE MEMBROS ================= */
     async function carregarEExibirMembros() {
       document.getElementById('searchContainerWrapper').style.display = 'flex';
       const loading = document.getElementById('loading');
@@ -1567,13 +1566,12 @@
       document.getElementById('modalMembro').style.display = 'flex';
     }
 
+    // Função de exclusão direta atualizada (sem a caixa "confirm" nativa do navegador)
     function excluirMembro(idMembro) {
-      if (confirm("Deseja realmente excluir este membro?")) {
-        listaMembros = listaMembros.filter(item => String(item.ID_Filho || item.id) !== String(idMembro));
-        currentData = listaMembros;
-        renderTabelaMembros(listaMembros);
-        showToast("Membro removido!");
-      }
+      listaMembros = listaMembros.filter(item => String(item.ID_Filho || item.id) !== String(idMembro));
+      currentData = listaMembros;
+      renderTabelaMembros(listaMembros);
+      showToast("Membro removido com sucesso!");
     }
 
     function salvarMembro() {
@@ -1610,7 +1608,6 @@
         observacoes: observacoes
       };
 
-      // Atualização otimizada imediata na interface local para agilizar a visualização
       if (id) {
         const idx = listaMembros.findIndex(m => String(m.ID_Filho || m.id) === String(id));
         if (idx !== -1) {

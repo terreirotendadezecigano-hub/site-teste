@@ -255,6 +255,14 @@
       loadPontosData();
     };
 
+    window.onpopstate = function(event) {
+      if (document.getElementById('detailModal').style.display === 'flex') {
+        closeDetail(false);
+        return;
+      }
+      checkUrlParams();
+    };
+
     function showToast(message, type = 'info') {
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
@@ -274,10 +282,35 @@
         const response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Pontos_Cantados`);
         currentData = await response.json();
         loading.style.display = 'none';
-        buildPontosHome(currentData);
+        checkUrlParams();
       } catch (err) {
         loading.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Erro ao carregar pontos cantados.';
       }
+    }
+
+    function checkUrlParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const pontoId = urlParams.get('ponto') || urlParams.get('id');
+      const linhaParam = urlParams.get('linha');
+
+      if (pontoId && currentData.length > 0) {
+        const found = currentData.find(item => {
+          const id = item.ID || item.Id || item.Titulo_Ponto || item.Titulo;
+          return id && id.toString().trim() === pontoId.trim();
+        });
+        if (found) {
+          buildPontosHome(currentData);
+          openPontoDetail(found, false);
+          return;
+        }
+      }
+
+      if (linhaParam) {
+        openPontosSubpage(linhaParam, false);
+        return;
+      }
+
+      buildPontosHome(currentData);
     }
 
     function getCleanImageUrl(item) {
@@ -333,9 +366,14 @@
       container.innerHTML = `<div class="pontos-categories-grid">${cardsHtml}</div>`;
     }
 
-    function openPontosSubpage(linhaOrixa) {
+    function openPontosSubpage(linhaOrixa, pushState = true) {
       isSubpageActive = true;
       document.getElementById('pageTitle').innerHTML = `<i class="fa-solid fa-music"></i> Pontos de ${linhaOrixa}`;
+
+      if (pushState) {
+        const newUrl = `${window.location.pathname}?linha=${encodeURIComponent(linhaOrixa)}`;
+        window.history.pushState({ linha: linhaOrixa }, '', newUrl);
+      }
 
       const filtered = currentData.filter(item => {
         let l = item.Orixa_Linha || item.Orixa || item.Linha || item.Categoria || '';
@@ -347,6 +385,7 @@
 
     function voltarPontosPrincipal() {
       document.getElementById('searchInput').value = '';
+      window.history.pushState({}, '', window.location.pathname);
       buildPontosHome(currentData);
     }
 
@@ -400,7 +439,7 @@
       renderPontosGrid(filtered);
     }
 
-    function openPontoDetail(item) {
+    function openPontoDetail(item, pushState = true) {
       const modalContent = document.getElementById('detailModalContent');
       const titulo = item.Titulo_Ponto || item.Titulo || 'Ponto Cantado';
       const linha = item.Orixa_Linha || item.Linha || 'Geral';
@@ -408,6 +447,12 @@
       const observacoes = item.Observacoes || item.Obs || '';
       const mediaUrl = item.Audio_URL || item.Audio || item.Video_URL || item.Video || '';
       const imagem = getCleanImageUrl(item);
+      const itemId = item.ID || item.Id || titulo;
+
+      if (pushState) {
+        const newUrl = `${window.location.pathname}?ponto=${encodeURIComponent(itemId)}`;
+        window.history.pushState({ ponto: itemId }, '', newUrl);
+      }
 
       let mediaTopContent = '';
       if (mediaUrl) {
@@ -420,7 +465,8 @@
         }
       }
 
-      currentShareText = `*Tenda de Zé Cigano*\n🎶 *${titulo}* (${linha})\n\n${letra ? `*Letra:*\n${letra}` : ''}`;
+      const shareUrl = `${window.location.origin}${window.location.pathname}?ponto=${encodeURIComponent(itemId)}`;
+      currentShareText = `*Tenda de Zé Cigano*\n🎶 *${titulo}* (${linha})\n\n${letra ? `*Letra:*\n${letra}\n\n` : ''}Acesse: ${shareUrl}`;
 
       modalContent.innerHTML = `
         <div class="modal-header">
@@ -454,8 +500,19 @@
       }
     }
 
-    function closeDetail() { document.getElementById('detailModal').style.display = 'none'; }
-    function closeModalOnBackdrop(e) { if (e.target.id === 'detailModal') closeDetail(); }
+    function closeDetail(updateHistory = true) { 
+      document.getElementById('detailModal').style.display = 'none'; 
+      if (updateHistory) {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('ponto') || urlParams.has('id')) {
+          window.history.back();
+        }
+      }
+    }
+
+    function closeModalOnBackdrop(e) { 
+      if (e.target.id === 'detailModal') closeDetail(); 
+    }
   </script>
 </body>
 </html>

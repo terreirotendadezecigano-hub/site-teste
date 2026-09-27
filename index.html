@@ -1530,6 +1530,246 @@
 
     function closeGenericDetail() { document.getElementById('detailModal').style.display = 'none'; }
     function closeModalOnBackdrop(e) { if (e.target.id === 'detailModal') closeGenericDetail(); }
+
+    // Variable global de controle de estado e edição
+let currentEditingId = null;
+let isSubmitting = false; // Trava para impedir envio/edição duplicada
+
+document.addEventListener('DOMContentLoaded', () => {
+    initApp();
+});
+
+function initApp() {
+    // Carrega inicialmente a seção/aba ativa
+    loadPageData('Pontos_Cantados');
+}
+
+/**
+ * Função genérica de busca de dados da planilha via Web App (Google Apps Script)
+ */
+function loadPageData(tabName) {
+    const container = document.getElementById('contentContainer') || document.getElementById('pontosContainer');
+    if (!container) return;
+
+    // Feedback de carregamento
+    container.innerHTML = '<div class="loading">Carregando dados...</div>';
+
+    // Substitua pela URL da sua implantação do Google Apps Script
+    const webAppUrl = 'SUA_URL_DO_WEB_APP';
+
+    fetch(`${webAppUrl}?action=read&sheet=${encodeURIComponent(tabName)}`)
+        .then(response => {
+            if (!response.ok) throw new Error('Erro ao obter dados do servidor.');
+            return response.json();
+        })
+        .then(data => {
+            if (tabName === 'Pontos_Cantados') {
+                renderPontosCantados(data);
+            } else {
+                renderGenericContent(data);
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar aba:', error);
+            container.innerHTML = '<p class="error-msg">Não foi possível carregar as informações no momento.</p>';
+        });
+}
+
+/**
+ * Renderiza os Pontos Cantados preservando os destaques formatados e tratando dados ausentes
+ */
+function renderPontosCantados(pontos) {
+    const container = document.getElementById('contentContainer') || document.getElementById('pontosContainer');
+    if (!container) return;
+
+    if (!pontos || !Array.isArray(pontos) || pontos.length === 0) {
+        container.innerHTML = '<p class="empty-msg">Nenhum ponto cantado cadastrado.</p>';
+        return;
+    }
+
+    let html = '<div class="pontos-grid">';
+
+    pontos.forEach((item) => {
+        // Mapeamento flexível de propriedades (previne telas pretas/em branco se a coluna mudar de nome)
+        const id = item.ID || item.id || item.ID_Ponto || '';
+        const titulo = item.Titulo || item.titulo || item.Nome || 'Ponto Cantado';
+        const orixa = item.Orixa || item.orixa || item.Linha || '';
+        const letra = item.Letra || item.letra || item.Letra_Ponto || '';
+        const audio = item.Audio || item.audio || item.Link || '';
+
+        // Formatação da letra preservando quebras de linha
+        const letraFormatada = letra ? letra.replace(/\n/g, '<br>') : '<em>Letra não cadastrada.</em>';
+
+        html += `
+            <div class="card-ponto" data-id="${id}">
+                <div class="card-header">
+                    <h3>${titulo}</h3>
+                    ${orixa ? `<span class="badge-orixa">${orixa}</span>` : ''}
+                </div>
+                <div class="letra-ponto">
+                    ${letraFormatada}
+                </div>
+                ${audio ? `
+                    <div class="audio-player">
+                        <audio controls src="${audio}"></audio>
+                    </div>
+                ` : ''}
+                <div class="card-actions">
+                    <button class="btn-edit" onclick="openEditModal('${id}')">
+                        <i class="fas fa-edit"></i> Editar
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+/**
+ * Monta os detalhes em HTML (Destaques e Chave/Valor) dentro dos Modais
+ */
+function buildDetailsHTML(dataObject) {
+    let info = '';
+    let bannerImg = '';
+    let mediaTopContent = '';
+
+    for (const [key, val] of Object.entries(dataObject)) {
+        if (val && val.toString().trim() !== '') {
+            // Se a chave contiver a palavra 'data', aplica formatação de data
+            if (key.toLowerCase().includes('data')) {
+                info += `<p><strong>${formatKeyName(key)}:</strong> ${formatDate(val)}</p>`;
+            } else if (!['imagem', 'banner', 'id'].includes(key.toLowerCase())) {
+                info += `<p><strong>${formatKeyName(key)}:</strong> ${val}</p>`;
+            }
+        }
+    }
+
+    // Processa imagem de topo caso exista
+    const imagem = dataObject.Imagem || dataObject.imagem || dataObject.Banner || '';
+    if (imagem && !mediaTopContent) {
+        bannerImg = `<img src="${imagem}" class="modal-banner-img" alt="Mídia">`;
+    }
+
+    // Estrutura completa do Modal com Destaques
+    const modalContent = document.getElementById('modalContent') || document.getElementById('detailModal');
+    if (modalContent) {
+        modalContent.innerHTML = `
+            <div class="modal-header">
+                <h3 style="color: var(--gold-primary); font-family: var(--font-title);">
+                    ${dataObject.Nome || dataObject.Titulo || 'Detalhes do Registro'}
+                </h3>
+                <button class="modal-close-icon" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                ${mediaTopContent}
+                ${bannerImg}
+                <div class="modal-details-box">
+                    ${info || '<p>Nenhum detalhe adicional informado.</p>'}
+                </div>
+            </div>
+        `;
+        
+        // Exibe o modal
+        const detailModal = document.getElementById('detailModal');
+        if (detailModal) detailModal.style.display = 'block';
+    }
+}
+
+/**
+ * Tratamento e prevenção de envio DUPLICADO em formulários de edição
+ */
+const editForm = document.getElementById('editForm') || document.getElementById('cadastroForm');
+
+if (editForm) {
+    // Remove qualquer listener prévio para evitar execuções redundantes
+    editForm.removeEventListener('submit', handleFormSubmit);
+    editForm.addEventListener('submit', handleFormSubmit);
+}
+
+function handleFormSubmit(e) {
+    e.preventDefault();
+
+    // Bloqueia caso já esteja processando uma requisição
+    if (isSubmitting) return;
+    isSubmitting = true;
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Salvando...';
+    }
+
+    const formData = new FormData(e.target);
+    const payload = Object.fromEntries(formData.entries());
+
+    if (currentEditingId) {
+        payload.id = currentEditingId;
+        payload.action = 'update';
+    } else {
+        payload.action = 'create';
+    }
+
+    const webAppUrl = 'SUA_URL_DO_WEB_APP';
+
+    fetch(webAppUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(result => {
+        if (result.status === 'success' || result.result === 'success') {
+            closeModal();
+            loadPageData('Pontos_Cantados');
+        } else {
+            alert('Erro ao salvar os dados: ' + (result.message || 'Tente novamente.'));
+        }
+    })
+    .catch(err => {
+        console.error('Erro na requisição:', err);
+        alert('Falha na comunicação com o servidor.');
+    })
+    .finally(() => {
+        // Libera a trava do formulário
+        isSubmitting = false;
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Salvar Alterações';
+        }
+    });
+}
+
+/**
+ * Funções Auxiliares de Formatação e Modais
+ */
+function openEditModal(id) {
+    currentEditingId = id;
+    const modal = document.getElementById('detailModal') || document.getElementById('editModal');
+    if (modal) modal.style.display = 'block';
+}
+
+function closeModal() {
+    currentEditingId = null;
+    const modal = document.getElementById('detailModal') || document.getElementById('editModal');
+    if (modal) modal.style.display = 'none';
+}
+
+function formatKeyName(key) {
+    return key
+        .replace(/_/g, ' ')
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, str => str.toUpperCase())
+        .trim();
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    return date.toLocaleDateString('pt-BR');
+}
   </script>
 </body>
 </html>

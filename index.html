@@ -1286,7 +1286,7 @@
       parentContainer.appendChild(grid);
     }
 
-    /* ================= PONTOS CANTADOS (PÁGINA INICIAL, CARDS POR LINHA/ENTIDADE E MODAL DINÂMICO) ================= */
+    /* ================= PONTOS CANTADOS ================= */
     function getPontoCategory(item) {
       return item.Linha_Entidade || item.Linha || item.Entidade || item.Orixa_Linha || item.Categoria || item.LinhaEntidade || 'Geral';
     }
@@ -1617,14 +1617,9 @@
       let info = '';
       let mediaTopContent = '';
 
-      // --- TRATAMENTO DINÂMICO DE ÁUDIO OU VÍDEO CONFORME AS COLUNAS SOLICITADAS ---
       if (tabName === 'Pontos_Cantados' || currentTab === 'Pontos_Cantados') {
         const audioUrl = item.PontoAudio_URL || item.Audio_URL || item.Audio || item.OrigemAudio_Ponto || '';
         const videoUrl = item.PontoVideo_URL || item.URLVideo_URL || item.URLVideo || item.Video_URL || item.Video || item.MP4 || '';
-
-        if (audioUrl && !audioUrl.toLowerCase().includes('http')) {
-          // Caso seja apenas texto descritivo de origem, mas se houver URL válida tratamos abaixo:
-        }
 
         let cleanAudio = audioUrl.toString().trim();
         if (cleanAudio.includes('drive.google.com') || cleanAudio.includes('docs.google.com')) {
@@ -1638,7 +1633,6 @@
           if (match && match[1]) cleanVideo = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
         }
 
-        // Prioriza vídeo se existir, senão carrega áudio
         if (cleanVideo && cleanVideo.startsWith('http')) {
           if (cleanVideo.includes('youtube.com') || cleanVideo.includes('youtu.be')) {
             let ytEmbed = cleanVideo;
@@ -1652,8 +1646,7 @@
           mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanAudio}">Seu navegador não suporta áudio.</audio>`;
         }
 
-        // Montagem detalhada do Ponto Cantado solicitada
-        const linhaEntidade = item.Linha_Entidade || '';
+        const linhaEntidade = item.Linha_Entidade || item.Linha || item.Entidade || '';
         const entidadeTipo = item.EntidadeTipo || '';
         const letraponto = item.Letra_Ponto || item.Letra || item.Conteudo_Texto || '';
         const origemAudio = item.OrigemAudio_Ponto || '';

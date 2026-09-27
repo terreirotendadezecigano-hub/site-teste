@@ -209,7 +209,7 @@
     .card-datetime { font-size: 0.68rem; color: var(--gold-primary); margin-bottom: 3px; }
     .card-text { font-size: 0.7rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
 
-    /* Estilos do Guia de Ervas */
+    /* Guia de Ervas */
     .ervas-home-container { display: flex; flex-direction: column; gap: 15px; width: 100%; }
     .ervas-intro-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 15px; text-align: center; width: 100%; }
     .ervas-intro-box h3 { color: var(--gold-primary); margin-top: 0; font-size: 1rem; }
@@ -670,7 +670,6 @@
     </div>
   </div>
 
-  <!-- MODAL DE CADASTRO/EDIÇÃO DE MEMBROS -->
   <div class="modal-overlay" id="modalMembro">
     <div class="modal-box" style="max-width:520px;">
       <div class="modal-header">
@@ -891,8 +890,7 @@
         'modo_preparo': 'Modo de Preparo', 'para_que_serve': 'Para que Serve', 'orixa_linha': 'Orixá / Linha',
         'data_evento': 'Data do Evento', 'data_criacao': 'Data de Criação', 'conteudo_texto': 'Conteúdo / Orientação',
         'horario': 'Horário', 'descricao': 'Descrição', 'categoria': 'Categoria', 'texo_aviso': 'Texto do Aviso',
-        'acesso_publico': 'Acesso', 'nome_erva': 'Nome da Erva', 'nome_popular': 'Nome Popular',
-        'titulo_ponto': 'Título do Ponto', 'letra_ponto': 'Letra do Ponto'
+        'acesso_publico': 'Acesso', 'nome_erva': 'Nome da Erva', 'nome_popular': 'Nome Popular'
       };
       const cleanKey = key.toLowerCase().trim().replace(/ /g, '_');
       if (dictionary[cleanKey]) return dictionary[cleanKey];
@@ -1023,6 +1021,36 @@
       } catch (err) {
         loading.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Erro ao carregar dados.';
       }
+    }
+
+    function filterCards() {
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      if (currentTab === 'Ervas_Banhos' && !isErvasSubpage) {
+        if (!query) { buildErvasHome(currentData); return; }
+        const filtered = currentData.filter(item => {
+          return Object.values(item).some(val => val && val.toString().toLowerCase().includes(query));
+        });
+        isErvasSubpage = true;
+        document.getElementById('pageTitle').innerHTML = `<i class="fa-solid fa-leaf"></i> Ervas (Busca: "${query}")`;
+        const container = document.getElementById('contentContainer');
+        container.innerHTML = `
+          <button class="btn-voltar-guia" onclick="voltarGuiaPrincipal()"><i class="fa-solid fa-arrow-left"></i> Voltar aos Tipos de Preparo</button>
+          <div id="subpageGridContainer"></div>
+        `;
+        renderErvasGrid(filtered);
+        return;
+      }
+
+      const filtered = currentData.filter(item => {
+        if (!isPublicAccess(item)) return false;
+        return Object.values(item).some(val => val && val.toString().toLowerCase().includes(query));
+      });
+
+      if (currentTab === 'Home') buildHomeAgenda(filtered);
+      else if (currentTab === 'Agenda') buildCalendarAgenda(filtered);
+      else if (currentTab === 'Membros') {
+        renderTabelaMembros(filtered);
+      } else renderContent(filtered, currentTab);
     }
 
     function buildHomeAgenda(data) {
@@ -1263,10 +1291,6 @@
       parentContainer.appendChild(grid);
     }
 
-    /* ======================================================== */
-    /* === MÓDULO DE GESTÃO DE MEMBROS (EDITAR, SALVAR, EXCLUIR) */
-    /* ======================================================== */
-
     async function carregarEExibirMembros() {
       const loading = document.getElementById('loading');
       const container = document.getElementById('contentContainer');
@@ -1309,7 +1333,7 @@
         const nome = m.Nome_Completo || m.Nome || '';
         const email = m.Email || m['E-mail'] || 'Não informado';
         const tel = m.Telefone || '';
-        const cleanPhone = tel ? tel.replace(/\D/g, '') : '';
+        const cleanPhone = tel ? tel.toString().replace(/\D/g, '') : '';
         let actionsContact = cleanPhone ? `<span>${tel}</span><div style="margin-top: 4px; display: flex; gap: 4px;"><a href="tel:${cleanPhone}" class="btn-action-icon" title="Ligar"><i class="fa-solid fa-phone"></i> Ligar</a><a href="https://wa.me/${cleanPhone}" target="_blank" class="btn-action-icon btn-whatsapp-icon" title="WhatsApp"><i class="fa-brands fa-whatsapp"></i> Zap</a></div>` : 'Não informado';
 
         const tr = document.createElement('tr');
@@ -1387,27 +1411,15 @@
 
     function excluirMembro(idMembro) {
       if (confirm("Deseja realmente excluir este membro?")) {
-        const payload = { acao: 'excluir', id: idMembro };
-        
-        fetch(WEB_APP_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload)
-        })
-        .then(() => {
-          alert("Solicitação de exclusão enviada com sucesso!");
-          setTimeout(() => carregarEExibirMembros(), 1500);
-        })
-        .catch(err => {
-          console.error("Erro ao excluir:", err);
-          alert("Erro ao excluir membro.");
-        });
+        listaMembros = listaMembros.filter(item => String(item.ID_Filho || item.id) !== String(idMembro));
+        currentData = listaMembros;
+        renderTabelaMembros(listaMembros);
+        alert("Membro removido!");
       }
     }
 
     function salvarMembro() {
-      const id = document.getElementById('membroId').value.trim();
+      const id = document.getElementById('membroId').value;
       const nome_completo = document.getElementById('membroNome').value.trim();
       const data_nascimento = document.getElementById('membroDataNasc').value;
       const telefone = document.getElementById('membroTelefone').value.trim();
@@ -1426,8 +1438,7 @@
       }
 
       const dadosMembro = {
-        acao: id ? 'editar' : 'cadastrar',
-        id: id || ('ID_' + new Date().getTime()),
+        id: id,
         nome_completo: nome_completo,
         data_nascimento: data_nascimento,
         telefone: telefone,
@@ -1450,7 +1461,7 @@
       .then(() => {
         alert("Membro salvo com sucesso!");
         closeMembroModal();
-        setTimeout(() => carregarEExibirMembros(), 1500);
+        carregarEExibirMembros();
       })
       .catch(err => {
         console.error("Erro ao salvar:", err);
@@ -1473,16 +1484,7 @@
         if (!isPublicAccess(item)) return;
         const card = document.createElement('div');
         card.className = 'card';
-        
-        let nome = '';
-        if (tabName === 'Mural_Imagens') {
-          nome = item.Titulo || item.Nome_Aviso || item.Titulo_Aviso || item.Categoria || 'Aviso';
-        } else if (tabName === 'Pontos_Cantados') {
-          nome = item.Titulo_Ponto || item.Titulo || item.Nome_Ponto || 'Ponto Cantado';
-        } else {
-          nome = item.Titulo_Ponto || item.Titulo || item.Nome_Evento || item.Categoria || 'Item';
-        }
-
+        const nome = item.Titulo_Ponto || item.Titulo || item.Nome_Evento || item.Categoria || 'Item';
         const imagem = getCleanImageUrl(item);
         
         card.innerHTML = `${imagem ? `<img src="${imagem}" class="card-img" alt="${nome}">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-folder fa-2x"></i></div>`}<div class="card-body"><h3 class="card-title">${nome}</h3></div>`;
@@ -1494,35 +1496,43 @@
 
     function openGenericDetail(item, tabName) {
       const modalContent = document.getElementById('detailModalContent');
-      let titulo = '';
-      if (tabName === 'Mural_Imagens' || currentTab === 'Mural_Imagens') {
-        titulo = item.Titulo || item.Nome_Aviso || item.Titulo_Aviso || 'Aviso';
-      } else if (tabName === 'Pontos_Cantados' || currentTab === 'Pontos_Cantados') {
-        titulo = item.Titulo_Ponto || item.Titulo || item.Nome_Ponto || 'Ponto Cantado';
-      } else {
-        titulo = item.Nome_Evento || item.Titulo_Ponto || item.Titulo || item.Nome_Erva || item.Categoria || 'Detalhes';
-      }
-
+      const titulo = item.Nome_Evento || item.Titulo_Ponto || item.Titulo || item.Nome_Erva || item.Categoria || 'Detalhes';
       const imagem = getCleanImageUrl(item);
       
       let info = '';
       let mediaTopContent = '';
 
-      const mediaUrl = item.Video_URL || item.Video || item.Audio_URL || item.Audio || item.MP4 || item.Arquivo_URL || '';
+      /* --- TRATAMENTO COMPLETO DE VÍDEO (YOUTUBE / DRIVE) E ÁUDIO --- */
+      const mediaUrl = item.Video_URL || item.Video || item.Audio_URL || item.Audio || item.MP4 || item.Arquivo_URL || item.Link_Externo || '';
       if (mediaUrl) {
         let cleanMedia = mediaUrl.toString().trim();
-        if (cleanMedia.includes('drive.google.com') || cleanMedia.includes('docs.google.com')) {
-          const match = cleanMedia.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanMedia.match(/id=([a-zA-Z0-9_-]+)/);
-          if (match && match[1]) cleanMedia = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
-        }
-        
         const lowerMedia = cleanMedia.toLowerCase();
-        const isAudio = lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio') || tabName === 'Audio';
-        
-        if (isAudio) {
-          mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>`;
+
+        // Verificação do YouTube
+        if (cleanMedia.includes('youtube.com') || cleanMedia.includes('youtu.be')) {
+          let videoId = '';
+          if (cleanMedia.includes('youtu.be/')) {
+            videoId = cleanMedia.split('youtu.be/')[1].split('?')[0];
+          } else if (cleanMedia.includes('watch?v=')) {
+            videoId = cleanMedia.split('watch?v=')[1].split('&')[0];
+          }
+          if (videoId) {
+            mediaTopContent = `<div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:6px; margin-bottom:10px;"><iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="position:absolute; top:0; left:0; width:100%; height:100%;"></iframe></div>`;
+          }
         } else {
-          mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
+          // Trata Google Drive / Direct URL
+          if (cleanMedia.includes('drive.google.com') || cleanMedia.includes('docs.google.com')) {
+            const match = cleanMedia.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanMedia.match(/id=([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) cleanMedia = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
+          }
+          
+          const isAudio = lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio') || tabName === 'Audio';
+          
+          if (isAudio) {
+            mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>`;
+          } else if (lowerMedia.endsWith('.mp4') || lowerMedia.endsWith('.webm') || lowerMedia.includes('video')) {
+            mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
+          }
         }
       }
 
@@ -1532,50 +1542,40 @@
 
         if (letra) info += `<p><strong>Letra do Ponto:</strong><br><span style="white-space: pre-line;">${letra}</span></p>`;
         if (observacoes) info += `<p><strong>Observações:</strong><br>${observacoes}</p>`;
-
       } else {
+        const ignoreKeys = ['id', 'id_ponto', 'id_evento', 'id_erva', 'id_imagem', 'id_guia', 'foto_url', 'imagem_url', 'arquivo_url', 'anexo_url', 'video_url', 'audio_url', 'foto_ervas', 'imagem_agenda', 'anexo'];
         for (let key in item) {
-          let cleanKeyLower = key.toLowerCase().trim().replace(/[\s_]/g, '');
-          
-          if (
-            cleanKeyLower.includes('id') || 
-            cleanKeyLower === 'destacarpopup' || 
-            cleanKeyLower === 'arquivourl' || 
-            cleanKeyLower === 'arquivoimagem' || 
-            cleanKeyLower === 'anexo' || 
-            cleanKeyLower === 'anexourl' || 
-            cleanKeyLower === 'acessopublico' || 
-            cleanKeyLower === 'fotourl' || 
-            cleanKeyLower === 'fotoervas'
-          ) continue;
-
-          if (item[key]) {
-            info += `<p><strong>${formatKeyName(key)}:</strong> ${item[key]}</p>`;
+          if (ignoreKeys.includes(key.toLowerCase())) continue;
+          let val = item[key];
+          if (val && val.toString().trim() !== '') {
+            if (key.toLowerCase().includes('data')) val = formatDateBR(val);
+            info += `<p><strong>${formatKeyName(key)}:</strong> ${val}</p>`;
           }
         }
       }
 
+      let bannerImg = '';
+      if (imagem && !mediaTopContent) {
+        bannerImg = `<img src="${imagem}" class="modal-banner-img" alt="${titulo}" onclick="openImageZoom('${imagem}')" title="Clique para ampliar">`;
+      }
+
       modalContent.innerHTML = `
-        <div class="modal-header"><h3 style="font-size:0.95rem; margin:0;">${titulo}</h3><button class="modal-close-icon" onclick="closeGenericDetail()">&times;</button></div>
+        <div class="modal-header">
+          <h3 style="color:var(--gold-primary); font-size:1rem; margin:0;">${titulo}</h3>
+          <button class="modal-close-icon" onclick="closeGenericDetail()">&times;</button>
+        </div>
         <div class="modal-body">
           ${mediaTopContent}
-          ${(!mediaTopContent && imagem) ? `<img src="${imagem}" class="modal-banner-img" onclick="openImageZoom('${imagem}')">` : ''}
-          <div class="modal-details-box">${info || '<p>Nenhum detalhe disponível.</p>'}</div>
+          ${bannerImg}
+          <div class="modal-details-box">${info || '<p>Sem informações adicionais.</p>'}</div>
         </div>
-        <div class="modal-actions"><button class="btn-submit" onclick="closeGenericDetail()">Fechar</button></div>
       `;
+
       document.getElementById('detailModal').style.display = 'flex';
     }
 
     function closeGenericDetail() { document.getElementById('detailModal').style.display = 'none'; }
     function closeModalOnBackdrop(e) { if (e.target.id === 'detailModal') closeGenericDetail(); }
-
-    function filterCards() {
-      const query = document.getElementById('searchInput').value.toLowerCase();
-      const filtered = currentData.filter(item => Object.values(item).some(val => val && val.toString().toLowerCase().includes(query)));
-      if (currentTab === 'Ervas_Banhos' && isErvasSubpage) renderErvasGrid(filtered);
-      else renderContent(filtered, currentTab);
-    }
   </script>
 </body>
 </html>

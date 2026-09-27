@@ -572,7 +572,6 @@
     /**
      * FUNÇÃO: showToast
      * Descrição: Exibe mensagens informativas ou de erro estilo Toast flutuante.
-     * Final da função showToast.
      */
     function showToast(message, type = 'info') {
       const container = document.getElementById('toast-container');
@@ -596,7 +595,6 @@
     /**
      * FUNÇÃO: showConfirmDialog
      * Descrição: Exibe caixa de diálogo interativa de confirmação.
-     * Final da função showConfirmDialog.
      */
     function showConfirmDialog(title, message, onConfirmCallback) {
       document.getElementById('confirmModalTitle').innerText = title;
@@ -646,7 +644,6 @@
     /**
      * FUNÇÃO: switchTab
      * Descrição: Alterna as abas do menu de navegação e carrega as respectivas informações.
-     * Final da função switchTab.
      */
     function switchTab(tabName, element) {
       currentTab = tabName;
@@ -1302,11 +1299,6 @@
       document.getElementById('modalMembro').style.display = 'flex';
     }
 
-    /**
-     * FUNÇÃO DESTAQUE: editarMembro
-     * Descrição: Carrega os dados do membro selecionado e guarda o ID no campo oculta (membroId).
-     * Final da função editarMembro.
-     */
     function editarMembro(idMembro) {
       const m = listaMembros.find(item => String(item.ID_Filho || item.id).trim() === String(idMembro).trim());
       if (!m) { 
@@ -1338,11 +1330,6 @@
       document.getElementById('modalMembro').style.display = 'flex';
     }
 
-    /**
-     * FUNÇÃO DESTAQUE: excluirMembro
-     * Descrição: Confirma a remoção e dispara solicitação POST para a Web App.
-     * Final da função excluirMembro.
-     */
     function excluirMembro(idMembro) {
       showConfirmDialog("Excluir Registro", "Deseja realmente remover este membro da planilha?", () => {
         showToast("Enviando solicitação de exclusão...", "info");
@@ -1364,11 +1351,6 @@
       });
     }
 
-    /**
-     * FUNÇÃO DESTAQUE: salvarMembro
-     * Descrição: Faz o envio das informações de inclusão ou edição ao Google Apps Script.
-     * Final da função salvarMembro.
-     */
     function salvarMembro() {
       if (isSubmitting) return;
 
@@ -1498,9 +1480,17 @@
         if (letra) info += `<p><strong>Letra do Ponto:</strong><br><span style="white-space: pre-line;">${letra}</span></p>`;
         if (observacoes) info += `<p><strong>Observações:</strong><br>${observacoes}</p>`;
       } else {
-        const ignoreKeys = ['id', 'id_ponto', 'id_evento', 'id_erva', 'id_imagem', 'id_guia', 'foto_url', 'imagem_url', 'arquivo_url', 'anexo_url', 'video_url', 'audio_url', 'foto_ervas', 'imagem_agenda', 'anexo'];
+        /* Lista de chaves ignoradas / ocultadas do modal de detalhes */
+        const ignoreKeys = [
+          'id', 'id_ponto', 'id_evento', 'id_erva', 'id_imagem', 'id_guia', 
+          'foto_url', 'imagem_url', 'arquivo_url', 'anexo_url', 'video_url', 
+          'audio_url', 'foto_ervas', 'imagem_agenda', 'anexo', 'imagem_cartaz', 
+          'imagem', 'arquivo', 'destacar', 'popup', 'acesso_publico', 'acesso', 
+          'visibilidade', 'pagina', 'pagina_pontos'
+        ];
+
         for (let key in item) {
-          if (ignoreKeys.includes(key.toLowerCase())) continue;
+          if (ignoreKeys.includes(key.toLowerCase().trim())) continue;
           let val = item[key];
           if (val && val.toString().trim() !== '') {
             if (key.toLowerCase().includes('data')) val = formatDateBR(val);

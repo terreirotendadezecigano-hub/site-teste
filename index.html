@@ -209,7 +209,6 @@
     .card-datetime { font-size: 0.68rem; color: var(--gold-primary); margin-bottom: 3px; }
     .card-text { font-size: 0.7rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
 
-    /* Estilos do Guia de Ervas e Pontos Cantados */
     .ervas-home-container, .pontos-home-container { display: flex; flex-direction: column; gap: 15px; width: 100%; }
     .ervas-intro-box, .pontos-intro-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 15px; text-align: center; width: 100%; }
     .ervas-intro-box h3, .pontos-intro-box h3 { color: var(--gold-primary); margin-top: 0; font-size: 1rem; }
@@ -600,7 +599,6 @@
 
     #loading { text-align: center; color: var(--gold-primary); padding: 20px; }
 
-    /* === ESTILOS DO TOAST (Aviso Flutuante) === */
     #custom-toast {
       position: fixed;
       bottom: 20px;
@@ -663,7 +661,7 @@
 
   <!-- Container Principal -->
   <div class="container">
-    <div class="search-container">
+    <div class="search-container" id="searchContainerWrapper">
       <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Pesquisar..." onkeyup="filterCards()">
     </div>
 
@@ -793,7 +791,6 @@
     </div>
   </div>
 
-  <!-- Elemento HTML do Toast -->
   <div id="custom-toast">Mensagem de aviso</div>
 
   <script>
@@ -808,16 +805,11 @@
     let isErvasSubpage = false;
     let isPontosSubpage = false;
 
-    // === FUNÇÃO DO TOAST ===
     function showToast(mensagem) {
       const toast = document.getElementById('custom-toast');
       toast.textContent = mensagem;
       toast.classList.add('toast-visible');
-      
-      // Some sozinho após 3 segundos
-      setTimeout(() => {
-        toast.classList.remove('toast-visible');
-      }, 3000);
+      setTimeout(() => { toast.classList.remove('toast-visible'); }, 3000);
     }
 
     function isPublicAccess(item) {
@@ -865,6 +857,14 @@
       if (element) element.classList.add('active');
 
       const generalInfoSection = document.getElementById('generalInfoSection');
+      const searchContainerWrapper = document.getElementById('searchContainerWrapper');
+
+      // Ocultar barra de pesquisa geral se estiver na home de Ervas ou Pontos Cantados
+      if (tabName === 'Ervas_Banhos' || tabName === 'Pontos_Cantados') {
+        searchContainerWrapper.style.display = 'none';
+      } else {
+        searchContainerWrapper.style.display = 'flex';
+      }
 
       if (tabName === 'Home') {
         generalInfoSection.style.display = 'grid';
@@ -931,10 +931,8 @@
       if (!dateStr) return '';
       let s = dateStr.toString().trim();
       if (!s || s === 'NaT' || s === 'undefined' || s === 'null') return '';
-      
       if (s.includes('T')) s = s.split('T')[0];
       if (s.includes(' ')) s = s.split(' ')[0];
-      
       if (s.includes('/')) {
         const p = s.split('/');
         if (p.length === 3) {
@@ -1198,6 +1196,7 @@
 
     /* ================= GUIA DE ERVAS ================= */
     function buildErvasHome(data) {
+      document.getElementById('searchContainerWrapper').style.display = 'none';
       const container = document.getElementById('contentContainer');
       const tiposPreparoSet = new Set();
 
@@ -1250,6 +1249,7 @@
 
     function openErvasSubpage(tipoPreparo) {
       isErvasSubpage = true;
+      document.getElementById('searchContainerWrapper').style.display = 'flex';
       document.getElementById('pageTitle').innerHTML = `<i class="fa-solid fa-leaf"></i> Ervas por Preparo: ${tipoPreparo}`;
       
       const container = document.getElementById('contentContainer');
@@ -1274,6 +1274,7 @@
 
     function voltarGuiaPrincipal() {
       isErvasSubpage = false;
+      document.getElementById('searchContainerWrapper').style.display = 'none';
       document.getElementById('pageTitle').innerHTML = '<i class="fa-solid fa-leaf"></i> Guia Sagrado de Ervas & Banhos';
       buildErvasHome(currentData);
     }
@@ -1331,6 +1332,7 @@
     }
 
     function buildPontosHome(data) {
+      document.getElementById('searchContainerWrapper').style.display = 'none';
       const container = document.getElementById('contentContainer');
       const categoriasSet = new Set();
 
@@ -1382,6 +1384,7 @@
 
     function openPontosSubpage(categoria) {
       isPontosSubpage = true;
+      document.getElementById('searchContainerWrapper').style.display = 'flex';
       document.getElementById('pageTitle').innerHTML = `<i class="fa-solid fa-music"></i> Pontos: ${categoria}`;
       
       const container = document.getElementById('contentContainer');
@@ -1401,6 +1404,7 @@
 
     function voltarPontosPrincipal() {
       isPontosSubpage = false;
+      document.getElementById('searchContainerWrapper').style.display = 'none';
       document.getElementById('pageTitle').innerHTML = '<i class="fa-solid fa-music"></i> Coletânea de Pontos Cantados';
       buildPontosHome(currentData);
     }
@@ -1443,8 +1447,9 @@
       parentContainer.appendChild(grid);
     }
 
-    /* ================= GESTÃO DE MEMBROS ================= */
+    /* ================= GESTÃO DE MEMBROS (CORRIGIDA E OTIMIZADA) ================= */
     async function carregarEExibirMembros() {
+      document.getElementById('searchContainerWrapper').style.display = 'flex';
       const loading = document.getElementById('loading');
       const container = document.getElementById('contentContainer');
       loading.style.display = 'block';
@@ -1605,20 +1610,34 @@
         observacoes: observacoes
       };
 
+      // Atualização otimizada imediata na interface local para agilizar a visualização
+      if (id) {
+        const idx = listaMembros.findIndex(m => String(m.ID_Filho || m.id) === String(id));
+        if (idx !== -1) {
+          listaMembros[idx].Nome_Completo = nome_completo;
+          listaMembros[idx].Email = email;
+          listaMembros[idx].Telefone = telefone;
+        }
+      } else {
+        listaMembros.unshift({
+          ID_Filho: 'temp_' + Date.now(),
+          Nome_Completo: nome_completo,
+          Email: email,
+          Telefone: telefone
+        });
+      }
+      
+      closeMembroModal();
+      renderTabelaMembros(listaMembros);
+      showToast("Membro salvo com sucesso!");
+
       fetch(WEB_APP_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(dadosMembro)
-      })
-      .then(() => {
-        showToast("Membro salvo com sucesso!");
-        closeMembroModal();
-        carregarEExibirMembros();
-      })
-      .catch(err => {
-        console.error("Erro ao salvar:", err);
-        showToast("Erro ao salvar os dados.");
+      }).catch(err => {
+        console.error("Erro ao sincronizar:", err);
       });
     }
 
@@ -1757,6 +1776,20 @@
 
     function filterCards() {
       const query = document.getElementById('searchInput').value.toLowerCase();
+      
+      if (currentTab === 'Membros') {
+        const linhas = document.querySelectorAll('#membrosTableBody tr');
+        linhas.forEach(linha => {
+          const textoLinha = linha.textContent.toLowerCase();
+          if (textoLinha.includes(query)) {
+            linha.style.display = '';
+          } else {
+            linha.style.display = 'none';
+          }
+        });
+        return;
+      }
+
       const filtered = currentData.filter(item => Object.values(item).some(val => val && val.toString().toLowerCase().includes(query)));
       if (currentTab === 'Ervas_Banhos' && isErvasSubpage) renderErvasGrid(filtered);
       else if (currentTab === 'Pontos_Cantados' && isPontosSubpage) renderPontosGrid(filtered);

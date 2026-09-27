@@ -705,7 +705,9 @@
       <li class="nav-item" onclick="switchTab('Ervas_Banhos', this)"><i class="fa-solid fa-leaf"></i> Ervas & Banhos</li>
       <li class="nav-item" onclick="switchTab('Guias_Instrucoes', this)"><i class="fa-solid fa-book-open"></i> Orientações</li>
       
-      <!-- ITEM DO MENU LATERAL PARA GERENCIAMENTO DE MEMBROS -->
+      <!-- ================================================================= -->
+      <!-- [DESTAQUE] ITEM DO MENU LATERAL PARA GERENCIAMENTO DE MEMBROS -->
+      <!-- ================================================================= -->
       <li class="nav-item" id="menuMembros" style="display:none;" onclick="switchTab('Membros', this)"><i class="fa-solid fa-users"></i> Membros</li>
     </ul>
   </aside>
@@ -790,7 +792,9 @@
     </div>
   </div>
 
-  <!-- MODAL HTML DE CADASTRO E EDIÇÃO DE MEMBROS (FILHOS) -->
+  <!-- ================================================================= -->
+  <!-- [DESTAQUE] MODAL HTML DE CADASTRO E EDIÇÃO DE MEMBROS (FILHOS)      -->
+  <!-- ================================================================= -->
   <div class="modal-overlay" id="modalMembro">
     <div class="modal-box" style="max-width:520px;">
       <div class="modal-header">
@@ -868,10 +872,10 @@
       </div>
     </div>
   </div>
+  <!-- ================================================================= -->
 
   <script>
     const SHEET_ID = '1BL978swtEmpF208tfvPOZJuv2YS1ecpujQnw4ZoA3Jk';
-    const WEB_APP_URL = ''; // Adicione a URL do seu Google Apps Script caso utilize integração POST
     let currentTab = 'Home';
     let currentData = [];
     let listaMembros = [];
@@ -940,7 +944,7 @@
         const titles = {
           'Agenda': '<i class="fa-solid fa-calendar-days"></i> Calendário da Agenda',
           'Mural_Imagens': '<i class="fa-solid fa-photo-film"></i> Mural de Avisos',
-          'Pontos_Cantados': '<i class="fa-solid fa-music"></i> Coletânea de Pontos Cantados',
+          'Pontos_Cantados': '<i class="fa-solid fa-music"></i> Pontos Cantados',
           'Ervas_Banhos': '<i class="fa-solid fa-leaf"></i> Guia Sagrado de Ervas & Banhos',
           'Guias_Instrucoes': '<i class="fa-solid fa-book-open"></i> Orientações',
           'Membros': '<i class="fa-solid fa-users"></i> Gestão de Membros'
@@ -976,7 +980,7 @@
     }
 
     function getVideoUrlFromItem(item) {
-      return item.Arquivo_Video || item.Video_URL || item['Video_URL'] || item.Video_Url || item.Video || item.Video_Link || item.Youtube || item.URL_Video || item.Link_Video || item.Audio_URL || '';
+      return item.Arquivo_Video || item.Video_URL || item['Video_URL'] || item.Video_Url || item.Video || item.Video_Link || item.Youtube || item.URL_Video || '';
     }
 
     function getCleanVideoEmbed(url) {
@@ -1023,15 +1027,6 @@
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const year = d.getFullYear();
       return `${day}/${month}/${year}`;
-    }
-
-    function formatDateForInput(dateStr) {
-      const d = parseLocalDate(dateStr);
-      if (!d) return '';
-      const day = String(d.getDate()).padStart(2, '0');
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const year = d.getFullYear();
-      return `${year}-${month}-${day}`;
     }
 
     function formatKeyName(key) {
@@ -1417,7 +1412,11 @@
       openGenericDetail(eventsList[0], 'Agenda');
     }
 
-    /* === GERENCIAMENTO DE MEMBROS === */
+
+    /* ======================================================== */
+    /* === INÍCIO DO CÓDIGO DE GERENCIAMENTO DE MEMBROS ======= */
+    /* ======================================================== */
+
     async function carregarEExibirMembros() {
       const loading = document.getElementById('loading');
       const container = document.getElementById('contentContainer');
@@ -1579,20 +1578,6 @@
         observacoes: observacoes
       };
 
-      if (!WEB_APP_URL) {
-        alert("O script Web App URL não foi configurado, salvando localmente na tela.");
-        if (id) {
-          const idx = listaMembros.findIndex(m => String(m.ID_Filho || m.id) === String(id));
-          if (idx !== -1) listaMembros[idx] = { ...listaMembros[idx], ...dadosMembro, Nome_Completo: nome_completo };
-        } else {
-          dadosMembro.ID_Filho = Date.now().toString();
-          listaMembros.unshift({ ...dadosMembro, Nome_Completo: nome_completo });
-        }
-        closeMembroModal();
-        renderTabelaMembros(listaMembros);
-        return;
-      }
-
       fetch(WEB_APP_URL, {
         method: 'POST',
         mode: 'no-cors',
@@ -1613,6 +1598,7 @@
     function closeMembroModal() {
       document.getElementById('modalMembro').style.display = 'none';
     }
+
 
     function buildErvasHome(data) {
       const container = document.getElementById('contentContainer');
@@ -1756,7 +1742,7 @@
 
       const categories = new Set(['Todos']);
       accessibleData.forEach(item => {
-        const cat = item.Orixa_Linha || item.Linha || item.Tipo_preparo || item.Categoria || item.Tipo_de_Midia || item.Classificacao || '';
+        const cat = item.Tipo_preparo || item.Categoria || item.Tipo_de_Midia || item.Classificacao || '';
         if (cat && cat.trim() !== '') {
           categories.add(cat.trim());
         }
@@ -1783,7 +1769,6 @@
       chipsContainer.style.display = 'flex';
     }
 
-    /* RENDERIZAÇÃO PRINCIPAL DE CONTEÚDO (INCLUINDO PONTOS CANTADOS EM CARDS ESTILO GUIA SAGRADO) */
     function renderContent(data, tabName) {
       if (tabName === 'Home' || tabName === 'Agenda' || tabName === 'Ervas_Banhos' || tabName === 'Membros') return;
 
@@ -1801,7 +1786,7 @@
         }
 
         if (selectedChip !== 'Todos') {
-          const cat = (item.Orixa_Linha || item.Linha || item.Tipo_preparo || item.Categoria || item.Tipo_de_Midia || item.Classificacao || '').toLowerCase();
+          const cat = (item.Tipo_preparo || item.Categoria || item.Tipo_de_Midia || item.Classificacao || '').toLowerCase();
           if (!cat.includes(selectedChip.toLowerCase())) return false;
         }
 
@@ -1827,8 +1812,8 @@
 
         if (tabName === 'Pontos_Cantados') {
           nome = item.Titulo_Ponto || item.Titulo || item.Nome || 'Ponto Cantado';
-          categoria = item.Orixa_Linha || item.Linha || item.Categoria || 'Umbanda';
-          descricao = item.Letra || item.Letra_Ponto || item.Descricao || '';
+          categoria = item.Orixa_Linha || item.Linha || 'Geral';
+          descricao = item.Letra || '';
         } else if (tabName === 'Mural_Imagens') {
           nome = item.Categoria || item.Titulo || item.Nome || 'Aviso';
           categoria = item.Tipo_de_Midia || item.Categoria || 'Aviso';
@@ -1845,10 +1830,10 @@
         const videoUrl = getVideoUrlFromItem(item);
 
         let imgContent = '';
-        if (imagem) {
+        if (imagem && tabName !== 'Pontos_Cantados') {
           imgContent = `<img src="${imagem}" class="card-img" alt="${nome}" onerror="this.onerror=null; this.src='https://via.placeholder.com/200x120?text=Sem+Imagem';">`;
         } else {
-          let iconClass = (tabName === 'Pontos_Cantados') ? 'fa-music' : (videoUrl || categoria.toLowerCase().includes('vídeo') || categoria.toLowerCase().includes('video')) ? 'fa-circle-play' : (tabName === 'Mural_Imagens' ? 'fa-photo-film' : 'fa-book-open');
+          let iconClass = (videoUrl || categoria.toLowerCase().includes('vídeo') || categoria.toLowerCase().includes('video')) ? 'fa-circle-play' : (tabName === 'Mural_Imagens' ? 'fa-photo-film' : (tabName === 'Pontos_Cantados' ? 'fa-music' : 'fa-book-open'));
           imgContent = `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid ${iconClass} fa-2x"></i></div>`;
         }
 
@@ -1963,12 +1948,11 @@
       showModal();
     }
 
-    /* EXIBIÇÃO DO MODAL DE PONTO CANTADO COM VÍDEO ATUALIZADO */
     function openPontoDetail(item) {
       const modalContent = document.getElementById('detailModalContent');
       const nome = item.Titulo_Ponto || item.Titulo || item.Nome || 'Ponto Cantado';
-      const linha = item.Orixa_Linha || item.Linha || item.Categoria || 'Umbanda';
-      const letra = item.Letra || item.Letra_Ponto || item.Descricao || item.Conteudo_Texto || 'Letra não informada.';
+      const linha = item.Orixa_Linha || item.Linha || 'Umbanda';
+      const letra = item.Letra || item.Letra_Ponto || item.Descricao || 'Letra não informada.';
       const rawVideo = getVideoUrlFromItem(item);
 
       let mediaHtml = '';
@@ -1986,7 +1970,7 @@
         </div>
         <div class="modal-body">
           ${mediaHtml}
-          <div style="white-space: pre-wrap; background: #111; padding: 10px; border-radius: 6px; border-left: 3px solid var(--gold-primary); font-size: 0.8rem; line-height: 1.5; color: #eee;">${letra}</div>
+          <div style="white-space: pre-wrap; background: #111; padding: 10px; border-radius: 6px; border-left: 3px solid var(--gold-primary); font-size: 0.8rem;">${letra}</div>
         </div>
         <div class="modal-actions">
           <button class="btn-share" onclick="shareOnWhatsapp('${nome}', '${letra}')"><i class="fa-brands fa-whatsapp"></i> Enviar</button>

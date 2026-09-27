@@ -213,7 +213,7 @@
     .ervas-home-container, .pontos-home-container { display: flex; flex-direction: column; gap: 15px; width: 100%; }
     .ervas-intro-box, .pontos-intro-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 15px; text-align: center; width: 100%; }
     .ervas-intro-box h3, .pontos-intro-box h3 { color: var(--gold-primary); margin-top: 0; font-size: 1rem; }
-    .ervas-intro-box p, .pontos-intro-box p { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px; }
+    .ervas-intro-box p, .pontos-intro-box p { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px; text-align: left; line-height: 1.4; }
     
     .ervas-categories-grid, .pontos-categories-grid { 
       display: grid; 
@@ -1286,7 +1286,7 @@
       parentContainer.appendChild(grid);
     }
 
-    /* ================= PONTOS CANTADOS (ORGANIZAÇÃO POR LINHA / ENTIDADE) ================= */
+    /* ================= PONTOS CANTADOS (PÁGINA INICIAL, CARDS POR LINHA/ENTIDADE E MODAL DINÂMICO) ================= */
     function getPontoCategory(item) {
       return item.Linha_Entidade || item.Linha || item.Entidade || item.Orixa_Linha || item.Categoria || item.LinhaEntidade || 'Geral';
     }
@@ -1319,7 +1319,7 @@
         else if (lower.includes('ogum') || lower.includes('xango') || lower.includes('xangô') || lower.includes('iansa') || lower.includes('iansã')) icon = 'fa-bolt';
         else if (lower.includes('ere') || lower.includes('erê') || lower.includes('crianc')) icon = 'fa-child';
         else if (lower.includes('cigano') || lower.includes('cigana')) icon = 'fa-star';
-        else if (lower.includes('marinheiro') || lower.includes('baiano') || lower.includes('booiadeiro') || lower.includes('boiadeiro')) icon = 'fa-anchor';
+        else if (lower.includes('marinheiro') || lower.includes('baiano') || lower.includes('boiadeiro')) icon = 'fa-anchor';
 
         cardsHtml += `
           <div class="ponto-category-card" onclick="openPontosSubpage('${cat.replace(/'/g, "\\'")}')">
@@ -1332,8 +1332,9 @@
       container.innerHTML = `
         <div class="pontos-home-container">
           <div class="pontos-intro-box">
-            <h3><i class="fa-solid fa-music"></i> Selecione a Linha ou Entidade</h3>
-            <p>Escolha a linha/entidade para visualizar e ouvir os pontos cantados correspondentes:</p>
+            <h3><i class="fa-solid fa-music"></i> O Sagrado Poder dos Pontos Cantados na Umbanda</h3>
+            <p>Os pontos cantados são preces em forma de música, verdadeiros mantras sagrados da Umbanda. Eles possuem a força de evocar as divindades (Orixás), guias e protetores espirituais, além de limpar energias densas, harmonizar o ambiente do terreiro e abrir portais de conexão espiritual. Cada linha de trabalho possui suas próprias vibrações, ritmos e melodias únicas.</p>
+            <p><strong>Selecione abaixo a Linha ou Entidade desejada para acessar os pontos correspondentes:</strong></p>
             <div class="pontos-categories-grid">${cardsHtml}</div>
           </div>
         </div>
@@ -1385,7 +1386,7 @@
         const catLabel = getPontoCategory(item);
         const letra = item.Letra_Ponto || item.Letra || item.Conteudo_Texto || '';
         const imagem = getCleanImageUrl(item);
-        const hasMedia = item.Video_URL || item.Video || item.Audio_URL || item.Audio || item.MP4 || item.Arquivo_URL;
+        const hasMedia = item.PontoAudio_URL || item.Audio_URL || item.Audio || item.PontoVideo_URL || item.URLVideo_URL || item.URLVideo || item.Video_URL || item.Video || item.MP4 || item.Arquivo_URL;
 
         let imgHtml = imagem ? `<img src="${imagem}" class="card-img" alt="${titulo}">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid ${hasMedia ? 'fa-circle-play' : 'fa-music'} fa-2x"></i></div>`;
 
@@ -1610,41 +1611,82 @@
 
     function openGenericDetail(item, tabName) {
       const modalContent = document.getElementById('detailModalContent');
-      const titulo = item.Nome_Evento || item.Titulo_Ponto || item.Titulo || item.Nome_Erva || item.Categoria || 'Detalhes';
+      const titulo = item.Titulo_Ponto || item.Nome_Evento || item.Titulo || item.Nome_Erva || item.Categoria || 'Detalhes';
       const imagem = getCleanImageUrl(item);
       
       let info = '';
       let mediaTopContent = '';
 
-      // --- TRATAMENTO DE VÍDEO E ÁUDIO PARA PONTOS CANTADOS E OUTRAS MÍDIAS ---
-      const mediaUrl = item.Video_URL || item.Video || item.Audio_URL || item.Audio || item.MP4 || item.Arquivo_URL || '';
-      if (mediaUrl) {
-        let cleanMedia = mediaUrl.toString().trim();
-        if (cleanMedia.includes('drive.google.com') || cleanMedia.includes('docs.google.com')) {
-          const match = cleanMedia.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanMedia.match(/id=([a-zA-Z0-9_-]+)/);
-          if (match && match[1]) cleanMedia = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
-        }
-        
-        const lowerMedia = cleanMedia.toLowerCase();
-        const isAudio = lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio') || tabName === 'Audio';
-        
-        if (isAudio) {
-          mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>`;
-        } else {
-          mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
-        }
-      }
-
+      // --- TRATAMENTO DINÂMICO DE ÁUDIO OU VÍDEO CONFORME AS COLUNAS SOLICITADAS ---
       if (tabName === 'Pontos_Cantados' || currentTab === 'Pontos_Cantados') {
-        const linha = getPontoCategory(item);
-        const letra = item.Letra_Ponto || item.Letra || item.Conteudo_Texto || item.LetraPonto || '';
-        const observacoes = item.Observacoes || item.Obs || '';
+        const audioUrl = item.PontoAudio_URL || item.Audio_URL || item.Audio || item.OrigemAudio_Ponto || '';
+        const videoUrl = item.PontoVideo_URL || item.URLVideo_URL || item.URLVideo || item.Video_URL || item.Video || item.MP4 || '';
 
-        if (linha) info += `<p><strong>Linha / Entidade:</strong> ${linha}</p>`;
-        if (letra) info += `<p><strong>Letra do Ponto:</strong><br><span style="white-space: pre-line;">${letra}</span></p>`;
-        if (observacoes) info += `<p><strong>Observações:</strong><br>${observacoes}</p>`;
+        if (audioUrl && !audioUrl.toLowerCase().includes('http')) {
+          // Caso seja apenas texto descritivo de origem, mas se houver URL válida tratamos abaixo:
+        }
+
+        let cleanAudio = audioUrl.toString().trim();
+        if (cleanAudio.includes('drive.google.com') || cleanAudio.includes('docs.google.com')) {
+          const match = cleanAudio.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanAudio.match(/id=([a-zA-Z0-9_-]+)/);
+          if (match && match[1]) cleanAudio = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
+        }
+
+        let cleanVideo = videoUrl.toString().trim();
+        if (cleanVideo.includes('drive.google.com') || cleanVideo.includes('docs.google.com')) {
+          const match = cleanVideo.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanVideo.match(/id=([a-zA-Z0-9_-]+)/);
+          if (match && match[1]) cleanVideo = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
+        }
+
+        // Prioriza vídeo se existir, senão carrega áudio
+        if (cleanVideo && cleanVideo.startsWith('http')) {
+          if (cleanVideo.includes('youtube.com') || cleanVideo.includes('youtu.be')) {
+            let ytEmbed = cleanVideo;
+            if (cleanVideo.includes('watch?v=')) ytEmbed = cleanVideo.replace('watch?v=', 'embed/');
+            else if (cleanVideo.includes('youtu.be/')) ytEmbed = cleanVideo.replace('youtu.be/', 'www.youtube.com/embed/');
+            mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
+          } else {
+            mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanVideo}">Seu navegador não suporta vídeos.</video>`;
+          }
+        } else if (cleanAudio && cleanAudio.startsWith('http')) {
+          mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanAudio}">Seu navegador não suporta áudio.</audio>`;
+        }
+
+        // Montagem detalhada do Ponto Cantado solicitada
+        const linhaEntidade = item.Linha_Entidade || '';
+        const entidadeTipo = item.EntidadeTipo || '';
+        const letraponto = item.Letra_Ponto || item.Letra || item.Conteudo_Texto || '';
+        const origemAudio = item.OrigemAudio_Ponto || '';
+        const oga = item.Oga_Responsavel || item.Oga || '';
+        const cantora = item.Cantora_Responsavel || item.Cantora || '';
+        const obs = item.Observacoes || item.ObservacoesAcesso_Publico || item.Obs || '';
+
+        if (linhaEntidade) info += `<p><strong>Linha / Entidade:</strong> ${linhaEntidade}</p>`;
+        if (entidadeTipo) info += `<p><strong>Tipo de Entidade:</strong> ${entidadeTipo}</p>`;
+        if (oga) info += `<p><strong>Ogã Responsável:</strong> ${oga}</p>`;
+        if (cantora) info += `<p><strong>Cantora Responsável:</strong> ${cantora}</p>`;
+        if (origemAudio) info += `<p><strong>Origem do Áudio:</strong> ${origemAudio}</p>`;
+        if (letraponto) info += `<p><strong>Letra do Ponto:</strong><br><span style="white-space: pre-line; color: var(--gold-light); font-size: 0.85rem; display: block; margin-top: 4px; background: #161616; padding: 8px; border-radius: 6px; border-left: 3px solid var(--gold-primary);">${letraponto}</span></p>`;
+        if (obs) info += `<p><strong>Observações:</strong><br>${obs}</p>`;
 
       } else {
+        const mediaUrl = item.Video_URL || item.Video || item.Audio_URL || item.Audio || item.MP4 || item.Arquivo_URL || '';
+        if (mediaUrl) {
+          let cleanMedia = mediaUrl.toString().trim();
+          if (cleanMedia.includes('drive.google.com') || cleanMedia.includes('docs.google.com')) {
+            const match = cleanMedia.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanMedia.match(/id=([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) cleanMedia = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
+          }
+          const lowerMedia = cleanMedia.toLowerCase();
+          const isAudio = lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio');
+          
+          if (isAudio) {
+            mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>`;
+          } else {
+            mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
+          }
+        }
+
         for (let key in item) {
           let cleanKeyLower = key.toLowerCase().trim().replace(/[\s_]/g, '');
           

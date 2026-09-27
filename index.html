@@ -1321,8 +1321,9 @@
         else if (lower.includes('cigano') || lower.includes('cigana')) icon = 'fa-star';
         else if (lower.includes('marinheiro') || lower.includes('baiano') || lower.includes('boiadeiro')) icon = 'fa-anchor';
 
+        /* CARD ATUALIZADO IGUAL AO DE ERVAS (erva-category-card) */
         cardsHtml += `
-          <div class="ponto-category-card" onclick="openPontosSubpage('${cat.replace(/'/g, "\\'")}')">
+          <div class="erva-category-card" onclick="openPontosSubpage('${cat.replace(/'/g, "\\'")}')">
             <i class="fa-solid ${icon}"></i>
             <h4>${cat}</h4>
           </div>
@@ -1335,7 +1336,7 @@
             <h3><i class="fa-solid fa-music"></i> O Sagrado Poder dos Pontos Cantados na Umbanda</h3>
             <p>Os pontos cantados são preces em forma de música, verdadeiros mantras sagrados da Umbanda. Eles possuem a força de evocar as divindades (Orixás), guias e protetores espirituais, além de limpar energias densas, harmonizar o ambiente do terreiro e abrir portais de conexão espiritual. Cada linha de trabalho possui suas próprias vibrações, ritmos e melodias únicas.</p>
             <p><strong>Selecione abaixo a Linha ou Entidade desejada para acessar os pontos correspondentes:</strong></p>
-            <div class="pontos-categories-grid">${cardsHtml}</div>
+            <div class="ervas-categories-grid">${cardsHtml}</div>
           </div>
         </div>
       `;

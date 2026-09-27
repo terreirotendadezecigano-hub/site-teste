@@ -1,662 +1,518 @@
-html, body { 
-  background-color: var(--bg-primary); 
-  color: var(--text-main); 
-  width: 100%;
-  min-height: 100vh;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow-x: hidden;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-* { box-sizing: border-box; }
-
-header.banner {
-  background: linear-gradient(135deg, var(--red-logo-dark) 0%, var(--red-logo) 50%, #1a0003 100%);
-  border-bottom: 2px solid var(--gold-primary);
-  padding: 10px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.7);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  width: 100%;
-}
-
-.banner-left, .banner-right { display: flex; align-items: center; flex-shrink: 0; }
-.banner-center { display: flex; align-items: center; gap: 8px; margin: 0 auto; text-align: center; }
-
-.banner-logo {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 2px solid var(--gold-primary);
-  object-fit: cover;
-  background-color: #000;
-  flex-shrink: 0;
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
-}
-
-.banner-titles h1 { font-size: 0.9rem; color: var(--gold-primary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin: 0; line-height: 1.1; }
-.banner-titles p { font-size: 0.65rem; color: var(--gold-light); margin: 0; }
-
-.btn-login {
-  background: rgba(0,0,0,0.4);
-  border: 1px solid var(--gold-primary);
-  color: var(--gold-primary);
-  padding: 5px 8px;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 0.72rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-}
-
-.user-logged {
-  color: var(--gold-light);
-  font-size: 0.72rem;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: rgba(212, 175, 55, 0.15);
-  padding: 4px 7px;
-  border-radius: 6px;
-  border: 1px solid var(--gold-primary);
-}
-
-.toggle-menu-btn {
-  background: rgba(0,0,0,0.3);
-  border: 1px solid var(--gold-primary);
-  color: var(--gold-primary);
-  font-size: 0.9rem;
-  padding: 5px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-aside.sidebar {
-  width: 250px;
-  max-width: 80vw;
-  background-color: #121212;
-  border-right: 1px solid var(--border-color);
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  top: 0; bottom: 0; left: 0;
-  transform: translateX(-100%);
-  transition: transform 0.3s ease;
-  z-index: 100001;
-  box-shadow: 4px 0 15px rgba(0,0,0,0.8);
-  padding-top: 15px;
-}
-
-aside.sidebar.open { transform: translateX(0); }
-.nav-list { list-style: none; padding: 10px 0; margin: 0; }
-
-.nav-item {
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.85rem;
-  border-left: 4px solid transparent;
-  transition: background 0.2s, color 0.2s;
-}
-
-.nav-item:hover, .nav-item.active {
-  background-color: rgba(212, 175, 55, 0.15);
-  color: var(--gold-primary);
-  border-left-color: var(--gold-primary);
-}
-
-.nav-item i { width: 20px; text-align: center; font-size: 0.95rem; }
-
-.container { 
-  padding: 12px; 
-  max-width: 1200px; 
-  margin: 0 auto; 
-  width: 100%; 
-  min-height: calc(100vh - 120px);
-}
-
-.search-container { display: flex; justify-content: flex-end; margin-bottom: 12px; }
-
-.search-bar {
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: 20px;
-  border: 1px solid var(--border-color);
-  background: #161616;
-  color: #fff;
-  outline: none;
-  font-size: 0.82rem;
-}
-
-.search-bar:focus { border-color: var(--gold-primary); }
-
-.section-title { 
-  font-size: 1rem; 
-  color: var(--gold-primary); 
-  margin-top: 10px;
-  margin-bottom: 12px; 
-  border-bottom: 1px solid var(--border-color); 
-  padding-bottom: 6px; 
-  display: flex; 
-  align-items: center; 
-  gap: 8px; 
-}
-
-.cards-grid { 
-  display: grid; 
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
-  gap: 12px; 
-}
-
-@media (min-width: 600px) {
-  .cards-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
-  .banner-logo { width: 44px; height: 44px; }
-  .banner-titles h1 { font-size: 1.1rem; }
-  .banner-titles p { font-size: 0.75rem; }
-}
-
-.card { 
-  background: var(--bg-card); 
-  border: 1px solid var(--border-color); 
-  border-radius: 8px; 
-  overflow: hidden; 
-  cursor: pointer; 
-  transition: transform 0.2s, border-color 0.2s; 
-  display: flex; 
-  flex-direction: column; 
-  height: 230px;
-}
-
-.card:hover { transform: translateY(-3px); border-color: var(--gold-primary); }
-.card-img { width: 100%; height: 100px; object-fit: cover; background: #000; flex-shrink: 0; }
-.card-body { padding: 8px; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
-.card-badges { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 4px; }
-.card-badge { background: #222; color: var(--gold-light); font-size: 0.62rem; padding: 2px 4px; border-radius: 4px; border: 1px solid #333; }
-.card-badge-restricted { background: #8b0000; color: #fff; font-size: 0.62rem; padding: 2px 4px; border-radius: 4px; }
-.card-title { font-size: 0.82rem; color: #fff; margin: 0 0 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
-.card-datetime { font-size: 0.68rem; color: var(--gold-primary); margin-bottom: 3px; }
-.card-text { font-size: 0.7rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
-
-/* Estilos do Guia de Ervas e Pontos Cantados */
-.ervas-home-container, .pontos-home-container { display: flex; flex-direction: column; gap: 15px; width: 100%; }
-.ervas-intro-box, .pontos-intro-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 15px; text-align: center; width: 100%; }
-.ervas-intro-box h3, .pontos-intro-box h3 { color: var(--gold-primary); margin-top: 0; font-size: 1rem; }
-.ervas-intro-box p, .pontos-intro-box p { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px; }
-
-.ervas-categories-grid, .pontos-categories-grid { 
-  display: grid; 
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
-  gap: 12px; 
-  width: 100%; 
-}
-
-.erva-category-card, .ponto-category-card { 
-  background: var(--bg-card); 
-  border: 1px solid var(--border-color); 
-  border-radius: 10px; 
-  overflow: hidden; 
-  cursor: pointer; 
-  transition: all 0.25s ease; 
-  display: flex; 
-  flex-direction: column; 
-  height: 180px;
-  text-align: left;
-}
-
-.erva-category-card:hover, .ponto-category-card:hover { 
-  border-color: var(--gold-primary); 
-  transform: translateY(-3px); 
-  box-shadow: 0 6px 16px rgba(212, 175, 55, 0.15);
-}
-
-.ponto-card-banner {
-  width: 100%;
-  height: 95px;
-  object-fit: cover;
-  background: linear-gradient(135deg, var(--red-logo-dark) 0%, var(--red-logo) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--gold-primary);
-  font-size: 2rem;
-  position: relative;
-}
-
-.ponto-card-banner img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.ponto-card-content {
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  flex-grow: 1;
-}
-
-.ponto-card-content h4 { 
-  font-size: 0.85rem; 
-  color: #fff; 
-  margin: 0 0 4px 0; 
-  white-space: nowrap; 
-  overflow: hidden; 
-  text-overflow: ellipsis; 
-  font-weight: 700;
-}
-
-.ponto-card-subtitle {
-  font-size: 0.68rem;
-  color: var(--text-muted);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.erva-category-card i, .erva-category-card h4 {
-  /* preservando estilos antigos de ervas caso necessário */
-}
-
-.erva-category-card {
-  padding: 14px 10px; 
-  text-align: center;
-  height: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-.erva-category-card i { font-size: 1.8rem; color: var(--gold-primary); margin-bottom: 6px; }
-.erva-category-card h4 { font-size: 0.85rem; color: #fff; margin: 0; }
-
-.btn-voltar-guia {
-  background: #1a1a1a;
-  border: 1px solid var(--gold-primary);
-  color: var(--gold-primary);
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 12px;
-  font-weight: 600;
-}
-.btn-voltar-guia:hover { background: var(--gold-primary); color: #000; }
-
-.calendar-container {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  padding: 15px;
-  max-width: 600px;
-  margin: 0 auto;
-}
-.calendar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-.calendar-header h3 {
-  color: var(--gold-primary);
-  margin: 0;
-  font-size: 1rem;
-  text-transform: capitalize;
-}
-.calendar-nav-btn {
-  background: #1a1a1a;
-  border: 1px solid var(--border-color);
-  color: var(--gold-primary);
-  padding: 5px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.8rem;
-}
-.calendar-nav-btn:hover { background: var(--gold-primary); color: #000; }
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 5px;
-  text-align: center;
-}
-.calendar-day-name {
-  font-size: 0.7rem;
-  color: var(--gold-light);
-  font-weight: bold;
-  padding-bottom: 8px;
-}
-.calendar-cell {
-  background: #121212;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  min-height: 55px;
-  padding: 4px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  font-size: 0.75rem;
-}
-.calendar-cell.empty { background: transparent; border: none; }
-.calendar-cell.has-event {
-  background: rgba(212, 175, 55, 0.12);
-  border-color: var(--gold-primary);
-  cursor: pointer;
-}
-.calendar-cell.has-event:hover {
-  background: rgba(212, 175, 55, 0.3);
-}
-.calendar-date-number {
-  font-weight: bold;
-  color: #fff;
-  margin-bottom: 2px;
-}
-.calendar-event-dot {
-  background: var(--gold-primary);
-  color: #000;
-  font-size: 0.55rem;
-  padding: 1px 3px;
-  border-radius: 3px;
-  width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-top: auto;
-}
-
-.table-responsive {
-  width: 100%;
-  overflow-x: auto;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  margin-top: 10px;
-}
-
-.membros-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-  font-size: 0.8rem;
-}
-
-.membros-table th, .membros-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border-color);
-  white-space: nowrap;
-}
-
-.membros-table th {
-  background-color: #1a1a1a;
-  color: var(--gold-primary);
-  font-weight: 600;
-}
-
-.membros-table tr:hover {
-  background-color: rgba(212, 175, 55, 0.05);
-}
-
-.btn-icon-only {
-  background: #222;
-  border: 1px solid var(--border-color);
-  color: var(--gold-light);
-  width: 30px;
-  height: 30px;
-  border-radius: 4px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  transition: all 0.2s;
-}
-.btn-icon-only:hover { background: var(--gold-primary); color: #000; border-color: var(--gold-primary); }
-.btn-delete-icon:hover { background: #8b0000; color: #fff; border-color: #8b0000; }
-
-.btn-action-icon {
-  background: #222;
-  border: 1px solid var(--border-color);
-  color: var(--gold-light);
-  padding: 4px 7px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.7rem;
-  margin-right: 3px;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  transition: all 0.2s;
-}
-.btn-action-icon:hover { background: var(--gold-primary); color: #000; border-color: var(--gold-primary); }
-.btn-whatsapp-icon:hover { background: #25d366; color: #fff; border-color: #25d366; }
-
-.btn-add-membro {
-  background: var(--gold-primary);
-  color: #000;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  font-size: 0.8rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.membros-form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-.membros-form-full {
-  grid-column: span 2;
-}
-
-.form-group {
-  margin-bottom: 8px;
-}
-
-.form-group label {
-  display: block;
-  font-size: 0.72rem;
-  color: var(--gold-light);
-  margin-bottom: 3px;
-}
-
-.form-control {
-  width: 100%;
-  padding: 6px 8px;
-  background: #111;
-  border: 1px solid var(--border-color);
-  color: #fff;
-  border-radius: 6px;
-  font-size: 0.78rem;
-}
-
-.form-control:focus {
-  border-color: var(--gold-primary);
-  outline: none;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(4px);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 200000;
-  padding: 15px;
-}
-
-.modal-box {
-  background: #181818;
-  border: 2px solid var(--gold-primary);
-  border-radius: 12px;
-  padding: 14px;
-  width: 100%;
-  max-width: 520px;
-  max-height: 85vh;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  margin: auto;
-}
-
-.modal-header { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  border-bottom: 1px solid var(--border-color); 
-  padding-bottom: 8px; 
-  margin-bottom: 10px; 
-  flex-shrink: 0;
-}
-
-.modal-close-icon { 
-  background: none; 
-  border: none; 
-  color: var(--gold-primary); 
-  font-size: 1.6rem; 
-  cursor: pointer; 
-  padding: 0 4px; 
-  line-height: 1;
-}
-
-.modal-body {
-  overflow-y: auto;
-  max-height: 65vh;
-  padding-right: 4px;
-  flex-grow: 1;
-}
-
-.modal-banner-img {
-  width: 100%;
-  max-height: 200px;
-  object-fit: contain;
-  background-color: #000;
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
-  margin-bottom: 10px;
-  display: block;
-  cursor: zoom-in;
-}
-
-.modal-details-box { 
-  background: #111; 
-  padding: 10px; 
-  border-radius: 6px; 
-  border: 1px solid #282828; 
-  font-size: 0.8rem; 
-  line-height: 1.4; 
-  color: #ddd; 
-}
-
-.modal-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-  flex-shrink: 0;
-}
-
-.btn-submit { 
-  background: var(--gold-primary); 
-  border: none; 
-  color: #000; 
-  font-weight: bold; 
-  padding: 9px; 
-  border-radius: 6px; 
-  cursor: pointer; 
-  font-size: 0.8rem;
-  flex: 1;
-}
-
-.general-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
-.general-card h3 { color: var(--gold-primary); font-size: 0.95rem; margin-top: 0; margin-bottom: 8px; }
-.info-list { list-style: none; padding: 0; margin: 0; }
-.info-list li { margin-bottom: 6px; font-size: 0.8rem; }
-.info-link { display: inline-flex; align-items: center; gap: 6px; color: #fff; text-decoration: none; word-break: break-word; }
-.info-link i { color: var(--gold-primary); width: 16px; text-align: center; }
-
-.image-zoom-overlay {
-  position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.9);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 300000;
-}
-.image-zoom-overlay img { max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 8px; }
-
-.btn-back-to-top {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 42px;
-  height: 42px;
-  background-color: var(--gold-primary);
-  color: #000;
-  border: none;
-  border-radius: 50%;
-  font-size: 1.1rem;
-  cursor: pointer;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-  z-index: 99999;
-}
-
-footer.footer {
-  background: #0f0003;
-  border-top: 1px solid var(--border-color);
-  text-align: center;
-  padding: 12px;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-top: auto;
-}
-
-footer.footer span { color: var(--gold-primary); }
-
-#loading { text-align: center; color: var(--gold-primary); padding: 20px; }
-
-
-<div id="generalInfoSection" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:12px;">
-  <div class="general-card">
-    <h3><i class="fa-solid fa-circle-info"></i> Quem Somos</h3>
-    <p id="txtQuemSomos" style="font-size:0.8rem; color:var(--text-muted); margin:0;">Carregando informações...</p>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pontos Cantados - Tenda de Zé Cigano</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-primary: #0a0a0a;
+      --bg-card: #141414;
+      --gold-primary: #d4af37;
+      --gold-light: #f3e5ab;
+      --red-logo: #60000a;
+      --red-logo-dark: #3a0005;
+      --text-main: #ffffff;
+      --text-muted: #aaaaaa;
+      --border-color: #2a2a2a;
+    }
+
+    html, body { 
+      background-color: var(--bg-primary); 
+      color: var(--text-main); 
+      width: 100%;
+      min-height: 100vh;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow-x: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    /* Cabeçalho Topo */
+    header.banner {
+      background: linear-gradient(135deg, var(--red-logo-dark) 0%, var(--red-logo) 50%, #1a0003 100%);
+      border-bottom: 2px solid var(--gold-primary);
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.7);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      width: 100%;
+    }
+
+    .banner-left, .banner-right { display: flex; align-items: center; flex-shrink: 0; }
+    .banner-center { display: flex; align-items: center; gap: 8px; margin: 0 auto; text-align: center; }
+
+    .banner-logo {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      border: 2px solid var(--gold-primary);
+      object-fit: cover;
+      background-color: #000;
+      flex-shrink: 0;
+      box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+    }
+
+    .banner-titles h1 { font-size: 0.9rem; color: var(--gold-primary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin: 0; line-height: 1.1; }
+    .banner-titles p { font-size: 0.65rem; color: var(--gold-light); margin: 0; }
+
+    .btn-voltar-home {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--gold-primary);
+      color: var(--gold-primary);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      text-decoration: none;
+    }
+    .btn-voltar-home:hover { background: var(--gold-primary); color: #000; }
+
+    /* Layout Conteúdo */
+    .container { 
+      padding: 12px; 
+      max-width: 1200px; 
+      margin: 0 auto; 
+      width: 100%; 
+      min-height: calc(100vh - 120px);
+    }
+
+    .search-container { display: flex; justify-content: flex-end; margin-bottom: 15px; }
+
+    .search-bar {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      background: #161616;
+      color: #fff;
+      outline: none;
+      font-size: 0.85rem;
+    }
+    .search-bar:focus { border-color: var(--gold-primary); }
+
+    .section-title { 
+      font-size: 1.1rem; 
+      color: var(--gold-primary); 
+      margin-top: 5px;
+      margin-bottom: 15px; 
+      border-bottom: 1px solid var(--border-color); 
+      padding-bottom: 8px; 
+      display: flex; 
+      align-items: center; 
+      gap: 8px; 
+    }
+
+    /* Grid Categorias e Cards */
+    .pontos-categories-grid, .cards-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+      gap: 12px; 
+      width: 100%; 
+    }
+
+    @media (min-width: 600px) {
+      .pontos-categories-grid, .cards-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+      .banner-logo { width: 44px; height: 44px; }
+      .banner-titles h1 { font-size: 1.1rem; }
+      .banner-titles p { font-size: 0.75rem; }
+    }
+
+    .ponto-category-card { 
+      background: #161616; 
+      border: 1px solid var(--border-color); 
+      border-radius: 8px; 
+      padding: 16px 10px; 
+      text-align: center; 
+      cursor: pointer; 
+      transition: all 0.2s ease; 
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .ponto-category-card:hover { 
+      border-color: var(--gold-primary); 
+      background: rgba(212, 175, 55, 0.08); 
+      transform: translateY(-3px); 
+    }
+    .ponto-category-card i { font-size: 1.8rem; color: var(--gold-primary); margin-bottom: 8px; }
+    .ponto-category-card h4 { font-size: 0.88rem; color: #fff; margin: 0; }
+
+    .card { 
+      background: var(--bg-card); 
+      border: 1px solid var(--border-color); 
+      border-radius: 8px; 
+      overflow: hidden; 
+      cursor: pointer; 
+      transition: transform 0.2s, border-color 0.2s; 
+      display: flex; 
+      flex-direction: column; 
+      height: 220px;
+    }
+    .card:hover { transform: translateY(-3px); border-color: var(--gold-primary); }
+    .card-img { width: 100%; height: 100px; object-fit: cover; background: #000; flex-shrink: 0; }
+    .card-body { padding: 10px; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .card-badges { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; }
+    .card-badge { background: #222; color: var(--gold-light); font-size: 0.62rem; padding: 2px 5px; border-radius: 4px; border: 1px solid #333; }
+    .card-title { font-size: 0.85rem; color: #fff; margin: 0 0 4px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
+
+    .btn-voltar-guia {
+      background: #1a1a1a;
+      border: 1px solid var(--gold-primary);
+      color: var(--gold-primary);
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+    .btn-voltar-guia:hover { background: var(--gold-primary); color: #000; }
+
+    /* Modais */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 200000; padding: 15px; }
+    .modal-box { background: #181818; border: 2px solid var(--gold-primary); border-radius: 12px; padding: 14px; width: 100%; max-width: 520px; max-height: 85vh; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9); display: flex; flex-direction: column; position: relative; margin: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 10px; flex-shrink: 0; }
+    .modal-close-icon { background: none; border: none; color: var(--gold-primary); font-size: 1.6rem; cursor: pointer; padding: 0 4px; line-height: 1; }
+    .modal-body { overflow-y: auto; max-height: 65vh; padding-right: 4px; flex-grow: 1; }
+    .modal-banner-img { width: 100%; max-height: 200px; object-fit: contain; background-color: #000; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 10px; display: block; }
+    .modal-details-box { background: #111; padding: 12px; border-radius: 6px; border: 1px solid #282828; font-size: 0.85rem; line-height: 1.5; color: #ddd; }
+    
+    .modal-actions { display: flex; gap: 8px; margin-top: 12px; flex-shrink: 0; }
+    .btn-share { background: var(--gold-primary); color: #000; font-weight: bold; border: none; padding: 9px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-close-modal { background: #2a2a2a; color: #fff; border: 1px solid var(--border-color); padding: 9px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+    /* Toast */
+    #toast-container { position: fixed; top: 20px; right: 20px; z-index: 500000; display: flex; flex-direction: column; gap: 10px; }
+    .toast { min-width: 250px; padding: 12px 16px; border-radius: 8px; color: #fff; font-size: 0.82rem; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 10px; background: #1b2d38; border: 1px solid #3498db; }
+    .toast-success { background: #1b381e; border-color: #2ecc71; color: #2ecc71; }
+
+    #loading { text-align: center; color: var(--gold-primary); padding: 30px; }
+    footer.footer { background: #0f0003; border-top: 1px solid var(--border-color); text-align: center; padding: 12px; font-size: 0.75rem; color: var(--text-muted); margin-top: auto; }
+  </style>
+</head>
+<body>
+
+  <div id="toast-container"></div>
+
+  <!-- Cabeçalho -->
+  <header class="banner">
+    <div class="banner-left">
+      <a href="index.html" class="btn-voltar-home"><i class="fa-solid fa-house"></i> Início</a>
+    </div>
+    <div class="banner-center">
+      <img src="https://lh3.googleusercontent.com/d/1tTQCxsP8Z8H5mNnEFEfVq8dEg9VF0U1-" class="banner-logo" alt="Tenda de Zé Cigano">
+      <div class="banner-titles">
+        <h1>Tenda de Zé Cigano</h1>
+        <p>Pontos Cantados</p>
+      </div>
+    </div>
+    <div class="banner-right"></div>
+  </header>
+
+  <!-- Container Principal -->
+  <div class="container">
+    <div class="search-container">
+      <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Pesquisar ponto ou palavra da letra..." onkeyup="filterPontos()">
+    </div>
+
+    <h2 class="section-title" id="pageTitle"><i class="fa-solid fa-drum"></i> Selecione a Linha / Entidade</h2>
+
+    <div id="loading"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p style="margin-top:8px; font-size:0.8rem;">Carregando pontos cantados...</p></div>
+    <div id="contentContainer"></div>
   </div>
-  <div class="general-card">
-    <h3><i class="fa-solid fa-address-book"></i> Contatos & Atendimento</h3>
-    <ul class="info-list" id="txtContatosGeral">
-      <li>Carregando contatos...</li>
-    </ul>
+
+  <!-- Modal Detalhes do Ponto -->
+  <div class="modal-overlay" id="detailModal" onclick="closeModalOnBackdrop(event)">
+    <div class="modal-box" id="detailModalContent"></div>
   </div>
-</div>
 
-<h2 class="section-title" id="pageTitle"><i class="fa-solid fa-star"></i> Destaques</h2>
+  <footer class="footer">
+    <p>© Tenda de Zé Cigano | <span style="color: var(--gold-primary);">Axé!</span></p>
+  </footer>
 
-<div id="loading"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p style="margin-top:6px; font-size:0.75rem;">Buscando dados...</p></div>
-<div id="contentContainer"></div>
+  <script>
+    const SHEET_ID = '1BL978swtEmpF208tfvPOZJuv2YS1ecpujQnw4ZoA3Jk';
+    let currentData = [];
+    let isSubpageActive = false;
+    let currentShareText = '';
+
+    window.onload = function() {
+      loadPontosData();
+    };
+
+    window.onpopstate = function(event) {
+      if (document.getElementById('detailModal').style.display === 'flex') {
+        closeDetail(false);
+        return;
+      }
+      checkUrlParams();
+    };
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.4s ease';
+        setTimeout(() => toast.remove(), 400);
+      }, 3000);
+    }
+
+    async function loadPontosData() {
+      const loading = document.getElementById('loading');
+      try {
+        const response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Pontos_Cantados`);
+        currentData = await response.json();
+        loading.style.display = 'none';
+        checkUrlParams();
+      } catch (err) {
+        loading.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Erro ao carregar pontos cantados.';
+      }
+    }
+
+    function checkUrlParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const pontoId = urlParams.get('ponto') || urlParams.get('id');
+      const linhaParam = urlParams.get('linha');
+
+      if (pontoId && currentData.length > 0) {
+        const found = currentData.find(item => {
+          const id = item.ID || item.Id || item.Titulo_Ponto || item.Titulo;
+          return id && id.toString().trim() === pontoId.trim();
+        });
+        if (found) {
+          buildPontosHome(currentData);
+          openPontoDetail(found, false);
+          return;
+        }
+      }
+
+      if (linhaParam) {
+        openPontosSubpage(linhaParam, false);
+        return;
+      }
+
+      buildPontosHome(currentData);
+    }
+
+    function getCleanImageUrl(item) {
+      const rawImg = item.Foto_URL || item.Imagem_URL || item.Imagem || item.Foto || item.Anexo_URL || '';
+      if (!rawImg) return '';
+      let clean = rawImg.toString().trim();
+      if (clean.includes('drive.google.com') || clean.includes('docs.google.com') || clean.includes('googleusercontent.com')) {
+        const match = clean.match(/\/d\/([a-zA-Z0-9_-]+)/) || clean.match(/id=([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) return `https://lh3.googleusercontent.com/d/${match[1]}`;
+      }
+      return clean;
+    }
+
+    function buildPontosHome(data) {
+      isSubpageActive = false;
+      document.getElementById('pageTitle').innerHTML = '<i class="fa-solid fa-drum"></i> Selecione a Linha / Entidade';
+      const container = document.getElementById('contentContainer');
+      const linhasSet = new Set();
+
+      data.forEach(item => {
+        let linha = item.Orixa_Linha || item.Orixa || item.Linha || item.Categoria || '';
+        if (linha && linha.toString().trim() !== '') {
+          linhasSet.add(linha.toString().trim());
+        }
+      });
+
+      let cardsHtml = '';
+      linhasSet.forEach(linha => {
+        let icon = 'fa-drum';
+        const lower = linha.toLowerCase();
+        if (lower.includes('oxalá')) icon = 'fa-sun';
+        else if (lower.includes('ogum')) icon = 'fa-shield-halved';
+        else if (lower.includes('oxóssi') || lower.includes('caboclo')) icon = 'fa-tree';
+        else if (lower.includes('xangô')) icon = 'fa-gavel';
+        else if (lower.includes('iemanjá') || lower.includes('oxum') || lower.includes('sereia')) icon = 'fa-water';
+        else if (lower.includes('iansã')) icon = 'fa-bolt';
+        else if (lower.includes('exu') || lower.includes('pombagira')) icon = 'fa-fire';
+        else if (lower.includes('preto') || lower.includes('velho')) icon = 'fa-cane-is-glance';
+
+        cardsHtml += `
+          <div class="ponto-category-card" onclick="openPontosSubpage('${linha}')">
+            <i class="fa-solid ${icon}"></i>
+            <h4>${linha}</h4>
+          </div>
+        `;
+      });
+
+      if (linhasSet.size === 0) {
+        renderPontosGrid(data);
+        return;
+      }
+
+      container.innerHTML = `<div class="pontos-categories-grid">${cardsHtml}</div>`;
+    }
+
+    function openPontosSubpage(linhaOrixa, pushState = true) {
+      isSubpageActive = true;
+      document.getElementById('pageTitle').innerHTML = `<i class="fa-solid fa-music"></i> Pontos de ${linhaOrixa}`;
+
+      if (pushState) {
+        const newUrl = `${window.location.pathname}?linha=${encodeURIComponent(linhaOrixa)}`;
+        window.history.pushState({ linha: linhaOrixa }, '', newUrl);
+      }
+
+      const filtered = currentData.filter(item => {
+        let l = item.Orixa_Linha || item.Orixa || item.Linha || item.Categoria || '';
+        return l.toString().trim().toLowerCase() === linhaOrixa.toLowerCase();
+      });
+
+      renderPontosGrid(filtered);
+    }
+
+    function voltarPontosPrincipal() {
+      document.getElementById('searchInput').value = '';
+      window.history.pushState({}, '', window.location.pathname);
+      buildPontosHome(currentData);
+    }
+
+    function renderPontosGrid(data) {
+      const container = document.getElementById('contentContainer');
+      container.innerHTML = `
+        <button class="btn-voltar-guia" onclick="voltarPontosPrincipal()"><i class="fa-solid fa-arrow-left"></i> Voltar às Linhas / Entidades</button>
+        <div id="subpagePontosGrid" class="cards-grid"></div>
+      `;
+
+      const subGrid = document.getElementById('subpagePontosGrid');
+
+      if (!data || data.length === 0) {
+        subGrid.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">Nenhum ponto localizado nesta categoria.</p>';
+        return;
+      }
+
+      data.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        const nome = item.Titulo_Ponto || item.Titulo || item.Nome_Evento || 'Ponto Cantado';
+        const linha = item.Orixa_Linha || item.Linha || 'Geral';
+        const imagem = getCleanImageUrl(item);
+
+        card.innerHTML = `
+          ${imagem ? `<img src="${imagem}" class="card-img" alt="${nome}">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-music fa-2x"></i></div>`}
+          <div class="card-body">
+            <div class="card-badges"><span class="card-badge">${linha}</span></div>
+            <h3 class="card-title">${nome}</h3>
+          </div>
+        `;
+        card.onclick = () => openPontoDetail(item);
+        subGrid.appendChild(card);
+      });
+    }
+
+    function filterPontos() {
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      if (!query) {
+        if (isSubpageActive) return;
+        buildPontosHome(currentData);
+        return;
+      }
+
+      const filtered = currentData.filter(item => {
+        return Object.values(item).some(val => val && val.toString().toLowerCase().includes(query));
+      });
+
+      isSubpageActive = true;
+      document.getElementById('pageTitle').innerHTML = `<i class="fa-solid fa-magnifying-glass"></i> Resultados para "${query}"`;
+      renderPontosGrid(filtered);
+    }
+
+    function openPontoDetail(item, pushState = true) {
+      const modalContent = document.getElementById('detailModalContent');
+      const titulo = item.Titulo_Ponto || item.Titulo || 'Ponto Cantado';
+      const linha = item.Orixa_Linha || item.Linha || 'Geral';
+      const letra = item.Letra_Ponto || item.Letra || item.Conteudo_Texto || '';
+      const observacoes = item.Observacoes || item.Obs || '';
+      const mediaUrl = item.Audio_URL || item.Audio || item.Video_URL || item.Video || '';
+      const imagem = getCleanImageUrl(item);
+      const itemId = item.ID || item.Id || titulo;
+
+      if (pushState) {
+        const newUrl = `${window.location.pathname}?ponto=${encodeURIComponent(itemId)}`;
+        window.history.pushState({ ponto: itemId }, '', newUrl);
+      }
+
+      let mediaTopContent = '';
+      if (mediaUrl) {
+        let cleanMedia = mediaUrl.toString().trim();
+        if (cleanMedia.includes('youtube.com') || cleanMedia.includes('youtu.be')) {
+          let videoId = cleanMedia.includes('youtu.be/') ? cleanMedia.split('youtu.be/')[1].split('?')[0] : cleanMedia.split('watch?v=')[1].split('&')[0];
+          if (videoId) mediaTopContent = `<div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:6px; margin-bottom:10px;"><iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allowfullscreen style="position:absolute; top:0; left:0; width:100%; height:100%;"></iframe></div>`;
+        } else {
+          mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Áudio não suportado.</audio>`;
+        }
+      }
+
+      const shareUrl = `${window.location.origin}${window.location.pathname}?ponto=${encodeURIComponent(itemId)}`;
+      currentShareText = `*Tenda de Zé Cigano*\n🎶 *${titulo}* (${linha})\n\n${letra ? `*Letra:*\n${letra}\n\n` : ''}Acesse: ${shareUrl}`;
+
+      modalContent.innerHTML = `
+        <div class="modal-header">
+          <h3 style="color:var(--gold-primary); font-size:1rem; margin:0;">${titulo}</h3>
+          <button class="modal-close-icon" onclick="closeDetail()">&times;</button>
+        </div>
+        <div class="modal-body">
+          ${mediaTopContent}
+          ${imagem && !mediaTopContent ? `<img src="${imagem}" class="modal-banner-img" alt="${titulo}">` : ''}
+          <div class="modal-details-box">
+            <p><strong>Linha / Entidade:</strong> ${linha}</p>
+            ${letra ? `<p style="margin-top:10px;"><strong>Letra:</strong><br><span style="white-space: pre-line;">${letra}</span></p>` : ''}
+            ${observacoes ? `<p style="margin-top:10px;"><strong>Observações:</strong><br>${observacoes}</p>` : ''}
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-share" onclick="sharePonto()"><i class="fa-solid fa-share-nodes"></i> Compartilhar</button>
+          <button class="btn-close-modal" onclick="closeDetail()"><i class="fa-solid fa-xmark"></i> Fechar</button>
+        </div>
+      `;
+
+      document.getElementById('detailModal').style.display = 'flex';
+    }
+
+    function sharePonto() {
+      if (navigator.share) {
+        navigator.share({ title: 'Ponto Cantado', text: currentShareText, url: window.location.href });
+      } else {
+        navigator.clipboard.writeText(currentShareText);
+        showToast('Texto copiado para a área de transferência!', 'success');
+      }
+    }
+
+    function closeDetail(updateHistory = true) { 
+      document.getElementById('detailModal').style.display = 'none'; 
+      if (updateHistory) {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('ponto') || urlParams.has('id')) {
+          window.history.back();
+        }
+      }
+    }
+
+    function closeModalOnBackdrop(e) { 
+      if (e.target.id === 'detailModal') closeDetail(); 
+    }
+  </script>
+</body>
+</html>

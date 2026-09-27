@@ -599,6 +599,30 @@
     footer.footer span { color: var(--gold-primary); }
 
     #loading { text-align: center; color: var(--gold-primary); padding: 20px; }
+
+    /* === ESTILOS DO TOAST (Aviso Flutuante) === */
+    #custom-toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #1f1f1f;
+      color: #fff;
+      padding: 14px 24px;
+      border-radius: 8px;
+      border-left: 4px solid var(--gold-primary);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
+      z-index: 999999;
+      font-size: 0.85rem;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      pointer-events: none;
+    }
+
+    #custom-toast.toast-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
   </style>
 </head>
 <body>
@@ -769,6 +793,9 @@
     </div>
   </div>
 
+  <!-- Elemento HTML do Toast -->
+  <div id="custom-toast">Mensagem de aviso</div>
+
   <script>
     const SHEET_ID = '1BL978swtEmpF208tfvPOZJuv2YS1ecpujQnw4ZoA3Jk';
     const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyFje_ocF7a0S7Tq4EYQmM5W3hv9SmHZqxJmWLhPKdkVfudzW-Q3EEbM66U9BiwdBZOJw/exec';
@@ -780,6 +807,18 @@
     let currentCalendarDate = new Date();
     let isErvasSubpage = false;
     let isPontosSubpage = false;
+
+    // === FUNÇÃO DO TOAST ===
+    function showToast(mensagem) {
+      const toast = document.getElementById('custom-toast');
+      toast.textContent = mensagem;
+      toast.classList.add('toast-visible');
+      
+      // Some sozinho após 3 segundos
+      setTimeout(() => {
+        toast.classList.remove('toast-visible');
+      }, 3000);
+    }
 
     function isPublicAccess(item) {
       if (!item) return true;
@@ -969,7 +1008,7 @@
 
     function copyPix(pixKey) {
       navigator.clipboard.writeText(pixKey);
-      alert('Chave PIX copiada!');
+      showToast('Chave PIX copiada!');
     }
 
     function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
@@ -1321,7 +1360,6 @@
         else if (lower.includes('cigano') || lower.includes('cigana')) icon = 'fa-star';
         else if (lower.includes('marinheiro') || lower.includes('baiano') || lower.includes('boiadeiro')) icon = 'fa-anchor';
 
-        /* CARD ATUALIZADO IGUAL AO DE ERVAS (erva-category-card) */
         cardsHtml += `
           <div class="erva-category-card" onclick="openPontosSubpage('${cat.replace(/'/g, "\\'")}')">
             <i class="fa-solid ${icon}"></i>
@@ -1486,7 +1524,7 @@
 
     function editarMembro(idMembro) {
       const m = listaMembros.find(item => String(item.ID_Filho || item.id) === String(idMembro));
-      if (!m) { alert("Membro não encontrado!"); return; }
+      if (!m) { showToast("Membro não encontrado!"); return; }
 
       document.getElementById('membroModalTitle').innerHTML = '<i class="fa-solid fa-user-pen"></i> Editar Membro';
       document.getElementById('membroId').value = m.ID_Filho || m.id || '';
@@ -1529,7 +1567,7 @@
         listaMembros = listaMembros.filter(item => String(item.ID_Filho || item.id) !== String(idMembro));
         currentData = listaMembros;
         renderTabelaMembros(listaMembros);
-        alert("Membro removido!");
+        showToast("Membro removido!");
       }
     }
 
@@ -1548,7 +1586,7 @@
       const observacoes = document.getElementById('membroObservacoes').value.trim();
 
       if (!nome_completo || !email) {
-        alert("Preencha ao menos o Nome Completo e o E-mail.");
+        showToast("Preencha ao menos o Nome Completo e o E-mail.");
         return;
       }
 
@@ -1574,13 +1612,13 @@
         body: JSON.stringify(dadosMembro)
       })
       .then(() => {
-        alert("Membro salvo com sucesso!");
+        showToast("Membro salvo com sucesso!");
         closeMembroModal();
         carregarEExibirMembros();
       })
       .catch(err => {
         console.error("Erro ao salvar:", err);
-        alert("Erro ao salvar os dados.");
+        showToast("Erro ao salvar os dados.");
       });
     }
 

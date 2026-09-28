@@ -1243,8 +1243,13 @@
 
       const filtered = currentData.filter(item => {
         if (!isPublicAccess(item)) return false;
-        const hasVid = item.Video_URL || item.Video || item.URLVideo || item.PontoVideo_URL;
+        
+        const arquivoUrlStr = (item.Arquivo_URL || item.Arquivo || '').toString().trim().toLowerCase();
+        const hasVid = item.Video_URL || item.Video || item.URLVideo || item.PontoVideo_URL || 
+                       arquivoUrlStr.endsWith('.mp4') || arquivoUrlStr.endsWith('.webm') || arquivoUrlStr.endsWith('.mov') || 
+                       arquivoUrlStr.includes('video') || arquivoUrlStr.includes('youtube.com') || arquivoUrlStr.includes('youtu.be');
         const hasImg = getCleanImageUrl(item);
+
         if (tipoFiltro === 'imagens') return hasImg && !hasVid;
         if (tipoFiltro === 'videos') return hasVid;
         return true;
@@ -1279,7 +1284,11 @@
         const titulo = item.Titulo || item.Nome_Evento || item.Categoria || 'Aviso';
         const texto = item.Descricao || item.Texo_Aviso || item.Conteudo_Texto || '';
         const imagem = getCleanImageUrl(item);
-        const hasVideo = item.Video_URL || item.Video || item.URLVideo || item.PontoVideo_URL;
+        
+        const arquivoUrlStr = (item.Arquivo_URL || item.Arquivo || '').toString().trim().toLowerCase();
+        const hasVideo = item.Video_URL || item.Video || item.URLVideo || item.PontoVideo_URL || 
+                         arquivoUrlStr.endsWith('.mp4') || arquivoUrlStr.endsWith('.webm') || arquivoUrlStr.endsWith('.mov') || 
+                         arquivoUrlStr.includes('video') || arquivoUrlStr.includes('youtube.com') || arquivoUrlStr.includes('youtu.be');
 
         let imgHtml = imagem ? `<img src="${imagem}" class="card-img" alt="${titulo}">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid ${hasVideo ? 'fa-video' : 'fa-image'} fa-2x"></i></div>`;
         const badgeLabel = hasVideo ? 'Vídeo' : 'Imagem';
@@ -1841,7 +1850,6 @@
         if (obs) info += `<p><strong>Observações:</strong><br>${obs}</p>`;
 
       } else if (tabName === 'Mural_Imagens' || currentTab === 'Mural_Imagens') {
-        // Ajuste exclusivo para o Mural de Avisos puxando Arquivo_URL (imagem, vídeo ou áudio) e Data_Criacao
         const arquivoUrl = item.Arquivo_URL || item.Arquivo || '';
         let cleanMedia = arquivoUrl.toString().trim();
         
@@ -1887,6 +1895,8 @@
             cleanKeyLower === 'destacarpopup' || 
             cleanKeyLower === 'arquivourl' || 
             cleanKeyLower === 'arquivo' || 
+            cleanKeyLower === 'arquivoimagem' ||
+            cleanKeyLower === 'categoria' ||
             cleanKeyLower === 'acessopublico' || 
             cleanKeyLower === 'datacriacao' ||
             cleanKeyLower === 'datadecriacao' ||
@@ -1934,6 +1944,7 @@
             cleanKeyLower === 'destacarpopup' || 
             cleanKeyLower === 'arquivourl' || 
             cleanKeyLower === 'arquivoimagem' || 
+            cleanKeyLower === 'categoria' ||
             cleanKeyLower === 'anexo' || 
             cleanKeyLower === 'anexourl' || 
             cleanKeyLower === 'acessopublico' || 

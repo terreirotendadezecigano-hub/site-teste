@@ -2093,82 +2093,38 @@
       let info = '';
       let mediaTopContent = '';
 
-      if (tabName === 'Pontos_Cantados' || currentTab === 'Pontos_Cantados') {
-        const audioUrl = item.PontoAudio_URL || item.Audio_URL || item.Audio || item.OrigemAudio_Ponto || '';
-        const videoUrl = item.PontoVideo_URL || item.URLVideo_URL || item.URLVideo || item.Video_URL || item.Video || item.MP4 || '';
-
-        let cleanAudio = getMediaDirectUrl(audioUrl);
-        let cleanVideo = getMediaDirectUrl(videoUrl);
-
-        if (cleanVideo && cleanVideo.startsWith('http')) {
-          if (cleanVideo.includes('youtube.com') || cleanVideo.includes('youtu.be')) {
-            let ytEmbed = cleanVideo;
-            if (cleanVideo.includes('watch?v=')) ytEmbed = cleanVideo.replace('watch?v=', 'embed/');
-            else if (cleanVideo.includes('youtu.be/')) ytEmbed = cleanVideo.replace('youtu.be/', 'www.youtube.com/embed/');
-            mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
-          } else {
-            mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanVideo}">Seu navegador não suporta vídeos.</video>`;
-          }
-        } else if (cleanAudio && cleanAudio.startsWith('http')) {
-          mediaTopContent = `<audio controls autoplay style="width:100%; margin-bottom:10px;"><source src="${cleanAudio}">Seu navegador não suporta áudio.</audio>`;
-        }
-
-        const linhaEntidade = item.Linha_Entidade || item.Linha || item.Entidade || '';
-        const entidadeTipo = item.EntidadeTipo || '';
-        const letraponto = item.Letra_Ponto || item.Letra || item.Conteudo_Texto || '';
-        const origemAudio = item.OrigemAudio_Ponto || '';
-        const oga = item.Oga_Responsavel || item.Oga || '';
-        const cantora = item.Cantora_Responsavel || item.Cantora || '';
-        const obs = item.Observacoes || item.ObservacoesAcesso_Publico || item.Obs || '';
-
-        if (linhaEntidade) info += `<p><strong>Linha / Entidade:</strong> ${linhaEntidade}</p>`;
-        if (entidadeTipo) info += `<p><strong>Tipo de Entidade:</strong> ${entidadeTipo}</p>`;
-        if (oga) info += `<p><strong>Ogã Responsável:</strong> ${oga}</p>`;
-        if (cantora) info += `<p><strong>Cantora Responsável:</strong> ${cantora}</p>`;
-        if (origemAudio) info += `<p><strong>Origem do Áudio:</strong> ${origemAudio}</p>`;
-        if (letraponto) info += `<p><strong>Letra do Ponto:</strong><br><span style="white-space: pre-line; color: var(--gold-light); font-size: 0.85rem; display: block; margin-top: 4px; background: #161616; padding: 8px; border-radius: 6px; border-left: 3px solid var(--gold-primary);">${letraponto}</span></p>`;
-        if (obs) info += `<p><strong>Observações:</strong><br>${obs}</p>`;
-
-      } else if (tabName === 'Mural_Imagens' || currentTab === 'Mural_Imagens') {
-        const videoRaw = item.Arquivo_Video || item.Video_URL || item.Video || '';
-        const audioRaw = item.Arquivo_Audio || item.Audio_URL || item.Audio || '';
+      if (tabName === 'Pontos_Cantados' || currentTab === 'Pontos_Cantados' || tabName === 'Mural_Imagens' || currentTab === 'Mural_Imagens') {
+        const audioUrl = item.PontoAudio_URL || item.Audio_URL || item.Audio || item.Arquivo_Audio || item.OrigemAudio_Ponto || '';
+        const videoUrl = item.PontoVideo_URL || item.URLVideo_URL || item.URLVideo || item.Video_URL || item.Video || item.Arquivo_Video || item.MP4 || '';
         const muralRaw = item.Mural_URL || item.Arquivo_URL || item.Arquivo || '';
 
-        const cleanVideo = getMediaDirectUrl(videoRaw);
-        const cleanAudio = getMediaDirectUrl(audioRaw);
-        const cleanMural = getMediaDirectUrl(muralRaw);
+        let mediaLink = videoUrl || audioUrl || muralRaw;
 
-        if (cleanVideo) {
-          if (cleanVideo.includes('youtube.com') || cleanVideo.includes('youtu.be')) {
-            let ytEmbed = cleanVideo;
-            if (cleanVideo.includes('watch?v=')) ytEmbed = cleanVideo.replace('watch?v=', 'embed/');
-            else if (cleanVideo.includes('youtu.be/')) ytEmbed = cleanVideo.replace('youtu.be/', 'www.youtube.com/embed/');
-            mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
-          } else {
-            mediaTopContent = `<video controls autoplay style="width:100%; max-height:240px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanVideo}">Seu navegador não suporta vídeos.</video>`;
+        if (mediaLink) {
+          let cleanMedia = mediaLink.toString().trim();
+          
+          // Converte links do Google Drive para o player embutido oficial (/preview) evitando travamento em 0:00
+          if (cleanMedia.includes('drive.google.com') || cleanMedia.includes('docs.google.com')) {
+            let match = cleanMedia.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanMedia.match(/id=([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+              cleanMedia = `https://drive.google.com/file/d/${match[1]}/preview`;
+            }
           }
-        } else if (cleanAudio) {
-          mediaTopContent = `
-            <div style="text-align: center; margin-bottom: 12px; background: #121212; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-              <img src="${INSTITUTIONAL_LOGO_URL}" style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--gold-primary); object-fit: cover; margin-bottom: 8px; box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);">
-              <audio controls autoplay style="width:100%;"><source src="${cleanAudio}">Seu navegador não suporta áudio.</audio>
-            </div>
-          `;
-        } else if (cleanMural && !cleanMural.startsWith('http')) {
-          mediaTopContent = `<img src="${INSTITUTIONAL_LOGO_URL}" class="modal-banner-img">`;
-        } else if (cleanMural) {
-          mediaTopContent = `<img src="${cleanMural}" class="modal-banner-img" onclick="openImageZoom('${cleanMural}')">`;
+
+          if (cleanMedia.includes('youtube.com') || cleanMedia.includes('youtu.be')) {
+            let ytEmbed = cleanMedia;
+            if (cleanMedia.includes('watch?v=')) ytEmbed = cleanMedia.replace('watch?v=', 'embed/');
+            else if (cleanMedia.includes('youtu.be/')) ytEmbed = cleanMedia.replace('youtu.be/', 'www.youtube.com/embed/');
+            mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
+          } else if (cleanMedia.includes('/preview')) {
+            mediaTopContent = `<div style="position:relative; width:100%; height:250px; margin-bottom:10px;"><iframe src="${cleanMedia}" style="width:100%; height:100%; border:0; border-radius:6px;" allow="autoplay"></iframe></div>`;
+          } else if (cleanMedia.endsWith('.mp3') || cleanMedia.endsWith('.wav') || cleanMedia.includes('audio')) {
+            mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>`;
+          } else {
+            mediaTopContent = `<video controls style="width:100%; max-height:240px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
+          }
         } else if (imagem) {
           mediaTopContent = `<img src="${imagem}" class="modal-banner-img" onclick="openImageZoom('${imagem}')">`;
-        }
-
-        let dataCriacaoVal = '';
-        for (let key in item) {
-          let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
-          if (ck === 'datacriacao' || ck === 'datadecriacao') {
-            dataCriacaoVal = item[key];
-            break;
-          }
         }
 
         for (let key in item) {
@@ -2192,56 +2148,6 @@
 
           let valStr = String(item[key] || '').trim();
           if (valStr.startsWith('http://') || valStr.startsWith('https://')) continue;
-          if (valStr.toLowerCase().includes('link externo')) continue;
-
-          if (valStr) {
-            info += `<p><strong>${formatKeyName(key)}:</strong> ${valStr}</p>`;
-          }
-        }
-
-        if (dataCriacaoVal) {
-          info += `<p style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 8px; color: var(--gold-light); font-size: 0.78rem;"><strong>Data de Publicação:</strong> ${formatDateBR(dataCriacaoVal)}</p>`;
-        }
-
-      } else {
-        const mediaUrl = item.Mural_URL || item.Video_URL || item.Video || item.URLVideo || item.Audio_URL || item.Audio || item.MP4 || item.Arquivo_URL || '';
-        if (mediaUrl) {
-          let cleanMedia = getMediaDirectUrl(mediaUrl);
-          const lowerMedia = cleanMedia.toLowerCase();
-          const isAudio = lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio');
-          const isYoutube = cleanMedia.includes('youtube.com') || cleanMedia.includes('youtu.be');
-          
-          if (isAudio) {
-            mediaTopContent = `<audio controls autoplay style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>`;
-          } else if (isYoutube) {
-            let ytEmbed = cleanMedia;
-            if (cleanMedia.includes('watch?v=')) ytEmbed = cleanMedia.replace('watch?v=', 'embed/');
-            else if (cleanMedia.includes('youtu.be/')) ytEmbed = cleanMedia.replace('youtu.be/', 'www.youtube.com/embed/');
-            mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
-          } else {
-            mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
-          }
-        }
-
-        for (let key in item) {
-          let cleanKeyLower = key.toLowerCase().trim().replace(/[\s_]/g, '');
-          
-          if (
-            cleanKeyLower.includes('id') || 
-            cleanKeyLower === 'destacarpopup' || 
-            cleanKeyLower === 'arquivourl' || 
-            cleanKeyLower === 'arquivoimagem' || 
-            cleanKeyLower === 'categoria' ||
-            cleanKeyLower === 'anexo' || 
-            cleanKeyLower === 'anexourl' || 
-            cleanKeyLower === 'acessopublico' || 
-            cleanKeyLower === 'fotourl' || 
-            cleanKeyLower === 'fotoervas'
-          ) continue;
-
-          let valStr = String(item[key] || '').trim();
-          if (valStr.startsWith('http://') || valStr.startsWith('https://')) continue;
-
           if (valStr) {
             info += `<p><strong>${formatKeyName(key)}:</strong> ${valStr}</p>`;
           }
@@ -2252,7 +2158,6 @@
         <div class="modal-header"><h3 style="font-size:0.95rem; margin:0;">${titulo}</h3><button class="modal-close-icon" onclick="closeGenericDetail()">&times;</button></div>
         <div class="modal-body">
           ${mediaTopContent}
-          ${(!mediaTopContent && imagem && !(tabName === 'Mural_Imagens' || currentTab === 'Mural_Imagens')) ? `<img src="${imagem}" class="modal-banner-img" onclick="openImageZoom('${imagem}')">` : ''}
           <div class="modal-details-box">${info || '<p>Nenhum detalhe disponível.</p>'}</div>
         </div>
         <div class="modal-actions">

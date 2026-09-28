@@ -1566,12 +1566,30 @@
       document.getElementById('modalMembro').style.display = 'flex';
     }
 
-    // Função de exclusão atualizada (sem caixa de confirmação nativa)
+    // Função de exclusão direta atualizada (sem a caixa "confirm" nativa do navegador)
     function excluirMembro(idMembro) {
+      const m = listaMembros.find(item => String(item.ID_Filho || item.id) === String(idMembro));
+      const emailExclusao = m ? (m.Email || m['E-mail'] || '') : '';
+
       listaMembros = listaMembros.filter(item => String(item.ID_Filho || item.id) !== String(idMembro));
       currentData = listaMembros;
       renderTabelaMembros(listaMembros);
       showToast("Membro removido com sucesso!");
+
+      const dadosExclusao = {
+        acao: 'excluir',
+        id: idMembro,
+        email: emailExclusao
+      };
+
+      fetch(WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(dadosExclusao)
+      }).catch(err => {
+        console.error("Erro ao sincronizar exclusão:", err);
+      });
     }
 
     function salvarMembro() {
@@ -1594,6 +1612,7 @@
       }
 
       const dadosMembro = {
+        acao: 'salvar',
         id: id,
         nome_completo: nome_completo,
         data_nascimento: data_nascimento,

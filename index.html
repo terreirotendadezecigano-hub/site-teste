@@ -431,11 +431,11 @@
       background: #181818;
       border: 1px solid var(--border-color);
       color: var(--gold-light);
-      width: 32px;
-      height: 32px;
+      width: 30px;
+      height: 30px;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -753,7 +753,7 @@
     </div>
   </div>
 
-  <!-- Modal Cadastro/Edição de Membro -->
+  <!-- Modal Cadastro/Edição de Membro Completo -->
   <div class="modal-overlay" id="modalMembro">
     <div class="modal-box" style="max-width:520px;">
       <div class="modal-header">
@@ -1690,16 +1690,21 @@
 
         const tel = m.Telefone || '';
         const cleanPhone = tel ? tel.replace(/\D/g, '') : '';
-        let actionsContact = cleanPhone ? `
-          <div style="display: flex; gap: 6px; align-items: center;">
-            <a href="tel:${cleanPhone}" class="btn-action-icon btn-call-stylish" title="Ligar">
-              <i class="fa-solid fa-phone-volume"></i>
-            </a>
-            <a href="https://wa.me/${cleanPhone}" target="_blank" class="btn-action-icon btn-whatsapp-stylish" title="Enviar WhatsApp">
-              <i class="fa-brands fa-whatsapp"></i>
-            </a>
+        let actionsContact = tel ? `
+          <div>
+            <span style="font-size: 0.78rem; display: block; margin-bottom: 3px;">${tel}</span>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <a href="tel:${cleanPhone}" class="btn-action-icon btn-call-stylish" title="Ligar">
+                <i class="fa-solid fa-phone-volume"></i>
+              </a>
+              <a href="https://wa.me/${cleanPhone}" target="_blank" class="btn-action-icon btn-whatsapp-stylish" title="Enviar WhatsApp">
+                <i class="fa-brands fa-whatsapp"></i>
+              </a>
+            </div>
           </div>
         ` : 'Não informado';
+
+        const emailCell = email !== 'Não informado' ? `<a href="mailto:${email}" style="color: var(--gold-light); text-decoration: underline;" title="Enviar E-mail">${email}</a>` : email;
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -1710,7 +1715,7 @@
             </div>
           </td>
           <td><strong>${nome}</strong></td>
-          <td>${email}</td>
+          <td>${emailCell}</td>
           <td><span class="card-badge" style="background:#1a1a1a;">${perfil}</span></td>
           <td>${dataInicioFormatada}</td>
           <td>${actionsContact}</td>
@@ -1736,6 +1741,43 @@
       }));
 
       const worksheet = XLSX.utils.json_to_sheet(dadosExport);
+
+      // Auto largura das colunas baseada no conteúdo
+      const colWidths = [];
+      dadosExport.forEach(row => {
+        Object.keys(row).forEach((key, i) => {
+          const val = String(row[key] || '');
+          const len = Math.max(val.length, key.length) + 4;
+          if (!colWidths[i] || len > colWidths[i].wch) {
+            colWidths[i] = { wch: len };
+          }
+        });
+      });
+      worksheet['!cols'] = colWidths;
+
+      // Estilização zebrada da tabela e cabeçalho preto com fonte branca em negrito
+      const range = XLSX.utils.decode_range(worksheet['!ref']);
+      for (let R = range.s.r; R <= range.e.r; ++R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+          if (!worksheet[cellAddress]) continue;
+          
+          if (R === 0) {
+            worksheet[cellAddress].s = {
+              fill: { fgColor: { rgb: "000000" } },
+              font: { bold: true, color: { rgb: "FFFFFF" } },
+              alignment: { horizontal: "center" }
+            };
+          } else {
+            const zebraColor = (R % 2 === 0) ? "F2F2F2" : "FFFFFF";
+            worksheet[cellAddress].s = {
+              fill: { fgColor: { rgb: zebraColor } },
+              font: { color: { rgb: "000000" } }
+            };
+          }
+        }
+      }
+
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Membros");
       XLSX.writeFile(workbook, "Membros_Tenda_Ze_Cigano.xlsx");

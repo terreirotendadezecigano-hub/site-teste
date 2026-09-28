@@ -166,12 +166,19 @@
       font-size: 1rem; 
       color: var(--gold-primary); 
       margin-top: 10px;
-      margin-bottom: 12px; 
-      border-bottom: 1px solid var(--border-color); 
-      padding-bottom: 6px; 
+      margin-bottom: 6px; 
       display: flex; 
       align-items: center; 
       gap: 8px; 
+    }
+
+    .mural-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 15px;
+      line-height: 1.4;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
     }
 
     .cards-grid { 
@@ -210,18 +217,6 @@
     .card-title { font-size: 0.82rem; color: #fff; margin: 0 0 3px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
     .card-datetime { font-size: 0.68rem; color: var(--gold-primary); margin-bottom: 3px; }
     .card-text { font-size: 0.7rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
-
-    .mural-intro-box { 
-      background: linear-gradient(135deg, #161616 0%, #1f1416 100%); 
-      border: 1px solid var(--gold-primary); 
-      border-radius: 10px; 
-      padding: 16px; 
-      margin-bottom: 15px; 
-      width: 100%; 
-      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.1);
-    }
-    .mural-intro-box h3 { color: var(--gold-primary); margin-top: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; }
-    .mural-intro-box p { font-size: 0.8rem; color: var(--text-muted); margin: 0; line-height: 1.4; }
 
     .ervas-home-container, .pontos-home-container { display: flex; flex-direction: column; gap: 15px; width: 100%; }
     .ervas-intro-box, .pontos-intro-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 15px; text-align: center; width: 100%; }
@@ -693,6 +688,7 @@
     </div>
 
     <h2 class="section-title" id="pageTitle"><i class="fa-solid fa-star"></i> Destaques</h2>
+    <div id="pageSubtitleContainer"></div>
 
     <div id="loading"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p style="margin-top:6px; font-size:0.75rem;">Buscando dados...</p></div>
     <div id="contentContainer"></div>
@@ -874,6 +870,7 @@
 
       const generalInfoSection = document.getElementById('generalInfoSection');
       const searchContainerWrapper = document.getElementById('searchContainerWrapper');
+      document.getElementById('pageSubtitleContainer').innerHTML = '';
 
       if (tabName === 'Ervas_Banhos' || tabName === 'Pontos_Cantados') {
         searchContainerWrapper.style.display = 'none';
@@ -915,7 +912,7 @@
                      item.Imagem_Cartaz || item.Capa || item.Anexo_URL || item['Anexo URL'] || item.Anexo || item.Link || '';
       if (!rawImg) return '';
       let clean = rawImg.toString().trim();
-      if (clean.includes('drive.google.com') || clean.includes('docs.google.com') || clean.includes('googleusercontent.com')) {
+      if (clean.includes('drive.google.com') || clean.includes('docs.google.com')) {
         const match = clean.match(/\/d\/([a-zA-Z0-9_-]+)/) || clean.match(/id=([a-zA-Z0-9_-]+)/);
         if (match && match[1]) return `https://lh3.googleusercontent.com/d/${match[1]}`;
       }
@@ -1217,9 +1214,9 @@
       const raw = item.Mural_URL || item.Arquivo_URL || item.Arquivo || item.Video_URL || item.Video || item.URLVideo || item.Midia_URL || item.Link_Video || item.Audio_URL || item.Audio || item.Link || '';
       if (!raw) return '';
       let clean = raw.toString().trim();
-      if (clean.includes('drive.google.com') || clean.includes('docs.google.com') || clean.includes('googleusercontent.com')) {
+      if (clean.includes('drive.google.com') || clean.includes('docs.google.com')) {
         const match = clean.match(/\/d\/([a-zA-Z0-9_-]+)/) || clean.match(/id=([a-zA-Z0-9_-]+)/);
-        if (match && match[1]) return `https://drive.google.com/uc?export=download&id=${match[1]}`;
+        if (match && match[1]) return `https://lh3.googleusercontent.com/d/${match[1]}`;
       }
       return clean;
     }
@@ -1267,14 +1264,13 @@
       });
       currentData = sortedData;
 
-      const introHtml = `
-        <div class="mural-intro-box">
-          <h3><i class="fa-solid fa-photo-film"></i> Mural de Avisos e Comunicações</h3>
-          <p>Acompanhe aqui os comunicados oficiais, informativos visuais, cartazes de festividades, áudios e mídias importantes do terreiro publicados pela administração.</p>
+      document.getElementById('pageSubtitleContainer').innerHTML = `
+        <div class="mural-subtitle">
+          Acompanhe aqui os comunicados oficiais, informativos visuais, cartazes de festividades, áudios e mídias importantes do terreiro publicados pela administração.
         </div>
       `;
 
-      container.innerHTML = `${introHtml}<div id="subpageMuralGridContainer"></div>`;
+      container.innerHTML = `<div id="subpageMuralGridContainer"></div>`;
       renderMuralGrid(sortedData);
     }
 
@@ -1860,13 +1856,13 @@
         let cleanAudio = audioUrl.toString().trim();
         if (cleanAudio.includes('drive.google.com') || cleanAudio.includes('docs.google.com')) {
           const match = cleanAudio.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanAudio.match(/id=([a-zA-Z0-9_-]+)/);
-          if (match && match[1]) cleanAudio = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+          if (match && match[1]) cleanAudio = `https://lh3.googleusercontent.com/d/${match[1]}`;
         }
 
         let cleanVideo = videoUrl.toString().trim();
         if (cleanVideo.includes('drive.google.com') || cleanVideo.includes('docs.google.com')) {
           const match = cleanVideo.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanVideo.match(/id=([a-zA-Z0-9_-]+)/);
-          if (match && match[1]) cleanVideo = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+          if (match && match[1]) cleanVideo = `https://lh3.googleusercontent.com/d/${match[1]}`;
         }
 
         if (cleanVideo && cleanVideo.startsWith('http')) {
@@ -1968,7 +1964,7 @@
           let cleanMedia = mediaUrl.toString().trim();
           if (cleanMedia.includes('drive.google.com') || cleanMedia.includes('docs.google.com')) {
             const match = cleanMedia.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanMedia.match(/id=([a-zA-Z0-9_-]+)/);
-            if (match && match[1]) cleanMedia = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+            if (match && match[1]) cleanMedia = `https://lh3.googleusercontent.com/d/${match[1]}`;
           }
           const lowerMedia = cleanMedia.toLowerCase();
           const isAudio = lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio');

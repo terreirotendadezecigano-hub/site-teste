@@ -1215,7 +1215,7 @@
       let clean = raw.toString().trim();
       if (clean.includes('drive.google.com') || clean.includes('docs.google.com')) {
         const match = clean.match(/\/d\/([a-zA-Z0-9_-]+)/) || clean.match(/id=([a-zA-Z0-9_-]+)/);
-        if (match && match[1]) return `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
+        if (match && match[1]) return `https://drive.google.com/file/d/${match[1]}/preview`;
       }
       return clean;
     }
@@ -1236,7 +1236,7 @@
       if (lowerTipo.includes('áudio') || lowerTipo.includes('audio') || lowerTipo.includes('som') || lowerUrl.endsWith('.mp3') || lowerUrl.endsWith('.wav') || lowerUrl.endsWith('.ogg') || lowerUrl.includes('audio')) {
         return 'audio';
       }
-      if (lowerTipo.includes('vídeo') || lowerTipo.includes('video') || lowerUrl.endsWith('.mp4') || lowerUrl.endsWith('.webm') || lowerUrl.endsWith('.mov') || lowerUrl.includes('video') || lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) {
+      if (lowerTipo.includes('vídeo') || lowerTipo.includes('video') || lowerUrl.endsWith('.mp4') || lowerUrl.endsWith('.webm') || lowerUrl.endsWith('.mov') || lowerUrl.includes('video') || lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be') || lowerUrl.includes('/preview')) {
         return 'video';
       }
       if (mediaUrl || lowerTipo.includes('imagem') || lowerTipo.includes('foto') || lowerTipo.includes('cartaz')) {
@@ -1963,7 +1963,7 @@
         let cleanVideo = videoUrl.toString().trim();
         if (cleanVideo.includes('drive.google.com') || cleanVideo.includes('docs.google.com')) {
           const match = cleanVideo.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanVideo.match(/id=([a-zA-Z0-9_-]+)/);
-          if (match && match[1]) cleanVideo = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
+          if (match && match[1]) cleanVideo = `https://drive.google.com/file/d/${match[1]}/preview`;
         }
 
         if (cleanVideo && cleanVideo.startsWith('http')) {
@@ -1972,6 +1972,8 @@
             if (cleanVideo.includes('watch?v=')) ytEmbed = cleanVideo.replace('watch?v=', 'embed/');
             else if (cleanVideo.includes('youtu.be/')) ytEmbed = cleanVideo.replace('youtu.be/', 'www.youtube.com/embed/');
             mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
+          } else if (cleanVideo.includes('/preview')) {
+            mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${cleanVideo}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
           } else {
             mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanVideo}">Seu navegador não suporta vídeos.</video>`;
           }
@@ -2012,6 +2014,8 @@
             if (cleanMedia.includes('watch?v=')) ytEmbed = cleanMedia.replace('watch?v=', 'embed/');
             else if (cleanMedia.includes('youtu.be/')) ytEmbed = cleanMedia.replace('youtu.be/', 'www.youtube.com/embed/');
             mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
+          } else if (cleanMedia.includes('/preview')) {
+            mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${cleanMedia}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
           } else {
             mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
           }
@@ -2064,7 +2068,7 @@
           let cleanMedia = mediaUrl.toString().trim();
           if (cleanMedia.includes('drive.google.com') || cleanMedia.includes('docs.google.com')) {
             const match = cleanMedia.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanMedia.match(/id=([a-zA-Z0-9_-]+)/);
-            if (match && match[1]) cleanMedia = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
+            if (match && match[1]) cleanMedia = `https://drive.google.com/file/d/${match[1]}/preview`;
           }
           const lowerMedia = cleanMedia.toLowerCase();
           const isAudio = lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio');
@@ -2077,6 +2081,8 @@
             if (cleanMedia.includes('watch?v=')) ytEmbed = cleanMedia.replace('watch?v=', 'embed/');
             else if (cleanMedia.includes('youtu.be/')) ytEmbed = cleanMedia.replace('youtu.be/', 'www.youtube.com/embed/');
             mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
+          } else if (cleanMedia.includes('/preview')) {
+            mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${cleanMedia}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
           } else {
             mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
           }

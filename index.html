@@ -344,7 +344,16 @@
     .modal-body { overflow-y: auto; max-height: 65vh; padding-right: 4px; flex-grow: 1; }
     .modal-banner-img { width: 100%; max-height: 200px; object-fit: contain; background-color: #000; border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 10px; display: block; cursor: zoom-in; }
     .modal-details-box { background: #111; padding: 10px; border-radius: 6px; border: 1px solid #282828; font-size: 0.8rem; line-height: 1.4; color: #ddd; }
-    .modal-actions { display: flex; gap: 8px; margin-top: 10px; flex-shrink: 0; }
+    
+    /* Botões de Ação no Rodapé do Modal */
+    .modal-actions { display: flex; gap: 8px; margin-top: 12px; flex-shrink: 0; }
+    .btn-share { background: var(--gold-primary); color: #000; font-weight: bold; border: none; padding: 9px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-share:hover { background: var(--gold-light); }
+    .btn-close-modal { background: #2a2a2a; color: #fff; border: 1px solid var(--border-color); padding: 9px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-close-modal:hover { background: #333; }
+
+    .btn-share-option { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: #111; color: #fff; font-size: 0.85rem; cursor: pointer; text-decoration: none; }
+    .btn-share-option:hover { background: rgba(212, 175, 55, 0.15); border-color: var(--gold-primary); }
 
     .btn-submit { background: var(--gold-primary); border: none; color: #000; font-weight: bold; padding: 9px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; flex: 1; }
     .btn-cancel { background: #333; color: #fff; border: 1px solid var(--border-color); padding: 9px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; flex: 1; }
@@ -440,6 +449,27 @@
   <!-- Modal Detalhes -->
   <div class="modal-overlay" id="detailModal" onclick="closeModalOnBackdrop(event)">
     <div class="modal-box" id="detailModalContent"></div>
+  </div>
+
+  <!-- Modal Seletor de Compartilhamento (Fallback) -->
+  <div class="modal-overlay" id="sharePickerModal">
+    <div class="modal-box" style="max-width:320px;">
+      <div class="modal-header">
+        <h3 style="font-size:0.9rem; margin:0;"><i class="fa-solid fa-share-nodes"></i> Compartilhar via</h3>
+        <button class="modal-close-icon" onclick="closeSharePickerModal()">&times;</button>
+      </div>
+      <div style="padding: 10px 0;">
+        <a id="shareOptWhatsapp" class="btn-share-option" target="_blank">
+          <i class="fa-brands fa-whatsapp" style="color:#25d366; font-size:1.2rem;"></i> WhatsApp
+        </a>
+        <a id="shareOptTelegram" class="btn-share-option" target="_blank">
+          <i class="fa-brands fa-telegram" style="color:#0088cc; font-size:1.2rem;"></i> Telegram
+        </a>
+        <button id="shareOptCopy" class="btn-share-option" onclick="copyShareText()">
+          <i class="fa-solid fa-copy" style="color:var(--gold-primary); font-size:1.2rem;"></i> Copiar Conteúdo
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Modal Zoom Imagem -->
@@ -568,6 +598,7 @@
     let isErvasSubpage = false;
     let isPontosSubpage = false;
     let isSubmitting = false;
+    let currentShareText = '';
 
     /**
      * FUNÇÃO: showToast
@@ -1302,11 +1333,6 @@
       document.getElementById('modalMembro').style.display = 'flex';
     }
 
-    /**
-     * FUNÇÃO DESTAQUE: editarMembro
-     * Descrição: Carrega os dados do membro selecionado e guarda o ID no campo oculta (membroId).
-     * Final da função editarMembro.
-     */
     function editarMembro(idMembro) {
       const m = listaMembros.find(item => String(item.ID_Filho || item.id).trim() === String(idMembro).trim());
       if (!m) { 
@@ -1338,11 +1364,6 @@
       document.getElementById('modalMembro').style.display = 'flex';
     }
 
-    /**
-     * FUNÇÃO DESTAQUE: excluirMembro
-     * Descrição: Confirma a remoção e dispara solicitação POST para a Web App.
-     * Final da função excluirMembro.
-     */
     function excluirMembro(idMembro) {
       showConfirmDialog("Excluir Registro", "Deseja realmente remover este membro da planilha?", () => {
         showToast("Enviando solicitação de exclusão...", "info");
@@ -1364,11 +1385,6 @@
       });
     }
 
-    /**
-     * FUNÇÃO DESTAQUE: salvarMembro
-     * Descrição: Faz o envio das informações de inclusão ou edição ao Google Apps Script.
-     * Final da função salvarMembro.
-     */
     function salvarMembro() {
       if (isSubmitting) return;
 
@@ -1457,6 +1473,9 @@
       container.appendChild(grid);
     }
 
+    /**
+     * FUNÇÃO DE EXIBIÇÃO DE DETALHES + SISTEMA DE COMPARTILHAMENTO
+     */
     function openGenericDetail(item, tabName) {
       const modalContent = document.getElementById('detailModalContent');
       const titulo = item.Nome_Evento || item.Titulo_Ponto || item.Titulo || item.Nome_Erva || item.Categoria || 'Detalhes';
@@ -1464,6 +1483,7 @@
       
       let info = '';
       let mediaTopContent = '';
+      let plainTextShare = `*Tenda de Zé Cigano*\n\n📌 *${titulo}*\n`;
 
       const mediaUrl = item.Video_URL || item.Video || item.Audio_URL || item.Audio || item.MP4 || item.Arquivo_URL || item.Link_Externo || '';
       if (mediaUrl) {
@@ -1495,8 +1515,14 @@
         const letra = item.Letra_Ponto || item.Letra || item.Conteudo_Texto || item.LetraPonto || '';
         const observacoes = item.Observacoes || item.Obs || '';
 
-        if (letra) info += `<p><strong>Letra do Ponto:</strong><br><span style="white-space: pre-line;">${letra}</span></p>`;
-        if (observacoes) info += `<p><strong>Observações:</strong><br>${observacoes}</p>`;
+        if (letra) {
+          info += `<p><strong>Letra do Ponto:</strong><br><span style="white-space: pre-line;">${letra}</span></p>`;
+          plainTextShare += `\n🎶 *Letra:*\n${letra}\n`;
+        }
+        if (observacoes) {
+          info += `<p><strong>Observações:</strong><br>${observacoes}</p>`;
+          plainTextShare += `\n📝 *Obs:* ${observacoes}\n`;
+        }
       } else {
         const ignoreKeys = [
           'id', 'id_ponto', 'id_evento', 'id_erva', 'id_imagem', 'id_guia', 
@@ -1510,10 +1536,14 @@
           let val = item[key];
           if (val && val.toString().trim() !== '') {
             if (key.toLowerCase().includes('data')) val = formatDateBR(val);
-            info += `<p><strong>${formatKeyName(key)}:</strong> ${val}</p>`;
+            const label = formatKeyName(key);
+            info += `<p><strong>${label}:</strong> ${val}</p>`;
+            plainTextShare += `*${label}:* ${val}\n`;
           }
         }
       }
+
+      currentShareText = plainTextShare;
 
       let bannerImg = '';
       if (imagem && !mediaTopContent) {
@@ -1530,9 +1560,52 @@
           ${bannerImg}
           <div class="modal-details-box">${info || '<p>Sem informações adicionais.</p>'}</div>
         </div>
+        <div class="modal-actions">
+          <button class="btn-share" onclick="handleShare('${encodeURIComponent(titulo)}')"><i class="fa-solid fa-share-nodes"></i> Compartilhar</button>
+          <button class="btn-close-modal" onclick="closeGenericDetail()"><i class="fa-solid fa-xmark"></i> Fechar</button>
+        </div>
       `;
 
       document.getElementById('detailModal').style.display = 'flex';
+    }
+
+    /**
+     * LÓGICA DE COMPARTILHAMENTO INTELIGENTE
+     */
+    function handleShare(titleEncoded) {
+      const shareTitle = decodeURIComponent(titleEncoded);
+      
+      // Tenta utilizar o compartilhamento nativo do celular / sistema operacional
+      if (navigator.share) {
+        navigator.share({
+          title: shareTitle,
+          text: currentShareText,
+          url: window.location.href
+        })
+        .then(() => showToast('Compartilhado com sucesso!', 'success'))
+        .catch((err) => {
+          if (err.name !== 'AbortError') openFallbackShareModal();
+        });
+      } else {
+        openFallbackShareModal();
+      }
+    }
+
+    function openFallbackShareModal() {
+      const encodedText = encodeURIComponent(currentShareText);
+      document.getElementById('shareOptWhatsapp').href = `https://api.whatsapp.com/send?text=${encodedText}`;
+      document.getElementById('shareOptTelegram').href = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodedText}`;
+      document.getElementById('sharePickerModal').style.display = 'flex';
+    }
+
+    function closeSharePickerModal() {
+      document.getElementById('sharePickerModal').style.display = 'none';
+    }
+
+    function copyShareText() {
+      navigator.clipboard.writeText(currentShareText);
+      showToast('Conteúdo copiado para a área de transferência!', 'success');
+      closeSharePickerModal();
     }
 
     function closeGenericDetail() { document.getElementById('detailModal').style.display = 'none'; }

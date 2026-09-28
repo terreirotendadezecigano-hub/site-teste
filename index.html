@@ -1237,6 +1237,13 @@
       return 'outros';
     }
 
+    function getItemDate(item) {
+      let dVal = item.Data_Criacao || item.DataCriacao || item.Data_Evento || item.Data || '';
+      if (!dVal) return new Date(0);
+      const d = parseLocalDate(dVal);
+      return d ? d : new Date(0);
+    }
+
     function buildMuralHome(data) {
       document.getElementById('searchContainerWrapper').style.display = 'none';
       const container = document.getElementById('contentContainer');
@@ -1330,6 +1337,9 @@
         return p.toString().trim().toLowerCase() === tipoMidia.toLowerCase();
       });
 
+      // Ordenar por data mais próxima/recente em relação ao dia atual
+      filtered.sort((a, b) => getItemDate(b) - getItemDate(a));
+
       renderMuralGrid(filtered);
     }
 
@@ -1357,6 +1367,9 @@
         if (tipoFiltro === 'audios') return tMidia === 'audio';
         return true;
       });
+
+      // Ordenar por data mais próxima/recente em relação ao dia atual
+      filtered.sort((a, b) => getItemDate(b) - getItemDate(a));
 
       renderMuralGrid(filtered);
     }
@@ -2133,7 +2146,10 @@
       const filtered = currentData.filter(item => Object.values(item).some(val => val && val.toString().toLowerCase().includes(query)));
       if (currentTab === 'Ervas_Banhos' && isErvasSubpage) renderErvasGrid(filtered);
       else if (currentTab === 'Pontos_Cantados' && isPontosSubpage) renderPontosGrid(filtered);
-      else if (currentTab === 'Mural_Imagens' && isMuralSubpage) renderMuralGrid(filtered);
+      else if (currentTab === 'Mural_Imagens' && isMuralSubpage) {
+        filtered.sort((a, b) => getItemDate(b) - getItemDate(a));
+        renderMuralGrid(filtered);
+      }
       else renderContent(filtered, currentTab);
     }
   </script>

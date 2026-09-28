@@ -953,7 +953,7 @@
         'linha_entidade': 'Linha / Entidade', 'data_evento': 'Data do Evento', 'data_criacao': 'Data de Criação', 'conteudo_texto': 'Conteúdo / Orientação',
         'horario': 'Horário', 'descricao': 'Descrição', 'categoria': 'Categoria', 'texo_aviso': 'Texto do Aviso',
         'acesso_publico': 'Acesso', 'nome_erva': 'Nome da Erva', 'nome_popular': 'Nome Popular', 'titulo_ponto': 'Título do Ponto',
-        'tipos_de_midia': 'Tipo de Mídia', 'tiposdemidia': 'Tipo de Mídia', 'mural_url': 'Mural URL', 'video_url': 'Vídeo URL', 'url_video': 'URL do Vídeo'
+        'tipos_de_midia': 'Tipo de Mídia', 'tiposdemidia': 'Tipo de Mídia', 'mural_url': 'Mural URL'
       };
       const cleanKey = key.toLowerCase().trim().replace(/ /g, '_');
       if (dictionary[cleanKey]) return dictionary[cleanKey];
@@ -1200,22 +1200,12 @@
 
     /* ================= MURAL DE AVISOS ================= */
     function getMuralMediaUrl(item) {
-      let raw = '';
-      for (let key in item) {
-        let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
-        if (ck.includes('url') || ck.includes('arquivo') || ck.includes('video') || ck.includes('audio') || ck.includes('midia') || ck.includes('link')) {
-          if (item[key] && item[key].toString().trim() !== '') {
-            raw = item[key];
-            break;
-          }
-        }
-      }
-      if (!raw) raw = item.Mural_URL || item.Arquivo_URL || item.Arquivo || item.Video_URL || item.Video || item.URLVideo || item.Midia_URL || item.Link_Video || item.Audio_URL || item.Audio || item.Link || '';
+      const raw = item.Mural_URL || item.Arquivo_URL || item.Arquivo || item.Video_URL || item.Video || item.URLVideo || item.Midia_URL || item.Link_Video || item.Audio_URL || item.Audio || item.Link || '';
       if (!raw) return '';
       let clean = raw.toString().trim();
-      if (clean.includes('drive.google.com') || clean.includes('docs.google.com')) {
+      if (clean.includes('drive.google.com') || clean.includes('docs.google.com') || clean.includes('googleusercontent.com')) {
         const match = clean.match(/\/d\/([a-zA-Z0-9_-]+)/) || clean.match(/id=([a-zA-Z0-9_-]+)/);
-        if (match && match[1]) return `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
+        if (match && match[1]) return `https://lh3.googleusercontent.com/d/${match[1]}`;
       }
       return clean;
     }
@@ -2039,8 +2029,6 @@
             cleanKeyLower === 'arquivourl' || 
             cleanKeyLower === 'arquivo' || 
             cleanKeyLower === 'arquivoimagem' ||
-            cleanKeyLower === 'videourl' ||
-            cleanKeyLower === 'urlvideo' ||
             cleanKeyLower === 'categoria' ||
             cleanKeyLower === 'acessopublico' || 
             cleanKeyLower === 'datacriacao' ||

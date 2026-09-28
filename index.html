@@ -1948,7 +1948,7 @@
         if (obs) info += `<p><strong>Observações:</strong><br>${obs}</p>`;
 
       } else if (tabName === 'Mural_Imagens' || currentTab === 'Mural_Imagens') {
-        const arquivoUrl = item.Arquivo_URL || item.Arquivo || item.Video_URL || item.Video || item.URLVideo || '';
+        const arquivoUrl = item.Arquivo_URL || item.Arquivo || item.Video_URL || item.Video || item.URLVideo || item.Midia_URL || item.Link_Video || '';
         let cleanMedia = arquivoUrl.toString().trim();
         
         if (cleanMedia) {
@@ -1959,7 +1959,7 @@
           const lowerMedia = cleanMedia.toLowerCase();
           const isAudio = lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio');
           const isYoutube = cleanMedia.includes('youtube.com') || cleanMedia.includes('youtu.be');
-          const isVideo = lowerMedia.endsWith('.mp4') || lowerMedia.endsWith('.webm') || lowerMedia.endsWith('.mov') || lowerMedia.includes('video') || cleanMedia.includes('alt=media');
+          const isVideo = lowerMedia.endsWith('.mp4') || lowerMedia.endsWith('.webm') || lowerMedia.endsWith('.mov') || lowerMedia.includes('video') || cleanMedia.includes('alt=media') || item.Tipos_de_Midia?.toLowerCase().includes('vídeo') || item.Tipos_de_Midia?.toLowerCase().includes('video');
 
           if (isAudio) {
             mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>`;

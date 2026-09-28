@@ -796,6 +796,7 @@
   <script>
     const SHEET_ID = '1BL978swtEmpF208tfvPOZJuv2YS1ecpujQnw4ZoA3Jk';
     const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyFje_ocF7a0S7Tq4EYQmM5W3hv9SmHZqxJmWLhPKdkVfudzW-Q3EEbM66U9BiwdBZOJw/exec';
+    const INSTITUTIONAL_LOGO_URL = 'https://lh3.googleusercontent.com/d/1tTQCxsP8Z8H5mNnEFEfVq8dEg9VF0U1-';
     let currentTab = 'Home';
     let currentData = [];
     let listaMembros = [];
@@ -897,7 +898,7 @@
     }
 
     function getCleanImageUrl(item) {
-      const rawImg = item.Foto_URL || item.Foto_Ervas || item.Arquivo_URL || item.Imagem_URL || item.Imagem || item.Foto || item.Foto_URL || 
+      const rawImg = item.Foto_URL || item.Foto_Ervas || item.Arquivo_URL || item.Imagem_URL || item.Imagem || item.Foto || 
                      item.Imagem_Cartaz || item.Capa || item.Anexo_URL || item['Anexo URL'] || item.Anexo || '';
       if (!rawImg) return '';
       let clean = rawImg.toString().trim();
@@ -1198,6 +1199,44 @@
     function showDayEvents(eventsList) { if (eventsList && eventsList.length > 0) openGenericDetail(eventsList[0]); }
 
     /* ================= MURAL DE AVISOS ================= */
+    function getMuralMediaUrl(item) {
+      const raw = item.Arquivo_URL || item.Arquivo || item.Video_URL || item.Video || item.URLVideo || item.Midia_URL || item.Link_Video || item.Audio_URL || item.Audio || '';
+      if (!raw) return '';
+      let clean = raw.toString().trim();
+      if (clean.includes('drive.google.com') || clean.includes('docs.google.com')) {
+        const match = clean.match(/\/d\/([a-zA-Z0-9_-]+)/) || clean.match(/id=([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) return `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
+      }
+      return clean;
+    }
+
+    function getMuralMediaType(item) {
+      let tipoMidiaVal = '';
+      for (let key in item) {
+        let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
+        if (ck === 'tiposdemidia' || ck === 'tipodemidia' || ck === 'tipomidia') {
+          tipoMidiaVal = item[key] || '';
+          break;
+        }
+      }
+      const mediaUrl = getMuralMediaUrl(item);
+      const lowerUrl = mediaUrl.toLowerCase();
+      const lowerTipo = tipoMidiaVal.toString().toLowerCase();
+
+      if (lowerTipo.includes('áudio') || lowerTipo.includes('audio') || lowerTipo.includes('som') || lowerUrl.endsWith('.mp3') || lowerUrl.endsWith('.wav') || lowerUrl.endsWith('.ogg') || lowerUrl.includes('audio')) {
+        return 'audio';
+      }
+      if (lowerTipo.includes('vídeo') || lowerTipo.includes('video') || lowerUrl.endsWith('.mp4') || lowerUrl.endsWith('.webm') || lowerUrl.endsWith('.mov') || lowerUrl.includes('video') || lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) {
+        return 'video';
+      }
+      if (mediaUrl || lowerTipo.includes('imagem') || lowerTipo.includes('foto') || lowerTipo.includes('cartaz')) {
+        return 'image';
+      }
+      const imgFallback = getCleanImageUrl(item);
+      if (imgFallback) return 'image';
+      return 'outros';
+    }
+
     function buildMuralHome(data) {
       document.getElementById('searchContainerWrapper').style.display = 'none';
       const container = document.getElementById('contentContainer');
@@ -1244,6 +1283,10 @@
             <i class="fa-solid fa-video"></i>
             <h4>Vídeos & Mídias</h4>
           </div>
+          <div class="mural-category-card" onclick="openMuralSubpage('audios')">
+            <i class="fa-solid fa-volume-high"></i>
+            <h4>Áudios</h4>
+          </div>
           <div class="mural-category-card" onclick="openMuralSubpage('todos')">
             <i class="fa-solid fa-layer-group"></i>
             <h4>Ver Todos</h4>
@@ -1255,7 +1298,7 @@
         <div class="mural-home-container">
           <div class="mural-intro-box">
             <h3><i class="fa-solid fa-photo-film"></i> Mural de Avisos e Comunicações</h3>
-            <p>O Mural de Avisos é o canal oficial de atualizações, informativos visuais, cartazes de festividades e mídias importantes do terreiro. Aqui você pode acompanhar comunicados em formato de imagem e vídeos institucionais ou litúrgicos compartilhados pela administração.</p>
+            <p>O Mural de Avisos é o canal oficial de atualizações, informativos visuais, cartazes de festividades, áudios e mídias importantes do terreiro. Aqui você pode acompanhar comunicados completos compartilhados pela administração.</p>
             <p><strong>Selecione abaixo o tipo de conteúdo que deseja visualizar:</strong></p>
             <div class="mural-categories-grid">${subCategoriesHtml}</div>
           </div>
@@ -1296,6 +1339,7 @@
       let titleText = 'Mural de Avisos';
       if (tipoFiltro === 'imagens') titleText = 'Mural: Imagens & Cartazes';
       else if (tipoFiltro === 'videos') titleText = 'Mural: Vídeos & Mídias';
+      else if (tipoFiltro === 'audios') titleText = 'Mural: Áudios';
       
       document.getElementById('pageTitle').innerHTML = `<i class="fa-solid fa-photo-film"></i> ${titleText}`;
       
@@ -1307,25 +1351,10 @@
 
       const filtered = currentData.filter(item => {
         if (!isPublicAccess(item)) return false;
-        
-        let tipoMidiaVal = '';
-        for (let key in item) {
-          let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
-          if (ck === 'tiposdemidia' || ck === 'tipodemidia' || ck === 'tipomidia') {
-            tipoMidiaVal = item[key] || '';
-            break;
-          }
-        }
-
-        const arquivoUrlStr = (item.Arquivo_URL || item.Arquivo || item.Video_URL || item.Video || item.URLVideo || '').toString().trim().toLowerCase();
-        const hasVid = tipoMidiaVal.toLowerCase().includes('vídeo') || tipoMidiaVal.toLowerCase().includes('video') || 
-                       item.Video_URL || item.Video || item.URLVideo || item.PontoVideo_URL || 
-                       arquivoUrlStr.endsWith('.mp4') || arquivoUrlStr.endsWith('.webm') || arquivoUrlStr.endsWith('.mov') || 
-                       arquivoUrlStr.includes('video') || arquivoUrlStr.includes('youtube.com') || arquivoUrlStr.includes('youtu.be') || arquivoUrlStr.includes('alt=media');
-        const hasImg = getCleanImageUrl(item) || tipoMidiaVal.toLowerCase().includes('imagem');
-
-        if (tipoFiltro === 'imagens') return hasImg && !hasVid;
-        if (tipoFiltro === 'videos') return hasVid;
+        const tMidia = getMuralMediaType(item);
+        if (tipoFiltro === 'imagens') return tMidia === 'image';
+        if (tipoFiltro === 'videos') return tMidia === 'video';
+        if (tipoFiltro === 'audios') return tMidia === 'audio';
         return true;
       });
 
@@ -1355,9 +1384,8 @@
       data.forEach(item => {
         const card = document.createElement('div');
         card.className = 'card';
-        const titulo = item.Titulo || item.Nome_Evento || item.Categoria || 'Aviso';
+        const titulo = item.Titulo || item.Nome_Evento || item.Titulo_Ponto || item.Categoria || 'Aviso';
         const texto = item.Descricao || item.Texo_Aviso || item.Conteudo_Texto || '';
-        const imagem = getCleanImageUrl(item);
         
         let tipoMidiaVal = '';
         for (let key in item) {
@@ -1368,14 +1396,24 @@
           }
         }
 
-        const arquivoUrlStr = (item.Arquivo_URL || item.Arquivo || item.Video_URL || item.Video || item.URLVideo || '').toString().trim().toLowerCase();
-        const hasVideo = tipoMidiaVal.toLowerCase().includes('vídeo') || tipoMidiaVal.toLowerCase().includes('video') ||
-                         item.Video_URL || item.Video || item.URLVideo || item.PontoVideo_URL || 
-                         arquivoUrlStr.endsWith('.mp4') || arquivoUrlStr.endsWith('.webm') || arquivoUrlStr.endsWith('.mov') || 
-                         arquivoUrlStr.includes('video') || arquivoUrlStr.includes('youtube.com') || arquivoUrlStr.includes('youtu.be') || arquivoUrlStr.includes('alt=media');
+        const tMidia = getMuralMediaType(item);
+        let imgHtml = '';
 
-        let imgHtml = imagem && !hasVideo ? `<img src="${imagem}" class="card-img" alt="${titulo}">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid ${hasVideo ? 'fa-video' : 'fa-image'} fa-2x"></i></div>`;
-        const badgeLabel = tipoMidiaVal || (hasVideo ? 'Vídeo' : 'Imagem');
+        if (tMidia === 'audio') {
+          imgHtml = `<img src="${INSTITUTIONAL_LOGO_URL}" class="card-img" alt="${titulo}" style="object-fit: contain; background: #000; padding: 5px;">`;
+        } else if (tMidia === 'video') {
+          const mediaUrl = getMuralMediaUrl(item);
+          if (mediaUrl.includes('youtube.com') || mediaUrl.includes('youtu.be')) {
+            imgHtml = `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-brands fa-youtube fa-2x"></i></div>`;
+          } else {
+            imgHtml = `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-video fa-2x"></i></div>`;
+          }
+        } else {
+          const imagem = getCleanImageUrl(item);
+          imgHtml = imagem ? `<img src="${imagem}" class="card-img" alt="${titulo}">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-image fa-2x"></i></div>`;
+        }
+
+        const badgeLabel = tipoMidiaVal || (tMidia === 'audio' ? 'Áudio' : tMidia === 'video' ? 'Vídeo' : 'Imagem');
 
         card.innerHTML = `
           ${imgHtml}
@@ -1948,31 +1986,27 @@
         if (obs) info += `<p><strong>Observações:</strong><br>${obs}</p>`;
 
       } else if (tabName === 'Mural_Imagens' || currentTab === 'Mural_Imagens') {
-        const arquivoUrl = item.Arquivo_URL || item.Arquivo || item.Video_URL || item.Video || item.URLVideo || item.Midia_URL || item.Link_Video || '';
-        let cleanMedia = arquivoUrl.toString().trim();
-        
-        if (cleanMedia) {
-          if (cleanMedia.includes('drive.google.com') || cleanMedia.includes('docs.google.com')) {
-            const match = cleanMedia.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanMedia.match(/id=([a-zA-Z0-9_-]+)/);
-            if (match && match[1]) cleanMedia = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
-          }
-          const lowerMedia = cleanMedia.toLowerCase();
-          const isAudio = lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio');
-          const isYoutube = cleanMedia.includes('youtube.com') || cleanMedia.includes('youtu.be');
-          const isVideo = lowerMedia.endsWith('.mp4') || lowerMedia.endsWith('.webm') || lowerMedia.endsWith('.mov') || lowerMedia.includes('video') || cleanMedia.includes('alt=media') || item.Tipos_de_Midia?.toLowerCase().includes('vídeo') || item.Tipos_de_Midia?.toLowerCase().includes('video') || item.TiposDeMidia?.toLowerCase().includes('vídeo') || item.TiposDeMidia?.toLowerCase().includes('video');
+        const tMidia = getMuralMediaType(item);
+        const cleanMedia = getMuralMediaUrl(item);
 
-          if (isAudio) {
-            mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>`;
-          } else if (isYoutube) {
+        if (tMidia === 'audio' && cleanMedia) {
+          mediaTopContent = `
+            <div style="text-align: center; margin-bottom: 10px;">
+              <img src="${INSTITUTIONAL_LOGO_URL}" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--gold-primary); object-fit: cover; margin-bottom: 8px; box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);">
+              <audio controls autoplay style="width:100%;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>
+            </div>
+          `;
+        } else if (tMidia === 'video' && cleanMedia) {
+          if (cleanMedia.includes('youtube.com') || cleanMedia.includes('youtu.be')) {
             let ytEmbed = cleanMedia;
             if (cleanMedia.includes('watch?v=')) ytEmbed = cleanMedia.replace('watch?v=', 'embed/');
             else if (cleanMedia.includes('youtu.be/')) ytEmbed = cleanMedia.replace('youtu.be/', 'www.youtube.com/embed/');
             mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
-          } else if (isVideo) {
-            mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
           } else {
-            mediaTopContent = `<img src="${cleanMedia}" class="modal-banner-img" onclick="openImageZoom('${cleanMedia}')">`;
+            mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
           }
+        } else if (cleanMedia) {
+          mediaTopContent = `<img src="${cleanMedia}" class="modal-banner-img" onclick="openImageZoom('${cleanMedia}')">`;
         } else if (imagem) {
           mediaTopContent = `<img src="${imagem}" class="modal-banner-img" onclick="openImageZoom('${imagem}')">`;
         }

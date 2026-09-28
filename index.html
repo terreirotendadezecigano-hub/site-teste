@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Tenda de Zé Cigano</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Bibliotecas para exportar PDF e Excel -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     :root {
       --bg-primary: #0a0a0a;
@@ -402,17 +399,27 @@
     .btn-icon-only:hover { background: var(--gold-primary); color: #000; border-color: var(--gold-primary); }
     .btn-delete-icon:hover { background: #8b0000; color: #fff; border-color: #8b0000; }
     
-    .membros-actions-toolbar {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
+    .btn-action-icon {
+      background: #222;
+      border: 1px solid var(--border-color);
+      color: var(--gold-light);
+      padding: 4px 7px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.7rem;
+      margin-right: 3px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.2s;
     }
+    .btn-action-icon:hover { background: var(--gold-primary); color: #000; border-color: var(--gold-primary); }
+    .btn-whatsapp-icon:hover { background: #25d366; color: #fff; border-color: #25d366; }
 
-    .btn-toolbar {
-      background: #1a1a1a;
-      border: 1px solid var(--gold-primary);
-      color: var(--gold-primary);
+    .btn-add-membro {
+      background: var(--gold-primary);
+      color: #000;
+      border: none;
       padding: 8px 14px;
       border-radius: 6px;
       font-weight: bold;
@@ -421,41 +428,8 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.2s;
+      margin-bottom: 10px;
     }
-    .btn-toolbar:hover { background: var(--gold-primary); color: #000; }
-    .btn-add-membro { background: var(--gold-primary); color: #000; border: none; }
-    .btn-add-membro:hover { background: #c29f2e; color: #000; }
-
-    .btn-action-icon {
-      background: #181818;
-      border: 1px solid var(--border-color);
-      color: var(--gold-light);
-      width: 30px;
-      height: 30px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.85rem;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-      text-decoration: none;
-    }
-    .btn-whatsapp-stylish {
-      background: rgba(37, 211, 102, 0.15);
-      border-color: #25d366;
-      color: #25d366;
-    }
-    .btn-whatsapp-stylish:hover { background: #25d366; color: #fff; border-color: #25d366; }
-
-    .btn-call-stylish {
-      background: rgba(212, 175, 55, 0.15);
-      border-color: var(--gold-primary);
-      color: var(--gold-primary);
-    }
-    .btn-call-stylish:hover { background: var(--gold-primary); color: #000; border-color: var(--gold-primary); }
 
     .membros-form-grid {
       display: grid;
@@ -753,7 +727,7 @@
     </div>
   </div>
 
-  <!-- Modal Cadastro/Edição de Membro Completo -->
+  <!-- Modal Cadastro/Edição de Membro -->
   <div class="modal-overlay" id="modalMembro">
     <div class="modal-box" style="max-width:520px;">
       <div class="modal-header">
@@ -780,7 +754,7 @@
             <input type="email" id="membroEmail" class="form-control" placeholder="email@exemplo.com">
           </div>
           <div class="form-group">
-            <label>Data de Início</label>
+            <label>Data de Entrada</label>
             <input type="date" id="membroDataEntrada" class="form-control">
           </div>
           <div class="form-group membros-form-full">
@@ -812,7 +786,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Perfil</label>
+            <label>Perfil de Acesso</label>
             <select id="membroPerfil" class="form-control">
               <option value="Membro">Membro</option>
               <option value="Colaborador">Colaborador</option>
@@ -841,7 +815,6 @@
     let currentTab = 'Home';
     let currentData = [];
     let listaMembros = [];
-    let dadosGeraisInstituicao = {};
     let isLoggedIn = false;
     let loggedUser = null;
     let currentCalendarDate = new Date();
@@ -1008,8 +981,7 @@
         const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Geral`);
         const data = await res.json();
         if (data && data.length > 0) {
-          dadosGeraisInstituicao = data[0];
-          const info = dadosGeraisInstituicao;
+          const info = data[0];
           const quemSomos = info.Quem_Somos || info.QuemSomos || '';
           const endereco = info.Endereco || info.Endereço || '';
           let enderecoHtml = quemSomos;
@@ -1242,7 +1214,7 @@
     function changeMonth(direction) { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction); buildCalendarAgenda(currentData); }
     function showDayEvents(eventsList) { if (eventsList && eventsList.length > 0) openGenericDetail(eventsList[0]); }
 
-    /* ================= MURAL DE AVISOS ================= */
+    /* ================= MURAL DE AVISOS (DIRETO E OTIMIZADO) ================= */
     function getMediaDirectUrl(raw) {
       if (!raw) return '';
       let clean = raw.toString().trim();
@@ -1625,13 +1597,6 @@
       try {
         const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Cadastro_Filhos`);
         listaMembros = await res.json();
-        
-        listaMembros.sort((a, b) => {
-          const nomeA = (a.Nome_Completo || a.Nome || '').toString().toLowerCase();
-          const nomeB = (b.Nome_Completo || b.Nome || '').toString().toLowerCase();
-          return nomeA.localeCompare(nomeB);
-        });
-
         currentData = listaMembros;
         loading.style.display = 'none';
         renderTabelaMembros(listaMembros);
@@ -1643,22 +1608,11 @@
     function renderTabelaMembros(membros) {
       const container = document.getElementById('contentContainer');
       container.innerHTML = `
-        <div class="membros-actions-toolbar">
-          <button class="btn-toolbar btn-add-membro" onclick="abrirModalNovoMembro()"><i class="fa-solid fa-plus"></i> Novo Membro</button>
-          <button class="btn-toolbar" onclick="exportarExcel()"><i class="fa-solid fa-file-excel" style="color: #27ae60;"></i> Exportar Excel</button>
-          <button class="btn-toolbar" onclick="exportarPDF()"><i class="fa-solid fa-file-pdf" style="color: #e74c3c;"></i> Gerar PDF</button>
-        </div>
+        <button class="btn-add-membro" onclick="abrirModalNovoMembro()"><i class="fa-solid fa-plus"></i> Novo Membro</button>
         <div class="table-responsive">
           <table class="membros-table">
             <thead>
-              <tr>
-                <th>Ações</th>
-                <th>Nome Completo</th>
-                <th>E-mail</th>
-                <th>Perfil</th>
-                <th>Data de Início</th>
-                <th>Telefone / Contato</th>
-              </tr>
+              <tr><th>Ações</th><th>Nome Completo</th><th>E-mail</th><th>Telefone / Contato</th></tr>
             </thead>
             <tbody id="membrosTableBody"></tbody>
           </table>
@@ -1667,7 +1621,7 @@
 
       const tbody = document.getElementById('membrosTableBody');
       if (!membros || membros.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Nenhum membro localizado.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Nenhum membro localizado.</td></tr>';
         return;
       }
 
@@ -1675,35 +1629,9 @@
         const id = m.ID_Filho || m.id || '';
         const nome = m.Nome_Completo || m.Nome || '';
         const email = m.Email || m['E-mail'] || 'Não informado';
-        const perfil = m.Perfil || 'Membro';
-        
-        let dataEntradaVal = '';
-        for (let key in m) {
-          let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
-          if (ck === 'dataentrada' || ck === 'datadeentrada' || ck === 'datainicio') {
-            dataEntradaVal = m[key];
-            break;
-          }
-        }
-        const dataInicioFormatada = dataEntradaVal ? formatDateBR(dataEntradaVal) : 'Não informada';
-
         const tel = m.Telefone || '';
         const cleanPhone = tel ? tel.replace(/\D/g, '') : '';
-        let actionsContact = tel ? `
-          <div>
-            <span style="font-size: 0.78rem; display: block; margin-bottom: 3px;">${tel}</span>
-            <div style="display: flex; gap: 6px; align-items: center;">
-              <a href="tel:${cleanPhone}" class="btn-action-icon btn-call-stylish" title="Ligar">
-                <i class="fa-solid fa-phone-volume"></i>
-              </a>
-              <a href="https://wa.me/${cleanPhone}" target="_blank" class="btn-action-icon btn-whatsapp-stylish" title="Enviar WhatsApp">
-                <i class="fa-brands fa-whatsapp"></i>
-              </a>
-            </div>
-          </div>
-        ` : 'Não informado';
-
-        const emailCell = email !== 'Não informado' ? `<a href="mailto:${email}" style="color: var(--gold-light); text-decoration: underline;" title="Enviar E-mail">${email}</a>` : email;
+        let actionsContact = cleanPhone ? `<span>${tel}</span><div style="margin-top: 4px; display: flex; gap: 4px;"><a href="tel:${cleanPhone}" class="btn-action-icon" title="Ligar"><i class="fa-solid fa-phone"></i> Ligar</a><a href="https://wa.me/${cleanPhone}" target="_blank" class="btn-action-icon btn-whatsapp-icon" title="WhatsApp"><i class="fa-brands fa-whatsapp"></i> Zap</a></div>` : 'Não informado';
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -1714,179 +1642,11 @@
             </div>
           </td>
           <td><strong>${nome}</strong></td>
-          <td>${emailCell}</td>
-          <td><span class="card-badge" style="background:#1a1a1a;">${perfil}</span></td>
-          <td>${dataInicioFormatada}</td>
+          <td>${email}</td>
           <td>${actionsContact}</td>
         `;
         tbody.appendChild(tr);
       });
-    }
-
-    function exportarExcel() {
-      if (!listaMembros || listaMembros.length === 0) {
-        showToast("Nenhum dado para exportar.");
-        return;
-      }
-
-      const chavesPotenciais = [
-        { key: 'Nome_Completo', label: 'Nome Completo' },
-        { key: 'Email', label: 'E-mail' },
-        { key: 'Telefone', label: 'Telefone' },
-        { key: 'Perfil', label: 'Perfil' },
-        { key: 'Cargo_Funcao', label: 'Cargo / Função' },
-        { key: 'Orixa_Frente', label: 'Orixá de Frente' },
-        { key: 'Status_Ativo', label: 'Status' },
-        { key: 'Data_Entrada', label: 'Data de Início' },
-        { key: 'Data_Nascimento', label: 'Data de Nascimento' },
-        { key: 'Endereco', label: 'Endereço' },
-        { key: 'Observacoes', label: 'Observações' }
-      ];
-
-      const chavesAtivas = chavesPotenciais.filter(cp => {
-        return listaMembros.some(m => {
-          let val = m[cp.key] || m[cp.key.toLowerCase()] || '';
-          if (cp.key === 'Email') val = m.Email || m['E-mail'] || '';
-          if (cp.key === 'Cargo_Funcao') val = m.Cargo_Funcao || m.Cargo || '';
-          if (cp.key === 'Status_Ativo') val = m.Status_Ativo || m.Status || '';
-          if (cp.key === 'Data_Entrada') val = m.Data_Entrada || m.Data_Inicio || '';
-          return val.toString().trim() !== '';
-        });
-      });
-
-      const dadosExport = listaMembros.map(m => {
-        let obj = {};
-        chavesAtivas.forEach(cp => {
-          let rawVal = '';
-          if (cp.key === 'Email') rawVal = m.Email || m['E-mail'] || '';
-          else if (cp.key === 'Cargo_Funcao') rawVal = m.Cargo_Funcao || m.Cargo || '';
-          else if (cp.key === 'Status_Ativo') rawVal = m.Status_Ativo || m.Status || '';
-          else if (cp.key === 'Data_Entrada') rawVal = m.Data_Entrada || m.Data_Inicio || '';
-          else if (cp.key === 'Data_Nascimento') rawVal = m.Data_Nascimento || m.Nascimento || '';
-          else rawVal = m[cp.key] || '';
-
-          if ((cp.key.includes('Data') || cp.key.includes('data')) && rawVal) {
-            rawVal = formatDateBR(rawVal);
-          }
-          obj[cp.label] = rawVal;
-        });
-        return obj;
-      });
-
-      const worksheet = XLSX.utils.json_to_sheet(dadosExport);
-
-      const colWidths = [];
-      dadosExport.forEach(row => {
-        Object.keys(row).forEach((key, i) => {
-          const val = String(row[key] || '');
-          const len = Math.max(val.length, key.length) + 4;
-          if (!colWidths[i] || len > colWidths[i].wch) {
-            colWidths[i] = { wch: len };
-          }
-        });
-      });
-      worksheet['!cols'] = colWidths;
-
-      const range = XLSX.utils.decode_range(worksheet['!ref']);
-      for (let R = range.s.r; R <= range.e.r; ++R) {
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
-          if (!worksheet[cellAddress]) continue;
-          
-          if (R === 0) {
-            worksheet[cellAddress].s = {
-              fill: { fgColor: { rgb: "000000" } },
-              font: { bold: true, color: { rgb: "FFFFFF" } },
-              alignment: { horizontal: "center" }
-            };
-          } else {
-            const zebraColor = (R % 2 === 0) ? "F2F2F2" : "FFFFFF";
-            worksheet[cellAddress].s = {
-              fill: { fgColor: { rgb: zebraColor } },
-              font: { color: { rgb: "000000" } }
-            };
-          }
-        }
-      }
-
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Membros");
-      XLSX.writeFile(workbook, "Membros_Tenda_Ze_Cigano.xlsx");
-      showToast("Planilha Excel exportada com sucesso!");
-    }
-
-    function exportarPDF() {
-      if (!listaMembros || listaMembros.length === 0) {
-        showToast("Nenhum dado para gerar PDF.");
-        return;
-      }
-
-      showToast("Gerando relatório em PDF...");
-      const nomeTerreiro = "Tenda de Zé Cigano - Terreiro de Umbanda";
-      const enderecoTerreiro = dadosGeraisInstituicao.Endereco || dadosGeraisInstituicao.Endereço || 'Minas Gerais, Brasil';
-      const contatoTerreiro = dadosGeraisInstituicao.Telefone_Whatsapp || dadosGeraisInstituicao.Telefone || '';
-
-      let linhasTabelaHTML = '';
-      listaMembros.forEach(m => {
-        const nome = m.Nome_Completo || m.Nome || '';
-        const email = m.Email || m['E-mail'] || '-';
-        const perfil = m.Perfil || 'Membro';
-        const tel = m.Telefone || '-';
-        let dataEntradaVal = m.Data_Entrada || m.Data_Inicio || '';
-        const dataFormatada = dataEntradaVal ? formatDateBR(dataEntradaVal) : '-';
-
-        linhasTabelaHTML += `
-          <tr>
-            <td style="padding: 6px; border-bottom: 1px solid #ddd; font-size: 11px;">${nome}</td>
-            <td style="padding: 6px; border-bottom: 1px solid #ddd; font-size: 11px;">${email}</td>
-            <td style="padding: 6px; border-bottom: 1px solid #ddd; font-size: 11px;">${perfil}</td>
-            <td style="padding: 6px; border-bottom: 1px solid #ddd; font-size: 11px;">${dataFormatada}</td>
-            <td style="padding: 6px; border-bottom: 1px solid #ddd; font-size: 11px;">${tel}</td>
-          </tr>
-        `;
-      });
-
-      const element = document.createElement('div');
-      element.style.padding = '20px';
-      element.style.background = '#ffffff';
-      element.style.color = '#333333';
-      element.style.fontFamily = 'Arial, sans-serif';
-
-      element.innerHTML = `
-        <div style="text-align: center; border-bottom: 2px solid #000000; padding-bottom: 12px; margin-bottom: 15px;">
-          <img src="${INSTITUTIONAL_LOGO_URL}" crossorigin="anonymous" style="width: 55px; height: 55px; border-radius: 50%; border: 2px solid #000000; object-fit: cover; margin-bottom: 6px;">
-          <h2 style="margin: 0; color: #000000; font-size: 16px; text-transform: uppercase; font-weight: bold;">${nomeTerreiro}</h2>
-          <p style="margin: 3px 0; font-size: 11px; color: #555;">Endereço: ${enderecoTerreiro} | Contato: ${contatoTerreiro}</p>
-          <h3 style="margin: 10px 0 0 0; color: #000000; font-size: 13px; font-weight: bold;">Relatório Oficial de Membros Cadastrados</h3>
-        </div>
-        <table style="width: 100%; border-collapse: collapse; text-align: left;">
-          <thead>
-            <tr style="background-color: #000000; color: #ffffff;">
-              <th style="padding: 8px; font-size: 11px;">Nome Completo</th>
-              <th style="padding: 8px; font-size: 11px;">E-mail</th>
-              <th style="padding: 8px; font-size: 11px;">Perfil</th>
-              <th style="padding: 8px; font-size: 11px;">Data de Início</th>
-              <th style="padding: 8px; font-size: 11px;">Telefone</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${linhasTabelaHTML}
-          </tbody>
-        </table>
-        <div style="margin-top: 20px; text-align: center; font-size: 9px; color: #777;">
-          Documento gerado automaticamente pelo sistema Tenda de Zé Cigano - Axé!
-        </div>
-      `;
-
-      const opt = {
-        margin:       10,
-        filename:     'Relatorio_Membros_Ze_Cigano.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      html2pdf().from(element).set(opt).save();
     }
 
     function abrirModalNovoMembro() {
@@ -1931,7 +1691,7 @@
       let dataEntradaVal = '';
       for (let key in m) {
         let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
-        if (ck === 'dataentrada' || ck === 'datadeentrada' || ck === 'datainicio') {
+        if (ck === 'dataentrada' || ck === 'datadeentrada') {
           dataEntradaVal = m[key];
           break;
         }
@@ -2012,25 +1772,15 @@
           listaMembros[idx].Nome_Completo = nome_completo;
           listaMembros[idx].Email = email;
           listaMembros[idx].Telefone = telefone;
-          listaMembros[idx].Perfil = perfil;
-          listaMembros[idx].Data_Entrada = data_entrada;
         }
       } else {
         listaMembros.unshift({
           ID_Filho: 'temp_' + Date.now(),
           Nome_Completo: nome_completo,
           Email: email,
-          Telefone: telefone,
-          Perfil: perfil,
-          Data_Entrada: data_entrada
+          Telefone: telefone
         });
       }
-
-      listaMembros.sort((a, b) => {
-        const nomeA = (a.Nome_Completo || a.Nome || '').toString().toLowerCase();
-        const nomeB = (b.Nome_Completo || b.Nome || '').toString().toLowerCase();
-        return nomeA.localeCompare(nomeB);
-      });
       
       closeMembroModal();
       renderTabelaMembros(listaMembros);
@@ -2050,6 +1800,7 @@
       document.getElementById('modalMembro').style.display = 'none';
     }
 
+    /* ================= EXIBIÇÃO DE CONTEÚDO E MODAL OTIMIZADO ================= */
     function renderContent(data, tabName) {
       if (['Home', 'Agenda', 'Membros', 'Ervas_Banhos', 'Pontos_Cantados', 'Mural_Imagens'].includes(tabName)) return;
       const container = document.getElementById('contentContainer');
@@ -2155,6 +1906,7 @@
             </div>
           `;
         } else if (cleanMural && !cleanMural.startsWith('http')) {
+          // Se for nome de arquivo local/texto que não é URL direta de imagem, exibe imagem padrão ou capa
           mediaTopContent = `<img src="${INSTITUTIONAL_LOGO_URL}" class="modal-banner-img">`;
         } else if (cleanMural) {
           mediaTopContent = `<img src="${cleanMural}" class="modal-banner-img" onclick="openImageZoom('${cleanMural}')">`;
@@ -2191,6 +1943,7 @@
           ) continue;
 
           let valStr = String(item[key] || '').trim();
+          // Oculta links externos brutos ou rotulados como Link Externo para manter o modal limpo
           if (valStr.startsWith('http://') || valStr.startsWith('https://')) continue;
           if (valStr.toLowerCase().includes('link externo')) continue;
 

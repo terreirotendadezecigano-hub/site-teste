@@ -1317,11 +1317,11 @@
           }
         }
 
-        const arquivoUrlStr = (item.Arquivo_URL || item.Arquivo || '').toString().trim().toLowerCase();
+        const arquivoUrlStr = (item.Arquivo_URL || item.Arquivo || item.Video_URL || item.Video || item.URLVideo || '').toString().trim().toLowerCase();
         const hasVid = tipoMidiaVal.toLowerCase().includes('vídeo') || tipoMidiaVal.toLowerCase().includes('video') || 
                        item.Video_URL || item.Video || item.URLVideo || item.PontoVideo_URL || 
                        arquivoUrlStr.endsWith('.mp4') || arquivoUrlStr.endsWith('.webm') || arquivoUrlStr.endsWith('.mov') || 
-                       arquivoUrlStr.includes('video') || arquivoUrlStr.includes('youtube.com') || arquivoUrlStr.includes('youtu.be');
+                       arquivoUrlStr.includes('video') || arquivoUrlStr.includes('youtube.com') || arquivoUrlStr.includes('youtu.be') || arquivoUrlStr.includes('alt=media');
         const hasImg = getCleanImageUrl(item) || tipoMidiaVal.toLowerCase().includes('imagem');
 
         if (tipoFiltro === 'imagens') return hasImg && !hasVid;
@@ -1368,13 +1368,13 @@
           }
         }
 
-        const arquivoUrlStr = (item.Arquivo_URL || item.Arquivo || '').toString().trim().toLowerCase();
+        const arquivoUrlStr = (item.Arquivo_URL || item.Arquivo || item.Video_URL || item.Video || item.URLVideo || '').toString().trim().toLowerCase();
         const hasVideo = tipoMidiaVal.toLowerCase().includes('vídeo') || tipoMidiaVal.toLowerCase().includes('video') ||
                          item.Video_URL || item.Video || item.URLVideo || item.PontoVideo_URL || 
                          arquivoUrlStr.endsWith('.mp4') || arquivoUrlStr.endsWith('.webm') || arquivoUrlStr.endsWith('.mov') || 
-                         arquivoUrlStr.includes('video') || arquivoUrlStr.includes('youtube.com') || arquivoUrlStr.includes('youtu.be');
+                         arquivoUrlStr.includes('video') || arquivoUrlStr.includes('youtube.com') || arquivoUrlStr.includes('youtu.be') || arquivoUrlStr.includes('alt=media');
 
-        let imgHtml = imagem ? `<img src="${imagem}" class="card-img" alt="${titulo}">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid ${hasVideo ? 'fa-video' : 'fa-image'} fa-2x"></i></div>`;
+        let imgHtml = imagem && !hasVideo ? `<img src="${imagem}" class="card-img" alt="${titulo}">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid ${hasVideo ? 'fa-video' : 'fa-image'} fa-2x"></i></div>`;
         const badgeLabel = tipoMidiaVal || (hasVideo ? 'Vídeo' : 'Imagem');
 
         card.innerHTML = `
@@ -1959,7 +1959,7 @@
           const lowerMedia = cleanMedia.toLowerCase();
           const isAudio = lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio');
           const isYoutube = cleanMedia.includes('youtube.com') || cleanMedia.includes('youtu.be');
-          const isVideo = lowerMedia.endsWith('.mp4') || lowerMedia.endsWith('.webm') || lowerMedia.endsWith('.mov') || lowerMedia.includes('video') || cleanMedia.includes('alt=media') || item.Tipos_de_Midia?.toLowerCase().includes('vídeo') || item.Tipos_de_Midia?.toLowerCase().includes('video');
+          const isVideo = lowerMedia.endsWith('.mp4') || lowerMedia.endsWith('.webm') || lowerMedia.endsWith('.mov') || lowerMedia.includes('video') || cleanMedia.includes('alt=media') || item.Tipos_de_Midia?.toLowerCase().includes('vídeo') || item.Tipos_de_Midia?.toLowerCase().includes('video') || item.TiposDeMidia?.toLowerCase().includes('vídeo') || item.TiposDeMidia?.toLowerCase().includes('video');
 
           if (isAudio) {
             mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>`;

@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Tenda de Zé Cigano</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Bibliotecas para exportar PDF e Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     :root {
       --bg-primary: #0a0a0a;
@@ -399,41 +402,17 @@
     .btn-icon-only:hover { background: var(--gold-primary); color: #000; border-color: var(--gold-primary); }
     .btn-delete-icon:hover { background: #8b0000; color: #fff; border-color: #8b0000; }
     
-    .btn-action-icon {
-      background: #181818;
-      border: 1px solid var(--border-color);
-      color: var(--gold-light);
-      padding: 5px 9px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.72rem;
-      margin-right: 4px;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      transition: all 0.2s ease;
-      font-weight: 600;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+    .membros-actions-toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
     }
-    .btn-action-icon:hover { background: var(--gold-primary); color: #000; border-color: var(--gold-primary); }
-    .btn-whatsapp-stylish {
-      background: rgba(37, 211, 102, 0.12);
-      border-color: #25d366;
-      color: #25d366;
-    }
-    .btn-whatsapp-stylish:hover { background: #25d366; color: #fff; border-color: #25d366; }
 
-    .btn-call-stylish {
-      background: rgba(212, 175, 55, 0.12);
-      border-color: var(--gold-primary);
+    .btn-toolbar {
+      background: #1a1a1a;
+      border: 1px solid var(--gold-primary);
       color: var(--gold-primary);
-    }
-    .btn-call-stylish:hover { background: var(--gold-primary); color: #000; border-color: var(--gold-primary); }
-
-    .btn-add-membro {
-      background: var(--gold-primary);
-      color: #000;
-      border: none;
       padding: 8px 14px;
       border-radius: 6px;
       font-weight: bold;
@@ -442,8 +421,41 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      margin-bottom: 10px;
+      transition: all 0.2s;
     }
+    .btn-toolbar:hover { background: var(--gold-primary); color: #000; }
+    .btn-add-membro { background: var(--gold-primary); color: #000; border: none; }
+    .btn-add-membro:hover { background: #c29f2e; color: #000; }
+
+    .btn-action-icon {
+      background: #181818;
+      border: 1px solid var(--border-color);
+      color: var(--gold-light);
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+      text-decoration: none;
+    }
+    .btn-whatsapp-stylish {
+      background: rgba(37, 211, 102, 0.15);
+      border-color: #25d366;
+      color: #25d366;
+    }
+    .btn-whatsapp-stylish:hover { background: #25d366; color: #fff; border-color: #25d366; }
+
+    .btn-call-stylish {
+      background: rgba(212, 175, 55, 0.15);
+      border-color: var(--gold-primary);
+      color: var(--gold-primary);
+    }
+    .btn-call-stylish:hover { background: var(--gold-primary); color: #000; border-color: var(--gold-primary); }
 
     .membros-form-grid {
       display: grid;
@@ -829,6 +841,7 @@
     let currentTab = 'Home';
     let currentData = [];
     let listaMembros = [];
+    let dadosGeraisInstituicao = {};
     let isLoggedIn = false;
     let loggedUser = null;
     let currentCalendarDate = new Date();
@@ -995,7 +1008,8 @@
         const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Geral`);
         const data = await res.json();
         if (data && data.length > 0) {
-          const info = data[0];
+          dadosGeraisInstituicao = data[0];
+          const info = dadosGeraisInstituicao;
           const quemSomos = info.Quem_Somos || info.QuemSomos || '';
           const endereco = info.Endereco || info.Endereço || '';
           let enderecoHtml = quemSomos;
@@ -1611,6 +1625,14 @@
       try {
         const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Cadastro_Filhos`);
         listaMembros = await res.json();
+        
+        // Ordenação alfabética por Nome Completo
+        listaMembros.sort((a, b) => {
+          const nomeA = (a.Nome_Completo || a.Nome || '').toString().toLowerCase();
+          const nomeB = (b.Nome_Completo || b.Nome || '').toString().toLowerCase();
+          return nomeA.localeCompare(nomeB);
+        });
+
         currentData = listaMembros;
         loading.style.display = 'none';
         renderTabelaMembros(listaMembros);
@@ -1622,7 +1644,11 @@
     function renderTabelaMembros(membros) {
       const container = document.getElementById('contentContainer');
       container.innerHTML = `
-        <button class="btn-add-membro" onclick="abrirModalNovoMembro()"><i class="fa-solid fa-plus"></i> Novo Membro</button>
+        <div class="membros-actions-toolbar">
+          <button class="btn-toolbar btn-add-membro" onclick="abrirModalNovoMembro()"><i class="fa-solid fa-plus"></i> Novo Membro</button>
+          <button class="btn-toolbar" onclick="exportarExcel()"><i class="fa-solid fa-file-excel" style="color: #27ae60;"></i> Exportar Excel</button>
+          <button class="btn-toolbar" onclick="exportarPDF()"><i class="fa-solid fa-file-pdf" style="color: #e74c3c;"></i> Gerar PDF</button>
+        </div>
         <div class="table-responsive">
           <table class="membros-table">
             <thead>
@@ -1665,13 +1691,12 @@
         const tel = m.Telefone || '';
         const cleanPhone = tel ? tel.replace(/\D/g, '') : '';
         let actionsContact = cleanPhone ? `
-          <span>${tel}</span>
-          <div style="margin-top: 5px; display: flex; gap: 4px;">
+          <div style="display: flex; gap: 6px; align-items: center;">
             <a href="tel:${cleanPhone}" class="btn-action-icon btn-call-stylish" title="Ligar">
-              <i class="fa-solid fa-phone-volume"></i> Ligar
+              <i class="fa-solid fa-phone-volume"></i>
             </a>
             <a href="https://wa.me/${cleanPhone}" target="_blank" class="btn-action-icon btn-whatsapp-stylish" title="Enviar WhatsApp">
-              <i class="fa-brands fa-whatsapp"></i> WhatsApp
+              <i class="fa-brands fa-whatsapp"></i>
             </a>
           </div>
         ` : 'Não informado';
@@ -1692,6 +1717,98 @@
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    function exportarExcel() {
+      if (!listaMembros || listaMembros.length === 0) {
+        showToast("Nenhum dado para exportar.");
+        return;
+      }
+      const dadosExport = listaMembros.map(m => ({
+        "Nome Completo": m.Nome_Completo || m.Nome || '',
+        "E-mail": m.Email || m['E-mail'] || '',
+        "Telefone": m.Telefone || '',
+        "Perfil": m.Perfil || 'Membro',
+        "Cargo / Função": m.Cargo_Funcao || m.Cargo || '',
+        "Orixá de Frente": m.Orixa_Frente || '',
+        "Status": m.Status_Ativo || 'Ativo',
+        "Data de Início": m.Data_Entrada || ''
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(dadosExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Membros");
+      XLSX.writeFile(workbook, "Membros_Tenda_Ze_Cigano.xlsx");
+      showToast("Planilha Excel exportada com sucesso!");
+    }
+
+    function exportarPDF() {
+      if (!listaMembros || listaMembros.length === 0) {
+        showToast("Nenhum dado para gerar PDF.");
+        return;
+      }
+
+      showToast("Gerando relatório em PDF...");
+      const nomeTerreiro = "Tenda de Zé Cigano - Terreiro de Umbanda";
+      const enderecoTerreiro = dadosGeraisInstituicao.Endereco || dadosGeraisInstituicao.Endereço || 'Minas Gerais, Brasil';
+      const contatoTerreiro = dadosGeraisInstituicao.Telefone_Whatsapp || dadosGeraisInstituicao.Telefone || '';
+
+      let linhasTabelaHTML = '';
+      listaMembros.forEach(m => {
+        const nome = m.Nome_Completo || m.Nome || '';
+        const email = m.Email || m['E-mail'] || '-';
+        const perfil = m.Perfil || 'Membro';
+        const tel = m.Telefone || '-';
+        linhasTabelaHTML += `
+          <tr>
+            <td style="padding: 6px; border-bottom: 1px solid #ddd; font-size: 11px;">${nome}</td>
+            <td style="padding: 6px; border-bottom: 1px solid #ddd; font-size: 11px;">${email}</td>
+            <td style="padding: 6px; border-bottom: 1px solid #ddd; font-size: 11px;">${perfil}</td>
+            <td style="padding: 6px; border-bottom: 1px solid #ddd; font-size: 11px;">${tel}</td>
+          </tr>
+        `;
+      });
+
+      const element = document.createElement('div');
+      element.style.padding = '20px';
+      element.style.background = '#ffffff';
+      element.style.color = '#333333';
+      element.style.fontFamily = 'Arial, sans-serif';
+
+      element.innerHTML = `
+        <div style="text-align: center; border-bottom: 2px solid #d4af37; padding-bottom: 12px; margin-bottom: 15px;">
+          <img src="${INSTITUTIONAL_LOGO_URL}" style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid #d4af37; object-fit: cover; margin-bottom: 6px;">
+          <h2 style="margin: 0; color: #60000a; font-size: 16px; text-transform: uppercase;">${nomeTerreiro}</h2>
+          <p style="margin: 3px 0; font-size: 11px; color: #555;">Endereço: ${enderecoTerreiro} | Contato: ${contatoTerreiro}</p>
+          <h3 style="margin: 10px 0 0 0; color: #d4af37; font-size: 13px;">Relatório Oficial de Membros Cadastrados</h3>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+          <thead>
+            <tr style="background-color: #60000a; color: #ffffff;">
+              <th style="padding: 8px; font-size: 11px;">Nome Completo</th>
+              <th style="padding: 8px; font-size: 11px;">E-mail</th>
+              <th style="padding: 8px; font-size: 11px;">Perfil</th>
+              <th style="padding: 8px; font-size: 11px;">Telefone</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${linhasTabelaHTML}
+          </tbody>
+        </table>
+        <div style="margin-top: 20px; text-align: center; font-size: 9px; color: #777;">
+          Documento gerado automaticamente pelo sistema Tenda de Zé Cigano - Axé!
+        </div>
+      `;
+
+      const opt = {
+        margin:       10,
+        filename:     'Relatorio_Membros_Ze_Cigano.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      html2pdf().from(element).set(opt).save();
     }
 
     function abrirModalNovoMembro() {
@@ -1830,6 +1947,13 @@
           Data_Entrada: data_entrada
         });
       }
+
+      // Reordena alfabeticamente
+      listaMembros.sort((a, b) => {
+        const nomeA = (a.Nome_Completo || a.Nome || '').toString().toLowerCase();
+        const nomeB = (b.Nome_Completo || b.Nome || '').toString().toLowerCase();
+        return nomeA.localeCompare(nomeB);
+      });
       
       closeMembroModal();
       renderTabelaMembros(listaMembros);

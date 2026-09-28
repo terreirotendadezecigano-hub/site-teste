@@ -211,8 +211,16 @@
     .card-datetime { font-size: 0.68rem; color: var(--gold-primary); margin-bottom: 3px; }
     .card-text { font-size: 0.7rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; }
 
-    .mural-intro-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 15px; margin-bottom: 15px; width: 100%; }
-    .mural-intro-box h3 { color: var(--gold-primary); margin-top: 0; font-size: 1rem; }
+    .mural-intro-box { 
+      background: linear-gradient(135deg, #161616 0%, #1f1416 100%); 
+      border: 1px solid var(--gold-primary); 
+      border-radius: 10px; 
+      padding: 16px; 
+      margin-bottom: 15px; 
+      width: 100%; 
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.1);
+    }
+    .mural-intro-box h3 { color: var(--gold-primary); margin-top: 0; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; }
     .mural-intro-box p { font-size: 0.8rem; color: var(--text-muted); margin: 0; line-height: 1.4; }
 
     .ervas-home-container, .pontos-home-container { display: flex; flex-direction: column; gap: 15px; width: 100%; }
@@ -515,7 +523,7 @@
     
     .modal-banner-img {
       width: 100%;
-      max-height: 200px;
+      max-height: 220px;
       object-fit: contain;
       background-color: #000;
       border-radius: 6px;
@@ -1204,14 +1212,14 @@
     function changeMonth(direction) { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction); buildCalendarAgenda(currentData); }
     function showDayEvents(eventsList) { if (eventsList && eventsList.length > 0) openGenericDetail(eventsList[0]); }
 
-    /* ================= MURAL DE AVISOS (DIRETO) ================= */
+    /* ================= MURAL DE AVISOS (DIRETO E OTIMIZADO) ================= */
     function getMuralMediaUrl(item) {
       const raw = item.Mural_URL || item.Arquivo_URL || item.Arquivo || item.Video_URL || item.Video || item.URLVideo || item.Midia_URL || item.Link_Video || item.Audio_URL || item.Audio || item.Link || '';
       if (!raw) return '';
       let clean = raw.toString().trim();
       if (clean.includes('drive.google.com') || clean.includes('docs.google.com') || clean.includes('googleusercontent.com')) {
         const match = clean.match(/\/d\/([a-zA-Z0-9_-]+)/) || clean.match(/id=([a-zA-Z0-9_-]+)/);
-        if (match && match[1]) return `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
+        if (match && match[1]) return `https://drive.google.com/uc?export=download&id=${match[1]}`;
       }
       return clean;
     }
@@ -1229,7 +1237,7 @@
       const lowerUrl = mediaUrl.toLowerCase();
       const lowerTipo = tipoMidiaVal.toString().toLowerCase();
 
-      if (lowerTipo.includes('áudio') || lowerTipo.includes('audio') || lowerTipo.includes('som') || lowerUrl.endsWith('.mp3') || lowerUrl.endsWith('.wav') || lowerUrl.endsWith('.ogg') || lowerUrl.includes('audio')) {
+      if (lowerTipo.includes('áudio') || lowerTipo.includes('audio') || lowerTipo.includes('som') || lowerUrl.endsWith('.mp3') || lowerUrl.endsWith('.m4a') || lowerUrl.endsWith('.wav') || lowerUrl.endsWith('.ogg') || lowerUrl.includes('audio')) {
         return 'audio';
       }
       if (lowerTipo.includes('vídeo') || lowerTipo.includes('video') || lowerUrl.endsWith('.mp4') || lowerUrl.endsWith('.webm') || lowerUrl.endsWith('.mov') || lowerUrl.includes('video') || lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) {
@@ -1261,8 +1269,8 @@
 
       const introHtml = `
         <div class="mural-intro-box">
-          <h3><i class="fa-solid fa-photo-film"></i> Mural de Avisos</h3>
-          <p>O Mural de Avisos é o canal oficial de atualizações, informativos visuais, cartazes de festividades, áudios e mídias importantes do terreiro. Aqui você pode acompanhar comunicados completos compartilhados pela administração.</p>
+          <h3><i class="fa-solid fa-photo-film"></i> Mural de Avisos e Comunicações</h3>
+          <p>Acompanhe aqui os comunicados oficiais, informativos visuais, cartazes de festividades, áudios e mídias importantes do terreiro publicados pela administração.</p>
         </div>
       `;
 
@@ -1304,21 +1312,21 @@
         let imgHtml = '';
 
         if (tMidia === 'audio') {
-          imgHtml = `<img src="${INSTITUTIONAL_LOGO_URL}" class="card-img" alt="${titulo}" style="object-fit: contain; background: #000; padding: 5px;">`;
+          imgHtml = `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-volume-high fa-2x"></i></div>`;
         } else if (tMidia === 'video') {
           const mediaUrl = getMuralMediaUrl(item);
           if (mediaUrl.includes('youtube.com') || mediaUrl.includes('youtu.be')) {
-            imgHtml = `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-brands fa-youtube fa-2x"></i></div>`;
+            imgHtml = `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:#ff0000;"><i class="fa-brands fa-youtube fa-2x"></i></div>`;
           } else {
             imgHtml = `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-video fa-2x"></i></div>`;
           }
         } else {
           const imagem = getCleanImageUrl(item);
-          imgHtml = imagem ? `<img src="${imagem}" class="card-img" alt="${titulo}">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-image fa-2x"></i></div>`;
+          imgHtml = imagem ? `<img src="${imagem}" class="card-img" alt="${titulo}" onerror="this.onerror=null; this.src='https://via.placeholder.com/200x120?text=Aviso';">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-image fa-2x"></i></div>`;
         }
 
-        const badgeLabel = tipoMidiaVal || (tMidia === 'audio' ? 'Áudio' : tMidia === 'video' ? 'Vídeo' : 'Imagem');
-        const closestBadge = index === 0 ? `<span class="card-badge-destaque"><i class="fa-solid fa-bolt"></i> Mais Próximo</span>` : '';
+        const badgeLabel = tipoMidiaVal || (tMidia === 'audio' ? 'Áudio' : tMidia === 'video' ? 'Vídeo' : 'Informativo');
+        const closestBadge = index === 0 ? `<span class="card-badge-destaque"><i class="fa-solid fa-bolt"></i> Destaque</span>` : '';
 
         card.innerHTML = `
           ${imgHtml}
@@ -1801,7 +1809,7 @@
       document.getElementById('modalMembro').style.display = 'none';
     }
 
-    /* ================= EXIBIÇÃO DE CONTEÚDO E MODAL ================= */
+    /* ================= EXIBIÇÃO DE CONTEÚDO E MODAL OTIMIZADO ================= */
     function renderContent(data, tabName) {
       if (['Home', 'Agenda', 'Membros', 'Ervas_Banhos', 'Pontos_Cantados', 'Mural_Imagens'].includes(tabName)) return;
       const container = document.getElementById('contentContainer');
@@ -1852,13 +1860,13 @@
         let cleanAudio = audioUrl.toString().trim();
         if (cleanAudio.includes('drive.google.com') || cleanAudio.includes('docs.google.com')) {
           const match = cleanAudio.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanAudio.match(/id=([a-zA-Z0-9_-]+)/);
-          if (match && match[1]) cleanAudio = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
+          if (match && match[1]) cleanAudio = `https://drive.google.com/uc?export=download&id=${match[1]}`;
         }
 
         let cleanVideo = videoUrl.toString().trim();
         if (cleanVideo.includes('drive.google.com') || cleanVideo.includes('docs.google.com')) {
           const match = cleanVideo.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanVideo.match(/id=([a-zA-Z0-9_-]+)/);
-          if (match && match[1]) cleanVideo = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
+          if (match && match[1]) cleanVideo = `https://drive.google.com/uc?export=download&id=${match[1]}`;
         }
 
         if (cleanVideo && cleanVideo.startsWith('http')) {
@@ -1896,8 +1904,8 @@
 
         if (tMidia === 'audio' && cleanMedia) {
           mediaTopContent = `
-            <div style="text-align: center; margin-bottom: 10px;">
-              <img src="${INSTITUTIONAL_LOGO_URL}" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--gold-primary); object-fit: cover; margin-bottom: 8px; box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);">
+            <div style="text-align: center; margin-bottom: 12px; background: #121212; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+              <img src="${INSTITUTIONAL_LOGO_URL}" style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--gold-primary); object-fit: cover; margin-bottom: 8px; box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);">
               <audio controls autoplay style="width:100%;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>
             </div>
           `;
@@ -1908,7 +1916,7 @@
             else if (cleanMedia.includes('youtu.be/')) ytEmbed = cleanMedia.replace('youtu.be/', 'www.youtube.com/embed/');
             mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
           } else {
-            mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
+            mediaTopContent = `<video controls autoplay style="width:100%; max-height:240px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
           }
         } else if (cleanMedia) {
           mediaTopContent = `<img src="${cleanMedia}" class="modal-banner-img" onclick="openImageZoom('${cleanMedia}')">`;
@@ -1934,12 +1942,15 @@
             cleanKeyLower === 'arquivourl' || 
             cleanKeyLower === 'arquivo' || 
             cleanKeyLower === 'arquivoimagem' ||
+            cleanKeyLower === 'arquivovideo' ||
+            cleanKeyLower === 'arquivoaudio' ||
             cleanKeyLower === 'categoria' ||
             cleanKeyLower === 'acessopublico' || 
             cleanKeyLower === 'datacriacao' ||
             cleanKeyLower === 'datadecriacao' ||
             cleanKeyLower === 'fotourl' ||
-            cleanKeyLower === 'link'
+            cleanKeyLower === 'link' ||
+            cleanKeyLower === 'tiposdemidia'
           ) continue;
 
           if (item[key]) {
@@ -1948,7 +1959,7 @@
         }
 
         if (dataCriacaoVal) {
-          info += `<p style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 8px; color: var(--gold-light); font-size: 0.78rem;"><strong>Data de Criação:</strong> ${formatDateBR(dataCriacaoVal)}</p>`;
+          info += `<p style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 8px; color: var(--gold-light); font-size: 0.78rem;"><strong>Data de Publicação:</strong> ${formatDateBR(dataCriacaoVal)}</p>`;
         }
 
       } else {
@@ -1957,7 +1968,7 @@
           let cleanMedia = mediaUrl.toString().trim();
           if (cleanMedia.includes('drive.google.com') || cleanMedia.includes('docs.google.com')) {
             const match = cleanMedia.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanMedia.match(/id=([a-zA-Z0-9_-]+)/);
-            if (match && match[1]) cleanMedia = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
+            if (match && match[1]) cleanMedia = `https://drive.google.com/uc?export=download&id=${match[1]}`;
           }
           const lowerMedia = cleanMedia.toLowerCase();
           const isAudio = lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio');

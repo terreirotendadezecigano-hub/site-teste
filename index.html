@@ -652,7 +652,6 @@
       <li class="nav-item" onclick="switchTab('Ervas_Banhos', this)"><i class="fa-solid fa-leaf"></i> Ervas & Banhos</li>
       <li class="nav-item" onclick="switchTab('Guias_Instrucoes', this)"><i class="fa-solid fa-book-open"></i> Orientações</li>
       <li class="nav-item" id="menuMembros" style="display:none;" onclick="switchTab('Membros', this)"><i class="fa-solid fa-users"></i> Membros</li>
-      <li class="nav-item" id="menuFinanceiro" style="display:none;" onclick="switchTab('Contas_Pagar_Receber', this)"><i class="fa-solid fa-wallet"></i> Financeiro</li>
     </ul>
   </aside>
 
@@ -877,7 +876,7 @@
       const searchContainerWrapper = document.getElementById('searchContainerWrapper');
       document.getElementById('pageSubtitleContainer').innerHTML = '';
 
-      if (tabName === 'Ervas_Banhos' || tabName === 'Pontos_Cantados' || tabName === 'Contas_Pagar_Receber') {
+      if (tabName === 'Ervas_Banhos' || tabName === 'Pontos_Cantados') {
         searchContainerWrapper.style.display = 'none';
       } else {
         searchContainerWrapper.style.display = 'flex';
@@ -896,15 +895,12 @@
           'Pontos_Cantados': '<i class="fa-solid fa-music"></i> Coletânea de Pontos Cantados',
           'Ervas_Banhos': '<i class="fa-solid fa-leaf"></i> Guia Sagrado de Ervas & Banhos',
           'Guias_Instrucoes': '<i class="fa-solid fa-book-open"></i> Orientações',
-          'Membros': '<i class="fa-solid fa-users"></i> Gestão de Membros',
-          'Contas_Pagar_Receber': '<i class="fa-solid fa-wallet"></i> Controle Financeiro'
+          'Membros': '<i class="fa-solid fa-users"></i> Gestão de Membros'
         };
         document.getElementById('pageTitle').innerHTML = titles[tabName] || '<i class="fa-solid fa-folder"></i> Registros';
         
         if (tabName === 'Membros') {
           carregarEExibirMembros();
-        } else if (tabName === 'Contas_Pagar_Receber') {
-          carregarEExibirFinanceiro();
         } else {
           loadTabData(tabName);
         }
@@ -1036,7 +1032,7 @@
     function closeLoginModal() { document.getElementById('loginModal').style.display = 'none'; }
 
     async function performLogin() {
-      const emailInput = document.getElementById('loginEmail'].value.trim().toLowerCase();
+      const emailInput = document.getElementById('loginEmail').value.trim().toLowerCase();
       const msgBox = document.getElementById('modalMsg');
       if (!emailInput) { msgBox.innerText = 'Informe o e-mail.'; return; }
       msgBox.innerText = 'Verificando...';
@@ -1064,36 +1060,25 @@
       isLoggedIn = false;
       loggedUser = null;
       updateAuthUI();
-      if (currentTab === 'Membros' || currentTab === 'Contas_Pagar_Receber') switchTab('Home');
+      if (currentTab === 'Membros') switchTab('Home');
       else loadTabData(currentTab);
     }
 
     function updateAuthUI() {
       const container = document.getElementById('authContainer');
       const menuMembros = document.getElementById('menuMembros');
-      const menuFinanceiro = document.getElementById('menuFinanceiro');
-      
       if (isLoggedIn && loggedUser) {
         container.innerHTML = `<div class="user-logged"><i class="fa-solid fa-circle-check" style="color: #2ecc71;"></i><span>${loggedUser.nome.split(' ')[0]}</span><i class="fa-solid fa-right-from-bracket" style="cursor:pointer; margin-left:4px;" onclick="logout()" title="Sair"></i></div>`;
-        
-        if (loggedUser.perfil === 'Dirigente') {
-          menuMembros.style.display = 'flex';
-          menuFinanceiro.style.display = 'flex';
-        } else {
-          menuMembros.style.display = 'none';
-          menuFinanceiro.style.display = 'none';
-        }
+        if (loggedUser.perfil === 'Dirigente') menuMembros.style.display = 'flex';
+        else menuMembros.style.display = 'none';
       } else {
         container.innerHTML = `<button class="btn-login" onclick="openLoginModal()"><i class="fa-solid fa-lock"></i> Membros</button>`;
         menuMembros.style.display = 'none';
-        menuFinanceiro.style.display = 'none';
       }
     }
 
     async function loadTabData(tabName) {
       if (tabName === 'Membros') { carregarEExibirMembros(); return; }
-      if (tabName === 'Contas_Pagar_Receber') { carregarEExibirFinanceiro(); return; }
-      
       const loading = document.getElementById('loading');
       const container = document.getElementById('contentContainer');
       loading.style.display = 'block';
@@ -1229,7 +1214,7 @@
     function changeMonth(direction) { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction); buildCalendarAgenda(currentData); }
     function showDayEvents(eventsList) { if (eventsList && eventsList.length > 0) openGenericDetail(eventsList[0]); }
 
-    /* ================= MURAL DE AVISOS ================= */
+    /* ================= MURAL DE AVISOS (DIRETO E OTIMIZADO) ================= */
     function getMediaDirectUrl(raw) {
       if (!raw) return '';
       let clean = raw.toString().trim();
@@ -1815,72 +1800,9 @@
       document.getElementById('modalMembro').style.display = 'none';
     }
 
-    /* ================= CONTROLE FINANCEIRO ================= */
-    async function carregarEExibirFinanceiro() {
-      document.getElementById('searchContainerWrapper').style.display = 'none';
-      const loading = document.getElementById('loading');
-      const container = document.getElementById('contentContainer');
-      loading.style.display = 'block';
-      container.innerHTML = '';
-
-      try {
-        const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Contas_Pagar_Receber`);
-        const contas = await res.json();
-        currentData = contas;
-        loading.style.display = 'none';
-        renderTabelaFinanceiro(contas);
-      } catch (e) {
-        loading.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Erro ao carregar dados financeiros.';
-      }
-    }
-
-    function renderTabelaFinanceiro(contas) {
-      const container = document.getElementById('contentContainer');
-      container.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
-          <h3 style="color:var(--gold-primary); font-size:0.95rem; margin:0;"><i class="fa-solid fa-wallet"></i> Contas a Pagar e Receber</h3>
-          <button class="btn-add-membro" onclick="showToast('Função de novo lançamento financeiro disponível em breve.')"><i class="fa-solid fa-plus"></i> Novo Lançamento</button>
-        </div>
-        <div class="table-responsive">
-          <table class="membros-table">
-            <thead>
-              <tr><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Valor (R$)</th><th>Vencimento</th><th>Status</th></tr>
-            </thead>
-            <tbody id="financeiroTableBody"></tbody>
-          </table>
-        </div>
-      `;
-
-      const tbody = document.getElementById('financeiroTableBody');
-      if (!contas || contas.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Nenhum registro financeiro encontrado.</td></tr>';
-        return;
-      }
-
-      contas.forEach(c => {
-        const tipo = c.Tipo_Movimentacao || c.Tipo || '';
-        const cat = c.Categoria || '';
-        const desc = c.Descricao || '';
-        const val = c.Valor || '0';
-        const venc = formatDateBR(c.Data_Vencimento || '');
-        const status = c.Status || '';
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><span style="color: ${tipo.toLowerCase().includes('entrada') ? '#2ecc71' : '#e74c3c'}; font-weight:bold;">${tipo}</span></td>
-          <td>${cat}</td>
-          <td>${desc}</td>
-          <td>R$ ${val}</td>
-          <td>${venc}</td>
-          <td>${status}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    /* ================= EXIBIÇÃO DE CONTEÚDO E MODAL ================= */
+    /* ================= EXIBIÇÃO DE CONTEÚDO E MODAL OTIMIZADO ================= */
     function renderContent(data, tabName) {
-      if (['Home', 'Agenda', 'Membros', 'Ervas_Banhos', 'Pontos_Cantados', 'Mural_Imagens', 'Contas_Pagar_Receber'].includes(tabName)) return;
+      if (['Home', 'Agenda', 'Membros', 'Ervas_Banhos', 'Pontos_Cantados', 'Mural_Imagens'].includes(tabName)) return;
       const container = document.getElementById('contentContainer');
       container.innerHTML = '';
       const grid = document.createElement('div');
@@ -2100,19 +2022,6 @@
       
       if (currentTab === 'Membros') {
         const linhas = document.querySelectorAll('#membrosTableBody tr');
-        linhas.forEach(linha => {
-          const textoLinha = linha.textContent.toLowerCase();
-          if (textoLinha.includes(query)) {
-            linha.style.display = '';
-          } else {
-            linha.style.display = 'none';
-          }
-        });
-        return;
-      }
-
-      if (currentTab === 'Contas_Pagar_Receber') {
-        const linhas = document.querySelectorAll('#financeiroTableBody tr');
         linhas.forEach(linha => {
           const textoLinha = linha.textContent.toLowerCase();
           if (textoLinha.includes(query)) {

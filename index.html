@@ -1244,13 +1244,15 @@
       const filtered = currentData.filter(item => {
         if (!isPublicAccess(item)) return false;
         
+        const tipoMidiaVal = (item.Tipo_de_Midia || item.Tipo_Midia || item.Midia || '').toString().trim().toLowerCase();
         const arquivoUrlStr = (item.Arquivo_URL || item.Arquivo || '').toString().trim().toLowerCase();
-        const hasVid = item.Video_URL || item.Video || item.URLVideo || item.PontoVideo_URL || 
+        
+        const hasVid = tipoMidiaVal === 'video' || item.Video_URL || item.Video || item.URLVideo || item.PontoVideo_URL || 
                        arquivoUrlStr.endsWith('.mp4') || arquivoUrlStr.endsWith('.webm') || arquivoUrlStr.endsWith('.mov') || 
                        arquivoUrlStr.includes('video') || arquivoUrlStr.includes('youtube.com') || arquivoUrlStr.includes('youtu.be');
-        const hasImg = getCleanImageUrl(item);
+        const hasImg = tipoMidiaVal === 'imagem' || tipoMidiaVal === 'foto' || getCleanImageUrl(item);
 
-        if (tipoFiltro === 'imagens') return hasImg && !hasVid;
+        if (tipoFiltro === 'imagens') return (tipoMidiaVal === 'imagem' || tipoMidiaVal === 'foto') || (hasImg && !hasVid);
         if (tipoFiltro === 'videos') return hasVid;
         return true;
       });
@@ -1285,8 +1287,9 @@
         const texto = item.Descricao || item.Texo_Aviso || item.Conteudo_Texto || '';
         const imagem = getCleanImageUrl(item);
         
+        const tipoMidiaVal = (item.Tipo_de_Midia || item.Tipo_Midia || item.Midia || '').toString().trim().toLowerCase();
         const arquivoUrlStr = (item.Arquivo_URL || item.Arquivo || '').toString().trim().toLowerCase();
-        const hasVideo = item.Video_URL || item.Video || item.URLVideo || item.PontoVideo_URL || 
+        const hasVideo = tipoMidiaVal === 'video' || item.Video_URL || item.Video || item.URLVideo || item.PontoVideo_URL || 
                          arquivoUrlStr.endsWith('.mp4') || arquivoUrlStr.endsWith('.webm') || arquivoUrlStr.endsWith('.mov') || 
                          arquivoUrlStr.includes('video') || arquivoUrlStr.includes('youtube.com') || arquivoUrlStr.includes('youtu.be');
 
@@ -1850,7 +1853,7 @@
         if (obs) info += `<p><strong>Observações:</strong><br>${obs}</p>`;
 
       } else if (tabName === 'Mural_Imagens' || currentTab === 'Mural_Imagens') {
-        const arquivoUrl = item.Arquivo_URL || item.Arquivo || '';
+        const arquivoUrl = item.Arquivo_URL || item.Arquivo || item.Video_URL || item.Video || item.URLVideo || '';
         let cleanMedia = arquivoUrl.toString().trim();
         
         if (cleanMedia) {
@@ -1859,9 +1862,10 @@
             if (match && match[1]) cleanMedia = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
           }
           const lowerMedia = cleanMedia.toLowerCase();
+          const tipoMidiaVal = (item.Tipo_de_Midia || item.Tipo_Midia || item.Midia || '').toString().trim().toLowerCase();
           const isAudio = lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio');
           const isYoutube = cleanMedia.includes('youtube.com') || cleanMedia.includes('youtu.be');
-          const isVideo = lowerMedia.endsWith('.mp4') || lowerMedia.endsWith('.webm') || lowerMedia.endsWith('.mov') || lowerMedia.includes('video');
+          const isVideo = tipoMidiaVal === 'video' || lowerMedia.endsWith('.mp4') || lowerMedia.endsWith('.webm') || lowerMedia.endsWith('.mov') || lowerMedia.includes('video');
 
           if (isAudio) {
             mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>`;
@@ -1871,7 +1875,7 @@
             else if (cleanMedia.includes('youtu.be/')) ytEmbed = cleanMedia.replace('youtu.be/', 'www.youtube.com/embed/');
             mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
           } else if (isVideo) {
-            mediaTopContent = `<video controls style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
+            mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
           } else {
             mediaTopContent = `<img src="${cleanMedia}" class="modal-banner-img" onclick="openImageZoom('${cleanMedia}')">`;
           }

@@ -236,19 +236,19 @@
     .card-action-btn:hover { background: var(--gold-primary); color: #000; }
     .card-action-delete:hover { background: #8b0000; border-color: #8b0000; color: #fff; }
 
-    .ervas-home-container, .pontos-home-container, .mural-home-container { display: flex; flex-direction: column; gap: 15px; width: 100%; }
-    .ervas-intro-box, .pontos-intro-box, .mural-intro-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 15px; text-align: center; width: 100%; }
-    .ervas-intro-box h3, .pontos-intro-box h3, .mural-intro-box h3 { color: var(--gold-primary); margin-top: 0; font-size: 1rem; }
-    .ervas-intro-box p, .pontos-intro-box p, .mural-intro-box p { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px; text-align: left; line-height: 1.4; }
+    .ervas-home-container, .pontos-home-container { display: flex; flex-direction: column; gap: 15px; width: 100%; }
+    .ervas-intro-box, .pontos-intro-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 15px; text-align: center; width: 100%; }
+    .ervas-intro-box h3, .pontos-intro-box h3 { color: var(--gold-primary); margin-top: 0; font-size: 1rem; }
+    .ervas-intro-box p, .pontos-intro-box p { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px; text-align: left; line-height: 1.4; }
     
-    .ervas-categories-grid, .pontos-categories-grid, .mural-categories-grid { 
+    .ervas-categories-grid, .pontos-categories-grid { 
       display: grid; 
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
       gap: 10px; 
       width: 100%; 
     }
     
-    .erva-category-card, .ponto-category-card, .mural-category-card { 
+    .erva-category-card, .ponto-category-card { 
       background: #161616; 
       border: 1px solid var(--border-color); 
       border-radius: 8px; 
@@ -258,14 +258,14 @@
       transition: all 0.2s ease; 
     }
     
-    .erva-category-card:hover, .ponto-category-card:hover, .mural-category-card:hover { 
+    .erva-category-card:hover, .ponto-category-card:hover { 
       border-color: var(--gold-primary); 
       background: rgba(212, 175, 55, 0.05); 
       transform: translateY(-2px); 
     }
     
-    .erva-category-card i, .ponto-category-card i, .mural-category-card i { font-size: 1.8rem; color: var(--gold-primary); margin-bottom: 6px; }
-    .erva-category-card h4, .ponto-category-card h4, .mural-category-card h4 { font-size: 0.85rem; color: #fff; margin: 0; }
+    .erva-category-card i, .ponto-category-card i { font-size: 1.8rem; color: var(--gold-primary); margin-bottom: 6px; }
+    .erva-category-card h4, .ponto-category-card h4 { font-size: 0.85rem; color: #fff; margin: 0; }
     
     .btn-voltar-guia {
       background: #1a1a1a;
@@ -894,7 +894,6 @@
     let currentCalendarDate = new Date();
     let isErvasSubpage = false;
     let isPontosSubpage = false;
-    let isMuralSubpage = false;
 
     function showToast(mensagem) {
       const toast = document.getElementById('custom-toast');
@@ -950,14 +949,13 @@
       currentTab = tabName;
       isErvasSubpage = false;
       isPontosSubpage = false;
-      isMuralSubpage = false;
       document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
       if (element) element.classList.add('active');
 
       const generalInfoSection = document.getElementById('generalInfoSection');
       const searchContainerWrapper = document.getElementById('searchContainerWrapper');
 
-      if (tabName === 'Ervas_Banhos' || tabName === 'Pontos_Cantados' || tabName === 'Mural_Imagens') {
+      if (tabName === 'Ervas_Banhos' || tabName === 'Pontos_Cantados') {
         searchContainerWrapper.style.display = 'none';
       } else {
         searchContainerWrapper.style.display = 'flex';
@@ -1176,7 +1174,7 @@
         else if (tabName === 'Agenda') buildCalendarAgenda(currentData);
         else if (tabName === 'Ervas_Banhos' && !isErvasSubpage) buildErvasHome(currentData);
         else if (tabName === 'Pontos_Cantados' && !isPontosSubpage) buildPontosHome(currentData);
-        else if (tabName === 'Mural_Imagens' && !isMuralSubpage) buildMuralHome(currentData);
+        else if (tabName === 'Mural_Imagens') buildMuralDirectView(currentData);
         else renderContent(currentData, tabName);
       } catch (err) {
         loading.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Erro ao carregar dados.';
@@ -1294,7 +1292,7 @@
     function changeMonth(direction) { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction); buildCalendarAgenda(currentData); }
     function showDayEvents(eventsList) { if (eventsList && eventsList.length > 0) openGenericDetail(eventsList[0]); }
 
-    /* ================= MURAL DE AVISOS ================= */
+    /* ================= MURAL DE AVISOS (DIRETO) ================= */
     function getMuralMediaUrl(item) {
       const raw = item.Mural_URL || item.Arquivo_URL || item.Arquivo || item.Video_URL || item.Video || item.URLVideo || item.Midia_URL || item.Link_Video || item.Audio_URL || item.Audio || item.Link || '';
       if (!raw) return '';
@@ -1333,8 +1331,8 @@
       return 'outros';
     }
 
-    function buildMuralHome(data) {
-      document.getElementById('searchContainerWrapper').style.display = 'none';
+    function buildMuralDirectView(data) {
+      document.getElementById('searchContainerWrapper').style.display = 'flex';
       const container = document.getElementById('contentContainer');
 
       const hoje = new Date();
@@ -1350,147 +1348,13 @@
       });
       currentData = sortedData;
 
-      const tiposMidiaSet = new Set();
-      sortedData.forEach(item => {
-        if (!isPublicAccess(item)) return;
-        let tipoMidiaVal = '';
-        for (let key in item) {
-          let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
-          if (ck === 'tiposdemidia' || ck === 'tipodemidia' || ck === 'tipomidia') {
-            tipoMidiaVal = item[key];
-            break;
-          }
-        }
-        if (tipoMidiaVal && tipoMidiaVal.toString().trim() !== '') {
-          tiposMidiaSet.add(tipoMidiaVal.toString().trim());
-        }
-      });
-
-      let subCategoriesHtml = '';
-      if (tiposMidiaSet.size > 0) {
-        tiposMidiaSet.forEach(tipo => {
-          let icon = 'fa-photo-film';
-          const lower = tipo.toLowerCase();
-          if (lower.includes('vídeo') || lower.includes('video')) icon = 'fa-video';
-          else if (lower.includes('imagem') || lower.includes('foto') || lower.includes('cartaz')) icon = 'fa-image';
-          else if (lower.includes('áudio') || lower.includes('audio') || lower.includes('som')) icon = 'fa-volume-high';
-
-          subCategoriesHtml += `
-            <div class="mural-category-card" onclick="openMuralSubpageByTipo('${tipo.replace(/'/g, "\\'")}')">
-              <i class="fa-solid ${icon}"></i>
-              <h4>${tipo}</h4>
-            </div>
-          `;
-        });
-      } else {
-        subCategoriesHtml = `
-          <div class="mural-category-card" onclick="openMuralSubpage('imagens')">
-            <i class="fa-solid fa-images"></i>
-            <h4>Imagens & Cartazes</h4>
-          </div>
-          <div class="mural-category-card" onclick="openMuralSubpage('videos')">
-            <i class="fa-solid fa-video"></i>
-            <h4>Vídeos & Mídias</h4>
-          </div>
-          <div class="mural-category-card" onclick="openMuralSubpage('audios')">
-            <i class="fa-solid fa-volume-high"></i>
-            <h4>Áudios</h4>
-          </div>
-          <div class="mural-category-card" onclick="openMuralSubpage('todos')">
-            <i class="fa-solid fa-layer-group"></i>
-            <h4>Ver Todos</h4>
-          </div>
-        `;
-      }
-
       let btnNovoAvisoHtml = '';
       if (canManageContent()) {
-        btnNovoAvisoHtml = `<button class="btn-add-mural" onclick="abrirModalNovoMural()"><i class="fa-solid fa-plus"></i> Novo Aviso no Mural</button>`;
+        btnNovoAvisoHtml = `<div style="margin-bottom:12px;"><button class="btn-add-mural" onclick="abrirModalNovoMural()"><i class="fa-solid fa-plus"></i> Novo Aviso no Mural</button></div>`;
       }
 
-      container.innerHTML = `
-        <div class="mural-home-container">
-          ${btnNovoAvisoHtml}
-          <div class="mural-intro-box">
-            <h3><i class="fa-solid fa-photo-film"></i> Mural de Avisos e Comunicações</h3>
-            <p>O Mural de Avisos é o canal oficial de atualizações, informativos visuais, cartazes de festividades, áudios e mídias importantes do terreiro. Aqui você pode acompanhar comunicados completos compartilhados pela administração.</p>
-            <p><strong>Selecione abaixo o tipo de conteúdo que deseja visualizar:</strong></p>
-            <div class="mural-categories-grid">${subCategoriesHtml}</div>
-          </div>
-        </div>
-      `;
-    }
-
-    function openMuralSubpageByTipo(tipoMidia) {
-      isMuralSubpage = true;
-      document.getElementById('searchContainerWrapper').style.display = 'flex';
-      document.getElementById('pageTitle').innerHTML = `<i class="fa-solid fa-photo-film"></i> Mural: ${tipoMidia}`;
-      
-      let btnNovoAvisoHtml = canManageContent() ? `<button class="btn-add-mural" onclick="abrirModalNovoMural()"><i class="fa-solid fa-plus"></i> Novo Aviso no Mural</button>` : '';
-
-      const container = document.getElementById('contentContainer');
-      container.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
-          <button class="btn-voltar-guia" onclick="voltarMuralPrincipal()"><i class="fa-solid fa-arrow-left"></i> Voltar ao Início do Mural</button>
-          ${btnNovoAvisoHtml}
-        </div>
-        <div id="subpageMuralGridContainer"></div>
-      `;
-
-      const filtered = currentData.filter(item => {
-        if (!isPublicAccess(item)) return false;
-        let p = '';
-        for (let key in item) {
-          let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
-          if (ck === 'tiposdemidia' || ck === 'tipodemidia' || ck === 'tipomidia') {
-            p = item[key] || '';
-            break;
-          }
-        }
-        return p.toString().trim().toLowerCase() === tipoMidia.toLowerCase();
-      });
-
-      renderMuralGrid(filtered);
-    }
-
-    function openMuralSubpage(tipoFiltro) {
-      isMuralSubpage = true;
-      document.getElementById('searchContainerWrapper').style.display = 'flex';
-      let titleText = 'Mural de Avisos';
-      if (tipoFiltro === 'imagens') titleText = 'Mural: Imagens & Cartazes';
-      else if (tipoFiltro === 'videos') titleText = 'Mural: Vídeos & Mídias';
-      else if (tipoFiltro === 'audios') titleText = 'Mural: Áudios';
-      
-      document.getElementById('pageTitle').innerHTML = `<i class="fa-solid fa-photo-film"></i> ${titleText}`;
-      
-      let btnNovoAvisoHtml = canManageContent() ? `<button class="btn-add-mural" onclick="abrirModalNovoMural()"><i class="fa-solid fa-plus"></i> Novo Aviso no Mural</button>` : '';
-
-      const container = document.getElementById('contentContainer');
-      container.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
-          <button class="btn-voltar-guia" onclick="voltarMuralPrincipal()"><i class="fa-solid fa-arrow-left"></i> Voltar ao Início do Mural</button>
-          ${btnNovoAvisoHtml}
-        </div>
-        <div id="subpageMuralGridContainer"></div>
-      `;
-
-      const filtered = currentData.filter(item => {
-        if (!isPublicAccess(item)) return false;
-        const tMidia = getMuralMediaType(item);
-        if (tipoFiltro === 'imagens') return tMidia === 'image';
-        if (tipoFiltro === 'videos') return tMidia === 'video';
-        if (tipoFiltro === 'audios') return tMidia === 'audio';
-        return true;
-      });
-
-      renderMuralGrid(filtered);
-    }
-
-    function voltarMuralPrincipal() {
-      isMuralSubpage = false;
-      document.getElementById('searchContainerWrapper').style.display = 'none';
-      document.getElementById('pageTitle').innerHTML = '<i class="fa-solid fa-photo-film"></i> Mural de Avisos';
-      buildMuralHome(currentData);
+      container.innerHTML = `${btnNovoAvisoHtml}<div id="subpageMuralGridContainer"></div>`;
+      renderMuralGrid(sortedData);
     }
 
     function renderMuralGrid(data) {
@@ -1498,15 +1362,17 @@
       if (!parentContainer) return;
       parentContainer.innerHTML = '';
 
-      if (!data || data.length === 0) {
-        parentContainer.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">Nenhum aviso encontrado para esta categoria.</p>';
+      const validos = data.filter(item => isPublicAccess(item));
+
+      if (!validos || validos.length === 0) {
+        parentContainer.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">Nenhum aviso encontrado no mural.</p>';
         return;
       }
 
       const grid = document.createElement('div');
       grid.className = 'cards-grid';
 
-      data.forEach((item, index) => {
+      validos.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = 'card';
         const itemId = item.ID_Mural || item.id || item.ID || index;
@@ -1609,12 +1475,7 @@
 
     function excluirMural(idItem) {
       currentData = currentData.filter(i => String(i.ID_Mural || i.id || i.ID) !== String(idItem));
-      if (isMuralSubpage) {
-        // Recarrega a subpágina atual
-        renderMuralGrid(currentData);
-      } else {
-        buildMuralHome(currentData);
-      }
+      renderMuralGrid(currentData);
       showToast('Aviso removido com sucesso!');
 
       fetch(WEB_APP_URL, {
@@ -1679,11 +1540,7 @@
       }
 
       closeMuralModal();
-      if (isMuralSubpage) {
-        renderMuralGrid(currentData);
-      } else {
-        buildMuralHome(currentData);
-      }
+      renderMuralGrid(currentData);
       showToast('Aviso salvo com sucesso!');
 
       fetch(WEB_APP_URL, {
@@ -2218,13 +2075,13 @@
         let cleanAudio = audioUrl.toString().trim();
         if (cleanAudio.includes('drive.google.com') || cleanAudio.includes('docs.google.com')) {
           const match = cleanAudio.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanAudio.match(/id=([a-zA-Z0-9_-]+)/);
-          if (match && match[1]) cleanAudio = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
+          if (match && match[1]) cleanAudio = `https://lh3.googleusercontent.com/d/${match[1]}`;
         }
 
         let cleanVideo = videoUrl.toString().trim();
         if (cleanVideo.includes('drive.google.com') || cleanVideo.includes('docs.google.com')) {
           const match = cleanVideo.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanVideo.match(/id=([a-zA-Z0-9_-]+)/);
-          if (match && match[1]) cleanVideo = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
+          if (match && match[1]) cleanVideo = `https://lh3.googleusercontent.com/d/${match[1]}`;
         }
 
         if (cleanVideo && cleanVideo.startsWith('http')) {
@@ -2237,7 +2094,7 @@
             mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanVideo}">Seu navegador não suporta vídeos.</video>`;
           }
         } else if (cleanAudio && cleanAudio.startsWith('http')) {
-          mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanAudio}">Seu navegador não suporta áudio.</audio>`;
+          mediaTopContent = `<audio controls autoplay style="width:100%; margin-bottom:10px;"><source src="${cleanAudio}">Seu navegador não suporta áudio.</audio>`;
         }
 
         const linhaEntidade = item.Linha_Entidade || item.Linha || item.Entidade || '';
@@ -2330,7 +2187,7 @@
           const isYoutube = cleanMedia.includes('youtube.com') || cleanMedia.includes('youtu.be');
           
           if (isAudio) {
-            mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>`;
+            mediaTopContent = `<audio controls autoplay style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>`;
           } else if (isYoutube) {
             let ytEmbed = cleanMedia;
             if (cleanMedia.includes('watch?v=')) ytEmbed = cleanMedia.replace('watch?v=', 'embed/');
@@ -2400,7 +2257,7 @@
       const filtered = currentData.filter(item => Object.values(item).some(val => val && val.toString().toLowerCase().includes(query)));
       if (currentTab === 'Ervas_Banhos' && isErvasSubpage) renderErvasGrid(filtered);
       else if (currentTab === 'Pontos_Cantados' && isPontosSubpage) renderPontosGrid(filtered);
-      else if (currentTab === 'Mural_Imagens' && isMuralSubpage) renderMuralGrid(filtered);
+      else if (currentTab === 'Mural_Imagens') renderMuralGrid(filtered);
       else renderContent(filtered, currentTab);
     }
   </script>

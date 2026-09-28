@@ -519,6 +519,17 @@
       margin: auto;
     }
 
+    @media (max-width: 599px) {
+      .modal-overlay { padding: 8px; }
+      .modal-box {
+        max-height: 92vh;
+        padding: 10px;
+        border-radius: 10px;
+      }
+      .modal-body { max-height: 76vh; }
+      .modal-media-video { max-height: 48vh; min-height: 150px; }
+    }
+
     .modal-header { 
       display: flex; 
       justify-content: space-between; 
@@ -556,6 +567,59 @@
       margin-bottom: 10px;
       display: block;
       cursor: zoom-in;
+    }
+
+    /* Players de mídia dos modais */
+    .modal-media-video {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      max-height: 62vh;
+      min-height: 180px;
+      object-fit: contain;
+      background: #000;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      margin: 0 0 12px 0;
+    }
+
+    .modal-media-audio {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+    }
+
+    .modal-media-youtube {
+      position: relative;
+      width: 100%;
+      padding-bottom: 56.25%;
+      height: 0;
+      overflow: hidden;
+      margin: 0 0 12px 0;
+      background: #000;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .modal-media-youtube iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .modal-media-error {
+      display: none;
+      margin: 8px 0 12px;
+      padding: 10px;
+      border: 1px solid #5a2a2a;
+      border-radius: 6px;
+      background: #241313;
+      color: #ffb0b0;
+      font-size: 0.75rem;
+      line-height: 1.4;
     }
 
     .modal-details-box { 
@@ -884,12 +948,24 @@
     }
 
     function openImageZoom(src) {
-      document.getElementById('zoomedImg').src = src;
+      const imageUrl = getMediaDirectUrl(src, 'image');
+      if (!imageUrl) return;
+
+      const img = document.getElementById('zoomedImg');
+      img.src = imageUrl;
+      img.onerror = () => {
+        img.removeAttribute('src');
+        showToast('Não foi possível carregar a imagem.');
+      };
+
       document.getElementById('imageZoomOverlay').style.display = 'flex';
     }
 
     function closeImageZoom() {
-      document.getElementById('imageZoomOverlay').style.display = 'none';
+      const overlay = document.getElementById('imageZoomOverlay');
+      const img = document.getElementById('zoomedImg');
+      overlay.style.display = 'none';
+      img.removeAttribute('src');
     }
 
     function switchTab(tabName, element) {
@@ -1243,15 +1319,144 @@
     function showDayEvents(eventsList) { if (eventsList && eventsList.length > 0) openGenericDetail(eventsList[0]); }
 
     /* ================= MURAL DE AVISOS ================= */
-    function getMediaDirectUrl(raw) {
+    function extractGoogleDriveFileId(raw) {
       if (!raw) return '';
-      let clean = raw.toString().trim();
-      if (clean.includes('drive.google.com') || clean.includes('docs.google.com')) {
-        const match = clean.match(/\/d\/([a-zA-Z0-9_-]+)/) || clean.match(/id=([a-zA-Z0-9_-]+)/);
-        if (match && match[1]) return `https://lh3.googleusercontent.com/d/${match[1]}`;
+      const clean = String(raw).trim();
+
+      const patterns = [
+        /\/file\/d\/([a-zA-Z0-9_-]+)/,
+        /\/d\/([a-zA-Z0-9_-]+)/,
+        /[?&]id=([a-zA-Z0-9_-]+)/,
+        /[?&]fileId=([a-zA-Z0-9_-]+)/
+      ];
+
+      for (const pattern of patterns) {
+        const match = clean.match(pattern);
+        if (match && match[1]) return match[1];
       }
+      return '';
+    }
+
+    function getMediaDirectUrl(raw, mediaType = 'auto') {
+      if (!raw) return '';
+
+      const clean = String(raw).trim();
+      if (!clean) return '';
+
+      if (/youtube\.com|youtu\.be/i.test(clean)) return clean;
+
+      const fileId = extractGoogleDriveFileId(clean);
+      if (fileId) {
+        const type = String(mediaType || 'auto').toLowerCase();
+
+        if (type === 'image' || type === 'imagem' || type === 'foto') {
+          return `https://lh3.googleusercontent.com/d/${fileId}`;
+        }
+
+        return `https://drive.usercontent.google.com/download?id=${fileId}&export=download&confirm=t`;
+      }
+
       return clean;
     }
+
+    function getYouTubeEmbedUrl(url) {
+      if (!url) return '';
+
+      const clean = String(url).trim();
+      let match = clean.match(/[?&]v=([a-zA-Z0-9_-]{6,})/);
+      if (match && match[1]) return `https://www.youtube.com/embed/${match[1]}`;
+
+      match = clean.match(/youtu\.be\/([a-zA-Z0-9_-]{6,})/);
+      if (match && match[1]) return `https://www.youtube.com/embed/${match[1]}`;
+
+      if (/youtube\.com\/embed\//i.test(clean)) return clean;
+      return clean;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function buildVideoHtml(url, options = {}) {
+      const source = escapeHtml(url);
+      const label = escapeHtml(options.label || 'vídeo');
+      if (!source) return '';
+
+      if (/youtube\.com|youtu\.be/i.test(url)) {
+        const embed = escapeHtml(getYouTubeEmbedUrl(url));
+        return `
+          <div class="modal-media-youtube">
+            <iframe src="${embed}"
+                    title="${label}"
+                    loading="eager"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen></iframe>
+          </div>`;
+      }
+
+      return `
+        <video class="modal-media-video"
+               controls
+               playsinline
+               preload="metadata"
+               onerror="handleMediaError(this, 'vídeo')">
+          <source src="${source}">
+          Seu navegador não conseguiu carregar este vídeo.
+        </video>
+        <div class="modal-media-error"></div>`;
+    }
+
+    function buildAudioHtml(url) {
+      const source = escapeHtml(url);
+      if (!source) return '';
+
+      return `
+        <div style="background:#121212; padding:12px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:12px;">
+          <audio class="modal-media-audio"
+                 controls
+                 preload="metadata"
+                 onerror="handleMediaError(this, 'áudio')">
+            <source src="${source}">
+            Seu navegador não conseguiu carregar este áudio.
+          </audio>
+          <div class="modal-media-error"></div>
+        </div>`;
+    }
+
+    function handleMediaError(mediaElement, mediaLabel) {
+      const wrapper = mediaElement ? mediaElement.parentElement : null;
+      const errorBox = wrapper ? wrapper.querySelector('.modal-media-error') : null;
+
+      if (errorBox) {
+        errorBox.textContent = `Não foi possível reproduzir este ${mediaLabel}. Verifique se o arquivo está compartilhado como "qualquer pessoa com o link" e se o formato é compatível com o navegador.`;
+        errorBox.style.display = 'block';
+      }
+
+      showToast(`Não foi possível carregar o ${mediaLabel}.`);
+    }
+
+    function stopModalMedia() {
+      const modal = document.getElementById('detailModalContent');
+      if (!modal) return;
+
+      modal.querySelectorAll('video, audio').forEach(media => {
+        try {
+          media.pause();
+          media.removeAttribute('src');
+          media.load();
+        } catch (e) {}
+      });
+
+      modal.querySelectorAll('iframe').forEach(iframe => {
+        try { iframe.src = 'about:blank'; } catch (e) {}
+      });
+    }
+
 
     function getMuralMediaType(item) {
       let tipoMidiaVal = '';
@@ -2088,7 +2293,7 @@
     function openGenericDetail(item, tabName) {
       const modalContent = document.getElementById('detailModalContent');
       const titulo = item.Titulo_Ponto || item.Nome_Evento || item.Titulo || item.Nome_Erva || item.Categoria || 'Detalhes';
-      const imagem = getCleanImageUrl(item);
+      const imagem = getMediaDirectUrl(getCleanImageUrl(item), 'image');
       
       let info = '';
       let mediaTopContent = '';
@@ -2097,20 +2302,13 @@
         const audioUrl = item.PontoAudio_URL || item.Audio_URL || item.Audio || item.OrigemAudio_Ponto || '';
         const videoUrl = item.PontoVideo_URL || item.URLVideo_URL || item.URLVideo || item.Video_URL || item.Video || item.MP4 || '';
 
-        let cleanAudio = getMediaDirectUrl(audioUrl);
-        let cleanVideo = getMediaDirectUrl(videoUrl);
+        const cleanVideo = getMediaDirectUrl(videoUrl, 'video');
+        const cleanAudio = getMediaDirectUrl(audioUrl, 'audio');
 
-        if (cleanVideo && cleanVideo.startsWith('http')) {
-          if (cleanVideo.includes('youtube.com') || cleanVideo.includes('youtu.be')) {
-            let ytEmbed = cleanVideo;
-            if (cleanVideo.includes('watch?v=')) ytEmbed = cleanVideo.replace('watch?v=', 'embed/');
-            else if (cleanVideo.includes('youtu.be/')) ytEmbed = cleanVideo.replace('youtu.be/', 'www.youtube.com/embed/');
-            mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
-          } else {
-            mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanVideo}">Seu navegador não suporta vídeos.</video>`;
-          }
-        } else if (cleanAudio && cleanAudio.startsWith('http')) {
-          mediaTopContent = `<audio controls autoplay style="width:100%; margin-bottom:10px;"><source src="${cleanAudio}">Seu navegador não suporta áudio.</audio>`;
+        if (cleanVideo) {
+          mediaTopContent = buildVideoHtml(cleanVideo, { label: titulo });
+        } else if (cleanAudio) {
+          mediaTopContent = buildAudioHtml(cleanAudio);
         }
 
         const linhaEntidade = item.Linha_Entidade || item.Linha || item.Entidade || '';
@@ -2134,32 +2332,26 @@
         const audioRaw = item.Arquivo_Audio || item.Audio_URL || item.Audio || '';
         const muralRaw = item.Mural_URL || item.Arquivo_URL || item.Arquivo || '';
 
-        const cleanVideo = getMediaDirectUrl(videoRaw);
-        const cleanAudio = getMediaDirectUrl(audioRaw);
-        const cleanMural = getMediaDirectUrl(muralRaw);
+        const cleanVideo = getMediaDirectUrl(videoRaw, 'video');
+        const cleanAudio = getMediaDirectUrl(audioRaw, 'audio');
+        const cleanMural = getMediaDirectUrl(muralRaw, 'image');
 
         if (cleanVideo) {
-          if (cleanVideo.includes('youtube.com') || cleanVideo.includes('youtu.be')) {
-            let ytEmbed = cleanVideo;
-            if (cleanVideo.includes('watch?v=')) ytEmbed = cleanVideo.replace('watch?v=', 'embed/');
-            else if (cleanVideo.includes('youtu.be/')) ytEmbed = cleanVideo.replace('youtu.be/', 'www.youtube.com/embed/');
-            mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
-          } else {
-            mediaTopContent = `<video controls autoplay style="width:100%; max-height:240px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanVideo}">Seu navegador não suporta vídeos.</video>`;
-          }
+          mediaTopContent = buildVideoHtml(cleanVideo, { label: titulo });
         } else if (cleanAudio) {
           mediaTopContent = `
-            <div style="text-align: center; margin-bottom: 12px; background: #121212; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-              <img src="${INSTITUTIONAL_LOGO_URL}" style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--gold-primary); object-fit: cover; margin-bottom: 8px; box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);">
-              <audio controls autoplay style="width:100%;"><source src="${cleanAudio}">Seu navegador não suporta áudio.</audio>
-            </div>
-          `;
-        } else if (cleanMural && !cleanMural.startsWith('http')) {
-          mediaTopContent = `<img src="${INSTITUTIONAL_LOGO_URL}" class="modal-banner-img">`;
+            <div style="text-align:center; margin-bottom:12px; background:#121212; padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+              <img src="${escapeHtml(INSTITUTIONAL_LOGO_URL)}"
+                   style="width:70px; height:70px; border-radius:50%; border:2px solid var(--gold-primary); object-fit:cover; margin-bottom:8px; box-shadow:0 0 10px rgba(212,175,55,.4);"
+                   alt="Tenda de Zé Cigano">
+              ${buildAudioHtml(cleanAudio)}
+            </div>`;
         } else if (cleanMural) {
-          mediaTopContent = `<img src="${cleanMural}" class="modal-banner-img" onclick="openImageZoom('${cleanMural}')">`;
+          const safeMural = escapeHtml(cleanMural);
+          mediaTopContent = `<img src="${safeMural}" class="modal-banner-img" alt="${escapeHtml(titulo)}" onclick="openImageZoom(this.src)" onerror="this.onerror=null; this.style.display='none'; showToast('Não foi possível carregar a imagem.');">`;
         } else if (imagem) {
-          mediaTopContent = `<img src="${imagem}" class="modal-banner-img" onclick="openImageZoom('${imagem}')">`;
+          const safeImagem = escapeHtml(getMediaDirectUrl(imagem, 'image'));
+          mediaTopContent = `<img src="${safeImagem}" class="modal-banner-img" alt="${escapeHtml(titulo)}" onclick="openImageZoom(this.src)" onerror="this.onerror=null; this.style.display='none'; showToast('Não foi possível carregar a imagem.');">`;
         }
 
         let dataCriacaoVal = '';
@@ -2206,20 +2398,14 @@
       } else {
         const mediaUrl = item.Mural_URL || item.Video_URL || item.Video || item.URLVideo || item.Audio_URL || item.Audio || item.MP4 || item.Arquivo_URL || '';
         if (mediaUrl) {
-          let cleanMedia = getMediaDirectUrl(mediaUrl);
-          const lowerMedia = cleanMedia.toLowerCase();
-          const isAudio = lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio');
-          const isYoutube = cleanMedia.includes('youtube.com') || cleanMedia.includes('youtu.be');
-          
+          const rawLower = String(mediaUrl).toLowerCase();
+          const isAudio = /\.(mp3|wav|ogg|m4a|aac|flac)(?:[?#].*)?$/i.test(rawLower) || rawLower.includes('audio');
+          const cleanMedia = getMediaDirectUrl(mediaUrl, isAudio ? 'audio' : 'video');
+
           if (isAudio) {
-            mediaTopContent = `<audio controls autoplay style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>`;
-          } else if (isYoutube) {
-            let ytEmbed = cleanMedia;
-            if (cleanMedia.includes('watch?v=')) ytEmbed = cleanMedia.replace('watch?v=', 'embed/');
-            else if (cleanMedia.includes('youtu.be/')) ytEmbed = cleanMedia.replace('youtu.be/', 'www.youtube.com/embed/');
-            mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
+            mediaTopContent = buildAudioHtml(cleanMedia);
           } else {
-            mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
+            mediaTopContent = buildVideoHtml(cleanMedia, { label: titulo });
           }
         }
 
@@ -2260,11 +2446,46 @@
           <button class="btn-submit" onclick="closeGenericDetail()">Fechar</button>
         </div>
       `;
-      document.getElementById('detailModal').style.display = 'flex';
+      const detailModal = document.getElementById('detailModal');
+      detailModal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+
+      requestAnimationFrame(() => {
+        const firstMedia = modalContent.querySelector('video, audio');
+        if (firstMedia) {
+          try { firstMedia.load(); } catch (e) {}
+        }
+      });
     }
 
-    function closeGenericDetail() { document.getElementById('detailModal').style.display = 'none'; }
-    function closeModalOnBackdrop(e) { if (e.target.id === 'detailModal') closeGenericDetail(); }
+    function closeGenericDetail() {
+      stopModalMedia();
+      document.getElementById('detailModal').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    function closeModalOnBackdrop(e) {
+      if (e.target.id === 'detailModal') closeGenericDetail();
+    }
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key !== 'Escape') return;
+
+      const imageZoom = document.getElementById('imageZoomOverlay');
+      const detailModal = document.getElementById('detailModal');
+      const loginModal = document.getElementById('loginModal');
+      const membroModal = document.getElementById('modalMembro');
+
+      if (imageZoom && imageZoom.style.display === 'flex') {
+        closeImageZoom();
+      } else if (detailModal && detailModal.style.display === 'flex') {
+        closeGenericDetail();
+      } else if (loginModal && loginModal.style.display === 'flex') {
+        closeLoginModal();
+      } else if (membroModal && membroModal.style.display === 'flex') {
+        closeMembroModal();
+      }
+    });
 
     function filterCards() {
       const query = document.getElementById('searchInput').value.toLowerCase();
@@ -2291,20 +2512,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

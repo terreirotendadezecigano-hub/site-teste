@@ -897,7 +897,7 @@
     }
 
     function getCleanImageUrl(item) {
-      const rawImg = item.Foto_URL || item.Foto_Ervas || item.Arquivo_URL || item.Imagem_URL || item.Imagem || item.Foto || item.Foto_URL || 
+      const rawImg = item.Foto_URL || item.Foto_Ervas || item.Arquivo_URL || item.Imagem_URL || item.Imagem || item.Foto || 
                      item.Imagem_Cartaz || item.Capa || item.Anexo_URL || item['Anexo URL'] || item.Anexo || '';
       if (!rawImg) return '';
       let clean = rawImg.toString().trim();
@@ -952,7 +952,7 @@
         'linha_entidade': 'Linha / Entidade', 'data_evento': 'Data do Evento', 'data_criacao': 'Data de Criação', 'conteudo_texto': 'Conteúdo / Orientação',
         'horario': 'Horário', 'descricao': 'Descrição', 'categoria': 'Categoria', 'texo_aviso': 'Texto do Aviso',
         'acesso_publico': 'Acesso', 'nome_erva': 'Nome da Erva', 'nome_popular': 'Nome Popular', 'titulo_ponto': 'Título do Ponto',
-        'tipos_de_midia': 'Tipo de Mídia', 'tiposdemidia': 'Tipo de Mídia'
+        'tipos_de_midia': 'Tipo de Mídia', 'tiposdemidia': 'Tipo de Mídia', 'arquivo_video': 'Arquivo de Vídeo'
       };
       const cleanKey = key.toLowerCase().trim().replace(/ /g, '_');
       if (dictionary[cleanKey]) return dictionary[cleanKey];
@@ -1197,36 +1197,7 @@
     function changeMonth(direction) { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction); buildCalendarAgenda(currentData); }
     function showDayEvents(eventsList) { if (eventsList && eventsList.length > 0) openGenericDetail(eventsList[0]); }
 
-    /* ================= MURAL DE AVISOS (CORRIGIDO) ================= */
-    function getMuralMediaUrl(item) {
-      const raw = item.Arquivo_URL || item.Arquivo || item.Video_URL || item.Video || item.URLVideo || item.Midia_URL || item.Link_Video || item.Anexo_URL || '';
-      if (!raw) return '';
-      let clean = raw.toString().trim();
-      if (clean.includes('drive.google.com') || clean.includes('docs.google.com')) {
-        const match = clean.match(/\/d\/([a-zA-Z0-9_-]+)/) || clean.match(/id=([a-zA-Z0-9_-]+)/);
-        if (match && match[1]) return `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
-      }
-      return clean;
-    }
-
-    function isMuralVideoItem(item) {
-      let tipoMidiaVal = '';
-      for (let key in item) {
-        let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
-        if (ck === 'tiposdemidia' || ck === 'tipodemidia' || ck === 'tipomidia') {
-          tipoMidiaVal = item[key] || '';
-          break;
-        }
-      }
-      const mediaUrl = getMuralMediaUrl(item).toLowerCase();
-      const lowerTipo = tipoMidiaVal.toLowerCase();
-
-      return lowerTipo.includes('vídeo') || lowerTipo.includes('video') ||
-             item.Video_URL || item.Video || item.URLVideo || item.PontoVideo_URL || 
-             mediaUrl.endsWith('.mp4') || mediaUrl.endsWith('.webm') || mediaUrl.endsWith('.mov') || 
-             mediaUrl.includes('video') || mediaUrl.includes('youtube.com') || mediaUrl.includes('youtu.be') || mediaUrl.includes('alt=media');
-    }
-
+    /* ================= MURAL DE AVISOS ================= */
     function buildMuralHome(data) {
       document.getElementById('searchContainerWrapper').style.display = 'none';
       const container = document.getElementById('contentContainer');
@@ -1336,10 +1307,25 @@
 
       const filtered = currentData.filter(item => {
         if (!isPublicAccess(item)) return false;
-        const hasVid = isMuralVideoItem(item);
-        const hasImg = getCleanImageUrl(item) || getMuralMediaUrl(item);
+        
+        let tipoMidiaVal = '';
+        for (let key in item) {
+          let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
+          if (ck === 'tiposdemidia' || ck === 'tipodemidia' || ck === 'tipomidia') {
+            tipoMidiaVal = item[key] || '';
+            break;
+          }
+        }
 
-        if (tipoFiltro === 'imagens') return !hasVid;
+        const videoField = item.Arquivo_Video || item.Arquivo_URL || item.Arquivo || item.Video_URL || item.Video || item.URLVideo || '';
+        const arquivoUrlStr = videoField.toString().trim().toLowerCase();
+        const hasVid = tipoMidiaVal.toLowerCase().includes('vídeo') || tipoMidiaVal.toLowerCase().includes('video') || 
+                       item.Arquivo_Video || item.Video_URL || item.Video || item.URLVideo || item.PontoVideo_URL || 
+                       arquivoUrlStr.endsWith('.mp4') || arquivoUrlStr.endsWith('.webm') || arquivoUrlStr.endsWith('.mov') || 
+                       arquivoUrlStr.includes('video') || arquivoUrlStr.includes('youtube.com') || arquivoUrlStr.includes('youtu.be') || arquivoUrlStr.includes('alt=media');
+        const hasImg = getCleanImageUrl(item) || tipoMidiaVal.toLowerCase().includes('imagem');
+
+        if (tipoFiltro === 'imagens') return hasImg && !hasVid;
         if (tipoFiltro === 'videos') return hasVid;
         return true;
       });
@@ -1373,8 +1359,6 @@
         const titulo = item.Titulo || item.Nome_Evento || item.Categoria || 'Aviso';
         const texto = item.Descricao || item.Texo_Aviso || item.Conteudo_Texto || '';
         const imagem = getCleanImageUrl(item);
-        const hasVideo = isMuralVideoItem(item);
-        const mediaUrl = getMuralMediaUrl(item);
         
         let tipoMidiaVal = '';
         for (let key in item) {
@@ -1385,15 +1369,14 @@
           }
         }
 
-        let imgHtml = '';
-        if (!hasVideo && imagem) {
-          imgHtml = `<img src="${imagem}" class="card-img" alt="${titulo}">`;
-        } else if (!hasVideo && mediaUrl && !mediaUrl.endsWith('.mp4') && !mediaUrl.endsWith('.webm') && !mediaUrl.endsWith('.mov')) {
-          imgHtml = `<img src="${mediaUrl}" class="card-img" alt="${titulo}">`;
-        } else {
-          imgHtml = `<div class="card-img" style="display:flex; flex-direction:column; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary); gap:4px;"><i class="fa-solid ${hasVideo ? 'fa-video' : 'fa-photo-film'} fa-2x"></i><span style="font-size:0.6rem; color:var(--gold-light);">${hasVideo ? 'Vídeo' : 'Mídia'}</span></div>`;
-        }
+        const videoField = item.Arquivo_Video || item.Arquivo_URL || item.Arquivo || item.Video_URL || item.Video || item.URLVideo || '';
+        const arquivoUrlStr = videoField.toString().trim().toLowerCase();
+        const hasVideo = tipoMidiaVal.toLowerCase().includes('vídeo') || tipoMidiaVal.toLowerCase().includes('video') ||
+                         item.Arquivo_Video || item.Video_URL || item.Video || item.URLVideo || item.PontoVideo_URL || 
+                         arquivoUrlStr.endsWith('.mp4') || arquivoUrlStr.endsWith('.webm') || arquivoUrlStr.endsWith('.mov') || 
+                         arquivoUrlStr.includes('video') || arquivoUrlStr.includes('youtube.com') || arquivoUrlStr.includes('youtu.be') || arquivoUrlStr.includes('alt=media');
 
+        let imgHtml = imagem && !hasVideo ? `<img src="${imagem}" class="card-img" alt="${titulo}">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid ${hasVideo ? 'fa-video' : 'fa-image'} fa-2x"></i></div>`;
         const badgeLabel = tipoMidiaVal || (hasVideo ? 'Vídeo' : 'Imagem');
 
         card.innerHTML = `
@@ -1877,7 +1860,7 @@
       document.getElementById('modalMembro').style.display = 'none';
     }
 
-    /* ================= EXIBIÇÃO DE CONTEÚDO E MODAL (CORRIGIDO PARA MURAL) ================= */
+    /* ================= EXIBIÇÃO DE CONTEÚDO E MODAL ================= */
     function renderContent(data, tabName) {
       if (['Home', 'Agenda', 'Membros', 'Ervas_Banhos', 'Pontos_Cantados', 'Mural_Imagens'].includes(tabName)) return;
       const container = document.getElementById('contentContainer');
@@ -1967,13 +1950,18 @@
         if (obs) info += `<p><strong>Observações:</strong><br>${obs}</p>`;
 
       } else if (tabName === 'Mural_Imagens' || currentTab === 'Mural_Imagens') {
-        let cleanMedia = getMuralMediaUrl(item);
+        const arquivoUrl = item.Arquivo_Video || item.Arquivo_URL || item.Arquivo || item.Video_URL || item.Video || item.URLVideo || item.Midia_URL || item.Link_Video || '';
+        let cleanMedia = arquivoUrl.toString().trim();
         
         if (cleanMedia) {
+          if (cleanMedia.includes('drive.google.com') || cleanMedia.includes('docs.google.com')) {
+            const match = cleanMedia.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanMedia.match(/id=([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) cleanMedia = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
+          }
           const lowerMedia = cleanMedia.toLowerCase();
           const isAudio = lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio');
           const isYoutube = cleanMedia.includes('youtube.com') || cleanMedia.includes('youtu.be');
-          const isVideo = isMuralVideoItem(item);
+          const isVideo = lowerMedia.endsWith('.mp4') || lowerMedia.endsWith('.webm') || lowerMedia.endsWith('.mov') || lowerMedia.includes('video') || cleanMedia.includes('alt=media') || item.Tipos_de_Midia?.toLowerCase().includes('vídeo') || item.Tipos_de_Midia?.toLowerCase().includes('video') || item.TiposDeMidia?.toLowerCase().includes('vídeo') || item.TiposDeMidia?.toLowerCase().includes('video') || item.Arquivo_Video;
 
           if (isAudio) {
             mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>`;
@@ -1983,7 +1971,7 @@
             else if (cleanMedia.includes('youtu.be/')) ytEmbed = cleanMedia.replace('youtu.be/', 'www.youtube.com/embed/');
             mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
           } else if (isVideo) {
-            mediaTopContent = `<video controls autoplay style="width:100%; max-height:280px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
+            mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
           } else {
             mediaTopContent = `<img src="${cleanMedia}" class="modal-banner-img" onclick="openImageZoom('${cleanMedia}')">`;
           }
@@ -2006,13 +1994,9 @@
             cleanKeyLower.includes('id') || 
             cleanKeyLower === 'destacarpopup' || 
             cleanKeyLower === 'arquivourl' || 
+            cleanKeyLower === 'arquivovideo' ||
             cleanKeyLower === 'arquivo' || 
             cleanKeyLower === 'arquivoimagem' ||
-            cleanKeyLower === 'videourl' ||
-            cleanKeyLower === 'video' ||
-            cleanKeyLower === 'urlvideo' ||
-            cleanKeyLower === 'midiaurl' ||
-            cleanKeyLower === 'linkvideo' ||
             cleanKeyLower === 'categoria' ||
             cleanKeyLower === 'acessopublico' || 
             cleanKeyLower === 'datacriacao' ||
@@ -2030,7 +2014,7 @@
         }
 
       } else {
-        const mediaUrl = item.Video_URL || item.Video || item.URLVideo || item.Audio_URL || item.Audio || item.MP4 || item.Arquivo_URL || '';
+        const mediaUrl = item.Video_URL || item.Video || item.URLVideo || item.Audio_URL || item.Audio || item.MP4 || item.Arquivo_URL || item.Arquivo_Video || '';
         if (mediaUrl) {
           let cleanMedia = mediaUrl.toString().trim();
           if (cleanMedia.includes('drive.google.com') || cleanMedia.includes('docs.google.com')) {
@@ -2060,6 +2044,7 @@
             cleanKeyLower.includes('id') || 
             cleanKeyLower === 'destacarpopup' || 
             cleanKeyLower === 'arquivourl' || 
+            cleanKeyLower === 'arquivovideo' ||
             cleanKeyLower === 'arquivoimagem' || 
             cleanKeyLower === 'categoria' ||
             cleanKeyLower === 'anexo' || 
@@ -2097,7 +2082,7 @@
       const query = document.getElementById('searchInput').value.toLowerCase();
       
       if (currentTab === 'Membros') {
-        const linhas = document.querySelectorAll('#membrosTableButton tr, #membrosTableBody tr');
+        const linhas = document.querySelectorAll('#membrosTableBody tr');
         linhas.forEach(linha => {
           const textoLinha = linha.textContent.toLowerCase();
           if (textoLinha.includes(query)) {

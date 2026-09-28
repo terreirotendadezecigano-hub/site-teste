@@ -951,7 +951,8 @@
         'modo_preparo': 'Modo de Preparo', 'para_que_serve': 'Para que Serve', 'orixa_linha': 'Orixá / Linha',
         'linha_entidade': 'Linha / Entidade', 'data_evento': 'Data do Evento', 'data_criacao': 'Data de Criação', 'conteudo_texto': 'Conteúdo / Orientação',
         'horario': 'Horário', 'descricao': 'Descrição', 'categoria': 'Categoria', 'texo_aviso': 'Texto do Aviso',
-        'acesso_publico': 'Acesso', 'nome_erva': 'Nome da Erva', 'nome_popular': 'Nome Popular', 'titulo_ponto': 'Título do Ponto'
+        'acesso_publico': 'Acesso', 'nome_erva': 'Nome da Erva', 'nome_popular': 'Nome Popular', 'titulo_ponto': 'Título do Ponto',
+        'tipos_de_midia': 'Tipo de Mídia', 'tiposdemidia': 'Tipo de Mídia'
       };
       const cleanKey = key.toLowerCase().trim().replace(/ /g, '_');
       if (dictionary[cleanKey]) return dictionary[cleanKey];
@@ -1201,29 +1202,92 @@
       document.getElementById('searchContainerWrapper').style.display = 'none';
       const container = document.getElementById('contentContainer');
 
+      const tiposMidiaSet = new Set();
+      data.forEach(item => {
+        if (!isPublicAccess(item)) return;
+        let tipoMidiaVal = '';
+        for (let key in item) {
+          let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
+          if (ck === 'tiposdemidia' || ck === 'tipodemidia' || ck === 'tipomidia') {
+            tipoMidiaVal = item[key];
+            break;
+          }
+        }
+        if (tipoMidiaVal && tipoMidiaVal.toString().trim() !== '') {
+          tiposMidiaSet.add(tipoMidiaVal.toString().trim());
+        }
+      });
+
+      let subCategoriesHtml = '';
+      if (tiposMidiaSet.size > 0) {
+        tiposMidiaSet.forEach(tipo => {
+          let icon = 'fa-photo-film';
+          const lower = tipo.toLowerCase();
+          if (lower.includes('vídeo') || lower.includes('video')) icon = 'fa-video';
+          else if (lower.includes('imagem') || lower.includes('foto') || lower.includes('cartaz')) icon = 'fa-image';
+          else if (lower.includes('áudio') || lower.includes('audio') || lower.includes('som')) icon = 'fa-volume-high';
+
+          subCategoriesHtml += `
+            <div class="mural-category-card" onclick="openMuralSubpageByTipo('${tipo.replace(/'/g, "\\'")}')">
+              <i class="fa-solid ${icon}"></i>
+              <h4>${tipo}</h4>
+            </div>
+          `;
+        });
+      } else {
+        subCategoriesHtml = `
+          <div class="mural-category-card" onclick="openMuralSubpage('imagens')">
+            <i class="fa-solid fa-images"></i>
+            <h4>Imagens & Cartazes</h4>
+          </div>
+          <div class="mural-category-card" onclick="openMuralSubpage('videos')">
+            <i class="fa-solid fa-video"></i>
+            <h4>Vídeos & Mídias</h4>
+          </div>
+          <div class="mural-category-card" onclick="openMuralSubpage('todos')">
+            <i class="fa-solid fa-layer-group"></i>
+            <h4>Ver Todos</h4>
+          </div>
+        `;
+      }
+
       container.innerHTML = `
         <div class="mural-home-container">
           <div class="mural-intro-box">
             <h3><i class="fa-solid fa-photo-film"></i> Mural de Avisos e Comunicações</h3>
             <p>O Mural de Avisos é o canal oficial de atualizações, informativos visuais, cartazes de festividades e mídias importantes do terreiro. Aqui você pode acompanhar comunicados em formato de imagem e vídeos institucionais ou litúrgicos compartilhados pela administração.</p>
             <p><strong>Selecione abaixo o tipo de conteúdo que deseja visualizar:</strong></p>
-            <div class="mural-categories-grid">
-              <div class="mural-category-card" onclick="openMuralSubpage('imagens')">
-                <i class="fa-solid fa-images"></i>
-                <h4>Imagens & Cartazes</h4>
-              </div>
-              <div class="mural-category-card" onclick="openMuralSubpage('videos')">
-                <i class="fa-solid fa-video"></i>
-                <h4>Vídeos & Mídias</h4>
-              </div>
-              <div class="mural-category-card" onclick="openMuralSubpage('todos')">
-                <i class="fa-solid fa-layer-group"></i>
-                <h4>Ver Todos</h4>
-              </div>
-            </div>
+            <div class="mural-categories-grid">${subCategoriesHtml}</div>
           </div>
         </div>
       `;
+    }
+
+    function openMuralSubpageByTipo(tipoMidia) {
+      isMuralSubpage = true;
+      document.getElementById('searchContainerWrapper').style.display = 'flex';
+      document.getElementById('pageTitle').innerHTML = `<i class="fa-solid fa-photo-film"></i> Mural: ${tipoMidia}`;
+      
+      const container = document.getElementById('contentContainer');
+      container.innerHTML = `
+        <button class="btn-voltar-guia" onclick="voltarMuralPrincipal()"><i class="fa-solid fa-arrow-left"></i> Voltar ao Início do Mural</button>
+        <div id="subpageMuralGridContainer"></div>
+      `;
+
+      const filtered = currentData.filter(item => {
+        if (!isPublicAccess(item)) return false;
+        let p = '';
+        for (let key in item) {
+          let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
+          if (ck === 'tiposdemidia' || ck === 'tipodemidia' || ck === 'tipomidia') {
+            p = item[key] || '';
+            break;
+          }
+        }
+        return p.toString().trim().toLowerCase() === tipoMidia.toLowerCase();
+      });
+
+      renderMuralGrid(filtered);
     }
 
     function openMuralSubpage(tipoFiltro) {
@@ -1244,15 +1308,23 @@
       const filtered = currentData.filter(item => {
         if (!isPublicAccess(item)) return false;
         
-        const tipoMidiaVal = (item.Tipo_de_Midia || item.Tipo_Midia || item.Midia || '').toString().trim().toLowerCase();
+        let tipoMidiaVal = '';
+        for (let key in item) {
+          let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
+          if (ck === 'tiposdemidia' || ck === 'tipodemidia' || ck === 'tipomidia') {
+            tipoMidiaVal = item[key] || '';
+            break;
+          }
+        }
+
         const arquivoUrlStr = (item.Arquivo_URL || item.Arquivo || '').toString().trim().toLowerCase();
-        
-        const hasVid = tipoMidiaVal === 'video' || item.Video_URL || item.Video || item.URLVideo || item.PontoVideo_URL || 
+        const hasVid = tipoMidiaVal.toLowerCase().includes('vídeo') || tipoMidiaVal.toLowerCase().includes('video') || 
+                       item.Video_URL || item.Video || item.URLVideo || item.PontoVideo_URL || 
                        arquivoUrlStr.endsWith('.mp4') || arquivoUrlStr.endsWith('.webm') || arquivoUrlStr.endsWith('.mov') || 
                        arquivoUrlStr.includes('video') || arquivoUrlStr.includes('youtube.com') || arquivoUrlStr.includes('youtu.be');
-        const hasImg = tipoMidiaVal === 'imagem' || tipoMidiaVal === 'foto' || getCleanImageUrl(item);
+        const hasImg = getCleanImageUrl(item) || tipoMidiaVal.toLowerCase().includes('imagem');
 
-        if (tipoFiltro === 'imagens') return (tipoMidiaVal === 'imagem' || tipoMidiaVal === 'foto') || (hasImg && !hasVid);
+        if (tipoFiltro === 'imagens') return hasImg && !hasVid;
         if (tipoFiltro === 'videos') return hasVid;
         return true;
       });
@@ -1287,14 +1359,23 @@
         const texto = item.Descricao || item.Texo_Aviso || item.Conteudo_Texto || '';
         const imagem = getCleanImageUrl(item);
         
-        const tipoMidiaVal = (item.Tipo_de_Midia || item.Tipo_Midia || item.Midia || '').toString().trim().toLowerCase();
+        let tipoMidiaVal = '';
+        for (let key in item) {
+          let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
+          if (ck === 'tiposdemidia' || ck === 'tipodemidia' || ck === 'tipomidia') {
+            tipoMidiaVal = item[key] || '';
+            break;
+          }
+        }
+
         const arquivoUrlStr = (item.Arquivo_URL || item.Arquivo || '').toString().trim().toLowerCase();
-        const hasVideo = tipoMidiaVal === 'video' || item.Video_URL || item.Video || item.URLVideo || item.PontoVideo_URL || 
+        const hasVideo = tipoMidiaVal.toLowerCase().includes('vídeo') || tipoMidiaVal.toLowerCase().includes('video') ||
+                         item.Video_URL || item.Video || item.URLVideo || item.PontoVideo_URL || 
                          arquivoUrlStr.endsWith('.mp4') || arquivoUrlStr.endsWith('.webm') || arquivoUrlStr.endsWith('.mov') || 
                          arquivoUrlStr.includes('video') || arquivoUrlStr.includes('youtube.com') || arquivoUrlStr.includes('youtu.be');
 
         let imgHtml = imagem ? `<img src="${imagem}" class="card-img" alt="${titulo}">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid ${hasVideo ? 'fa-video' : 'fa-image'} fa-2x"></i></div>`;
-        const badgeLabel = hasVideo ? 'Vídeo' : 'Imagem';
+        const badgeLabel = tipoMidiaVal || (hasVideo ? 'Vídeo' : 'Imagem');
 
         card.innerHTML = `
           ${imgHtml}
@@ -1799,6 +1880,20 @@
       container.appendChild(grid);
     }
 
+    function shareCurrentItem(titulo) {
+      const shareData = {
+        title: titulo,
+        text: `Confira este conteúdo da Tenda de Zé Cigano: ${titulo}`,
+        url: window.location.href
+      };
+      if (navigator.share) {
+        navigator.share(shareData).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        showToast('Link copiado para a área de transferência!');
+      }
+    }
+
     function openGenericDetail(item, tabName) {
       const modalContent = document.getElementById('detailModalContent');
       const titulo = item.Titulo_Ponto || item.Nome_Evento || item.Titulo || item.Nome_Erva || item.Categoria || 'Detalhes';
@@ -1862,10 +1957,9 @@
             if (match && match[1]) cleanMedia = `https://www.googleapis.com/drive/v3/files/${match[1]}?alt=media`;
           }
           const lowerMedia = cleanMedia.toLowerCase();
-          const tipoMidiaVal = (item.Tipo_de_Midia || item.Tipo_Midia || item.Midia || '').toString().trim().toLowerCase();
           const isAudio = lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio');
           const isYoutube = cleanMedia.includes('youtube.com') || cleanMedia.includes('youtu.be');
-          const isVideo = tipoMidiaVal === 'video' || lowerMedia.endsWith('.mp4') || lowerMedia.endsWith('.webm') || lowerMedia.endsWith('.mov') || lowerMedia.includes('video');
+          const isVideo = lowerMedia.endsWith('.mp4') || lowerMedia.endsWith('.webm') || lowerMedia.endsWith('.mov') || lowerMedia.includes('video') || cleanMedia.includes('alt=media');
 
           if (isAudio) {
             mediaTopContent = `<audio controls style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>`;
@@ -1969,7 +2063,10 @@
           ${(!mediaTopContent && imagem && !(tabName === 'Mural_Imagens' || currentTab === 'Mural_Imagens')) ? `<img src="${imagem}" class="modal-banner-img" onclick="openImageZoom('${imagem}')">` : ''}
           <div class="modal-details-box">${info || '<p>Nenhum detalhe disponível.</p>'}</div>
         </div>
-        <div class="modal-actions"><button class="btn-submit" onclick="closeGenericDetail()">Fechar</button></div>
+        <div class="modal-actions">
+          <button class="btn-submit" style="background:#222; color:var(--gold-primary); border:1px solid var(--gold-primary);" onclick="shareCurrentItem('${titulo.replace(/'/g, "\\'")}')"><i class="fa-solid fa-share-nodes"></i> Compartilhar</button>
+          <button class="btn-submit" onclick="closeGenericDetail()">Fechar</button>
+        </div>
       `;
       document.getElementById('detailModal').style.display = 'flex';
     }

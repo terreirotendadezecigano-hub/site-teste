@@ -400,21 +400,35 @@
     .btn-delete-icon:hover { background: #8b0000; color: #fff; border-color: #8b0000; }
     
     .btn-action-icon {
-      background: #222;
+      background: #181818;
       border: 1px solid var(--border-color);
       color: var(--gold-light);
-      padding: 4px 7px;
-      border-radius: 4px;
+      padding: 5px 9px;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 0.7rem;
-      margin-right: 3px;
+      font-size: 0.72rem;
+      margin-right: 4px;
       display: inline-flex;
       align-items: center;
-      gap: 3px;
-      transition: all 0.2s;
+      gap: 5px;
+      transition: all 0.2s ease;
+      font-weight: 600;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.4);
     }
     .btn-action-icon:hover { background: var(--gold-primary); color: #000; border-color: var(--gold-primary); }
-    .btn-whatsapp-icon:hover { background: #25d366; color: #fff; border-color: #25d366; }
+    .btn-whatsapp-stylish {
+      background: rgba(37, 211, 102, 0.12);
+      border-color: #25d366;
+      color: #25d366;
+    }
+    .btn-whatsapp-stylish:hover { background: #25d366; color: #fff; border-color: #25d366; }
+
+    .btn-call-stylish {
+      background: rgba(212, 175, 55, 0.12);
+      border-color: var(--gold-primary);
+      color: var(--gold-primary);
+    }
+    .btn-call-stylish:hover { background: var(--gold-primary); color: #000; border-color: var(--gold-primary); }
 
     .btn-add-membro {
       background: var(--gold-primary);
@@ -754,7 +768,7 @@
             <input type="email" id="membroEmail" class="form-control" placeholder="email@exemplo.com">
           </div>
           <div class="form-group">
-            <label>Data de Entrada</label>
+            <label>Data de Início</label>
             <input type="date" id="membroDataEntrada" class="form-control">
           </div>
           <div class="form-group membros-form-full">
@@ -786,7 +800,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Perfil de Acesso</label>
+            <label>Perfil</label>
             <select id="membroPerfil" class="form-control">
               <option value="Membro">Membro</option>
               <option value="Colaborador">Colaborador</option>
@@ -1612,7 +1626,14 @@
         <div class="table-responsive">
           <table class="membros-table">
             <thead>
-              <tr><th>Ações</th><th>Nome Completo</th><th>E-mail</th><th>Telefone / Contato</th></tr>
+              <tr>
+                <th>Ações</th>
+                <th>Nome Completo</th>
+                <th>E-mail</th>
+                <th>Perfil</th>
+                <th>Data de Início</th>
+                <th>Telefone / Contato</th>
+              </tr>
             </thead>
             <tbody id="membrosTableBody"></tbody>
           </table>
@@ -1621,7 +1642,7 @@
 
       const tbody = document.getElementById('membrosTableBody');
       if (!membros || membros.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Nenhum membro localizado.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Nenhum membro localizado.</td></tr>';
         return;
       }
 
@@ -1629,9 +1650,31 @@
         const id = m.ID_Filho || m.id || '';
         const nome = m.Nome_Completo || m.Nome || '';
         const email = m.Email || m['E-mail'] || 'Não informado';
+        const perfil = m.Perfil || 'Membro';
+        
+        let dataEntradaVal = '';
+        for (let key in m) {
+          let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
+          if (ck === 'dataentrada' || ck === 'datadeentrada' || ck === 'datainicio') {
+            dataEntradaVal = m[key];
+            break;
+          }
+        }
+        const dataInicioFormatada = dataEntradaVal ? formatDateBR(dataEntradaVal) : 'Não informada';
+
         const tel = m.Telefone || '';
         const cleanPhone = tel ? tel.replace(/\D/g, '') : '';
-        let actionsContact = cleanPhone ? `<span>${tel}</span><div style="margin-top: 4px; display: flex; gap: 4px;"><a href="tel:${cleanPhone}" class="btn-action-icon" title="Ligar"><i class="fa-solid fa-phone"></i> Ligar</a><a href="https://wa.me/${cleanPhone}" target="_blank" class="btn-action-icon btn-whatsapp-icon" title="WhatsApp"><i class="fa-brands fa-whatsapp"></i> Zap</a></div>` : 'Não informado';
+        let actionsContact = cleanPhone ? `
+          <span>${tel}</span>
+          <div style="margin-top: 5px; display: flex; gap: 4px;">
+            <a href="tel:${cleanPhone}" class="btn-action-icon btn-call-stylish" title="Ligar">
+              <i class="fa-solid fa-phone-volume"></i> Ligar
+            </a>
+            <a href="https://wa.me/${cleanPhone}" target="_blank" class="btn-action-icon btn-whatsapp-stylish" title="Enviar WhatsApp">
+              <i class="fa-brands fa-whatsapp"></i> WhatsApp
+            </a>
+          </div>
+        ` : 'Não informado';
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -1643,6 +1686,8 @@
           </td>
           <td><strong>${nome}</strong></td>
           <td>${email}</td>
+          <td><span class="card-badge" style="background:#1a1a1a;">${perfil}</span></td>
+          <td>${dataInicioFormatada}</td>
           <td>${actionsContact}</td>
         `;
         tbody.appendChild(tr);
@@ -1691,7 +1736,7 @@
       let dataEntradaVal = '';
       for (let key in m) {
         let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
-        if (ck === 'dataentrada' || ck === 'datadeentrada') {
+        if (ck === 'dataentrada' || ck === 'datadeentrada' || ck === 'datainicio') {
           dataEntradaVal = m[key];
           break;
         }
@@ -1772,13 +1817,17 @@
           listaMembros[idx].Nome_Completo = nome_completo;
           listaMembros[idx].Email = email;
           listaMembros[idx].Telefone = telefone;
+          listaMembros[idx].Perfil = perfil;
+          listaMembros[idx].Data_Entrada = data_entrada;
         }
       } else {
         listaMembros.unshift({
           ID_Filho: 'temp_' + Date.now(),
           Nome_Completo: nome_completo,
           Email: email,
-          Telefone: telefone
+          Telefone: telefone,
+          Perfil: perfil,
+          Data_Entrada: data_entrada
         });
       }
       

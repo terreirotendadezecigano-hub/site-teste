@@ -45,7 +45,8 @@
       width: 100%;
     }
 
-    .banner-left, .banner-right { display: flex; align-items: center; flex-shrink: 0; }
+    .banner-left, .banner-right { display: flex; align-items: center; flex-shrink: 0; width: 60px; }
+    .banner-right { justify-content: flex-end; }
     .banner-center { display: flex; align-items: center; gap: 8px; margin: 0 auto; text-align: center; }
 
     .banner-logo {
@@ -169,7 +170,9 @@
       margin-bottom: 6px; 
       display: flex; 
       align-items: center; 
+      justify-content: center;
       gap: 8px; 
+      text-align: center;
     }
 
     .mural-subtitle {
@@ -177,6 +180,7 @@
       color: var(--text-muted);
       margin-bottom: 15px;
       line-height: 1.4;
+      text-align: center;
       border-bottom: 1px solid var(--border-color);
       padding-bottom: 8px;
     }
@@ -963,7 +967,8 @@
         'linha_entidade': 'Linha / Entidade', 'data_evento': 'Data do Evento', 'data_criacao': 'Data de Criação', 'conteudo_texto': 'Conteúdo / Orientação',
         'horario': 'Horário', 'descricao': 'Descrição', 'categoria': 'Categoria', 'texo_aviso': 'Texto do Aviso',
         'acesso_publico': 'Acesso', 'nome_erva': 'Nome da Erva', 'nome_popular': 'Nome Popular', 'titulo_ponto': 'Título do Ponto',
-        'tipos_de_midia': 'Tipo de Mídia', 'tiposdemidia': 'Tipo de Mídia', 'mural_url': 'Mural URL'
+        'tipos_de_midia': 'Tipo de Mídia', 'tiposdemidia': 'Tipo de Mídia', 'mural_url': 'Mural URL',
+        'arquivo_video': 'Vídeo', 'arquivo_audio': 'Áudio'
       };
       const cleanKey = key.toLowerCase().trim().replace(/ /g, '_');
       if (dictionary[cleanKey]) return dictionary[cleanKey];
@@ -1210,8 +1215,7 @@
     function showDayEvents(eventsList) { if (eventsList && eventsList.length > 0) openGenericDetail(eventsList[0]); }
 
     /* ================= MURAL DE AVISOS (DIRETO E OTIMIZADO) ================= */
-    function getMuralMediaUrl(item) {
-      const raw = item.Mural_URL || item.Arquivo_URL || item.Arquivo || item.Video_URL || item.Video || item.URLVideo || item.Midia_URL || item.Link_Video || item.Audio_URL || item.Audio || item.Link || '';
+    function getMediaDirectUrl(raw) {
       if (!raw) return '';
       let clean = raw.toString().trim();
       if (clean.includes('drive.google.com') || clean.includes('docs.google.com')) {
@@ -1230,19 +1234,15 @@
           break;
         }
       }
-      const mediaUrl = getMuralMediaUrl(item);
-      const lowerUrl = mediaUrl.toLowerCase();
+      const videoCol = item.Arquivo_Video || item.Video_URL || item.Video || '';
+      const audioCol = item.Arquivo_Audio || item.Audio_URL || item.Audio || '';
+      const muralUrl = item.Mural_URL || item.Arquivo_URL || item.Arquivo || '';
       const lowerTipo = tipoMidiaVal.toString().toLowerCase();
 
-      if (lowerTipo.includes('áudio') || lowerTipo.includes('audio') || lowerTipo.includes('som') || lowerUrl.endsWith('.mp3') || lowerUrl.endsWith('.m4a') || lowerUrl.endsWith('.wav') || lowerUrl.endsWith('.ogg') || lowerUrl.includes('audio')) {
-        return 'audio';
-      }
-      if (lowerTipo.includes('vídeo') || lowerTipo.includes('video') || lowerUrl.endsWith('.mp4') || lowerUrl.endsWith('.webm') || lowerUrl.endsWith('.mov') || lowerUrl.includes('video') || lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) {
-        return 'video';
-      }
-      if (mediaUrl || lowerTipo.includes('imagem') || lowerTipo.includes('foto') || lowerTipo.includes('cartaz')) {
-        return 'image';
-      }
+      if (audioCol || lowerTipo.includes('áudio') || lowerTipo.includes('audio')) return 'audio';
+      if (videoCol || lowerTipo.includes('vídeo') || lowerTipo.includes('video')) return 'video';
+      if (muralUrl || lowerTipo.includes('imagem') || lowerTipo.includes('foto')) return 'image';
+      
       const imgFallback = getCleanImageUrl(item);
       if (imgFallback) return 'image';
       return 'outros';
@@ -1310,12 +1310,7 @@
         if (tMidia === 'audio') {
           imgHtml = `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-volume-high fa-2x"></i></div>`;
         } else if (tMidia === 'video') {
-          const mediaUrl = getMuralMediaUrl(item);
-          if (mediaUrl.includes('youtube.com') || mediaUrl.includes('youtu.be')) {
-            imgHtml = `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:#ff0000;"><i class="fa-brands fa-youtube fa-2x"></i></div>`;
-          } else {
-            imgHtml = `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-video fa-2x"></i></div>`;
-          }
+          imgHtml = `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-video fa-2x"></i></div>`;
         } else {
           const imagem = getCleanImageUrl(item);
           imgHtml = imagem ? `<img src="${imagem}" class="card-img" alt="${titulo}" onerror="this.onerror=null; this.src='https://via.placeholder.com/200x120?text=Aviso';">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-image fa-2x"></i></div>`;
@@ -1853,17 +1848,8 @@
         const audioUrl = item.PontoAudio_URL || item.Audio_URL || item.Audio || item.OrigemAudio_Ponto || '';
         const videoUrl = item.PontoVideo_URL || item.URLVideo_URL || item.URLVideo || item.Video_URL || item.Video || item.MP4 || '';
 
-        let cleanAudio = audioUrl.toString().trim();
-        if (cleanAudio.includes('drive.google.com') || cleanAudio.includes('docs.google.com')) {
-          const match = cleanAudio.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanAudio.match(/id=([a-zA-Z0-9_-]+)/);
-          if (match && match[1]) cleanAudio = `https://lh3.googleusercontent.com/d/${match[1]}`;
-        }
-
-        let cleanVideo = videoUrl.toString().trim();
-        if (cleanVideo.includes('drive.google.com') || cleanVideo.includes('docs.google.com')) {
-          const match = cleanVideo.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanVideo.match(/id=([a-zA-Z0-9_-]+)/);
-          if (match && match[1]) cleanVideo = `https://lh3.googleusercontent.com/d/${match[1]}`;
-        }
+        let cleanAudio = getMediaDirectUrl(audioUrl);
+        let cleanVideo = getMediaDirectUrl(videoUrl);
 
         if (cleanVideo && cleanVideo.startsWith('http')) {
           if (cleanVideo.includes('youtube.com') || cleanVideo.includes('youtu.be')) {
@@ -1895,27 +1881,35 @@
         if (obs) info += `<p><strong>Observações:</strong><br>${obs}</p>`;
 
       } else if (tabName === 'Mural_Imagens' || currentTab === 'Mural_Imagens') {
-        const tMidia = getMuralMediaType(item);
-        const cleanMedia = getMuralMediaUrl(item);
+        const videoRaw = item.Arquivo_Video || item.Video_URL || item.Video || '';
+        const audioRaw = item.Arquivo_Audio || item.Audio_URL || item.Audio || '';
+        const muralRaw = item.Mural_URL || item.Arquivo_URL || item.Arquivo || '';
 
-        if (tMidia === 'audio' && cleanMedia) {
+        const cleanVideo = getMediaDirectUrl(videoRaw);
+        const cleanAudio = getMediaDirectUrl(audioRaw);
+        const cleanMural = getMediaDirectUrl(muralRaw);
+
+        if (cleanVideo) {
+          if (cleanVideo.includes('youtube.com') || cleanVideo.includes('youtu.be')) {
+            let ytEmbed = cleanVideo;
+            if (cleanVideo.includes('watch?v=')) ytEmbed = cleanVideo.replace('watch?v=', 'embed/');
+            else if (cleanVideo.includes('youtu.be/')) ytEmbed = cleanVideo.replace('youtu.be/', 'www.youtube.com/embed/');
+            mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
+          } else {
+            mediaTopContent = `<video controls autoplay style="width:100%; max-height:240px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanVideo}">Seu navegador não suporta vídeos.</video>`;
+          }
+        } else if (cleanAudio) {
           mediaTopContent = `
             <div style="text-align: center; margin-bottom: 12px; background: #121212; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
               <img src="${INSTITUTIONAL_LOGO_URL}" style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--gold-primary); object-fit: cover; margin-bottom: 8px; box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);">
-              <audio controls autoplay style="width:100%;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>
+              <audio controls autoplay style="width:100%;"><source src="${cleanAudio}">Seu navegador não suporta áudio.</audio>
             </div>
           `;
-        } else if (tMidia === 'video' && cleanMedia) {
-          if (cleanMedia.includes('youtube.com') || cleanMedia.includes('youtu.be')) {
-            let ytEmbed = cleanMedia;
-            if (cleanMedia.includes('watch?v=')) ytEmbed = cleanMedia.replace('watch?v=', 'embed/');
-            else if (cleanMedia.includes('youtu.be/')) ytEmbed = cleanMedia.replace('youtu.be/', 'www.youtube.com/embed/');
-            mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
-          } else {
-            mediaTopContent = `<video controls autoplay style="width:100%; max-height:240px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;
-          }
-        } else if (cleanMedia) {
-          mediaTopContent = `<img src="${cleanMedia}" class="modal-banner-img" onclick="openImageZoom('${cleanMedia}')">`;
+        } else if (cleanMural && !cleanMural.startsWith('http')) {
+          // Se for nome de arquivo local/texto que não é URL direta de imagem, exibe imagem padrão ou capa
+          mediaTopContent = `<img src="${INSTITUTIONAL_LOGO_URL}" class="modal-banner-img">`;
+        } else if (cleanMural) {
+          mediaTopContent = `<img src="${cleanMural}" class="modal-banner-img" onclick="openImageZoom('${cleanMural}')">`;
         } else if (imagem) {
           mediaTopContent = `<img src="${imagem}" class="modal-banner-img" onclick="openImageZoom('${imagem}')">`;
         }
@@ -1937,7 +1931,6 @@
             cleanKeyLower === 'muralurl' ||
             cleanKeyLower === 'arquivourl' || 
             cleanKeyLower === 'arquivo' || 
-            cleanKeyLower === 'arquivoimagem' ||
             cleanKeyLower === 'arquivovideo' ||
             cleanKeyLower === 'arquivoaudio' ||
             cleanKeyLower === 'categoria' ||
@@ -1949,8 +1942,13 @@
             cleanKeyLower === 'tiposdemidia'
           ) continue;
 
-          if (item[key]) {
-            info += `<p><strong>${formatKeyName(key)}:</strong> ${item[key]}</p>`;
+          let valStr = String(item[key] || '').trim();
+          // Oculta links externos brutos ou rotulados como Link Externo para manter o modal limpo
+          if (valStr.startsWith('http://') || valStr.startsWith('https://')) continue;
+          if (valStr.toLowerCase().includes('link externo')) continue;
+
+          if (valStr) {
+            info += `<p><strong>${formatKeyName(key)}:</strong> ${valStr}</p>`;
           }
         }
 
@@ -1961,11 +1959,7 @@
       } else {
         const mediaUrl = item.Mural_URL || item.Video_URL || item.Video || item.URLVideo || item.Audio_URL || item.Audio || item.MP4 || item.Arquivo_URL || '';
         if (mediaUrl) {
-          let cleanMedia = mediaUrl.toString().trim();
-          if (cleanMedia.includes('drive.google.com') || cleanMedia.includes('docs.google.com')) {
-            const match = cleanMedia.match(/\/d\/([a-zA-Z0-9_-]+)/) || cleanMedia.match(/id=([a-zA-Z0-9_-]+)/);
-            if (match && match[1]) cleanMedia = `https://lh3.googleusercontent.com/d/${match[1]}`;
-          }
+          let cleanMedia = getMediaDirectUrl(mediaUrl);
           const lowerMedia = cleanMedia.toLowerCase();
           const isAudio = lowerMedia.endsWith('.mp3') || lowerMedia.endsWith('.wav') || lowerMedia.includes('audio');
           const isYoutube = cleanMedia.includes('youtube.com') || cleanMedia.includes('youtu.be');
@@ -1998,8 +1992,11 @@
             cleanKeyLower === 'fotoervas'
           ) continue;
 
-          if (item[key]) {
-            info += `<p><strong>${formatKeyName(key)}:</strong> ${item[key]}</p>`;
+          let valStr = String(item[key] || '').trim();
+          if (valStr.startsWith('http://') || valStr.startsWith('https://')) continue;
+
+          if (valStr) {
+            info += `<p><strong>${formatKeyName(key)}:</strong> ${valStr}</p>`;
           }
         }
       }

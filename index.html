@@ -1729,20 +1729,56 @@
         showToast("Nenhum dado para exportar.");
         return;
       }
-      const dadosExport = listaMembros.map(m => ({
-        "Nome Completo": m.Nome_Completo || m.Nome || '',
-        "E-mail": m.Email || m['E-mail'] || '',
-        "Telefone": m.Telefone || '',
-        "Perfil": m.Perfil || 'Membro',
-        "Cargo / Função": m.Cargo_Funcao || m.Cargo || '',
-        "Orixá de Frente": m.Orixa_Frente || '',
-        "Status": m.Status_Ativo || 'Ativo',
-        "Data de Início": m.Data_Entrada || ''
-      }));
+
+      // Mapeia os dados e oculta colunas que estiverem totalmente vazias em todos os registros
+      const chavesPotenciais = [
+        { key: 'Nome_Completo', label: 'Nome Completo' },
+        { key: 'Email', label: 'E-mail' },
+        { key: 'Telefone', label: 'Telefone' },
+        { key: 'Perfil', label: 'Perfil' },
+        { key: 'Cargo_Funcao', label: 'Cargo / Função' },
+        { key: 'Orixa_Frente', label: 'Orixá de Frente' },
+        { key: 'Status_Ativo', label: 'Status' },
+        { key: 'Data_Entrada', label: 'Data de Início' },
+        { key: 'Data_Nascimento', label: 'Data de Nascimento' },
+        { key: 'Endereco', label: 'Endereço' },
+        { key: 'Observacoes', label: 'Observações' }
+      ];
+
+      const chavesAtivas = chavesPotenciais.filter(cp => {
+        return listaMembros.some(m => {
+          let val = m[cp.key] || m[cp.key.toLowerCase()] || '';
+          if (cp.key === 'Email') val = m.Email || m['E-mail'] || '';
+          if (cp.key === 'Cargo_Funcao') val = m.Cargo_Funcao || m.Cargo || '';
+          if (cp.key === 'Status_Ativo') val = m.Status_Ativo || m.Status || '';
+          if (cp.key === 'Data_Entrada') val = m.Data_Entrada || m.Data_Inicio || '';
+          return val.toString().trim() !== '';
+        });
+      });
+
+      const dadosExport = listaMembros.map(m => {
+        let obj = {};
+        chavesAtivas.forEach(cp => {
+          let rawVal = '';
+          if (cp.key === 'Email') rawVal = m.Email || m['E-mail'] || '';
+          else if (cp.key === 'Cargo_Funcao') rawVal = m.Cargo_Funcao || m.Cargo || '';
+          else if (cp.key === 'Status_Ativo') rawVal = m.Status_Ativo || m.Status || '';
+          else if (cp.key === 'Data_Entrada') rawVal = m.Data_Entrada || m.Data_Inicio || '';
+          else if (cp.key === 'Data_Nascimento') rawVal = m.Data_Nascimento || m.Nascimento || '';
+          else rawVal = m[cp.key] || '';
+
+          // Formata datas para dd/mm/aaaa se houver hífen
+          if ((cp.key.includes('Data') || cp.key.includes('data')) && rawVal) {
+            rawVal = formatDateBR(rawVal);
+          }
+          obj[cp.label] = rawVal;
+        });
+        return obj;
+      });
 
       const worksheet = XLSX.utils.json_to_sheet(dadosExport);
 
-      // Auto largura das colunas baseada no conteúdo
+      // Auto largura das colunas baseada no conteúdo para não cortar nada
       const colWidths = [];
       dadosExport.forEach(row => {
         Object.keys(row).forEach((key, i) => {
@@ -1755,7 +1791,7 @@
       });
       worksheet['!cols'] = colWidths;
 
-      // Estilização zebrada da tabela e cabeçalho preto com fonte branca em negrito
+      // Estilização zebrada (branco e cinza claro) e cabeçalho preto sólido com fonte branca em negrito
       const range = XLSX.utils.decode_range(worksheet['!ref']);
       for (let R = range.s.r; R <= range.e.r; ++R) {
         for (let C = range.s.c; C <= range.e.c; ++C) {
@@ -1801,11 +1837,15 @@
         const email = m.Email || m['E-mail'] || '-';
         const perfil = m.Perfil || 'Membro';
         const tel = m.Telefone || '-';
+        let dataEntradaVal = m.Data_Entrada || m.Data_Inicio || '';
+        const dataFormatada = dataEntradaVal ? formatDateBR(dataEntradaVal) : '-';
+
         linhasTabelaHTML += `
           <tr>
             <td style="padding: 6px; border-bottom: 1px solid #ddd; font-size: 11px;">${nome}</td>
             <td style="padding: 6px; border-bottom: 1px solid #ddd; font-size: 11px;">${email}</td>
             <td style="padding: 6px; border-bottom: 1px solid #ddd; font-size: 11px;">${perfil}</td>
+            <td style="padding: 6px; border-bottom: 1px solid #ddd; font-size: 11px;">${dataFormatada}</td>
             <td style="padding: 6px; border-bottom: 1px solid #ddd; font-size: 11px;">${tel}</td>
           </tr>
         `;
@@ -1818,18 +1858,19 @@
       element.style.fontFamily = 'Arial, sans-serif';
 
       element.innerHTML = `
-        <div style="text-align: center; border-bottom: 2px solid #d4af37; padding-bottom: 12px; margin-bottom: 15px;">
-          <img src="${INSTITUTIONAL_LOGO_URL}" style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid #d4af37; object-fit: cover; margin-bottom: 6px;">
-          <h2 style="margin: 0; color: #60000a; font-size: 16px; text-transform: uppercase;">${nomeTerreiro}</h2>
+        <div style="text-align: center; border-bottom: 2px solid #000000; padding-bottom: 12px; margin-bottom: 15px;">
+          <img src="${INSTITUTIONAL_LOGO_URL}" style="width: 55px; height: 55px; border-radius: 50%; border: 2px solid #000000; object-fit: cover; margin-bottom: 6px;">
+          <h2 style="margin: 0; color: #000000; font-size: 16px; text-transform: uppercase; font-weight: bold;">${nomeTerreiro}</h2>
           <p style="margin: 3px 0; font-size: 11px; color: #555;">Endereço: ${enderecoTerreiro} | Contato: ${contatoTerreiro}</p>
-          <h3 style="margin: 10px 0 0 0; color: #d4af37; font-size: 13px;">Relatório Oficial de Membros Cadastrados</h3>
+          <h3 style="margin: 10px 0 0 0; color: #000000; font-size: 13px; font-weight: bold;">Relatório Oficial de Membros Cadastrados</h3>
         </div>
         <table style="width: 100%; border-collapse: collapse; text-align: left;">
           <thead>
-            <tr style="background-color: #60000a; color: #ffffff;">
+            <tr style="background-color: #000000; color: #ffffff;">
               <th style="padding: 8px; font-size: 11px;">Nome Completo</th>
               <th style="padding: 8px; font-size: 11px;">E-mail</th>
               <th style="padding: 8px; font-size: 11px;">Perfil</th>
+              <th style="padding: 8px; font-size: 11px;">Data de Início</th>
               <th style="padding: 8px; font-size: 11px;">Telefone</th>
             </tr>
           </thead>

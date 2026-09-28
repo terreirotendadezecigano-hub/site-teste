@@ -1566,7 +1566,7 @@
       document.getElementById('modalMembro').style.display = 'flex';
     }
 
-    // Função de exclusão direta atualizada (sem a caixa "confirm" nativa do navegador)
+    // Função de exclusão atualizada (sem caixa de confirmação nativa)
     function excluirMembro(idMembro) {
       listaMembros = listaMembros.filter(item => String(item.ID_Filho || item.id) !== String(idMembro));
       currentData = listaMembros;

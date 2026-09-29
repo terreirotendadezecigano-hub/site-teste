@@ -1126,7 +1126,7 @@
         </div>`;
 
       el.innerHTML = `
-        <div class="card" style="padding:0;max-width:980px;overflow:hidden;">
+        <div class="card tzc-config-card-v31" style="padding:0;max-width:980px;overflow:hidden;height:auto;min-height:0;">
           ${sec('Identidade',
             item('Nome do Terreiro',d.Nome_Terreiro || 'Tenda de Zé Cigano')+
             item('Subtítulo',d.Subtitulo || 'Terreiro de Umbanda')+
@@ -1293,6 +1293,19 @@
         <div style="font-size:.62rem;color:var(--text-muted);margin-top:3px;">Sistema desenvolvido por <span style="color:var(--gold-primary);">SistemasAeR</span></div>`;
     }
 
+    function aplicarFaviconTZC_V1(url) {
+      const logoUrl = String(url || '').trim();
+      if (!logoUrl) return;
+      let link = document.querySelector('link[rel="icon"]');
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.head.appendChild(link);
+      }
+      link.type = 'image/png';
+      link.href = logoUrl;
+    }
+
     function aplicarIdentidadeVisualTZC_V1(d) {
       if (!d) return;
       const root = document.documentElement;
@@ -1307,6 +1320,7 @@
       if (nome && d.Nome_Terreiro) nome.textContent = d.Nome_Terreiro;
       if (subtitulo && d.Subtitulo) subtitulo.textContent = d.Subtitulo;
       if (logo && d.Logo_URL) logo.src = d.Logo_URL;
+      if (d.Logo_URL) aplicarFaviconTZC_V1(d.Logo_URL);
       aplicarRodapeTZC_V1(d);
     }
 
@@ -3702,19 +3716,37 @@
     } catch(e) {}
   });
 </script>
+
+<style id="tzc-v31-ajustes">
+  #tzcGeralPainelV1 > .tzc-config-card-v31{
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow:visible!important;
+    display:block!important;
+  }
+  #tzcGeralPainelV1 > .tzc-config-card-v31 > div:last-child{
+    border-bottom:0!important;
+  }
+  .banner-titles{
+    display:flex!important;
+    flex-direction:column!important;
+    justify-content:center!important;
+  }
+</style>
 </body>
 </html>
 
 <style id="tzc-v27-compactacao">
-  header.banner{padding:6px 10px!important;min-height:70px!important;border-bottom-width:1px!important}
-  .banner-logo{width:48px!important;height:48px!important;border-width:1px!important;box-shadow:0 0 5px rgba(212,175,55,.35)!important}
-  .banner-center{gap:8px!important}
-  .banner-titles h1{font-size:1.02rem!important;line-height:1.05!important;letter-spacing:.35px!important}
-  .banner-titles p{font-size:.72rem!important;line-height:1.05!important}
+  header.banner{padding:6px 10px!important;min-height:78px!important;border-bottom-width:1px!important}
+  .banner-logo{width:52px!important;height:52px!important;border-width:1px!important;box-shadow:0 0 5px rgba(212,175,55,.35)!important}
+  .banner-center{gap:10px!important}
+  .banner-titles h1{font-size:1.04rem!important;line-height:1.15!important;letter-spacing:.4px!important;margin:0 0 4px!important}
+  .banner-titles p{font-size:.74rem!important;line-height:1.2!important;margin:0!important;opacity:.95}
   .toggle-menu-btn,.btn-login,.user-logged{font-size:.68rem!important}
   @media(max-width:680px){
-    header.banner{min-height:62px!important;padding:5px 8px!important}
-    .banner-logo{width:43px!important;height:43px!important}
+    header.banner{min-height:68px!important;padding:5px 8px!important}
+    .banner-logo{width:46px!important;height:46px!important}
   }
 </style>
 

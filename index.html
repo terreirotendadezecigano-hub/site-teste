@@ -4766,6 +4766,10 @@
   .erva-img-modal-v70{width:min(900px,96vw);max-height:88vh;overflow:auto;background:#151515;border:1px solid var(--gold-primary);border-radius:12px;padding:16px}
   .erva-img-head-v70{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:10px;margin-bottom:12px;border-bottom:1px solid #303030}
   .erva-img-head-v70 h4{margin:0;color:#fff;font-size:1rem}.erva-img-head-v70 button{border:0;background:transparent;color:#d9bd45;font-size:1.4rem;cursor:pointer}
+  .erva-img-footer-v71{display:flex;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid #303030;position:sticky;bottom:-16px;background:#151515;padding-bottom:4px}
+  .erva-img-fechar-v71{border:1px solid var(--gold-primary);background:#151515;color:#f1d75a;border-radius:7px;padding:8px 18px;font-weight:800;cursor:pointer}
+  .erva-img-fechar-v71:hover{background:#211d0c}
+
   .erva-img-modal-v70 .erva-img-grid-v67{grid-template-columns:repeat(3,minmax(180px,1fr))}
   .erva-img-modal-v70 .erva-img-option-v67 img{height:220px}
   @media(max-width:700px){.erva-img-modal-v70 .erva-img-grid-v67{grid-template-columns:repeat(2,minmax(130px,1fr))}.erva-img-modal-v70 .erva-img-option-v67 img{height:180px}}
@@ -5070,10 +5074,6 @@
       }
       if(!box)return; box.innerHTML='';
       if(!nomes.length){box.innerHTML='<span style="font-size:.72rem;color:#999">Não encontrei uma identificação segura. Melhor deixar em branco e conferir manualmente.</span>';return;}
-      const aviso=document.createElement('span');
-      aviso.style.cssText='display:block;width:100%;font-size:.68rem;color:#999;margin-bottom:3px';
-      aviso.textContent='Sugestões ligadas ao nome popular em português. Confirme pela imagem/planta antes de salvar.';
-      box.appendChild(aviso);
       nomes.forEach(n=>{const b=document.createElement('button');b.type='button';b.className='erva-sugestao-v68';b.textContent=n;b.onclick=()=>{const i=document.getElementById('erva_Nome_Cientifico');if(i)i.value=n;box.innerHTML='';showToast('Nome científico selecionado. Confira antes de salvar.');};box.appendChild(b);});
     }catch(e){if(box)box.innerHTML='<span style="font-size:.72rem;color:#999">Não foi possível consultar agora.</span>';}
   };
@@ -5147,6 +5147,7 @@
       <div class="erva-img-head-v70"><h4><i class="fa-solid fa-images"></i> Escolher imagem — ${escErvaV37(nome||cientifico)}</h4><button type="button" onclick="fecharBuscaImagemErvaTZC_V70()">×</button></div>
       <div class="erva-img-status-v67"><i class="fa-solid fa-spinner fa-spin"></i> Procurando imagens...</div>
       <div class="erva-img-grid-v67"></div>
+      <div class="erva-img-footer-v71"><button type="button" class="erva-img-fechar-v71" onclick="fecharBuscaImagemErvaTZC_V70()"><i class="fa-solid fa-xmark"></i> Fechar</button></div>
     </div>`;
     overlay.onclick=()=>fecharBuscaImagemErvaTZC_V70();
     document.body.appendChild(overlay);
@@ -6367,3 +6368,5 @@ function filtrarEstudosTZC_V55(valor){
 <!-- TZC V69 — pesquisa de dados dentro do modal, com escolha manual da sugestão. -->
 
 <!-- TZC V70 — nome científico prioriza português/Wikidata + imagens em modal próprio. -->
+
+<!-- TZC V71 — sugestões científicas compactas + botão Fechar no modal de imagens. -->

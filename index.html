@@ -1114,6 +1114,9 @@
           );
         });
 
+      const contadorEstudos = document.getElementById('tzcEstudosContadorV1');
+      if (contadorEstudos) contadorEstudos.textContent = `· ${ativos.length} registro${ativos.length === 1 ? '' : 's'}`;
+
       if (!ativos.length) {
         lista.innerHTML = `
           <div style="text-align:center;padding:35px 15px;color:var(--text-muted);border:1px solid #292929;border-radius:10px;background:#111;">
@@ -1169,7 +1172,7 @@
             <tbody>${linhas}</tbody>
           </table>
         </div>
-        <div style="margin-top:8px;color:var(--text-muted);font-size:.78rem;">${ativos.length} registro${ativos.length === 1 ? '' : 's'} no Acervo</div>`;
+`;
     }
 
     function abrirVisualizacaoEstudoTZC_V1(estudo) {
@@ -1783,7 +1786,7 @@
           <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
             <div>
               <div style="font-size:.72rem;color:var(--gold-primary);font-weight:700;text-transform:uppercase;letter-spacing:.04em;">Gestão Interna</div>
-              <h2 style="margin:4px 0 0;color:#fff;font-size:1rem;">Categorias</h2>
+              <h2 style="margin:4px 0 0;color:#fff;font-size:1rem;">Categorias <span id="tzcCategoriasContadorV1" style="color:var(--text-muted);font-weight:500;font-size:.78rem;"></span></h2>
             </div>
             <div style="display:flex;gap:8px;">
               <button type="button" class="btn-toolbar" onclick="voltarGestaoInternaTZC_V1()">
@@ -1831,6 +1834,9 @@
         .filter(categoriaAtivaTZC_V1)
         .sort((a,b) => nomeCategoriaTZC_V1(a).localeCompare(nomeCategoriaTZC_V1(b),'pt-BR',{sensitivity:'base'}));
 
+      const contadorCategorias = document.getElementById('tzcCategoriasContadorV1');
+      if (contadorCategorias) contadorCategorias.textContent = `· ${dados.length} ativa${dados.length === 1 ? '' : 's'}`;
+
       if (!dados.length) {
         alvo.innerHTML = `<div class="card" style="padding:20px;color:var(--text-muted);">Nenhuma categoria cadastrada.</div>`;
         return;
@@ -1863,7 +1869,7 @@
             </tbody>
           </table>
         </div>
-        <div style="margin-top:8px;color:var(--text-muted);font-size:.72rem;">${dados.length} categoria${dados.length === 1 ? '' : 's'} ativa${dados.length === 1 ? '' : 's'}</div>`;
+`;
     }
 
     function abrirNovaCategoriaTZC_V1() {
@@ -1950,6 +1956,21 @@
       };
 
       document.getElementById('modalCategoriaTZC_V1')?.remove();
+
+      const lista = Array.isArray(window.tzcCategoriasGestaoV1) ? window.tzcCategoriasGestaoV1 : [];
+      const anterior = modo === 'editar'
+        ? {...(lista.find(x => idCategoriaTZC_V1(x) === id) || {})}
+        : null;
+      const novoItem = {...(anterior || {}), ...payload.dados};
+
+      if (modo === 'editar') {
+        const pos = lista.findIndex(x => idCategoriaTZC_V1(x) === id);
+        if (pos >= 0) lista[pos] = novoItem;
+      } else {
+        lista.push(novoItem);
+      }
+      window.tzcCategoriasGestaoV1 = lista;
+      renderCategoriasTZC_V1();
       showToast(modo === 'editar' ? 'Salvando alterações...' : 'Salvando categoria...');
 
       fetch(WEB_APP_URL, {
@@ -1958,11 +1979,17 @@
         body:JSON.stringify(payload)
       }).then(() => {
         showToast(modo === 'editar' ? 'Categoria atualizada!' : 'Categoria cadastrada!');
-        setTimeout(async () => {
-          await carregarCategoriasEstudosTZC_V1();
-          abrirCategoriasTZC_V1();
-        }, 900);
-      }).catch(e => showToast('Falha ao salvar categoria: ' + e.message));
+        carregarCategoriasEstudosTZC_V1();
+      }).catch(e => {
+        if (modo === 'editar' && anterior) {
+          const pos = lista.findIndex(x => idCategoriaTZC_V1(x) === id);
+          if (pos >= 0) lista[pos] = anterior;
+        } else {
+          window.tzcCategoriasGestaoV1 = lista.filter(x => idCategoriaTZC_V1(x) !== id);
+        }
+        renderCategoriasTZC_V1();
+        showToast('Falha ao salvar categoria: ' + e.message);
+      });
     }
 
     async function excluirCategoriaTZC_V1(id) {
@@ -1986,10 +2013,7 @@
         })
       }).then(() => {
         showToast('Categoria excluída com sucesso!');
-        setTimeout(async () => {
-          await carregarCategoriasEstudosTZC_V1();
-          abrirCategoriasTZC_V1();
-        }, 900);
+        carregarCategoriasEstudosTZC_V1();
       }).catch(e => {
         item.Ativo = 'Sim';
         renderCategoriasTZC_V1();

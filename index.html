@@ -1115,12 +1115,13 @@
 
       const item = (titulo, valor, classe='') => `
         <div class="${classe}" style="min-width:0;">
-          <div style="font-size:.66rem;color:var(--gold-primary);font-weight:700;text-transform:uppercase;margin-bottom:3px;">${titulo}</div>
-          <div style="font-size:.78rem;color:#fff;line-height:1.35;overflow-wrap:anywhere;">${escHtmlTZC_V1(valor || '—')}</div>
+          <div style="font-size:.72rem;color:var(--gold-primary);font-weight:700;text-transform:uppercase;margin-bottom:3px;">${titulo}</div>
+          <div style="font-size:.82rem;color:#fff;line-height:1.4;overflow-wrap:anywhere;">${escHtmlTZC_V1(valor || '—')}</div>
         </div>`;
+      const opcional = (titulo, valor) => String(valor || '').trim() ? item(titulo, valor) : '';
       const sec = (titulo, conteudo, cols='repeat(3,minmax(0,1fr))') => `
         <div style="padding:11px 13px;border-bottom:1px solid var(--border-color);">
-          <div style="font-size:.72rem;color:#fff;font-weight:700;margin-bottom:9px;">${titulo}</div>
+          <div style="font-size:.8rem;color:#fff;font-weight:700;margin-bottom:9px;">${titulo}</div>
           <div style="display:grid;grid-template-columns:${cols};gap:10px 16px;">${conteudo}</div>
         </div>`;
 
@@ -1131,8 +1132,14 @@
             item('Subtítulo',d.Subtitulo || 'Terreiro de Umbanda')+
             item('Logo',d.Logo_URL || 'Logo atual do site'))}
           ${sec('Institucional',
-            item('Quem Somos',d.Quem_Somos)+item('Endereço',d.Endereco),
-            'minmax(0,1.6fr) minmax(220px,.8fr)')}
+            item('Quem Somos',d.Quem_Somos)+
+            item('Endereço',d.Endereco)+
+            opcional('CNPJ',d.CNPJ)+
+            opcional('Inscrição Estadual',d.Inscricao_Estadual)+
+            opcional('Visão',d.Visao)+
+            opcional('Missão',d.Missao)+
+            opcional('Valores',d.Valores),
+            'repeat(3,minmax(0,1fr))')}
           ${sec('Contato e Redes',
             item('Telefone / WhatsApp',d.Telefone_Whatsapp)+
             item('Grupo WhatsApp',d.Grupo_Zap)+
@@ -1154,8 +1161,8 @@
 
       const input = (nome, label, valor, tipo='text') => `
         <label style="display:block;">
-          <span style="display:block;font-size:.7rem;color:var(--gold-primary);font-weight:700;margin-bottom:4px;">${label}</span>
-          <input type="${tipo}" name="${nome}" value="${escHtmlTZC_V1(valor || '')}" style="width:100%;box-sizing:border-box;background:#0d0d0d;color:#fff;border:1px solid var(--border-color);border-radius:7px;padding:8px;font:inherit;font-size:.78rem;">
+          <span style="display:block;font-size:.72rem;color:var(--gold-primary);font-weight:700;margin-bottom:4px;">${label}</span>
+          <input type="${tipo}" name="${nome}" value="${escHtmlTZC_V1(valor || '')}" style="width:100%;box-sizing:border-box;background:#0d0d0d;color:#fff;border:1px solid var(--border-color);border-radius:7px;padding:8px;font:inherit;font-size:.8rem;">
         </label>`;
 
       document.body.insertAdjacentHTML('beforeend', `
@@ -1170,7 +1177,7 @@
               <style>
                 .tzc-config-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 10px}
                 .tzc-config-full{grid-column:1/-1}
-                .tzc-config-sec{grid-column:1/-1;color:#fff;font-size:.76rem;font-weight:700;border-bottom:1px solid #2a2a2a;padding:4px 0 6px;margin-top:5px}
+                .tzc-config-sec{grid-column:1/-1;color:#fff;font-size:.8rem;font-weight:700;border-bottom:1px solid #2a2a2a;padding:4px 0 6px;margin-top:5px}
                 .tzc-color-row{display:grid;grid-template-columns:44px 1fr;gap:7px;align-items:end}
                 .tzc-color-row input[type=color]{width:44px;height:33px;padding:2px;background:#0d0d0d;border:1px solid #2a2a2a;border-radius:7px}
                 @media(max-width:760px){.tzc-config-grid{grid-template-columns:1fr 1fr}.tzc-config-full,.tzc-config-sec{grid-column:1/-1}} @media(max-width:520px){.tzc-config-grid{grid-template-columns:1fr}.tzc-config-full,.tzc-config-sec{grid-column:1}}
@@ -1183,11 +1190,27 @@
                 ${input('Logo_URL','URL da Logo',d.Logo_URL || '')}
 
                 <div class="tzc-config-sec">Institucional</div>
-                <label class="tzc-config-full">
-                  <span style="display:block;font-size:.7rem;color:var(--gold-primary);font-weight:700;margin-bottom:4px;">Quem Somos</span>
-                  <textarea name="Quem_Somos" rows="3" style="width:100%;box-sizing:border-box;background:#0d0d0d;color:#fff;border:1px solid var(--border-color);border-radius:7px;padding:8px;font:inherit;font-size:.78rem;resize:vertical;">${escHtmlTZC_V1(d.Quem_Somos || '')}</textarea>
+                ${input('CNPJ','CNPJ',d.CNPJ)}
+                ${input('Inscricao_Estadual','Inscrição Estadual',d.Inscricao_Estadual)}
+                ${input('Endereco','Endereço',d.Endereco)}
+                <label>
+                  <span style="display:block;font-size:.72rem;color:var(--gold-primary);font-weight:700;margin-bottom:4px;">Quem Somos</span>
+                  <textarea name="Quem_Somos" rows="3" style="width:100%;box-sizing:border-box;background:#0d0d0d;color:#fff;border:1px solid var(--border-color);border-radius:7px;padding:8px;font:inherit;font-size:.8rem;resize:vertical;">${escHtmlTZC_V1(d.Quem_Somos || '')}</textarea>
                 </label>
-                <div class="tzc-config-full">${input('Endereco','Endereço',d.Endereco)}</div>
+                <label>
+                  <span style="display:block;font-size:.72rem;color:var(--gold-primary);font-weight:700;margin-bottom:4px;">Visão</span>
+                  <textarea name="Visao" rows="3" style="width:100%;box-sizing:border-box;background:#0d0d0d;color:#fff;border:1px solid var(--border-color);border-radius:7px;padding:8px;font:inherit;font-size:.8rem;resize:vertical;">${escHtmlTZC_V1(d.Visao || '')}</textarea>
+                </label>
+                <label>
+                  <span style="display:block;font-size:.72rem;color:var(--gold-primary);font-weight:700;margin-bottom:4px;">Missão</span>
+                  <textarea name="Missao" rows="3" style="width:100%;box-sizing:border-box;background:#0d0d0d;color:#fff;border:1px solid var(--border-color);border-radius:7px;padding:8px;font:inherit;font-size:.8rem;resize:vertical;">${escHtmlTZC_V1(d.Missao || '')}</textarea>
+                </label>
+                <div class="tzc-config-full">
+                  <label style="display:block;">
+                    <span style="display:block;font-size:.72rem;color:var(--gold-primary);font-weight:700;margin-bottom:4px;">Valores</span>
+                    <textarea name="Valores" rows="2" style="width:100%;box-sizing:border-box;background:#0d0d0d;color:#fff;border:1px solid var(--border-color);border-radius:7px;padding:8px;font:inherit;font-size:.8rem;resize:vertical;">${escHtmlTZC_V1(d.Valores || '')}</textarea>
+                  </label>
+                </div>
 
                 <div class="tzc-config-sec">Contato e Redes</div>
                 ${input('Telefone_Whatsapp','Telefone / WhatsApp',d.Telefone_Whatsapp)}
@@ -3651,14 +3674,14 @@
 </html>
 
 <style id="tzc-v27-compactacao">
-  header.banner{padding:4px 9px!important;min-height:46px!important;border-bottom-width:1px!important}
-  .banner-logo{width:30px!important;height:30px!important;border-width:1px!important;box-shadow:0 0 5px rgba(212,175,55,.35)!important}
-  .banner-center{gap:6px!important}
-  .banner-titles h1{font-size:.78rem!important;line-height:1.05!important;letter-spacing:.35px!important}
-  .banner-titles p{font-size:.56rem!important;line-height:1.05!important}
+  header.banner{padding:6px 10px!important;min-height:54px!important;border-bottom-width:1px!important}
+  .banner-logo{width:36px!important;height:36px!important;border-width:1px!important;box-shadow:0 0 5px rgba(212,175,55,.35)!important}
+  .banner-center{gap:8px!important}
+  .banner-titles h1{font-size:.88rem!important;line-height:1.05!important;letter-spacing:.35px!important}
+  .banner-titles p{font-size:.62rem!important;line-height:1.05!important}
   .toggle-menu-btn,.btn-login,.user-logged{font-size:.68rem!important}
   @media(max-width:680px){
-    header.banner{min-height:44px!important;padding:4px 7px!important}
-    .banner-logo{width:28px!important;height:28px!important}
+    header.banner{min-height:50px!important;padding:5px 8px!important}
+    .banner-logo{width:33px!important;height:33px!important}
   }
 </style>

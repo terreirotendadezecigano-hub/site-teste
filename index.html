@@ -4761,6 +4761,17 @@
 
 
 
+
+  /* V73 — carregamento compacto + pesquisa de dados em modal */
+  .erva-loading-overlay-v73{position:fixed;inset:0;background:rgba(0,0,0,.66);z-index:100001;display:flex;align-items:center;justify-content:center;padding:20px}
+  .erva-loading-box-v73{background:#151515;border:1px solid var(--gold-primary);border-radius:10px;padding:14px 20px;color:#eee;font-size:.82rem;box-shadow:0 12px 35px rgba(0,0,0,.45)}
+  .erva-loading-box-v73 i{color:#d4af37;margin-right:8px}
+  .erva-info-overlay-v73{position:fixed;inset:0;background:rgba(0,0,0,.80);z-index:100000;display:flex;align-items:center;justify-content:center;padding:22px}
+  .erva-info-modal-v73{width:min(820px,95vw);max-height:86vh;overflow:auto;background:#151515;border:1px solid var(--gold-primary);border-radius:12px;padding:16px}
+  .erva-info-head-v73{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid #303030}
+  .erva-info-head-v73 h4{margin:0;color:#fff;font-size:.98rem}.erva-info-head-v73>button{border:0;background:transparent;color:#d9bd45;font-size:1.35rem;cursor:pointer}
+  .erva-info-footer-v73{display:flex;justify-content:flex-end;margin-top:13px;padding-top:11px;border-top:1px solid #303030}
+
   /* V70 — seletor de imagens em modal próprio */
   .erva-img-overlay-v70{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:100000;display:flex;align-items:center;justify-content:center;padding:22px}
   .erva-img-modal-v70{width:min(900px,96vw);max-height:88vh;overflow:auto;background:#151515;border:1px solid var(--gold-primary);border-radius:12px;padding:16px}
@@ -5084,16 +5095,24 @@
     }catch(e){if(box)box.innerHTML='<span style="font-size:.72rem;color:#999">Não foi possível consultar agora.</span>';}
   };
 
+  window.fecharPesquisaErvaTZC_V73=function(){document.getElementById('ervaInfoOverlayV73')?.remove();};
+
   window.pesquisarDadoErvaTZC_V69=async function(campo,rotulo){
     const nome=document.getElementById('erva_Nome_Erva')?.value?.trim()||'';
     const cientifico=document.getElementById('erva_Nome_Cientifico')?.value?.trim()||'';
-    const box=document.getElementById('ervaPesquisaInternaV69');
     if(!nome&&!cientifico){showToast('Informe primeiro o nome da erva.');return;}
-    if(!box)return;
+    fecharPesquisaErvaTZC_V73();
 
-    box.style.display='block';
-    box.innerHTML=`<div class="erva-pesquisa-head-v69"><div class="erva-pesquisa-title-v69"><i class="fa-solid fa-magnifying-glass"></i> Pesquisar: ${escErvaV37(rotulo)}</div><button type="button" class="erva-pesquisa-close-v69" onclick="document.getElementById('ervaPesquisaInternaV69').style.display='none'">×</button></div>
-      <div class="erva-pesquisa-status-v69"><i class="fa-solid fa-spinner fa-spin"></i> Consultando fontes abertas sem sair desta tela...</div>`;
+    const overlay=document.createElement('div');
+    overlay.id='ervaInfoOverlayV73';overlay.className='erva-info-overlay-v73';
+    overlay.innerHTML=`<div class="erva-info-modal-v73" onclick="event.stopPropagation()">
+      <div class="erva-info-head-v73"><h4><i class="fa-solid fa-magnifying-glass"></i> ${escErvaV37(rotulo)} — ${escErvaV37(nome||cientifico)}</h4><button type="button" onclick="fecharPesquisaErvaTZC_V73()">×</button></div>
+      <div class="erva-pesquisa-status-v69"><i class="fa-solid fa-spinner fa-spin"></i> Pesquisando...</div>
+      <div class="erva-pesquisa-list-v69"></div>
+      <div class="erva-info-footer-v73"><button type="button" class="erva-img-fechar-v71" onclick="fecharPesquisaErvaTZC_V73()"><i class="fa-solid fa-xmark"></i> Fechar</button></div>
+    </div>`;
+    overlay.onclick=()=>fecharPesquisaErvaTZC_V73();
+    document.body.appendChild(overlay);
 
     const temas={
       Finalidade_Propriedades:'propriedades usos medicinal',
@@ -5106,23 +5125,22 @@
     const q=[cientifico||nome,nome,temas[campo]||rotulo].filter(Boolean).join(' ');
     try{
       const url='https://pt.wikipedia.org/w/api.php?origin=*&action=query&list=search&srnamespace=0&srlimit=6&srsearch='+encodeURIComponent(q)+'&format=json';
-      const res=await fetch(url);
-      const json=await res.json();
+      const res=await fetch(url);const json=await res.json();
       let itens=(json?.query?.search||[]);
-      if(!itens.length && cientifico){
+      if(!itens.length&&cientifico){
         const r2=await fetch('https://pt.wikipedia.org/w/api.php?origin=*&action=query&list=search&srnamespace=0&srlimit=6&srsearch='+encodeURIComponent(cientifico)+'&format=json');
-        const j2=await r2.json(); itens=j2?.query?.search||[];
+        const j2=await r2.json();itens=j2?.query?.search||[];
       }
-      const status=`<div class="erva-pesquisa-status-v69">${itens.length?'Resultados encontrados. Leia e escolha somente o que fizer sentido; nada é preenchido automaticamente.':'Nenhum resultado útil encontrado nesta fonte. Não alteramos o campo.'}</div>`;
-      const lista=itens.map(it=>{
+      const status=overlay.querySelector('.erva-pesquisa-status-v69');
+      const lista=overlay.querySelector('.erva-pesquisa-list-v69');
+      status.textContent=itens.length?'Escolha uma sugestão. Nada será alterado até você clicar em “Usar esta informação”.':'Nenhum resultado útil encontrado nesta fonte.';
+      lista.innerHTML=itens.map(it=>{
         const texto=String(it.snippet||'').replace(/<[^>]*>/g,' ').replace(/&quot;/g,'"').replace(/&#039;/g,"'").replace(/&amp;/g,'&').replace(/\s+/g,' ').trim();
         const sugestao=(it.title+(texto?': '+texto:'')).trim();
         return `<div class="erva-pesquisa-item-v69"><strong>${escErvaV37(it.title)}</strong><p>${escErvaV37(texto||'Resultado relacionado encontrado na Wikipédia.')}</p><div class="erva-fonte-v69">Fonte: Wikipédia em português</div><div class="erva-pesquisa-actions-v69"><button type="button" class="erva-usar-v69" data-campo="${escErvaV37(campo)}" data-texto="${encodeURIComponent(sugestao)}" onclick="usarSugestaoErvaTZC_V69(this)"><i class="fa-solid fa-check"></i> Usar esta informação</button></div></div>`;
       }).join('');
-      box.innerHTML=`<div class="erva-pesquisa-head-v69"><div class="erva-pesquisa-title-v69"><i class="fa-solid fa-magnifying-glass"></i> Pesquisar: ${escErvaV37(rotulo)}</div><button type="button" class="erva-pesquisa-close-v69" onclick="document.getElementById('ervaPesquisaInternaV69').style.display='none'">×</button></div>${status}<div class="erva-pesquisa-list-v69">${lista}</div>`;
-      box.scrollIntoView({behavior:'smooth',block:'nearest'});
     }catch(e){
-      box.innerHTML=`<div class="erva-pesquisa-head-v69"><div class="erva-pesquisa-title-v69">Pesquisar: ${escErvaV37(rotulo)}</div><button type="button" class="erva-pesquisa-close-v69" onclick="document.getElementById('ervaPesquisaInternaV69').style.display='none'">×</button></div><div class="erva-pesquisa-status-v69">Não foi possível consultar a fonte agora. O campo não foi alterado.</div>`;
+      overlay.querySelector('.erva-pesquisa-status-v69').textContent='Não foi possível pesquisar agora. O campo não foi alterado.';
     }
   };
 
@@ -5134,6 +5152,7 @@
     if(inp.value.trim() && !confirm('Este campo já possui conteúdo. Deseja substituir pelo resultado escolhido?'))return;
     inp.value=texto;
     inp.dispatchEvent(new Event('input',{bubbles:true}));
+    fecharPesquisaErvaTZC_V73();
     showToast('Sugestão aplicada. Você ainda pode editar antes de salvar.');
   };
 
@@ -5147,24 +5166,27 @@
     if(!nome&&!cientifico){showToast('Informe primeiro o nome da erva.');return;}
     fecharBuscaImagemErvaTZC_V70();
 
-    const overlay=document.createElement('div');
-    overlay.id='ervaImgOverlayV70'; overlay.className='erva-img-overlay-v70';
-    overlay.innerHTML=`<div class="erva-img-modal-v70" onclick="event.stopPropagation()">
-      <div class="erva-img-head-v70"><h4><i class="fa-solid fa-images"></i> Escolher imagem — ${escErvaV37(nome||cientifico)}</h4><button type="button" onclick="fecharBuscaImagemErvaTZC_V70()">×</button></div>
-      <div class="erva-img-status-v67"><i class="fa-solid fa-spinner fa-spin"></i> Procurando imagens...</div>
-      <div class="erva-img-grid-v67"></div>
-      <div class="erva-img-footer-v71"><button type="button" class="erva-img-fechar-v71" onclick="fecharBuscaImagemErvaTZC_V70()"><i class="fa-solid fa-xmark"></i> Fechar</button></div>
-    </div>`;
-    overlay.onclick=()=>fecharBuscaImagemErvaTZC_V70();
-    document.body.appendChild(overlay);
+    const loading=document.createElement('div');
+    loading.id='ervaImgOverlayV70';loading.className='erva-loading-overlay-v73';
+    loading.innerHTML='<div class="erva-loading-box-v73"><i class="fa-solid fa-spinner fa-spin"></i> Pesquisando imagens...</div>';
+    document.body.appendChild(loading);
 
     try{
       const termo=(cientifico||nome)+' plant';
       const url='https://commons.wikimedia.org/w/api.php?origin=*&action=query&generator=search&gsrnamespace=6&gsrlimit=12&gsrsearch='+encodeURIComponent(termo)+'&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=500&format=json';
-      const res=await fetch(url); const json=await res.json();
+      const res=await fetch(url);const json=await res.json();
       const itens=Object.values(json?.query?.pages||{}).filter(p=>p.imageinfo?.[0]?.thumburl||p.imageinfo?.[0]?.url);
-      const status=overlay.querySelector('.erva-img-status-v67');
-      status.textContent=itens.length?'Clique na foto que deseja usar. A escolha só será gravada quando você clicar em Salvar.':'Nenhuma imagem encontrada. Tente primeiro escolher o nome científico.';
+      fecharBuscaImagemErvaTZC_V70();
+
+      const overlay=document.createElement('div');
+      overlay.id='ervaImgOverlayV70';overlay.className='erva-img-overlay-v70';
+      overlay.innerHTML=`<div class="erva-img-modal-v70" onclick="event.stopPropagation()">
+        <div class="erva-img-head-v70"><h4><i class="fa-solid fa-images"></i> Escolher imagem — ${escErvaV37(nome||cientifico)}</h4><button type="button" onclick="fecharBuscaImagemErvaTZC_V70()">×</button></div>
+        <div class="erva-img-status-v67">${itens.length?'Clique na foto que deseja usar. A escolha só será gravada quando você clicar em Salvar.':'Nenhuma imagem encontrada. Tente primeiro escolher o nome científico.'}</div>
+        <div class="erva-img-grid-v67"></div>
+        <div class="erva-img-footer-v71"><button type="button" class="erva-img-fechar-v71" onclick="fecharBuscaImagemErvaTZC_V70()"><i class="fa-solid fa-xmark"></i> Fechar</button></div>
+      </div>`;
+      overlay.onclick=()=>fecharBuscaImagemErvaTZC_V70();document.body.appendChild(overlay);
       const grid=overlay.querySelector('.erva-img-grid-v67');
       itens.forEach(p=>{
         const ii=p.imageinfo[0],meta=ii.extmetadata||{},full=ii.url||ii.thumburl,thumb=ii.thumburl||ii.url;
@@ -5176,7 +5198,8 @@
         grid.appendChild(b);
       });
     }catch(e){
-      overlay.querySelector('.erva-img-status-v67').textContent='Não foi possível buscar imagens agora.';
+      fecharBuscaImagemErvaTZC_V70();
+      showToast('Não foi possível buscar imagens agora.');
     }
   };
 
@@ -6378,3 +6401,5 @@ function filtrarEstudosTZC_V55(valor){
 <!-- TZC V71 — sugestões científicas compactas + botão Fechar no modal de imagens. -->
 
 <!-- TZC V72 — resultados de nome científico podem ser ocultados/recolhidos. -->
+
+<!-- TZC V73 — carregamento compacto de imagens + pesquisa de informações em modal próprio. -->

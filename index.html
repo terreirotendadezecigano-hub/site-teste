@@ -834,6 +834,65 @@
   }
 </style>
 
+
+<style id="tzc-v43-ervas-harmonia">
+  /* Escala visual da página inicial / Lei da Harmonia */
+  .ervas-admin-v37{font-size:var(--tzc-font-md)!important}
+  .ervas-toolbar-v37{display:block!important;width:100%!important;margin:12px 0!important}
+  .ervas-toolbar-v37 input{
+    width:100%!important;min-height:34px!important;padding:7px 11px!important;
+    background:#161616!important;border:1px solid var(--border-color)!important;color:#fff!important;
+    border-radius:20px!important;font-family:inherit!important;font-size:var(--tzc-font-sm)!important;
+  }
+  .ervas-toolbar-v37 input:focus{outline:none!important;border-color:var(--gold-primary)!important}
+  .ervas-table-v37,.ervas-table-v37 th,.ervas-table-v37 td{font-size:var(--tzc-font-sm)!important}
+
+  /* Modal: proporção e tipografia do padrão aprovado */
+  .ervas-modal-v37{padding:18px!important}
+  .ervas-modal-box-v37{
+    width:min(980px,calc(100vw - 36px))!important;max-height:calc(100dvh - 36px)!important;
+    background:#181818!important;border:1px solid var(--gold-primary)!important;border-radius:12px!important;
+    padding:14px!important;box-shadow:0 10px 30px rgba(0,0,0,.9)!important;overflow:visible!important;
+  }
+  .ervas-modal-head-v37{padding-bottom:8px!important;margin-bottom:10px!important;border-bottom:1px solid var(--border-color)!important}
+  .ervas-modal-head-v37 h3{font-size:var(--tzc-font-lg)!important;margin:0!important}
+  .ervas-close-v37{font-size:1.35rem!important;color:var(--gold-primary)!important}
+  .ervas-form-v37{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px 10px!important;overflow:visible!important}
+  .ervas-field-v37 label{font-size:var(--tzc-font-sm)!important;color:var(--gold-light)!important;margin-bottom:3px!important;font-weight:600!important}
+  .ervas-field-v37 input,.ervas-field-v37 select,.ervas-field-v37 textarea{
+    min-height:32px!important;padding:6px 8px!important;background:#111!important;border:1px solid var(--border-color)!important;
+    color:#fff!important;border-radius:6px!important;font-family:inherit!important;font-size:var(--tzc-font-sm)!important;
+  }
+  .ervas-field-v37 input:focus,.ervas-field-v37 select:focus,.ervas-field-v37 textarea:focus{outline:none!important;border-color:var(--gold-primary)!important}
+  .ervas-field-v37 textarea{min-height:50px!important;max-height:70px!important;resize:vertical!important}
+  .ervas-form-actions-v37 button{min-height:32px!important;padding:6px 10px!important;border-radius:6px!important;font-family:inherit!important;font-size:var(--tzc-font-sm)!important}
+
+  /* Dropdown próprio: preto/dourado, sem popup branco do navegador */
+  .erva-combo-v43{position:relative!important;z-index:30}
+  .erva-combo-control-v43{position:relative}
+  .erva-combo-control-v43 input{padding-right:32px!important}
+  .erva-combo-seta-v43{
+    position:absolute;right:1px;top:1px;bottom:1px;width:30px;border:0;border-left:1px solid var(--border-color);
+    background:#161616;color:var(--gold-primary);border-radius:0 6px 6px 0;cursor:pointer;font-size:.68rem;
+  }
+  .erva-combo-list-v43{
+    display:none;position:absolute;z-index:999999;left:0;right:0;top:calc(100% + 3px);max-height:170px;overflow:auto;
+    background:#151515;border:1px solid var(--gold-primary);border-radius:7px;padding:4px;box-shadow:0 10px 24px rgba(0,0,0,.8);
+  }
+  .erva-combo-v43.aberto .erva-combo-list-v43{display:block}
+  .erva-combo-item-v43{
+    display:block;width:100%;padding:7px 8px;border:0;border-radius:5px;background:transparent;color:#fff;
+    text-align:left;cursor:pointer;font-family:inherit;font-size:var(--tzc-font-sm);
+  }
+  .erva-combo-item-v43:hover{background:rgba(212,175,55,.14);color:var(--gold-light)}
+  .erva-combo-vazio-v43{padding:8px;color:var(--text-muted);font-size:var(--tzc-font-sm)}
+  @media(max-width:900px){.ervas-form-v37{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+  @media(max-width:600px){
+    .ervas-modal-v37{padding:10px!important}.ervas-modal-box-v37{width:calc(100vw - 20px)!important;max-height:calc(100dvh - 20px)!important}
+    .ervas-form-v37{grid-template-columns:1fr!important}.ervas-field-v37.c1,.ervas-field-v37.c2{grid-column:span 1!important}
+  }
+</style>
+
 </head>
 <body>
 
@@ -3999,12 +4058,7 @@
           <button type="button" class="ervas-primary-v37" onclick="novaErvaTZC_V37()"><i class="fa-solid fa-plus"></i> Nova Erva</button>
         </div>
         <div class="ervas-toolbar-v37">
-          <input id="ervaBuscaV37" placeholder="Buscar por nome, categoria, finalidade..." oninput="renderTabelaErvasTZC_V37()">
-          <select id="ervaCategoriaV41" onchange="renderTabelaErvasTZC_V37()"><option value="">Todas as categorias</option></select>
-          <select id="ervaPreparoV41" onchange="renderTabelaErvasTZC_V37()"><option value="">Todos os preparos</option></select>
-          <select id="ervaStatusV37" onchange="renderTabelaErvasTZC_V37()">
-            <option value="Ativo">Ativas</option><option value="Excluido">Excluídas</option><option value="">Todas</option>
-          </select>
+          <input id="ervaBuscaV37" placeholder="Buscar em todos os dados das ervas..." oninput="renderTabelaErvasTZC_V37()">
         </div>
         <div id="ervasTabelaV37"><div class="ervas-empty-v37">Carregando ervas...</div></div>
       </div>`;
@@ -4032,17 +4086,7 @@
   };
 
   window.atualizarFiltrosErvasV41=function(){
-    const dados=(window.tzcErvasAdminV37||[]).filter(x=>String(x.Status||'Ativo')!=='Excluido');
-    const ordenar=a=>[...new Set(a.map(v=>String(v||'').trim()).filter(Boolean))]
-      .sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
-    const preencher=(id,valores,rotulo)=>{
-      const el=document.getElementById(id); if(!el)return;
-      const atual=el.value;
-      el.innerHTML=`<option value="">${rotulo}</option>`+valores.map(v=>`<option value="${escErvaV37(v)}">${escErvaV37(v)}</option>`).join('');
-      if(valores.includes(atual)) el.value=atual;
-    };
-    preencher('ervaCategoriaV41',ordenar(dados.map(x=>x.Categoria)),'Todas as categorias');
-    preencher('ervaPreparoV41',ordenar(dados.map(x=>x.Tipo_Preparo)),'Todos os preparos');
+    // V43: a pesquisa única substitui os filtros extras.
   };
 
   window.carregarErvasAdminTZC_V37 = async function(){
@@ -4086,17 +4130,11 @@
 
   window.renderTabelaErvasTZC_V37 = function(){
     const alvo=document.getElementById('ervasTabelaV37'); if(!alvo)return;
-    const q=(document.getElementById('ervaBuscaV37')?.value||'').toLowerCase().trim();
-    const st=document.getElementById('ervaStatusV37')?.value ?? 'Ativo';
-    const cat=document.getElementById('ervaCategoriaV41')?.value||'';
-    const prep=document.getElementById('ervaPreparoV41')?.value||'';
+    const q=(document.getElementById('ervaBuscaV37')?.value||'').toLocaleLowerCase('pt-BR').trim();
     const dados=(window.tzcErvasAdminV37||[]).filter(x=>{
-      const status=String(x.Status||'Ativo');
-      if(st && status!==st)return false;
-      if(cat && String(x.Categoria||'')!==cat)return false;
-      if(prep && String(x.Tipo_Preparo||'')!==prep)return false;
-      const hay=[x.Nome_Erva,x.Nome_Cientifico,x.Categoria,x.Tipo_Preparo,x.Finalidade_Propriedades,x.Indicacao_Uso].join(' ').toLowerCase();
-      return !q||hay.includes(q);
+      if(String(x.Status||'Ativo')==='Excluido') return false;
+      const hay=Object.values(x||{}).map(v=>String(v??'')).join(' ').toLocaleLowerCase('pt-BR');
+      return !q || hay.includes(q);
     });
     if(!dados.length){alvo.innerHTML='<div class="ervas-empty-v37">Nenhuma erva encontrada.</div>';return;}
     alvo.innerHTML=`<div class="ervas-table-wrap-v37"><table class="ervas-table-v37">
@@ -4191,10 +4229,50 @@
     const atual=String(v||'').trim();
     const vals=[...new Set((lista||[]).map(x=>String(x||'').trim()).filter(Boolean).concat(atual?[atual]:[]))]
       .sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
-    return `<div class="ervas-field-v37 ${cls}"><label>${l}</label><input id="erva_${n}" list="lista_${n}_v42" value="${escErvaV37(atual)}" placeholder="Digite ou selecione"><datalist id="lista_${n}_v42">${vals.map(x=>`<option value="${escErvaV37(x)}"></option>`).join('')}</datalist></div>`;
+    const itens=vals.map(x=>`<button type="button" class="erva-combo-item-v43" data-value="${escErvaV37(x)}" onclick="selecionarComboErvaV43('${n}',this.dataset.value)">${escErvaV37(x)}</button>`).join('');
+    return `<div class="ervas-field-v37 ${cls} erva-combo-v43" id="combo_${n}_v43">
+      <label>${l}</label>
+      <div class="erva-combo-control-v43">
+        <input id="erva_${n}" value="${escErvaV37(atual)}" placeholder="Digite ou selecione" autocomplete="off"
+          onfocus="abrirComboErvaV43('${n}')" oninput="filtrarComboErvaV43('${n}',this.value)">
+        <button type="button" class="erva-combo-seta-v43" tabindex="-1" onclick="toggleComboErvaV43('${n}')"><i class="fa-solid fa-chevron-down"></i></button>
+      </div>
+      <div class="erva-combo-list-v43" id="lista_${n}_v43">${itens||'<div class="erva-combo-vazio-v43">Digite para cadastrar a primeira opção.</div>'}</div>
+    </div>`;
   };
+
+  window.fecharCombosErvaV43=function(exceto=''){
+    document.querySelectorAll('.erva-combo-v43.aberto').forEach(el=>{
+      if(el.id!==`combo_${exceto}_v43`) el.classList.remove('aberto');
+    });
+  };
+  window.abrirComboErvaV43=function(n){
+    fecharCombosErvaV43(n);
+    document.getElementById(`combo_${n}_v43`)?.classList.add('aberto');
+    filtrarComboErvaV43(n,document.getElementById(`erva_${n}`)?.value||'');
+  };
+  window.toggleComboErvaV43=function(n){
+    const el=document.getElementById(`combo_${n}_v43`); if(!el)return;
+    const abrir=!el.classList.contains('aberto');
+    fecharCombosErvaV43(n); el.classList.toggle('aberto',abrir);
+    if(abrir) document.getElementById(`erva_${n}`)?.focus();
+  };
+  window.filtrarComboErvaV43=function(n,q){
+    const termo=String(q||'').trim().toLocaleLowerCase('pt-BR');
+    document.querySelectorAll(`#lista_${n}_v43 .erva-combo-item-v43`).forEach(btn=>{
+      btn.style.display=!termo||btn.dataset.value.toLocaleLowerCase('pt-BR').includes(termo)?'block':'none';
+    });
+  };
+  window.selecionarComboErvaV43=function(n,v){
+    const inp=document.getElementById(`erva_${n}`); if(inp)inp.value=v;
+    document.getElementById(`combo_${n}_v43`)?.classList.remove('aberto');
+  };
+
   window.escErvaV37=function(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');};
 })();
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.erva-combo-v43')) fecharCombosErvaV43();
+});
 </script>
 
 </body>

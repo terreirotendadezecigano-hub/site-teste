@@ -1846,10 +1846,10 @@
       container.innerHTML = `
         <section class="gestao-interna-home" style="padding:8px 0 30px;">
           <div style="margin-bottom:24px;text-align:center;">
-            <h2 style="margin:0;font-size:1rem;font-weight:700;color:#fff;letter-spacing:.01em;">
+            <h2 class="tzc-gestao-title-v51" style="margin:0;font-size:1rem;font-weight:700;color:#fff;letter-spacing:.01em;">
               <i class="fa-solid fa-sliders" style="color:var(--gold-primary);margin-right:8px;"></i>Gestão Interna
             </h2>
-            <p style="margin:8px auto 0;max-width:720px;color:var(--text-muted);font-size:.84rem;line-height:1.5;">
+            <p class="tzc-gestao-intro-v51" style="margin:8px auto 0;max-width:720px;color:var(--text-muted);font-size:.84rem;line-height:1.5;">
               Espaço reservado para organizar conteúdos, estudos e ferramentas internas do Terreiro Tenda de Zé Cigano.
             </p>
             <div style="width:46px;height:1px;background:var(--gold-primary);opacity:.7;margin:11px auto 0;"></div>
@@ -2291,7 +2291,7 @@
             <i class="fa-solid fa-arrow-left"></i> Gestão Interna
           </button>
           <div class="tzc-page-copy-v44">
-            <h2><i class="fa-solid fa-book-open"></i> Estudos da Tenda de Zé Cigano</h2>
+            <h2><i class="fa-solid fa-book-open"></i> Estudos da Tenda de Zé Cigano <span id="tzcEstudosContadorV1" class="tzc-count-v47"></span></h2>
             <p>Acervo interno para organizar, consultar e manter os estudos e conteúdos de referência do Terreiro.</p>
           </div>
           <button class="btn-toolbar btn-add-membro tzc-page-new-v44" onclick="abrirNovoEstudoTZC_V1()">
@@ -3135,7 +3135,7 @@
                 return `<tr style="border-top:1px solid var(--border-color);">
                   <td style="padding:10px;color:#fff;font-weight:700;">${escTZC_V1(nomeCategoriaTZC_V1(c) || 'Sem nome')}</td>
                   <td style="padding:10px;color:var(--text-muted);">${escTZC_V1(c.Modulo || c.Area || 'Estudos')}</td>
-                  <td style="padding:10px;color:#fff;">Ativa</td>
+                  <td style="padding:10px;"><span class="card-badge tzc-status-chip-v51">Ativa</span></td>
                   <td style="padding:7px 10px;text-align:right;white-space:nowrap;">
                     <button class="btn-icon-only" title="Visualizar" aria-label="Visualizar" onclick="visualizarCategoriaTZC_V48('${escTZC_V1(id)}')"><i class="fa-solid fa-eye"></i></button>
                     <button class="btn-icon-only" title="Editar" aria-label="Editar" onclick="editarCategoriaTZC_V1('${escTZC_V1(id)}')"><i class="fa-solid fa-pen"></i></button>
@@ -3170,11 +3170,11 @@
         <div class="tzc-categoria-modal-box-v50" style="width:min(460px,calc(100vw - 36px));background:#111;border:1px solid var(--gold-primary);border-radius:12px;padding:18px;box-shadow:0 18px 55px rgba(0,0,0,.55);">
           <form onsubmit="salvarCategoriaTZC_V1(event)" data-modo="${editando ? 'editar' : 'novo'}" data-id="${escTZC_V1(id)}">
             <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:15px;">
-              <h3 style="margin:0;color:#fff;font-size:1rem;">${editando ? 'Editar Categoria' : 'Nova Categoria'}</h3>
+              <h3 style="margin:0;color:#fff;font-size:1rem;"><i class="fa-solid fa-tags tzc-modal-title-icon-v51"></i> ${editando ? 'Editar Categoria' : 'Nova Categoria'}</h3>
               <button type="button" class="tzc-modal-x-v50" aria-label="Fechar" onclick="document.getElementById('modalCategoriaTZC_V1').remove()">×</button>
             </div>
             <div style="display:grid;gap:12px;">
-              <div><label>Nome da categoria</label><input id="tzcCategoriaNome" class="form-control" required value="${escTZC_V1(editando ? nomeCategoriaTZC_V1(item) : '')}"></div>
+              <div><label>Nome da categoria</label><input id="tzcCategoriaNome" class="form-control" placeholder="Ex.: Umbanda, Oração, Ervas & Banhos..." required value="${escTZC_V1(editando ? nomeCategoriaTZC_V1(item) : '')}"></div>
               <div><label>Módulo</label>
                 <select id="tzcCategoriaModulo" class="form-control">
                   <option value="Estudos">Estudos</option>
@@ -4881,13 +4881,13 @@
   };
 
   window.abrirFormErvaTZC_V37=function(x){
-    abrirModalErvaV37(`<div class="ervas-modal-head-v37"><h3>${window.tzcErvaEditandoV37?'Editar Erva':'Nova Erva'}</h3><button class="ervas-close-v37" onclick="fecharModalErvaV37()">×</button></div>
+    abrirModalErvaV37(`<div class="ervas-modal-head-v37"><h3><i class="fa-solid fa-leaf tzc-modal-title-icon-v51"></i> ${window.tzcErvaEditandoV37?'Editar Erva':'Nova Erva'}</h3><button class="ervas-close-v37" onclick="fecharModalErvaV37()">×</button></div>
     <div class="ervas-form-v37">
       ${campoErvaV42('Nome_Erva','Nome da Erva',x.Nome_Erva,true,'c2')}
       ${campoErvaV42('Nome_Cientifico','Nome Científico',x.Nome_Cientifico,false,'c2')}
       ${campoSelectErvaV42('Categoria','Categoria',x.Categoria,(window.tzcErvasAdminV37||[]).map(e=>e.Categoria),'c1')}
       ${campoSelectErvaV42('Tipo_Preparo','Tipo de Preparo',x.Tipo_Preparo,(window.tzcErvasAdminV37||[]).map(e=>e.Tipo_Preparo),'c1')}
-      <div class="ervas-field-v37 c1"><label>Acesso Público</label><select id="erva_Acesso_Publico"><option ${String(x.Acesso_Publico||'Sim')==='Sim'?'selected':''}>Sim</option><option ${String(x.Acesso_Publico||'')==='Não'?'selected':''}>Não</option></select></div>
+      <div class="ervas-field-v37 c1"><label>Acesso Público</label><select id="erva_Acesso_Publico" title="Define se esta erva poderá aparecer em áreas públicas do sistema" aria-label="Acesso Público"><option ${String(x.Acesso_Publico||'Sim')==='Sim'?'selected':''}>Sim</option><option ${String(x.Acesso_Publico||'')==='Não'?'selected':''}>Não</option></select></div>
       ${campoErvaV42('Foto_URL','Imagem / link do Drive',x.Foto_URL,false,'c1')}
       ${campoErvaV42('Finalidade_Propriedades','Finalidade / Propriedades',x.Finalidade_Propriedades,false,'c2',true)}
       ${campoErvaV42('Uso_Espiritual','Uso Espiritual',x.Uso_Espiritual,false,'c2',true)}
@@ -4942,7 +4942,19 @@
   };
   window.campoErvaV42=function(n,l,v,req=false,cls='c1',area=false){
     const val=escErvaV37(v||'');
-    return `<div class="ervas-field-v37 ${cls}"><label>${l}${req?' *':''}</label>${area?`<textarea id="erva_${n}">${val}</textarea>`:`<input id="erva_${n}" value="${val}" ${req?'required':''}>`}</div>`;
+    const dicas={
+      Nome_Erva:'Ex.: Arruda, Alecrim, Guiné...',
+      Nome_Cientifico:'Ex.: Ruta graveolens',
+      Foto_URL:'Cole aqui o link da imagem ou do Drive',
+      Finalidade_Propriedades:'Descreva propriedades, benefícios e finalidades da erva',
+      Uso_Espiritual:'Explique o uso espiritual ou ritualístico',
+      Indicacao_Uso:'Informe em quais situações o uso é indicado',
+      Modo_Uso:'Explique como preparar, aplicar ou utilizar',
+      Cuidados:'Informe contraindicações, alertas ou cuidados importantes',
+      Observacoes:'Registre informações complementares'
+    };
+    const ph=escErvaV37(dicas[n]||'Digite a informação');
+    return `<div class="ervas-field-v37 ${cls}"><label>${l}${req?' *':''}</label>${area?`<textarea id="erva_${n}" placeholder="${ph}">${val}</textarea>`:`<input id="erva_${n}" value="${val}" placeholder="${ph}" ${req?'required':''}>`}</div>`;
   };
   window.campoSelectErvaV42=function(n,l,v,lista,cls='c1'){
     const atual=String(v||'').trim();
@@ -4952,7 +4964,7 @@
     return `<div class="ervas-field-v37 ${cls} erva-combo-v43" id="combo_${n}_v43">
       <label>${l}</label>
       <div class="erva-combo-control-v43">
-        <input id="erva_${n}" value="${escErvaV37(atual)}" placeholder="Digite ou selecione" autocomplete="off"
+        <input id="erva_${n}" value="${escErvaV37(atual)}" placeholder="${n==='Categoria'?'Digite ou selecione uma categoria':'Digite ou selecione o tipo de preparo'}" autocomplete="off"
           onfocus="abrirComboErvaV43('${n}')" oninput="filtrarComboErvaV43('${n}',this.value)">
         <button type="button" class="erva-combo-seta-v43" tabindex="-1" onclick="toggleComboErvaV43('${n}')"><i class="fa-solid fa-chevron-down"></i></button>
       </div>
@@ -5405,4 +5417,46 @@ function visualizarCategoriaTZC_V48(id){
   }
 })();
 </script>
+
+
+
+<style id="tzc-v51-refinamentos">
+/* V51 — refinamentos do padrão aprovado */
+.tzc-gestao-title-v51{
+  font-size:1.18rem!important;
+  line-height:1.3!important;
+}
+.tzc-gestao-intro-v51{
+  font-size:.92rem!important;
+  line-height:1.55!important;
+  max-width:780px!important;
+}
+.tzc-modal-title-icon-v51{
+  color:var(--gold-primary)!important;
+  margin-right:7px!important;
+  font-size:.95em!important;
+}
+.tzc-status-chip-v51{
+  display:inline-flex!important;
+  align-items:center!important;
+  padding:3px 7px!important;
+  border:1px solid #3a3a3a!important;
+  border-radius:5px!important;
+  background:#191919!important;
+  color:#f3e5ab!important;
+  font-size:.72rem!important;
+  font-weight:600!important;
+}
+#modalCategoriaTZC_V1 input::placeholder,
+.ervas-modal-box-v37 input::placeholder,
+.ervas-modal-box-v37 textarea::placeholder{
+  color:#777!important;
+  opacity:1!important;
+  font-style:italic!important;
+}
+.ervas-modal-head-v37 h3 i,
+#modalCategoriaTZC_V1 h3 i{
+  color:var(--gold-primary)!important;
+}
+</style>
 

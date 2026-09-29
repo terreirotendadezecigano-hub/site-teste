@@ -904,7 +904,7 @@
       container.innerHTML = `
         <section class="gestao-interna-home" style="padding:8px 0 30px;">
           <div style="margin-bottom:24px;text-align:center;">
-            <h2 style="margin:0;font-size:1.15rem;font-weight:700;color:#fff;letter-spacing:.01em;">
+            <h2 style="margin:0;font-size:1rem;font-weight:700;color:#fff;letter-spacing:.01em;">
               <i class="fa-solid fa-sliders" style="color:var(--gold-primary);margin-right:8px;"></i>Gestão Interna
             </h2>
             <p style="margin:8px auto 0;max-width:720px;color:var(--text-muted);font-size:.84rem;line-height:1.5;">
@@ -917,7 +917,7 @@
             <button type="button" class="card" onclick="abrirEstudosTZC_V1()" style="text-align:left;border:1px solid var(--gold-primary);cursor:pointer;background:linear-gradient(145deg,#171717,#0d0d0d);">
               <div style="padding:20px;">
                 <i class="fa-solid fa-book-open" style="font-size:1.7rem;color:var(--gold-primary);margin-bottom:12px;"></i>
-                <h3 style="margin:0 0 6px;">Estudos</h3>
+                <h3 style="margin:0 0 6px;color:#fff !important;font-size:1rem;">Estudos</h3>
                 <p style="margin:0;color:var(--text-muted);font-size:.82rem;">Criar, guardar e consultar textos de estudo.</p>
               </div>
             </button>
@@ -1007,8 +1007,16 @@
             </div>`}
           <div class="card-body">
             <div class="card-badges"><span class="card-badge">${escTZC_V1(categoria)}</span></div>
-            <h3 class="card-title" style="color:#fff;">${escTZC_V1(titulo)}</h3>
+            <h3 class="card-title" style="color:#fff !important;">${escTZC_V1(titulo)}</h3>
             ${resumo ? `<p class="card-text">${escTZC_V1(resumo)}</p>` : ''}
+            <div style="display:flex;justify-content:flex-end;gap:5px;margin-top:8px;">
+              <button type="button" class="btn-icon-only" onclick="event.stopPropagation();editarEstudoTZC_V1('${escTZC_V1(estudo.ID_Estudo || estudo.ID || '')}')" title="Editar">
+                <i class="fa-solid fa-pen"></i>
+              </button>
+              <button type="button" class="btn-icon-only btn-delete-icon" onclick="event.stopPropagation();excluirEstudoTZC_V1('${escTZC_V1(estudo.ID_Estudo || estudo.ID || '')}')" title="Excluir">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
           </div>
         `;
         card.onclick = () => abrirVisualizacaoEstudoTZC_V1(estudo);
@@ -1093,10 +1101,13 @@
                   <select id="tzcEstudoCategoria" class="form-control">
                     <option value="">Selecione uma categoria</option>
                     <option value="Umbanda">Umbanda</option>
+                    <option value="Oração">Oração</option>
+                    <option value="Simpatia">Simpatia</option>
                     <option value="Ervas & Banhos">Ervas & Banhos</option>
-                    <option value="História">História</option>
+                    <option value="Defumação">Defumação</option>
                     <option value="Pontos Cantados">Pontos Cantados</option>
                     <option value="Orientações">Orientações</option>
+                    <option value="História">História</option>
                     <option value="Outros">Outros</option>
                   </select>
                 </div>
@@ -1148,13 +1159,85 @@
       document.body.appendChild(modal);
     }
 
+    async function editarEstudoTZC_V1(id) {
+      const estudo = (window.tzcEstudosV1 || []).find(x =>
+        String(x.ID_Estudo || x.ID || '') === String(id)
+      );
+      if (!estudo) {
+        showToast('Estudo não encontrado.');
+        return;
+      }
+
+      abrirNovoEstudoTZC_V1();
+      const modal = document.getElementById('modalNovoEstudoTZC_V1');
+      if (!modal) return;
+
+      modal.querySelector('h3').innerHTML =
+        '<i class="fa-solid fa-book-open" style="color:var(--gold-primary);"></i> Editar Estudo';
+
+      document.getElementById('tzcEstudoTitulo').value = estudo.Titulo || '';
+      document.getElementById('tzcEstudoCategoria').value = estudo.Categoria || '';
+      document.getElementById('tzcEstudoResumo').value = estudo.Resumo || '';
+      document.getElementById('tzcEstudoTexto').value = estudo.Texto || '';
+      document.getElementById('tzcEstudoImagem').value = estudo.Imagem_URL || '';
+      document.getElementById('tzcEstudoFonte').value = estudo.Fonte_Informacao || '';
+      document.getElementById('tzcEstudoVisibilidade').value = estudo.Visibilidade || 'Público';
+
+      const form = modal.querySelector('form');
+      form.dataset.modo = 'editar';
+      form.dataset.idEstudo = String(id);
+
+      const botao = form.querySelector('button[type="submit"]');
+      if (botao) botao.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar Alterações';
+    }
+
+    async function excluirEstudoTZC_V1(id) {
+      const estudo = (window.tzcEstudosV1 || []).find(x =>
+        String(x.ID_Estudo || x.ID || '') === String(id)
+      );
+      if (!estudo) {
+        showToast('Estudo não encontrado.');
+        return;
+      }
+
+      const titulo = estudo.Titulo || 'este estudo';
+      if (!confirm(`Deseja realmente excluir "${titulo}"?`)) return;
+
+      const payload = {
+        acao: 'excluir',
+        nomeAba: 'Estudos',
+        id: String(id),
+        idColuna: 'ID_Estudo'
+      };
+
+      try {
+        await fetch(WEB_APP_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {'Content-Type':'text/plain;charset=utf-8'},
+          body: JSON.stringify(payload)
+        });
+        showToast('Estudo enviado para exclusão.');
+        setTimeout(() => abrirEstudosTZC_V1(), 800);
+      } catch (e) {
+        showToast('Não foi possível excluir o estudo: ' + e.message);
+      }
+    }
+
     async function salvarEstudoTZC_V1(event) {
       event.preventDefault();
 
+      const form = event.target;
+      const modo = form.dataset.modo || 'novo';
+      const idEdicao = form.dataset.idEstudo || ('EST-' + Date.now());
+
       const payload = {
+        acao: modo === 'editar' ? 'atualizar' : 'inserir',
         nomeAba: 'Estudos',
+        id: idEdicao,
+        idColuna: 'ID_Estudo',
         valores: [
-          'EST-' + Date.now(),
+          idEdicao,
           document.getElementById('tzcEstudoTitulo').value.trim(),
           document.getElementById('tzcEstudoCategoria').value.trim(),
           document.getElementById('tzcEstudoResumo').value.trim(),
@@ -1185,7 +1268,7 @@
         });
 
         document.getElementById('modalNovoEstudoTZC_V1').remove();
-        showToast('Estudo enviado para gravação.');
+        showToast(modo === 'editar' ? 'Alterações enviadas para gravação.' : 'Estudo enviado para gravação.');
         setTimeout(() => abrirEstudosTZC_V1(), 800);
       } catch (e) {
         showToast('Não foi possível enviar o estudo: ' + e.message);

@@ -1105,6 +1105,56 @@
       }
     }
 
+    async function fetchMuralData() {
+      // A aba real do Mural é identificada pelo GID 1669035050.
+      // Usamos o Google Sheets GViz diretamente para não depender do nome
+      // da aba nem do OpenSheet para esta seção.
+      const gvizUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=1669035050&_=${Date.now()}`;
+      try {
+        const response = await fetch(gvizUrl, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Google Sheets HTTP ${response.status}`);
+        const text = await response.text();
+        const ini = text.indexOf('{');
+        const fim = text.lastIndexOf('}');
+        if (ini < 0 || fim <= ini) throw new Error('Resposta GViz inválida.');
+
+        const payload = JSON.parse(text.slice(ini, fim + 1));
+        if (payload.status && payload.status !== 'ok') {
+          throw new Error(payload.errors?.[0]?.detailed_message || payload.errors?.[0]?.message || 'Erro no GViz.');
+        }
+
+        const cols = (payload.table?.cols || []).map((c, i) => c.label || c.id || `Coluna_${i + 1}`);
+        const rows = payload.table?.rows || [];
+
+        return rows.map(row => {
+          const obj = {};
+          cols.forEach((col, i) => {
+            const cell = row.c?.[i];
+            obj[col] = cell?.v ?? '';
+          });
+          return obj;
+        });
+      } catch (e) {
+        // Fallback 1: OpenSheet usando o nome exato da aba.
+        try {
+          const response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Mural_URL%20sera%20as%20colunas`, { cache: 'no-store' });
+          if (!response.ok) throw new Error('OpenSheet indisponível.');
+          const data = await response.json();
+          if (Array.isArray(data)) return data;
+        } catch (_) {}
+
+        // Fallback 2: Apps Script publicado.
+        try {
+          const response = await fetch(`${WEB_APP_URL}?sheet=${encodeURIComponent('Mural_URL sera as colunas')}&_=${Date.now()}`, { cache: 'no-store' });
+          if (!response.ok) throw new Error('Apps Script indisponível.');
+          const data = await response.json();
+          if (Array.isArray(data)) return data;
+        } catch (_) {}
+
+        throw e;
+      }
+    }
+
     async function loadTabData(tabName) {
       if (tabName === 'Membros') { carregarEExibirMembros(); return; }
       const loading = document.getElementById('loading');
@@ -1115,14 +1165,14 @@
       const targetSheet = (tabName === 'Home' || tabName === 'Agenda') ? 'Agenda_Festividades' : tabName;
 
       try {
-        let response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${targetSheet}`);
-        let data = await response.json();
+        let data;
 
-        // A aba usada para o Mural na planilha atual chama-se exatamente
-        // "Mural_URL sera as colunas". Mantemos Mural_Imagens como primeira
-        // tentativa para não alterar o comportamento das demais instalações.
-        if (tabName === 'Mural_Imagens' && (!Array.isArray(data) || data.length === 0)) {
-          response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Mural_URL%20sera%20as%20colunas`);
+        // Correção EXCLUSIVA do Mural. Todas as outras abas continuam
+        // usando exatamente o carregamento original.
+        if (tabName === 'Mural_Imagens') {
+          data = await fetchMuralData();
+        } else {
+          const response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${targetSheet}`);
           data = await response.json();
         }
 
@@ -1136,6 +1186,7 @@
         else if (tabName === 'Mural_Imagens') buildMuralDirectView(currentData);
         else renderContent(currentData, tabName);
       } catch (err) {
+        console.error('Erro ao carregar dados:', err);
         loading.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Erro ao carregar dados.';
       }
     }
@@ -2171,26 +2222,49 @@
         if (obs) info += `<p><strong>Observações:</strong><br>${obs}</p>`;
 
       } else if (tabName === 'Mural_Imagens' || currentTab === 'Mural_Imagens') {
-        const videoRaw = item.Arquivo_Video || item.Video_URL || item.Video || '';
-        const audioRaw = item.Arquivo_Audio || item.Audio_URL || item.Audio || '';
+        const videoRawOriginal = item.Arquivo_Video || item.Video_URL || item.Video || '';
+        const audioRawOriginal = item.Arquivo_Audio || item.Audio_URL || item.Audio || '';
         const muralRaw = item.Mural_URL || item.Arquivo_URL || item.Arquivo || '';
 
-        const cleanVideo = getMediaDirectUrl(videoRaw);
-        const cleanAudio = getMediaDirectUrl(audioRaw);
+        // Na planilha, Arquivo_Video/Arquivo_Audio contêm o CAMINHO do arquivo,
+        // enquanto Mural_URL contém a URL pública já pronta. Para o modal,
+        // usamos a URL pronta quando o campo de arquivo não for uma URL.
+        const videoRaw = /^https?:\/\//i.test(String(videoRawOriginal).trim()) ? videoRawOriginal : '';
+        const audioRaw = /^https?:\/\//i.test(String(audioRawOriginal).trim()) ? audioRawOriginal : '';
+
+        const cleanVideo = getMediaDirectUrl(videoRaw || muralRaw);
+        const cleanAudio = getMediaDirectUrl(audioRaw || muralRaw);
         const cleanMural = getMediaDirectUrl(muralRaw);
 
-        if (cleanVideo) {
+        const driveFileId = (url) => {
+          const m = String(url || '').match(/\/d\/([a-zA-Z0-9_-]+)/) || String(url || '').match(/[?&]id=([a-zA-Z0-9_-]+)/);
+          return m ? m[1] : '';
+        };
+
+        if (cleanVideo && (videoRaw || (item.Arquivo_Video && cleanMural))) {
           if (cleanVideo.includes('youtube.com') || cleanVideo.includes('youtu.be')) {
             let ytEmbed = getYoutubeEmbedUrl(cleanVideo);
-            mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
+            mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>`;
           } else {
-            mediaTopContent = `<video controls autoplay style="width:100%; max-height:240px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanVideo}">Seu navegador não suporta vídeos.</video>`;
+            const fileId = driveFileId(cleanVideo);
+            if (fileId && /drive\.google\.com/i.test(cleanVideo)) {
+              mediaTopContent = `<div style="position:relative; width:100%; height:260px; margin-bottom:10px; background:#000; border-radius:6px; overflow:hidden;"><iframe src="https://drive.google.com/file/d/${fileId}/preview" style="width:100%; height:100%; border:0;" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>`;
+            } else {
+              mediaTopContent = `<video controls playsinline preload="metadata" style="width:100%; max-height:260px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanVideo}">Seu navegador não suporta vídeos.</video>`;
+            }
           }
-        } else if (cleanAudio) {
+        } else if (cleanAudio && (audioRaw || (item.Arquivo_Audio && cleanMural))) {
+          const fileId = driveFileId(cleanAudio);
+          let audioPlayer = '';
+          if (fileId && /drive\.google\.com/i.test(cleanAudio)) {
+            audioPlayer = `<div style="position:relative; width:100%; height:180px; background:#000; border-radius:6px; overflow:hidden;"><iframe src="https://drive.google.com/file/d/${fileId}/preview" style="width:100%; height:100%; border:0;" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>`;
+          } else {
+            audioPlayer = `<audio controls preload="metadata" style="width:100%;"><source src="${cleanAudio}">Seu navegador não suporta áudio.</audio>`;
+          }
           mediaTopContent = `
             <div style="text-align: center; margin-bottom: 12px; background: #121212; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
               <img src="${INSTITUTIONAL_LOGO_URL}" style="width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--gold-primary); object-fit: cover; margin-bottom: 8px; box-shadow: 0 0 10px rgba(212, 175, 55, 0.4);">
-              <audio controls autoplay style="width:100%;"><source src="${cleanAudio}">Seu navegador não suporta áudio.</audio>
+              ${audioPlayer}
             </div>
           `;
         } else if (cleanMural && !cleanMural.startsWith('http')) {

@@ -4765,7 +4765,7 @@
 
 
   /* V76 — pesquisa padronizada: loading pequeno + resultado junto ao campo */
-  .erva-sugestao-campo-v76{margin-top:6px;padding:8px;border:1px solid #4b421c;border-radius:7px;background:#111;font-size:.72rem;line-height:1.38;color:#ddd}
+  .erva-sugestao-campo-v76{margin-top:6px;padding:8px;border:1px solid #4b421c;border-radius:7px;background:#111;font-size:.72rem;line-height:1.38;color:#ddd;position:absolute;z-index:20;width:min(430px,72vw);box-shadow:0 8px 24px rgba(0,0,0,.55)}
   .erva-sugestao-campo-v76 .v76fonte{display:block;color:#777;font-size:.62rem;margin-top:5px}
   .erva-sugestao-campo-v76 .v76acoes{display:flex;gap:6px;justify-content:flex-end;margin-top:7px}
   .erva-sugestao-campo-v76 button{border:1px solid #8f7620;background:#17150d;color:#e5c83c;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:.68rem;font-weight:700}
@@ -5119,16 +5119,21 @@
 
   function frasesRelevantesV76(texto,campo){
     const mapa={
-      Finalidade_Propriedades:['propriedade','efeito','medicinal','terapêut','óleo essencial','composto','atividade'],
-      Indicacao_Uso:['indicad','utilizad','usad','trat','sintoma','medicinal','terapêut'],
-      Modo_Uso:['infusão','decoc','chá','macer','prepar','dose','folhas','flores','uso tópico','banho'],
-      Cuidados:['contraindic','toxic','advers','risco','cuidado','grávid','gesta','interaç','alerg','segurança'],
-      Observacoes:['origin','nativ','espécie','família','gênero','cultiv','distribui','aromát','perene','arbusto'],
-      Uso_Espiritual:['relig','ritual','espiritual','umbanda','banho','defuma','sagrado','tradição']
+      Finalidade_Propriedades:['propriedade','efeito','atividade','medicinal','terapêut','antioxid','anti-inflamat','calmante','sedativ','digestiv','antimicrob'],
+      Indicacao_Uso:['indicad','utilizad','empregad','tratamento','sintoma','terapêut','medicinal'],
+      Modo_Uso:['infusão','decocção','decoc','chá','macer','preparo','preparad','dose','xícara','colher','aplicar','uso tópico','banho'],
+      Cuidados:['contraindic','toxic','efeito advers','não deve','evitar','risco','grávid','gesta','amament','interaç','alerg','segurança'],
+      Observacoes:['origem','nativa','espécie','família','gênero','cultiv','distribui','aromát','perene','arbusto'],
+      Uso_Espiritual:['umbanda','candomblé','relig','ritual','espiritual','defuma','banho de ervas','sagrado','orixá','tradição']
     };
     const ks=mapa[campo]||[];
     const frases=String(texto||'').replace(/\s+/g,' ').split(/(?<=[.!?])\s+/);
-    return frases.filter(f=>ks.some(k=>f.toLowerCase().includes(k))).slice(0,3).join(' ').trim();
+    const achadas=frases.filter(f=>{
+      const z=f.toLowerCase();
+      return ks.some(k=>z.includes(k));
+    }).filter(f=>f.length>=25 && f.length<=360);
+    if(!achadas.length)return '';
+    return achadas.slice(0,2).join(' ').trim();
   }
 
   async function paginaWikipediaV76(nome){
@@ -5168,10 +5173,10 @@
       const box=document.createElement('div');box.className='erva-sugestao-campo-v76';
 
       if(!sugestao){
-        box.innerHTML=`Não encontrei informação específica para <strong>${escErvaV37(rotulo)}</strong>. Não vou sugerir conteúdo genérico de outra planta.
+        box.innerHTML=`Não encontrei informação específica para <strong>${escErvaV37(rotulo)}</strong> nesta fonte.
         <div class="v76acoes"><button type="button" onclick="this.closest('.erva-sugestao-campo-v76').remove()">Fechar</button></div>`;
       }else{
-        box.innerHTML=`${escErvaV37(sugestao)}
+        box.innerHTML=`<strong>${escErvaV37(rotulo)}:</strong> ${escErvaV37(sugestao)}
         <span class="v76fonte">Fonte: Wikipédia em português — ${escErvaV37(pag.titulo)}</span>
         <div class="v76acoes"><button type="button" onclick="this.closest('.erva-sugestao-campo-v76').remove()">Descartar</button>
         <button type="button" data-campo="${escErvaV37(campo)}" data-texto="${encodeURIComponent(sugestao)}" onclick="usarSugestaoErvaTZC_V69(this)"><i class="fa-solid fa-check"></i> Usar</button></div>`;
@@ -6450,3 +6455,5 @@ function filtrarEstudosTZC_V55(valor){
 <!-- TZC V75 — remove banners repetitivos e diferencia melhor a pesquisa de cada campo. -->
 
 <!-- TZC V76 — sem modal grande; pesquisa pequena padronizada e filtro de conteúdo da própria planta. -->
+
+<!-- TZC V77 — respostas curtas e estritamente relacionadas ao campo; sem biografia genérica da planta. -->

@@ -1115,9 +1115,18 @@
       const targetSheet = (tabName === 'Home' || tabName === 'Agenda') ? 'Agenda_Festividades' : tabName;
 
       try {
-        const response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${targetSheet}`);
+        let response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${targetSheet}`);
         let data = await response.json();
-        currentData = data;
+
+        // A aba usada para o Mural na planilha atual chama-se exatamente
+        // "Mural_URL sera as colunas". Mantemos Mural_Imagens como primeira
+        // tentativa para não alterar o comportamento das demais instalações.
+        if (tabName === 'Mural_Imagens' && (!Array.isArray(data) || data.length === 0)) {
+          response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Mural_URL%20sera%20as%20colunas`);
+          data = await response.json();
+        }
+
+        currentData = Array.isArray(data) ? data : [];
         loading.style.display = 'none';
 
         if (tabName === 'Home') buildHomeAgenda(currentData);
@@ -1245,28 +1254,26 @@
     /* ================= MURAL DE AVISOS ================= */
     function getMediaDirectUrl(raw) {
       if (!raw) return '';
-
       const clean = String(raw).trim();
       if (!clean) return '';
 
-      // Links externos (YouTube, links de imagem, etc.) permanecem iguais.
+      // Links externos (YouTube, imagens externas etc.) permanecem iguais.
       if (!/drive\.google\.com|docs\.google\.com/i.test(clean)) return clean;
 
-      // Se o codigo.gs já gerou uma URL de mídia, não altere para download.
+      // Se o codigo.gs já gerou uma URL de mídia, não transforme em download.
       if (/drive\.google\.com\/uc\?[^#]*export=media/i.test(clean)) return clean;
 
-      // Extrai o ID de arquivos do Google Drive.
       const match = clean.match(/\/d\/([a-zA-Z0-9_-]+)/) || clean.match(/[?&]id=([a-zA-Z0-9_-]+)/);
       if (!match || !match[1]) return clean;
 
       const fileId = match[1];
 
-      // Imagens: URL que funciona diretamente no <img>.
+      // Imagens do Drive.
       if (/\.(jpg|jpeg|png|gif|webp|bmp|svg)(?:[?#].*)?$/i.test(clean)) {
         return `https://lh3.googleusercontent.com/d/${fileId}`;
       }
 
-      // Vídeo/áudio: MEDIA, nunca DOWNLOAD.
+      // Vídeos e áudios do Drive: manter MEDIA, não DOWNLOAD.
       return `https://drive.google.com/uc?export=media&id=${fileId}`;
     }
 
@@ -1613,7 +1620,7 @@
         const catLabel = getPontoCategory(item);
         const letra = item.Letra_Ponto || item.Letra || item.Conteudo_Texto || '';
         const imagem = getCleanImageUrl(item);
-        const hasMedia = item.PontoAudio_URL || item.Audio_URL || item.Audio || item.PontoVideo_URL || item.URLVideo_URL || item.URLVideo || item.Video_URL || item.Video || item.MP4 || item.Arquivo_URL;
+        const hasMedia = item.PontoAudio_URL || item.Audio_URL || item.Audio || item.PontoVideo_URL || item.Video_Ponto || item.URLVideo_URL || item.URLVideo || item.Video_URL || item.Video || item.MP4 || item.Arquivo_URL;
 
         let imgHtml = imagem ? `<img src="${imagem}" class="card-img" alt="${titulo}">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid ${hasMedia ? 'fa-circle-play' : 'fa-music'} fa-2x"></i></div>`;
 
@@ -2102,6 +2109,25 @@
       }
     }
 
+    function getYoutubeEmbedUrl(url) {
+      const clean = String(url || '').trim();
+      if (!clean) return '';
+      try {
+        const u = new URL(clean);
+        let id = '';
+        if (u.hostname.includes('youtu.be')) {
+          id = u.pathname.replace(/^\//, '').split('/')[0];
+        } else if (u.hostname.includes('youtube.com')) {
+          if (u.pathname === '/watch') id = u.searchParams.get('v') || '';
+          else if (u.pathname.startsWith('/shorts/')) id = u.pathname.split('/')[2] || '';
+          else if (u.pathname.startsWith('/embed/')) id = u.pathname.split('/')[2] || '';
+        }
+        return id ? `https://www.youtube.com/embed/${id}` : clean;
+      } catch (e) {
+        return clean;
+      }
+    }
+
     function openGenericDetail(item, tabName) {
       const modalContent = document.getElementById('detailModalContent');
       const titulo = item.Titulo_Ponto || item.Nome_Evento || item.Titulo || item.Nome_Erva || item.Categoria || 'Detalhes';
@@ -2112,16 +2138,14 @@
 
       if (tabName === 'Pontos_Cantados' || currentTab === 'Pontos_Cantados') {
         const audioUrl = item.PontoAudio_URL || item.Audio_URL || item.Audio || item.OrigemAudio_Ponto || '';
-        const videoUrl = item.PontoVideo_URL || item.URLVideo_URL || item.URLVideo || item.Video_URL || item.Video || item.MP4 || '';
+        const videoUrl = item.PontoVideo_URL || item.Video_Ponto || item.URLVideo_URL || item.URLVideo || item.Video_URL || item.Video || item.MP4 || '';
 
         let cleanAudio = getMediaDirectUrl(audioUrl);
         let cleanVideo = getMediaDirectUrl(videoUrl);
 
         if (cleanVideo && cleanVideo.startsWith('http')) {
           if (cleanVideo.includes('youtube.com') || cleanVideo.includes('youtu.be')) {
-            let ytEmbed = cleanVideo;
-            if (cleanVideo.includes('watch?v=')) ytEmbed = cleanVideo.replace('watch?v=', 'embed/');
-            else if (cleanVideo.includes('youtu.be/')) ytEmbed = cleanVideo.replace('youtu.be/', 'www.youtube.com/embed/');
+            let ytEmbed = getYoutubeEmbedUrl(cleanVideo);
             mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
           } else {
             mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanVideo}">Seu navegador não suporta vídeos.</video>`;
@@ -2157,9 +2181,7 @@
 
         if (cleanVideo) {
           if (cleanVideo.includes('youtube.com') || cleanVideo.includes('youtu.be')) {
-            let ytEmbed = cleanVideo;
-            if (cleanVideo.includes('watch?v=')) ytEmbed = cleanVideo.replace('watch?v=', 'embed/');
-            else if (cleanVideo.includes('youtu.be/')) ytEmbed = cleanVideo.replace('youtu.be/', 'www.youtube.com/embed/');
+            let ytEmbed = getYoutubeEmbedUrl(cleanVideo);
             mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
           } else {
             mediaTopContent = `<video controls autoplay style="width:100%; max-height:240px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanVideo}">Seu navegador não suporta vídeos.</video>`;
@@ -2231,9 +2253,7 @@
           if (isAudio) {
             mediaTopContent = `<audio controls autoplay style="width:100%; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta áudio.</audio>`;
           } else if (isYoutube) {
-            let ytEmbed = cleanMedia;
-            if (cleanMedia.includes('watch?v=')) ytEmbed = cleanMedia.replace('watch?v=', 'embed/');
-            else if (cleanMedia.includes('youtu.be/')) ytEmbed = cleanMedia.replace('youtu.be/', 'www.youtube.com/embed/');
+            let ytEmbed = getYoutubeEmbedUrl(cleanMedia);
             mediaTopContent = `<div style="position:relative; width:100%; padding-bottom:56.25%; height:0; margin-bottom:10px;"><iframe src="${ytEmbed}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:0; border-radius:6px;" allowfullscreen></iframe></div>`;
           } else {
             mediaTopContent = `<video controls autoplay style="width:100%; max-height:220px; background:#000; border-radius:6px; margin-bottom:10px;"><source src="${cleanMedia}">Seu navegador não suporta vídeos.</video>`;

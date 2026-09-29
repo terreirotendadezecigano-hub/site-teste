@@ -1343,7 +1343,15 @@
       const clean = String(raw).trim();
       if (!clean) return '';
 
-      if (/youtube\.com|youtu\.be/i.test(clean)) return clean;
+      // Links externos (YouTube, Vimeo, etc.) ficam exatamente como estão.
+      if (/youtube\.com|youtu\.be|vimeo\.com/i.test(clean)) return clean;
+
+      // MUITO IMPORTANTE:
+      // Se o codigo.gs já gerou uma URL de mídia do Drive, NÃO transformar
+      // novamente em "download". O endpoint "download" pode forçar o Chrome
+      // a baixar MP4/M4A em vez de reproduzir no site.
+      if (/drive\.google\.com\/uc\?[^#]*export=media/i.test(clean)) return clean;
+      if (/drive\.usercontent\.google\.com\/download\?/i.test(clean) && /export=media/i.test(clean)) return clean;
 
       const fileId = extractGoogleDriveFileId(clean);
       if (fileId) {
@@ -1353,7 +1361,8 @@
           return `https://lh3.googleusercontent.com/d/${fileId}`;
         }
 
-        return `https://drive.usercontent.google.com/download?id=${fileId}&export=download&confirm=t`;
+        // Para vídeo e áudio do Drive, usar o endpoint MEDIA, não DOWNLOAD.
+        return `https://drive.google.com/uc?export=media&id=${fileId}`;
       }
 
       return clean;

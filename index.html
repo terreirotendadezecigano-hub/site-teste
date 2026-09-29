@@ -1894,7 +1894,7 @@
               </div>
             </button>
 
-            <button type="button" class="card" onclick="abrirArtesPdfTZC()" style="text-align:left;border:1px solid var(--border-color);cursor:pointer;background:linear-gradient(145deg,#171717,#0d0d0d);">
+            <button type="button" class="card card-artes-pdfs" onclick="abrirArtesPdfTZC()" style="text-align:left;border:1px solid var(--border-color);cursor:pointer;background:linear-gradient(145deg,#171717,#0d0d0d);">
               <div style="padding:20px;">
                 <i class="fa-solid fa-palette" style="font-size:1.7rem;color:var(--gold-primary);margin-bottom:12px;"></i>
                 <h3 style="margin:0 0 6px;">Artes e PDFs</h3>
@@ -5829,12 +5829,16 @@ function filtrarEstudosTZC_V55(valor){
  };
  window.verArtePdfTZC=function(id){
    const x=window.tzcArtesV85.find(a=>String(a.ID_Material)===String(id));if(!x)return;
-   const ehPdf=/pdf/i.test(String(x.Tipo||'')) || /\.pdf(?:$|[?#])/i.test(String(x.Arquivo_URL||''));
-   const preview=x.Capa_URL
-     ? `<img src="${esc(x.Capa_URL)}" alt="${esc(x.Titulo)}">`
-     : (ehPdf && x.Arquivo_URL
-        ? `<iframe class="artes-pdf-preview-v89" src="${esc(x.Arquivo_URL)}#page=1&view=FitH" title="Prévia de ${esc(x.Titulo)}"></iframe>`
-        : `<div class="artes-view-placeholder-v88"><span>Prévia não informada</span></div>`);
+   const arquivo=String(x.Arquivo_URL||'').trim(), capa=String(x.Capa_URL||'').trim();
+   const ehPdf=/pdf/i.test(String(x.Tipo||'')) || /\.pdf(?:$|[?#])/i.test(arquivo);
+   const ehImagem=/\.(?:png|jpe?g|gif|webp|svg)(?:$|[?#])/i.test(arquivo) || /^data:image\//i.test(arquivo);
+   const preview=capa
+     ? `<img src="${esc(capa)}" alt="${esc(x.Titulo)}" onerror="this.outerHTML='<div class=&quot;artes-view-placeholder-v88&quot;><span>Capa não pôde ser carregada</span></div>'">`
+     : (ehImagem
+        ? `<img src="${esc(arquivo)}" alt="${esc(x.Titulo)}">`
+        : (ehPdf && arquivo
+           ? `<iframe class="artes-pdf-preview-v89" src="${esc(arquivo)}#page=1&view=FitH" title="Prévia de ${esc(x.Titulo)}"></iframe>`
+           : `<div class="artes-view-placeholder-v88"><span>Prévia não informada</span></div>`));
    modal(`<div class="artes-modal-head-v85"><h3>${esc(x.Titulo)}</h3><button class="artes-x-v85" onclick="fecharModalArtesTZC()">×</button></div>
    <div class="artes-view-layout-v88">
      <div class="artes-view-preview-v88">${preview}</div>
@@ -5842,7 +5846,7 @@ function filtrarEstudosTZC_V55(valor){
        <p><strong>Tipo:</strong> ${esc(x.Tipo)}</p>
        <p><strong>Categoria:</strong> ${esc(x.Categoria||'—')}</p>
        <p><strong>Descrição:</strong> ${esc(x.Descricao||'—')}</p>
-       <p><strong>Acesso Público:</strong> ${esc(x.Acesso_Publico)}</p>
+       <p><strong>Acesso Público:</strong> <span class="tzc-status-cinza-v90">${esc(x.Acesso_Publico||"—")}</span></p>
        <p><strong>Arquivo / Link:</strong> ${x.Arquivo_URL?`<a class="artes-link-v85" href="${esc(x.Arquivo_URL)}" target="_blank" rel="noopener">Abrir material</a>`:'Não informado'}</p>
      </div>
    </div>
@@ -6722,3 +6726,13 @@ function filtrarEstudosTZC_V55(valor){
 <!-- TZC V78 — resultado compacto centralizado sobre o formulário. -->
 
 <!-- TZC V79 — corrige reabertura do modal: aliases históricos + cache mesclado + recarga pós-save. Preparado para enriquecimento por fontes/livro sem perder dados existentes. -->
+
+<style id="tzc-v91-harmonia">
+/* Gestão Interna — cards sempre legíveis */
+#cardArtesPDFs, #cardArtesPDFs:link, #cardArtesPDFs:visited,
+.card-artes-pdfs, .card-artes-pdfs:link, .card-artes-pdfs:visited {color:#fff!important}
+#cardArtesPDFs h3,#cardArtesPDFs p,#cardArtesPDFs span,
+.card-artes-pdfs h3,.card-artes-pdfs p,.card-artes-pdfs span {color:inherit!important}
+/* Acesso/Visibilidade — padrão global */
+.tzc-status-cinza-v90{display:inline-block!important;color:#c7c7c7!important;background:#1b1b1b!important;border:1px solid #353535!important;border-radius:5px!important;padding:3px 7px!important;font-size:.72rem!important;font-weight:600!important;line-height:1.1!important}
+</style>

@@ -3899,3 +3899,41 @@
   .btn-login,.user-logged{font-size:.75rem!important;min-height:30px!important;padding:5px 8px!important}
 }
 </style>
+
+
+<style id="tzc-v35-config-largura-total">
+/* Configurações segue a mesma largura visual do Acervo/Estudos */
+#tzcGeralPainelV1{width:100%!important;max-width:none!important}
+.tzc-inline-wrap{
+  width:100%!important;
+  max-width:none!important;
+  grid-template-columns:1fr!important;
+  gap:10px!important;
+}
+.tzc-inline-sec,
+.tzc-inline-sec.tzc-v33-largo{
+  width:100%!important;
+  max-width:none!important;
+  grid-column:1/-1!important;
+  box-sizing:border-box!important;
+}
+
+/* Mais espaço horizontal interno: dados deixam de ficar amontoados */
+.tzc-inline-sec .tzc-inline-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:12px 24px!important;
+}
+#tzcSec_identidade .tzc-inline-grid,
+#tzcSec_institucional .tzc-inline-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+
+@media(max-width:1050px){
+  .tzc-inline-sec .tzc-inline-grid,
+  #tzcSec_identidade .tzc-inline-grid,
+  #tzcSec_institucional .tzc-inline-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media(max-width:760px){
+  .tzc-inline-sec .tzc-inline-grid,
+  #tzcSec_identidade .tzc-inline-grid,
+  #tzcSec_institucional .tzc-inline-grid{grid-template-columns:1fr!important}
+}
+</style>

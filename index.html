@@ -1007,6 +1007,14 @@
               </div>
             </button>
 
+            <button type="button" class="card" onclick="abrirCategoriasTZC_V1()" style="text-align:left;border:1px solid var(--border-color);cursor:pointer;background:linear-gradient(145deg,#171717,#0d0d0d);">
+              <div style="padding:20px;">
+                <i class="fa-solid fa-tags" style="font-size:1.7rem;color:var(--gold-primary);margin-bottom:12px;"></i>
+                <h3 style="margin:0 0 6px;color:#fff !important;font-size:1rem;">Categorias</h3>
+                <p style="margin:0;color:var(--text-muted);font-size:.82rem;">Organizar categorias usadas nos módulos do sistema.</p>
+              </div>
+            </button>
+
             <div class="card" style="text-align:left;opacity:.65;">
               <div style="padding:20px;">
                 <i class="fa-solid fa-leaf" style="font-size:1.7rem;color:var(--gold-primary);margin-bottom:12px;"></i>
@@ -1762,6 +1770,230 @@
       } catch (e) {
         console.info('Configurações flexíveis TZC ainda não disponíveis:', e.message);
       }
+    }
+
+    /* ================= GESTÃO INTERNA — CATEGORIAS V1 ================= */
+    async function abrirCategoriasTZC_V1() {
+      const container = document.getElementById('contentContainer');
+      const search = document.getElementById('searchContainerWrapper');
+      if (search) search.style.display = 'none';
+
+      container.innerHTML = `
+        <section style="padding:8px 0 30px;">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+            <div>
+              <div style="font-size:.72rem;color:var(--gold-primary);font-weight:700;text-transform:uppercase;letter-spacing:.04em;">Gestão Interna</div>
+              <h2 style="margin:4px 0 0;color:#fff;font-size:1rem;">Categorias</h2>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button type="button" class="btn-toolbar" onclick="voltarGestaoInternaTZC_V1()">
+                <i class="fa-solid fa-arrow-left"></i> Gestão Interna
+              </button>
+              <button type="button" class="btn-toolbar btn-primary" onclick="abrirNovaCategoriaTZC_V1()">
+                <i class="fa-solid fa-plus"></i> Nova Categoria
+              </button>
+            </div>
+          </div>
+          <div id="tzcCategoriasTabela"><div style="padding:22px;color:var(--text-muted);">Carregando categorias...</div></div>
+        </section>`;
+
+      try {
+        const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${encodeURIComponent(TZC_CATEGORIAS_SHEET)}?t=${Date.now()}`, {cache:'no-store'});
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const rows = await res.json();
+        window.tzcCategoriasGestaoV1 = Array.isArray(rows) ? rows : [];
+      } catch (e) {
+        window.tzcCategoriasGestaoV1 = [];
+        showToast('Não foi possível carregar as categorias.');
+      }
+      renderCategoriasTZC_V1();
+    }
+
+    function categoriaAtivaTZC_V1(item) {
+      const status = String(item.Status || '').trim().toLowerCase();
+      const ativo = String(item.Ativo ?? 'Sim').trim().toLowerCase();
+      return !['excluido','excluído'].includes(status) &&
+             !['nao','não','false','inativo','excluido','excluído'].includes(ativo);
+    }
+
+    function idCategoriaTZC_V1(item) {
+      return String(item.ID_Categoria || item.ID || '').trim();
+    }
+
+    function nomeCategoriaTZC_V1(item) {
+      return String(item.Nome || item.Categoria || '').trim();
+    }
+
+    function renderCategoriasTZC_V1() {
+      const alvo = document.getElementById('tzcCategoriasTabela');
+      if (!alvo) return;
+      const dados = (Array.isArray(window.tzcCategoriasGestaoV1) ? window.tzcCategoriasGestaoV1 : [])
+        .filter(categoriaAtivaTZC_V1)
+        .sort((a,b) => nomeCategoriaTZC_V1(a).localeCompare(nomeCategoriaTZC_V1(b),'pt-BR',{sensitivity:'base'}));
+
+      if (!dados.length) {
+        alvo.innerHTML = `<div class="card" style="padding:20px;color:var(--text-muted);">Nenhuma categoria cadastrada.</div>`;
+        return;
+      }
+
+      alvo.innerHTML = `
+        <div style="border:1px solid var(--border-color);border-radius:10px;overflow:hidden;background:#101010;">
+          <table style="width:100%;border-collapse:collapse;font-size:.78rem;">
+            <thead>
+              <tr style="color:var(--gold-primary);text-align:left;">
+                <th style="padding:10px;">Categoria</th>
+                <th style="padding:10px;">Módulo</th>
+                <th style="padding:10px;">Situação</th>
+                <th style="padding:10px;text-align:right;">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${dados.map(c => {
+                const id = idCategoriaTZC_V1(c);
+                return `<tr style="border-top:1px solid var(--border-color);">
+                  <td style="padding:10px;color:#fff;font-weight:700;">${escTZC_V1(nomeCategoriaTZC_V1(c) || 'Sem nome')}</td>
+                  <td style="padding:10px;color:var(--text-muted);">${escTZC_V1(c.Modulo || c.Area || 'Estudos')}</td>
+                  <td style="padding:10px;color:#fff;">Ativa</td>
+                  <td style="padding:7px 10px;text-align:right;white-space:nowrap;">
+                    <button class="btn-icon" title="Editar" onclick="editarCategoriaTZC_V1('${escTZC_V1(id)}')"><i class="fa-solid fa-pencil"></i></button>
+                    <button class="btn-icon" title="Excluir" onclick="excluirCategoriaTZC_V1('${escTZC_V1(id)}')"><i class="fa-solid fa-trash"></i></button>
+                  </td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:8px;color:var(--text-muted);font-size:.72rem;">${dados.length} categoria${dados.length === 1 ? '' : 's'} ativa${dados.length === 1 ? '' : 's'}</div>`;
+    }
+
+    function abrirNovaCategoriaTZC_V1() {
+      abrirModalCategoriaTZC_V1(null);
+    }
+
+    function editarCategoriaTZC_V1(id) {
+      const item = (window.tzcCategoriasGestaoV1 || []).find(x => idCategoriaTZC_V1(x) === String(id));
+      if (!item) return showToast('Categoria não encontrada.');
+      abrirModalCategoriaTZC_V1(item);
+    }
+
+    function abrirModalCategoriaTZC_V1(item) {
+      document.getElementById('modalCategoriaTZC_V1')?.remove();
+      const editando = !!item;
+      const id = editando ? idCategoriaTZC_V1(item) : ('CAT-' + Date.now());
+      const overlay = document.createElement('div');
+      overlay.id = 'modalCategoriaTZC_V1';
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:18px;';
+      overlay.innerHTML = `
+        <div style="width:min(460px,calc(100vw - 36px));background:#111;border:1px solid var(--gold-primary);border-radius:12px;padding:18px;box-shadow:0 18px 55px rgba(0,0,0,.55);">
+          <form onsubmit="salvarCategoriaTZC_V1(event)" data-modo="${editando ? 'editar' : 'novo'}" data-id="${escTZC_V1(id)}">
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:15px;">
+              <h3 style="margin:0;color:#fff;font-size:1rem;">${editando ? 'Editar Categoria' : 'Nova Categoria'}</h3>
+              <button type="button" class="btn-icon" onclick="document.getElementById('modalCategoriaTZC_V1').remove()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="display:grid;gap:12px;">
+              <div><label>Nome da categoria</label><input id="tzcCategoriaNome" class="form-control" required value="${escTZC_V1(editando ? nomeCategoriaTZC_V1(item) : '')}"></div>
+              <div><label>Módulo</label>
+                <select id="tzcCategoriaModulo" class="form-control">
+                  <option value="Estudos">Estudos</option>
+                  <option value="Geral">Geral</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:13px;border-top:1px solid var(--border-color);">
+              <button type="button" class="btn-toolbar" onclick="document.getElementById('modalCategoriaTZC_V1').remove()">Fechar</button>
+              <button type="submit" class="btn-toolbar btn-primary"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+            </div>
+          </form>
+        </div>`;
+      document.body.appendChild(overlay);
+      const modulo = editando ? String(item.Modulo || item.Area || 'Estudos') : 'Estudos';
+      const sel = document.getElementById('tzcCategoriaModulo');
+      if ([...sel.options].some(o => o.value === modulo)) sel.value = modulo;
+      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    }
+
+    async function salvarCategoriaTZC_V1(event) {
+      event.preventDefault();
+      const form = event.target;
+      if (form.dataset.salvando === '1') return;
+      const id = form.dataset.id;
+      const modo = form.dataset.modo;
+      const nome = document.getElementById('tzcCategoriaNome').value.trim();
+      const modulo = document.getElementById('tzcCategoriaModulo').value;
+      if (!nome) return showToast('Informe o nome da categoria.');
+
+      const duplicada = (window.tzcCategoriasGestaoV1 || []).some(x =>
+        categoriaAtivaTZC_V1(x) &&
+        idCategoriaTZC_V1(x) !== id &&
+        nomeCategoriaTZC_V1(x).toLocaleLowerCase('pt-BR') === nome.toLocaleLowerCase('pt-BR') &&
+        String(x.Modulo || x.Area || 'Estudos') === modulo
+      );
+      if (duplicada) return showToast('Já existe uma categoria com esse nome neste módulo.');
+
+      form.dataset.salvando = '1';
+      const agora = new Date().toISOString();
+      const payload = {
+        acao: modo === 'editar' ? 'atualizar' : 'inserir',
+        nomeAba: TZC_CATEGORIAS_SHEET,
+        id: id,
+        idColuna: 'ID_Categoria',
+        dados: {
+          ID_Categoria: id,
+          Nome: nome,
+          Modulo: modulo,
+          Ativo: 'Sim',
+          Status: 'Ativo',
+          Data_Atualizacao: agora,
+          ...(modo === 'novo' ? {Data_Criacao: agora} : {})
+        }
+      };
+
+      document.getElementById('modalCategoriaTZC_V1')?.remove();
+      showToast(modo === 'editar' ? 'Salvando alterações...' : 'Salvando categoria...');
+
+      fetch(WEB_APP_URL, {
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify(payload)
+      }).then(() => {
+        showToast(modo === 'editar' ? 'Categoria atualizada!' : 'Categoria cadastrada!');
+        setTimeout(async () => {
+          await carregarCategoriasEstudosTZC_V1();
+          abrirCategoriasTZC_V1();
+        }, 900);
+      }).catch(e => showToast('Falha ao salvar categoria: ' + e.message));
+    }
+
+    async function excluirCategoriaTZC_V1(id) {
+      const item = (window.tzcCategoriasGestaoV1 || []).find(x => idCategoriaTZC_V1(x) === String(id));
+      if (!item) return showToast('Categoria não encontrada.');
+      const confirmou = await confirmarExclusaoEstudoTZC_V1(nomeCategoriaTZC_V1(item));
+      if (!confirmou) return;
+
+      item.Status = 'Excluido';
+      renderCategoriasTZC_V1();
+      showToast('Excluindo categoria...');
+
+      fetch(WEB_APP_URL, {
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({
+          acao:'excluir',
+          nomeAba:TZC_CATEGORIAS_SHEET,
+          id:String(id),
+          idColuna:'ID_Categoria'
+        })
+      }).then(() => {
+        showToast('Categoria excluída com sucesso!');
+        setTimeout(async () => {
+          await carregarCategoriasEstudosTZC_V1();
+          abrirCategoriasTZC_V1();
+        }, 900);
+      }).catch(e => {
+        item.Status = 'Ativo';
+        renderCategoriasTZC_V1();
+        showToast('Falha ao excluir categoria: ' + e.message);
+      });
     }
 
     async function carregarCategoriasEstudosTZC_V1() {

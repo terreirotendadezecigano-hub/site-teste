@@ -992,7 +992,7 @@
       `;
 
       try {
-        const response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Estudo`);
+        const response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Estudo?_=${Date.now()}`, { cache: 'no-store' });
         if (!response.ok) throw new Error('HTTP ' + response.status);
         const dados = await response.json();
         window.tzcEstudosV1 = Array.isArray(dados) ? dados : [];
@@ -1229,7 +1229,8 @@
     }
 
     async function excluirEstudoTZC_V1(id) {
-      const estudo = (window.tzcEstudosV1 || []).find(x =>
+      const estudos = Array.isArray(window.tzcEstudosV1) ? window.tzcEstudosV1 : [];
+      const estudo = estudos.find(x =>
         String(x.ID_Estudo || x.ID || '') === String(id)
       );
       if (!estudo) {
@@ -1247,36 +1248,34 @@
         idColuna: 'ID_Estudo'
       };
 
-      try {
-        await fetch(WEB_APP_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: {'Content-Type':'text/plain;charset=utf-8'},
-          body: JSON.stringify(payload)
-        });
-        showToast('Estudo enviado para exclusão.');
-        setTimeout(() => abrirEstudosTZC_V1(), 800);
-      } catch (e) {
+      // Remove da tela imediatamente; no banco a exclusão continua sendo lógica.
+      estudo.Status = 'Excluido';
+      renderEstudosTZC_V1(estudos);
+      showToast('Excluindo estudo...');
+
+      fetch(WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify(payload)
+      }).then(() => {
+        showToast('Estudo excluído com sucesso!');
+        setTimeout(() => abrirEstudosTZC_V1(), 1800);
+      }).catch((e) => {
+        estudo.Status = 'Ativo';
+        renderEstudosTZC_V1(estudos);
         showToast('Não foi possível excluir o estudo: ' + e.message);
-      }
+      });
     }
 
     async function salvarEstudoTZC_V1(event) {
       event.preventDefault();
 
       const form = event.target;
-      const botaoSalvar = form.querySelector('button[type="submit"]');
-
-      // Bloqueio imediato contra clique duplo.
       if (form.dataset.salvando === '1') return;
-      form.dataset.salvando = '1';
 
       const modo = form.dataset.modo || 'novo';
-
-      // O ID é criado uma única vez e reaproveitado durante toda a tentativa.
-      if (!form.dataset.idEstudo) {
-        form.dataset.idEstudo = 'EST-' + Date.now();
-      }
+      if (!form.dataset.idEstudo) form.dataset.idEstudo = 'EST-' + Date.now();
       const idEdicao = form.dataset.idEstudo;
 
       const titulo = document.getElementById('tzcEstudoTitulo').value.trim();
@@ -1290,9 +1289,15 @@
       const agora = new Date().toISOString();
 
       if (!titulo || !textoEstudo) {
-        form.dataset.salvando = '0';
         showToast('Preencha o título e o texto do estudo.');
         return;
+      }
+
+      form.dataset.salvando = '1';
+      const botaoSalvar = form.querySelector('button[type="submit"]');
+      if (botaoSalvar) {
+        botaoSalvar.disabled = true;
+        botaoSalvar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
       }
 
       const payload = {
@@ -1301,60 +1306,60 @@
         id: idEdicao,
         idColuna: 'ID_Estudo',
         valores: [
-          idEdicao,
-          titulo,
-          categoria,
-          resumo,
-          textoEstudo,
-          visibilidade,
-          imagem,
-          fonte,
-          'Ativo',
-          autor,
-          agora,
-          agora
+          idEdicao, titulo, categoria, resumo, textoEstudo, visibilidade,
+          imagem, fonte, 'Ativo', autor, agora, agora
         ]
       };
 
-      const textoOriginalBotao = botaoSalvar ? botaoSalvar.innerHTML : '';
-      if (botaoSalvar) {
-        botaoSalvar.disabled = true;
-        botaoSalvar.style.opacity = '.7';
-        botaoSalvar.style.cursor = 'wait';
-        botaoSalvar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+      // Atualização otimista: o usuário vê o resultado imediatamente.
+      const registroLocal = {
+        ID_Estudo: idEdicao,
+        'Título': titulo,
+        Titulo: titulo,
+        Categoria: categoria,
+        Resumo: resumo,
+        Texto: textoEstudo,
+        Acesso_Publico: visibilidade,
+        Estudo_Imagem: imagem,
+        Fonte: fonte,
+        Status: 'Ativo',
+        Autor: autor,
+        Data_Atualizacao: agora
+      };
+
+      window.tzcEstudosV1 = Array.isArray(window.tzcEstudosV1) ? window.tzcEstudosV1 : [];
+      const indiceLocal = window.tzcEstudosV1.findIndex(x =>
+        String(x.ID_Estudo || x.ID || '') === String(idEdicao)
+      );
+
+      if (indiceLocal >= 0) {
+        window.tzcEstudosV1[indiceLocal] = Object.assign({}, window.tzcEstudosV1[indiceLocal], registroLocal);
+      } else {
+        registroLocal.Data_Criacao = agora;
+        window.tzcEstudosV1.push(registroLocal);
       }
 
-      try {
-        await fetch(WEB_APP_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: {'Content-Type':'text/plain;charset=utf-8'},
-          body: JSON.stringify(payload)
-        });
+      // Fecha o modal ANTES de esperar o Google Apps Script responder.
+      const modal = document.getElementById('modalNovoEstudoTZC_V1');
+      if (modal) modal.remove();
 
-        // Fecha imediatamente após o envio concluir e dá retorno visual.
-        const modal = document.getElementById('modalNovoEstudoTZC_V1');
-        if (modal) modal.remove();
+      renderEstudosTZC_V1(window.tzcEstudosV1);
+      showToast(modo === 'editar' ? 'Salvando alterações...' : 'Salvando estudo...');
 
-        showToast(modo === 'editar'
-          ? 'Alterações salvas com sucesso!'
-          : 'Estudo salvo com sucesso!');
-
-        // Recarrega o Acervo após o Google Sheets ter tempo de refletir a gravação.
+      // Envio em segundo plano.
+      fetch(WEB_APP_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify(payload)
+      }).then(() => {
+        showToast(modo === 'editar' ? 'Alterações salvas com sucesso!' : 'Estudo salvo com sucesso!');
+        // Sincroniza novamente com a planilha depois do processamento.
+        setTimeout(() => abrirEstudosTZC_V1(), 1800);
+      }).catch((e) => {
+        showToast('Falha ao enviar o estudo. Tente novamente: ' + e.message);
         setTimeout(() => abrirEstudosTZC_V1(), 1200);
-
-      } catch (e) {
-        form.dataset.salvando = '0';
-
-        if (botaoSalvar) {
-          botaoSalvar.disabled = false;
-          botaoSalvar.style.opacity = '';
-          botaoSalvar.style.cursor = '';
-          botaoSalvar.innerHTML = textoOriginalBotao;
-        }
-
-        showToast('Não foi possível salvar o estudo: ' + e.message);
-      }
+      });
     }
 
     function escTZC_V1(valor) {

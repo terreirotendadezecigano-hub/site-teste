@@ -1113,50 +1113,92 @@
       const d = window.tzcGeralV1 || {};
       aplicarIdentidadeVisualTZC_V1(d);
 
-      const item = (titulo, valor, classe='') => `
-        <div class="${classe}" style="min-width:0;">
-          <div style="font-size:.72rem;color:var(--gold-primary);font-weight:700;text-transform:uppercase;margin-bottom:3px;">${titulo}</div>
-          <div style="font-size:.82rem;color:#fff;line-height:1.4;overflow-wrap:anywhere;">${escHtmlTZC_V1(valor || '—')}</div>
-        </div>`;
-      const opcional = (titulo, valor) => String(valor || '').trim() ? item(titulo, valor) : '';
-      const sec = (titulo, conteudo, cols='repeat(3,minmax(0,1fr))') => `
-        <div style="padding:11px 13px;border-bottom:1px solid var(--border-color);">
-          <div style="font-size:.8rem;color:#fff;font-weight:700;margin-bottom:9px;">${titulo}</div>
-          <div style="display:grid;grid-template-columns:${cols};gap:10px 16px;">${conteudo}</div>
-        </div>`;
+      const val = v => escHtmlTZC_V1(v || '—');
+      const linha = (titulo, valor) => `<div class="tzc-i-item"><span>${titulo}</span><div>${val(valor)}</div></div>`;
+      const opc = (titulo, valor) => String(valor||'').trim() ? linha(titulo,valor) : '';
+      const sec = (id,titulo,conteudo) => `
+        <section class="tzc-inline-sec" id="tzcSec_${id}">
+          <div class="tzc-inline-head"><strong>${titulo}</strong>
+            <button class="btn-toolbar" type="button" onclick="editarSecaoConfigTZC_V1('${id}')"><i class="fa-solid fa-pen"></i> Editar</button>
+          </div>
+          <div class="tzc-inline-grid">${conteudo}</div>
+        </section>`;
 
       el.innerHTML = `
-        <div class="card tzc-config-card-v31" style="padding:0;max-width:980px;overflow:hidden;height:auto;min-height:0;">
-          ${sec('Identidade',
-            item('Nome do Terreiro',d.Nome_Terreiro || 'Tenda de Zé Cigano')+
-            item('Subtítulo',d.Subtitulo || 'Terreiro de Umbanda')+
-            item('Logo',d.Logo_URL || 'Logo atual do site'))}
-          ${sec('Institucional',
-            item('Quem Somos',d.Quem_Somos)+
-            item('Endereço',d.Endereco)+
-            opcional('CNPJ',d.CNPJ)+
-            opcional('Inscrição Estadual',d.Inscricao_Estadual)+
-            opcional('Visão',d.Visao)+
-            opcional('Missão',d.Missao)+
-            opcional('Valores',d.Valores),
-            'repeat(3,minmax(0,1fr))')}
-          ${sec('Contato e Redes',
-            item('Telefone / WhatsApp',d.Telefone_Whatsapp)+
-            item('Grupo WhatsApp',d.Grupo_Zap)+
-            item('Instagram',d.Instagram)+
-            item('Facebook',d.Facebook))}
-          ${sec('Giras e Contribuição',
-            item('Horário das Giras',d.Horario_Giras)+item('Valor',d.Valor)+item('PIX',d.PIX))}
-          ${(d.Rodape_Texto || d.Rodape_Link_Texto || d.Rodape_Link_URL) ? sec('Rodapé',
-            opcional('Texto adicional',d.Rodape_Texto)+
-            opcional('Texto do link',d.Rodape_Link_Texto)+
-            opcional('URL do link',d.Rodape_Link_URL)) : ''}
-        </div>
-        <style>
-          @media(max-width:760px){
-            #tzcGeralPainelV1 .card>div>div{grid-template-columns:1fr!important}
-          }
-        </style>`;
+        <div class="tzc-inline-wrap">
+          ${sec('identidade','Identidade',
+            linha('Nome do Terreiro',d.Nome_Terreiro || 'Tenda de Zé Cigano')+
+            linha('Subtítulo',d.Subtitulo || 'Terreiro de Umbanda')+
+            linha('Logo',d.Logo_URL || 'Logo atual do site'))}
+          ${sec('institucional','Institucional',
+            linha('Quem Somos',d.Quem_Somos)+linha('Endereço',d.Endereco)+
+            opc('CNPJ',d.CNPJ)+opc('Inscrição Estadual',d.Inscricao_Estadual)+
+            opc('Visão',d.Visao)+opc('Missão',d.Missao)+opc('Valores',d.Valores))}
+          ${sec('contato','Contato e Redes',
+            linha('Telefone / WhatsApp',d.Telefone_Whatsapp)+linha('Grupo WhatsApp',d.Grupo_Zap)+
+            linha('Instagram',d.Instagram)+linha('Facebook',d.Facebook))}
+          ${sec('giras','Giras e Contribuição',
+            linha('Horário das Giras',d.Horario_Giras)+linha('Valor',d.Valor)+linha('PIX',d.PIX))}
+          ${sec('rodape','Rodapé',
+            linha('Texto adicional',d.Rodape_Texto)+linha('Texto do link',d.Rodape_Link_Texto)+linha('URL do link',d.Rodape_Link_URL))}
+          ${sec('aparencia','Aparência',
+            linha('Fundo principal',d.Cor_Fundo || '#0a0a0a')+linha('Fundo dos painéis',d.Cor_Card || '#141414')+
+            linha('Destaque / dourado',d.Cor_Dourado || '#d4af37')+linha('Cabeçalho / vinho',d.Cor_Cabecalho || '#60000a'))}
+        </div>`;
+    }
+
+    function camposSecaoConfigTZC_V1(id) {
+      return {
+        identidade:[['Nome_Terreiro','Nome do Terreiro'],['Subtitulo','Subtítulo'],['Logo_URL','URL da Logo']],
+        institucional:[['CNPJ','CNPJ'],['Inscricao_Estadual','Inscrição Estadual'],['Endereco','Endereço'],['Quem_Somos','Quem Somos','textarea'],['Visao','Visão','textarea'],['Missao','Missão','textarea'],['Valores','Valores','textarea']],
+        contato:[['Telefone_Whatsapp','Telefone / WhatsApp'],['Grupo_Zap','Grupo WhatsApp'],['Instagram','Instagram'],['Facebook','Facebook']],
+        giras:[['Horario_Giras','Horário das Giras'],['Valor','Valor'],['PIX','PIX']],
+        rodape:[['Rodape_Texto','Texto adicional'],['Rodape_Link_Texto','Texto do link'],['Rodape_Link_URL','URL do link']],
+        aparencia:[['Cor_Fundo','Fundo principal','color'],['Cor_Card','Fundo dos painéis','color'],['Cor_Dourado','Destaque / dourado','color'],['Cor_Cabecalho','Cabeçalho / vinho','color']]
+      }[id] || [];
+    }
+
+    function editarSecaoConfigTZC_V1(id) {
+      const sec=document.getElementById('tzcSec_'+id);
+      if(!sec) return;
+      const d=window.tzcGeralV1||{};
+      const campos=camposSecaoConfigTZC_V1(id);
+      const titulo=sec.querySelector('.tzc-inline-head strong')?.textContent || '';
+      const campoHtml=([nome,label,tipo])=>{
+        const v=d[nome] || (nome==='Cor_Fundo'?'#0a0a0a':nome==='Cor_Card'?'#141414':nome==='Cor_Dourado'?'#d4af37':nome==='Cor_Cabecalho'?'#60000a':'');
+        if(tipo==='textarea') return `<label class="tzc-edit-field"><span>${label}</span><textarea name="${nome}" rows="3">${escHtmlTZC_V1(v)}</textarea></label>`;
+        if(tipo==='color') return `<label class="tzc-edit-field"><span>${label}</span><div class="tzc-color-inline"><input type="color" name="${nome}" value="${escHtmlTZC_V1(v)}"><input type="text" data-cor="${nome}" value="${escHtmlTZC_V1(v)}"></div></label>`;
+        return `<label class="tzc-edit-field"><span>${label}</span><input name="${nome}" value="${escHtmlTZC_V1(v)}"></label>`;
+      };
+      sec.innerHTML=`<div class="tzc-inline-head"><strong>${titulo}</strong><div class="tzc-inline-actions"><button class="btn-toolbar" type="button" onclick="renderConfiguracoesTerreiroTZC_V1()">Cancelar</button><button class="btn-toolbar" type="button" onclick="salvarSecaoConfigTZC_V1('${id}')"><i class="fa-solid fa-floppy-disk"></i> Salvar</button></div></div><div class="tzc-edit-grid">${campos.map(campoHtml).join('')}</div>`;
+      sec.querySelectorAll('input[type=color]').forEach(c=>{
+        const txt=sec.querySelector(`[data-cor="${c.name}"]`);
+        c.addEventListener('input',()=>{txt.value=c.value});
+        txt?.addEventListener('input',()=>{if(/^#[0-9a-f]{6}$/i.test(txt.value))c.value=txt.value});
+      });
+    }
+
+    async function salvarSecaoConfigTZC_V1(id) {
+      const sec=document.getElementById('tzcSec_'+id);
+      if(!sec) return;
+      const dados={...(window.tzcGeralV1||{})};
+      camposSecaoConfigTZC_V1(id).forEach(([nome,,tipo])=>{
+        let el=sec.querySelector(`[name="${nome}"]`);
+        if(tipo==='color'){
+          const txt=sec.querySelector(`[data-cor="${nome}"]`);
+          dados[nome]=String((txt&&txt.value)||el?.value||'').trim();
+        } else dados[nome]=String(el?.value||'').trim();
+      });
+      window.tzcGeralV1=dados;
+      aplicarIdentidadeVisualTZC_V1(dados);
+      renderConfiguracoesTerreiroTZC_V1();
+      try { localStorage.setItem('TZC_GERAL_CACHE_V1',JSON.stringify(dados)); } catch(e) {}
+      try{
+        await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'salvar_config',nomeAba:'Geral',dados})});
+        if(typeof mostrarToastTZC_V1==='function') mostrarToastTZC_V1('Configurações salvas.');
+      }catch(e){
+        if(typeof mostrarToastTZC_V1==='function') mostrarToastTZC_V1('Não foi possível salvar.');
+      }
     }
 
     function editarConfiguracoesTerreiroTZC_V1() {
@@ -3733,6 +3775,25 @@
     flex-direction:column!important;
     justify-content:center!important;
   }
+</style>
+
+<style id="tzc-v32-inline-config">
+.tzc-inline-wrap{max-width:980px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tzc-inline-sec{background:var(--bg-card);border:1px solid var(--border-color);border-radius:8px;padding:11px 13px;height:max-content}
+.tzc-inline-head{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border-color);padding-bottom:7px;margin-bottom:9px}
+.tzc-inline-head strong{font-size:.82rem;color:#fff}
+.tzc-inline-head .btn-toolbar{padding:5px 8px;font-size:.7rem}
+.tzc-inline-grid,.tzc-edit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
+.tzc-i-item{min-width:0}.tzc-i-item span,.tzc-edit-field>span{display:block;color:var(--gold-primary);font-size:.72rem;font-weight:700;margin-bottom:3px}
+.tzc-i-item div{font-size:.82rem;color:#fff;line-height:1.4;overflow-wrap:anywhere}
+.tzc-edit-field input,.tzc-edit-field textarea{width:100%;box-sizing:border-box;background:#0d0d0d;color:#fff;border:1px solid var(--border-color);border-radius:7px;padding:7px 8px;font:inherit;font-size:.82rem}
+.tzc-edit-field textarea{resize:vertical;min-height:66px}
+.tzc-inline-actions{display:flex;gap:6px}
+.tzc-color-inline{display:grid;grid-template-columns:38px 1fr;gap:6px}.tzc-color-inline input[type=color]{height:34px;padding:2px}
+#tzcSec_identidade,#tzcSec_institucional{grid-column:1/-1}
+#tzcSec_identidade .tzc-inline-grid,#tzcSec_identidade .tzc-edit-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+#tzcSec_institucional .tzc-inline-grid,#tzcSec_institucional .tzc-edit-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:760px){.tzc-inline-wrap{grid-template-columns:1fr}.tzc-inline-sec{grid-column:1!important}.tzc-inline-grid,.tzc-edit-grid,#tzcSec_identidade .tzc-inline-grid,#tzcSec_identidade .tzc-edit-grid,#tzcSec_institucional .tzc-inline-grid,#tzcSec_institucional .tzc-edit-grid{grid-template-columns:1fr}}
 </style>
 </body>
 </html>

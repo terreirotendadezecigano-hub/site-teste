@@ -761,6 +761,33 @@
   }
 </style>
 
+
+<style id="tzc-v40-scroll-correto">
+  /* V40: remove a causa real do scroll vazio.
+     A .container antiga forçava min-height:calc(100vh - 120px)
+     sem descontar corretamente cabeçalho + rodapé. */
+  html, body {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  body {
+    overflow-y: auto !important;
+  }
+  .container {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+  #contentContainer,
+  .ervas-admin-v37 {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+  footer.footer {
+    margin-top: 0 !important;
+    position: static !important;
+  }
+</style>
+
 </head>
 <body>
 

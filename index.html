@@ -5048,6 +5048,11 @@
     const nome=document.getElementById('erva_Nome_Erva')?.value?.trim()||'';
     const box=document.getElementById('ervaSugestoesCientificoV68');
     if(!nome){showToast('Informe primeiro o nome da erva.');return;}
+    if(box && box.dataset.aberto==='1'){
+      box.innerHTML=''; box.dataset.aberto='0';
+      return;
+    }
+    if(box)box.dataset.aberto='1';
     if(box)box.innerHTML='<span style="font-size:.72rem;color:#aaa"><i class="fa-solid fa-spinner fa-spin"></i> Procurando pelo nome usado em português...</span>';
     try{
       // Primeiro procura pelo nome popular na Wikipédia em português.
@@ -5073,8 +5078,9 @@
         nomes=[...new Set((gj.results||[]).map(x=>x.canonicalName||x.scientificName).filter(Boolean))].slice(0,5);
       }
       if(!box)return; box.innerHTML='';
-      if(!nomes.length){box.innerHTML='<span style="font-size:.72rem;color:#999">Não encontrei uma identificação segura. Melhor deixar em branco e conferir manualmente.</span>';return;}
-      nomes.forEach(n=>{const b=document.createElement('button');b.type='button';b.className='erva-sugestao-v68';b.textContent=n;b.onclick=()=>{const i=document.getElementById('erva_Nome_Cientifico');if(i)i.value=n;box.innerHTML='';showToast('Nome científico selecionado. Confira antes de salvar.');};box.appendChild(b);});
+      if(!nomes.length){box.innerHTML='<span style="font-size:.72rem;color:#999">Não encontrei uma identificação segura. Melhor deixar em branco e conferir manualmente.</span>';box.dataset.aberto='0';return;}
+      const ocultar=document.createElement('button');ocultar.type='button';ocultar.className='erva-sugestao-v68';ocultar.innerHTML='<i class="fa-solid fa-eye-slash"></i> Ocultar';ocultar.onclick=()=>{box.innerHTML='';box.dataset.aberto='0';};box.appendChild(ocultar);
+      nomes.forEach(n=>{const b=document.createElement('button');b.type='button';b.className='erva-sugestao-v68';b.textContent=n;b.onclick=()=>{const i=document.getElementById('erva_Nome_Cientifico');if(i)i.value=n;box.innerHTML='';box.dataset.aberto='0';showToast('Nome científico selecionado.');};box.appendChild(b);});
     }catch(e){if(box)box.innerHTML='<span style="font-size:.72rem;color:#999">Não foi possível consultar agora.</span>';}
   };
 
@@ -6370,3 +6376,5 @@ function filtrarEstudosTZC_V55(valor){
 <!-- TZC V70 — nome científico prioriza português/Wikidata + imagens em modal próprio. -->
 
 <!-- TZC V71 — sugestões científicas compactas + botão Fechar no modal de imagens. -->
+
+<!-- TZC V72 — resultados de nome científico podem ser ocultados/recolhidos. -->

@@ -2378,7 +2378,8 @@
         const titulo = estudo['Título'] || estudo.Titulo || 'Estudo sem título';
         const categoria = estudo.Categoria || 'Estudo';
         const resumo = estudo.Resumo || '';
-        const visibilidade = estudo.Acesso_Publico || estudo.Visibilidade || '—';
+        const visRaw = estudo.Acesso_Publico || estudo.Visibilidade || '—';
+        const visibilidade = /^(público|publico|sim)$/i.test(String(visRaw).trim()) ? 'Sim' : /^(privado|não|nao)$/i.test(String(visRaw).trim()) ? 'Não' : visRaw;
         const indice = window.tzcEstudosV1.indexOf(estudo);
 
         return `
@@ -2386,7 +2387,7 @@
             <td style="padding:12px;vertical-align:middle;"><span class="card-badge">${escTZC_V1(categoria)}</span></td>
             <td style="padding:12px;vertical-align:middle;font-weight:700;color:#fff;">${escTZC_V1(titulo)}</td>
             <td style="padding:12px;vertical-align:middle;color:var(--text-muted);min-width:220px;">${escTZC_V1(resumo || '—')}</td>
-            <td style="padding:12px;vertical-align:middle;white-space:nowrap;">${escTZC_V1(visibilidade)}</td>
+            <td style="padding:12px;vertical-align:middle;white-space:nowrap;"><span class="tzc-status-cinza-v90">${escTZC_V1(visibilidade)}</span></td>
             <td style="padding:8px 12px;vertical-align:middle;white-space:nowrap;text-align:right;">
               <div style="display:flex;gap:6px;justify-content:flex-end;">
                 <button type="button" class="btn-icon-only" onclick="abrirVisualizacaoEstudoTZC_V1(window.tzcEstudosV1[${indice}])" title="Visualizar" aria-label="Visualizar">
@@ -5776,12 +5777,12 @@ function filtrarEstudosTZC_V55(valor){
 
 <style>
 /* V85 — Artes e PDFs: mesmo padrão visual oficial */
-.artes-table-v85{width:100%;border-collapse:collapse;background:var(--bg-card);border:1px solid var(--border-color);border-radius:8px;overflow:hidden}
+.artes-table-v85{width:100%;border-collapse:collapse;background:#141414;border:1px solid #2a2a2a;border-radius:8px;overflow:hidden}
 .artes-table-v85 th,.artes-table-v85 td{padding:12px 14px;border-bottom:1px solid var(--border-color);text-align:left;vertical-align:middle}
-.artes-table-v85 th{color:var(--gold-primary);font-size:.78rem;background:#111}.artes-table-v85 td{color:#eee;font-size:.84rem}.artes-table-v85 tr:last-child td{border-bottom:0}
+.artes-table-v85 th{color:var(--gold-primary);font-size:.78rem;background:#141414}.artes-table-v85 td{color:#eee;font-size:.84rem}.artes-table-v85 tr:last-child td{border-bottom:0}
 .artes-actions-v85{display:flex;gap:6px;justify-content:flex-end}.artes-actions-v85 .btn-toolbar{width:29px;height:29px;padding:0;display:inline-flex;align-items:center;justify-content:center}
 .artes-thumb-v85{width:38px;height:38px;border-radius:6px;border:1px solid #333;object-fit:cover;background:#0b0b0b}
-.artes-tipo-v85{display:flex;align-items:center;gap:8px}.artes-tipo-icon-v85{width:29px;height:29px;border-radius:7px;border:1px solid #343434;background:#1b1b1b;color:var(--gold-primary);display:inline-flex;align-items:center;justify-content:center}
+.artes-tipo-v85{display:flex;align-items:center;gap:8px}.artes-tipo-icon-v85{width:24px;height:24px;min-width:24px;border-radius:6px;border:1px solid #343434;background:#1b1b1b;color:var(--gold-primary);display:inline-flex;align-items:center;justify-content:center;font-size:.68rem}.artes-tipo-icon-v85 i{font-size:.68rem;line-height:1}
 .artes-empty-v85{padding:28px;text-align:center;color:var(--text-muted);border:1px solid var(--border-color);border-radius:8px;background:var(--bg-card)}
 .artes-overlay-v85{position:fixed;inset:0;z-index:14500;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;padding:18px}
 .artes-modal-v85{width:min(720px,96vw);max-height:90vh;overflow:auto;background:#151515;border:1px solid var(--gold-primary);border-radius:10px;padding:16px;box-shadow:0 22px 65px #000}
@@ -5791,8 +5792,11 @@ function filtrarEstudosTZC_V55(valor){
 .artes-field-v85 input,.artes-field-v85 select,.artes-field-v85 textarea{width:100%;box-sizing:border-box;background:#0d0d0d;color:#fff;border:1px solid #343434;border-radius:7px;padding:9px 10px;font:inherit}
 .artes-modal-foot-v85{display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #303030;margin-top:14px;padding-top:12px}
 .artes-view-v85 p{margin:9px 0;color:#ddd;line-height:1.45}.artes-view-v85 strong{color:var(--gold-light)}.artes-link-v85{color:var(--gold-light);word-break:break-all}
-.artes-preview-v85{max-width:100%;max-height:320px;display:block;margin:0 auto 12px;border-radius:8px;border:1px solid #333;object-fit:contain;background:#0b0b0b}
-@media(max-width:760px){.artes-grid-v85{grid-template-columns:1fr}.artes-field-v85.full{grid-column:auto}.artes-table-v85{min-width:760px}.artes-table-wrap-v85{overflow:auto}}
+.artes-preview-v85{max-width:100%;max-height:320px;display:block;margin:0 auto 12px;border-radius:8px;border:1px solid #333;object-fit:contain;background:#0b0b0b}.artes-view-layout-v88{display:grid;grid-template-columns:210px 1fr;gap:18px;align-items:start}.artes-view-preview-v88{min-height:245px;border:1px solid #303030;border-radius:9px;background:#0b0b0b;display:flex;align-items:center;justify-content:center;overflow:hidden}.artes-view-preview-v88 img{width:100%;height:245px;object-fit:contain}.artes-pdf-preview-v89{width:100%;height:245px;border:0;background:#fff;display:block}.artes-view-placeholder-v88{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;color:#666;text-align:center;padding:18px}.artes-view-placeholder-v88 i{font-size:2rem;color:var(--gold-primary)}.artes-view-info-v88{min-width:0}.artes-view-info-v88 p{padding-bottom:8px;border-bottom:1px solid #272727}.artes-view-info-v88 p:last-child{border-bottom:0}.artes-modal-view-v88{width:min(620px,94vw)}
+@media(max-width:760px){.artes-view-layout-v88{grid-template-columns:1fr}.artes-view-preview-v88{min-height:180px}.artes-view-preview-v88 img{height:220px}.artes-grid-v85{grid-template-columns:1fr}.artes-field-v85.full{grid-column:auto}.artes-table-v85{min-width:760px}.artes-table-wrap-v85{overflow:auto}}
+
+/* V90 — padrão global de acesso/visibilidade nas tabelas */
+.tzc-status-cinza-v90{display:inline-block;color:#c7c7c7;background:#1b1b1b;border:1px solid #353535;border-radius:5px;padding:3px 7px;font-size:.72rem;font-weight:600;line-height:1.1}
 </style>
 <script id="tzc-v85-artes-pdfs">
 (function(){
@@ -5804,7 +5808,7 @@ function filtrarEstudosTZC_V55(valor){
  const iconTipo=t=>/pdf/i.test(t)?'fa-solid fa-file-pdf':/document/i.test(t)?'fa-solid fa-file-lines':/imagem/i.test(t)?'fa-solid fa-image':'fa-solid fa-palette';
  const norm=x=>({ID_Material:x.ID_Material||x.ID||'',Tipo:x.Tipo||'Arte',Titulo:x.Titulo||x.Nome||'',Categoria:x.Categoria||'',Descricao:x.Descricao||x.Resumo||'',Arquivo_URL:x.Arquivo_URL||x.URL||x.Link||'',Capa_URL:x.Capa_URL||x.Imagem_URL||x.Foto_URL||'',Acesso_Publico:x.Acesso_Publico||'Sim',Status:x.Status||'Ativo',Data_Criacao:x.Data_Criacao||'',Data_Atualizacao:x.Data_Atualizacao||''});
  window.fecharModalArtesTZC=()=>document.getElementById('artesOverlayV85')?.remove();
- function modal(html){fecharModalArtesTZC();document.body.insertAdjacentHTML('beforeend',`<div id="artesOverlayV85" class="artes-overlay-v85"><div class="artes-modal-v85">${html}</div></div>`)}
+ function modal(html,extra=''){fecharModalArtesTZC();document.body.insertAdjacentHTML('beforeend',`<div id="artesOverlayV85" class="artes-overlay-v85"><div class="artes-modal-v85 ${extra}">${html}</div></div>`)}
  window.abrirArtesPdfTZC=async function(){
    const b=document.getElementById('searchContainerWrapper');if(b)b.style.display='none';const t=document.getElementById('pageTitle');if(t)t.style.display='none';
    const c=document.getElementById('contentContainer');
@@ -5821,9 +5825,29 @@ function filtrarEstudosTZC_V55(valor){
    const arr=window.tzcArtesV85.filter(x=>(x.Tipo+' '+x.Titulo+' '+x.Categoria+' '+x.Descricao).toLocaleLowerCase('pt-BR').includes(q));
    const ct=document.getElementById('artesCountV85');if(ct)ct.textContent='· '+arr.length+' registros';
    if(!arr.length){alvo.innerHTML='<div class="artes-empty-v85">Nenhum material cadastrado.</div>';return;}
-   alvo.innerHTML=`<div class="artes-table-wrap-v85"><table class="artes-table-v85"><thead><tr><th>Tipo</th><th>Título</th><th>Categoria</th><th>Acesso</th><th style="text-align:right">Ações</th></tr></thead><tbody>${arr.map(x=>`<tr><td><span class="artes-tipo-v85"><span class="artes-tipo-icon-v85"><i class="${iconTipo(x.Tipo)}"></i></span>${esc(x.Tipo)}</span></td><td><strong>${esc(x.Titulo)}</strong></td><td>${esc(x.Categoria||'—')}</td><td>${esc(x.Acesso_Publico||'Sim')}</td><td><div class="artes-actions-v85"><button class="btn-toolbar" onclick="verArtePdfTZC('${esc(x.ID_Material)}')" title="Visualizar"><i class="fa-solid fa-eye"></i></button><button class="btn-toolbar" onclick="editarArtePdfTZC('${esc(x.ID_Material)}')" title="Editar"><i class="fa-solid fa-pen"></i></button><button class="btn-toolbar" onclick="excluirArtePdfTZC('${esc(x.ID_Material)}')" title="Excluir"><i class="fa-solid fa-trash"></i></button></div></td></tr>`).join('')}</tbody></table></div>`;
+   alvo.innerHTML=`<div class="artes-table-wrap-v85"><table class="artes-table-v85"><thead><tr><th>Tipo</th><th>Título</th><th>Categoria</th><th>Acesso</th><th style="text-align:right">Ações</th></tr></thead><tbody>${arr.map(x=>`<tr><td>${esc(x.Tipo)}</td><td><strong>${esc(x.Titulo)}</strong></td><td>${esc(x.Categoria||'—')}</td><td><span class="tzc-status-cinza-v90">${esc(x.Acesso_Publico||'Sim')}</span></td><td><div class="artes-actions-v85"><button class="btn-toolbar" onclick="verArtePdfTZC('${esc(x.ID_Material)}')" title="Visualizar"><i class="fa-solid fa-eye"></i></button><button class="btn-toolbar" onclick="editarArtePdfTZC('${esc(x.ID_Material)}')" title="Editar"><i class="fa-solid fa-pen"></i></button><button class="btn-toolbar" onclick="excluirArtePdfTZC('${esc(x.ID_Material)}')" title="Excluir"><i class="fa-solid fa-trash"></i></button></div></td></tr>`).join('')}</tbody></table></div>`;
  };
- window.verArtePdfTZC=function(id){const x=window.tzcArtesV85.find(a=>String(a.ID_Material)===String(id));if(!x)return;modal(`<div class="artes-modal-head-v85"><h3><i class="${iconTipo(x.Tipo)}" style="color:var(--gold-primary);margin-right:6px"></i>${esc(x.Titulo)}</h3><button class="artes-x-v85" onclick="fecharModalArtesTZC()">×</button></div><div class="artes-view-v85">${x.Capa_URL?`<img class="artes-preview-v85" src="${esc(x.Capa_URL)}" alt="">`:''}<p><strong>Tipo:</strong> ${esc(x.Tipo)}</p><p><strong>Categoria:</strong> ${esc(x.Categoria||'—')}</p><p><strong>Descrição:</strong> ${esc(x.Descricao||'—')}</p><p><strong>Acesso Público:</strong> ${esc(x.Acesso_Publico)}</p><p><strong>Arquivo / Link:</strong> ${x.Arquivo_URL?`<a class="artes-link-v85" href="${esc(x.Arquivo_URL)}" target="_blank" rel="noopener">Abrir material</a>`:'Não informado'}</p></div><div class="artes-modal-foot-v85"><button class="btn-toolbar" onclick="fecharModalArtesTZC()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="fecharModalArtesTZC();editarArtePdfTZC('${esc(id)}')"><i class="fa-solid fa-pen"></i> Editar</button></div>`)};
+ window.verArtePdfTZC=function(id){
+   const x=window.tzcArtesV85.find(a=>String(a.ID_Material)===String(id));if(!x)return;
+   const ehPdf=/pdf/i.test(String(x.Tipo||'')) || /\.pdf(?:$|[?#])/i.test(String(x.Arquivo_URL||''));
+   const preview=x.Capa_URL
+     ? `<img src="${esc(x.Capa_URL)}" alt="${esc(x.Titulo)}">`
+     : (ehPdf && x.Arquivo_URL
+        ? `<iframe class="artes-pdf-preview-v89" src="${esc(x.Arquivo_URL)}#page=1&view=FitH" title="Prévia de ${esc(x.Titulo)}"></iframe>`
+        : `<div class="artes-view-placeholder-v88"><span>Prévia não informada</span></div>`);
+   modal(`<div class="artes-modal-head-v85"><h3>${esc(x.Titulo)}</h3><button class="artes-x-v85" onclick="fecharModalArtesTZC()">×</button></div>
+   <div class="artes-view-layout-v88">
+     <div class="artes-view-preview-v88">${preview}</div>
+     <div class="artes-view-v85 artes-view-info-v88">
+       <p><strong>Tipo:</strong> ${esc(x.Tipo)}</p>
+       <p><strong>Categoria:</strong> ${esc(x.Categoria||'—')}</p>
+       <p><strong>Descrição:</strong> ${esc(x.Descricao||'—')}</p>
+       <p><strong>Acesso Público:</strong> ${esc(x.Acesso_Publico)}</p>
+       <p><strong>Arquivo / Link:</strong> ${x.Arquivo_URL?`<a class="artes-link-v85" href="${esc(x.Arquivo_URL)}" target="_blank" rel="noopener">Abrir material</a>`:'Não informado'}</p>
+     </div>
+   </div>
+   <div class="artes-modal-foot-v85"><button class="btn-toolbar" onclick="fecharModalArtesTZC()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="fecharModalArtesTZC();editarArtePdfTZC('${esc(id)}')"><i class="fa-solid fa-pen"></i> Editar</button></div>`,'artes-modal-view-v88')
+ };
  window.editarArtePdfTZC=function(id){const x=window.tzcArtesV85.find(a=>String(a.ID_Material)===String(id))||{ID_Material:idNovo(),Tipo:'Arte',Titulo:'',Categoria:'',Descricao:'',Arquivo_URL:'',Capa_URL:'',Acesso_Publico:'Sim',Status:'Ativo'};const edit=!!id;modal(`<div class="artes-modal-head-v85"><h3>${edit?'<i class="fa-solid fa-pen"></i> Editar Material':'<i class="fa-solid fa-plus"></i> Novo Material'}</h3><button class="artes-x-v85" onclick="fecharModalArtesTZC()">×</button></div><div class="artes-grid-v85"><div class="artes-field-v85"><label>Tipo *</label><select id="aTipoV85"><option ${x.Tipo==='Arte'?'selected':''}>Arte</option><option ${x.Tipo==='PDF'?'selected':''}>PDF</option><option ${x.Tipo==='Documento'?'selected':''}>Documento</option><option ${x.Tipo==='Imagem'?'selected':''}>Imagem</option></select></div><div class="artes-field-v85"><label>Título *</label><input id="aTituloV85" value="${esc(x.Titulo)}"></div><div class="artes-field-v85"><label>Categoria</label><input id="aCategoriaV85" value="${esc(x.Categoria)}" placeholder="Ex.: Giras, Estudos, Comunicados"></div><div class="artes-field-v85"><label>Acesso Público</label><select id="aAcessoV85"><option ${x.Acesso_Publico!=='Não'?'selected':''}>Sim</option><option ${x.Acesso_Publico==='Não'?'selected':''}>Não</option></select></div><div class="artes-field-v85 full"><label>Arquivo / Link</label><input id="aArquivoV85" value="${esc(x.Arquivo_URL)}" placeholder="https://..."></div><div class="artes-field-v85 full"><label>Imagem / Capa</label><input id="aCapaV85" value="${esc(x.Capa_URL)}" placeholder="https://..."></div><div class="artes-field-v85 full"><label>Descrição</label><textarea id="aDescricaoV85" rows="4">${esc(x.Descricao)}</textarea></div></div><div class="artes-modal-foot-v85"><button class="btn-toolbar" onclick="fecharModalArtesTZC()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="salvarArtePdfTZC('${esc(x.ID_Material)}',${edit})"><i class="fa-solid fa-floppy-disk"></i> Salvar</button></div>`)};
  window.salvarArtePdfTZC=function(id,edit){const dados={ID_Material:id,Tipo:document.getElementById('aTipoV85').value,Titulo:document.getElementById('aTituloV85').value.trim(),Categoria:document.getElementById('aCategoriaV85').value.trim(),Descricao:document.getElementById('aDescricaoV85').value.trim(),Arquivo_URL:document.getElementById('aArquivoV85').value.trim(),Capa_URL:document.getElementById('aCapaV85').value.trim(),Acesso_Publico:document.getElementById('aAcessoV85').value,Status:'Ativo',Data_Atualizacao:new Date().toISOString()};if(!dados.Titulo){if(typeof showToast==='function')showToast('Informe o título.');return;}const old=window.tzcArtesV85.find(a=>String(a.ID_Material)===String(id));if(old?.Data_Criacao)dados.Data_Criacao=old.Data_Criacao;else dados.Data_Criacao=new Date().toISOString();fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:edit?'atualizar':'inserir',nomeAba:'Artes_PDFs',id,idColuna:'ID_Material',dados})});const i=window.tzcArtesV85.findIndex(a=>String(a.ID_Material)===String(id));if(i>=0)window.tzcArtesV85[i]=dados;else window.tzcArtesV85.push(dados);fecharModalArtesTZC();renderArtesPdfTZC();if(typeof showToast==='function')showToast(edit?'Material atualizado!':'Material cadastrado!');setTimeout(carregarArtesPdfTZC,1700)};
  window.excluirArtePdfTZC=function(id){const x=window.tzcArtesV85.find(a=>String(a.ID_Material)===String(id));if(!x)return;fecharModalArtesTZC();document.body.insertAdjacentHTML('beforeend',`<div id="artesOverlayV85" class="artes-overlay-v85" style="background:rgba(0,0,0,.68)"><div style="width:min(420px,94vw);background:#111;border:1px solid var(--gold-primary);border-radius:14px;padding:20px;box-shadow:0 20px 60px #000"><div style="display:flex;gap:13px;align-items:flex-start"><div style="width:36px;height:36px;min-width:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#351014;color:#ff6b72;font-size:.95rem"><i class="fa-solid fa-trash"></i></div><div style="flex:1"><h3 style="color:#fff;font-size:18px;margin:2px 0 7px">Excluir material?</h3><p style="color:#bbb;margin:0;line-height:1.45">Deseja realmente excluir “${esc(x.Titulo)}”?</p></div></div><div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #303030;margin-top:16px;padding-top:12px"><button class="btn-toolbar" onclick="fecharModalArtesTZC()">Cancelar</button><button class="btn-toolbar" style="background:#8f1f28;border-color:#b52b35;color:#fff" onclick="confirmarExcluirArtePdfTZC('${esc(id)}')"><i class="fa-solid fa-trash"></i> Excluir</button></div></div></div>`)};

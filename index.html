@@ -4746,12 +4746,18 @@
   /* V67 — Busca de imagens no Wikimedia Commons */
   .erva-img-search-v67{margin-top:12px;padding-top:12px;border-top:1px solid #292929}
   .erva-img-status-v67{font-size:.78rem;color:#aaa;margin:0 0 9px}
-  .erva-img-grid-v67{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+  .erva-img-grid-v67{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:12px}
   .erva-img-option-v67{background:#101010;border:1px solid #303030;border-radius:9px;padding:6px;cursor:pointer;text-align:left;color:#ddd}
   .erva-img-option-v67:hover{border-color:var(--gold-primary)}
-  .erva-img-option-v67 img{width:100%;aspect-ratio:1/1;object-fit:contain;background:#fff;border-radius:6px;display:block}
-  .erva-img-option-v67 small{display:block;margin-top:5px;font-size:.64rem;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  @media(max-width:720px){.erva-img-grid-v67{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  .erva-img-option-v67 img{width:100%;height:170px;object-fit:contain;background:#fff;border-radius:7px;display:block}
+  .erva-img-option-v67 small{display:block;margin-top:7px;font-size:.72rem;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  @media(max-width:850px){.erva-img-grid-v67{grid-template-columns:repeat(2,minmax(140px,1fr))}} @media(max-width:560px){.erva-img-grid-v67{grid-template-columns:1fr}.erva-img-option-v67 img{height:210px}}
+
+
+  .erva-helper-v68{height:28px;padding:0 9px;border:1px solid #66591f;border-radius:6px;background:#17150d;color:#e3c84c;font-size:.72rem;font-weight:700;cursor:pointer;white-space:nowrap}
+  .erva-helper-v68:hover{border-color:var(--gold-primary);background:#211d0c}
+  .erva-sugestoes-v68{margin-top:7px;display:flex;flex-wrap:wrap;gap:6px}
+  .erva-sugestao-v68{border:1px solid #4b421c;background:#111;color:#eee;border-radius:7px;padding:6px 9px;font-size:.74rem;cursor:pointer}
 
   /* V66 — Ervas: miniatura na tabela + visualização com foto à esquerda */
   .erva-thumb-v66{
@@ -4986,7 +4992,11 @@
     abrirModalErvaV37(`<div class="ervas-modal-head-v37"><h3><i class="fa-solid fa-leaf tzc-modal-title-icon-v51"></i> ${window.tzcErvaEditandoV37?'Editar Erva':'Nova Erva'}</h3><button class="ervas-close-v37" onclick="fecharModalErvaV37()">×</button></div>
     <div class="ervas-form-v37">
       ${campoErvaV42('Nome_Erva','Nome da Erva',x.Nome_Erva,true,'c2')}
-      ${campoErvaV42('Nome_Cientifico','Nome Científico',x.Nome_Cientifico,false,'c2')}
+      <div class="c2">
+        ${campoErvaV42('Nome_Cientifico','Nome Científico',x.Nome_Cientifico,false,'')}
+        <button type="button" class="erva-helper-v68" style="margin-top:7px;width:100%" onclick="buscarNomeCientificoErvaTZC_V68()"><i class="fa-solid fa-flask"></i> Buscar nome científico</button>
+        <div id="ervaSugestoesCientificoV68" class="erva-sugestoes-v68"></div>
+      </div>
       ${campoSelectErvaV42('Categoria','Categoria',x.Categoria,(window.tzcErvasAdminV37||[]).map(e=>e.Categoria),'c1')}
       ${campoSelectErvaV42('Tipo_Preparo','Tipo de Preparo',x.Tipo_Preparo,(window.tzcErvasAdminV37||[]).map(e=>e.Tipo_Preparo),'c1')}
       <div class="ervas-field-v37 c1"><label>Acesso Público</label><select id="erva_Acesso_Publico" title="Define se esta erva poderá aparecer em áreas públicas do sistema" aria-label="Acesso Público"><option ${String(x.Acesso_Publico||'Sim')==='Sim'?'selected':''}>Sim</option><option ${String(x.Acesso_Publico||'')==='Não'?'selected':''}>Não</option></select></div>
@@ -4994,14 +5004,36 @@
         ${campoErvaV42('Foto_URL','Imagem / link da imagem',x.Foto_URL,false,'')}
         <button type="button" class="ervas-secondary-v37" style="margin-top:7px;width:100%" onclick="buscarImagemErvaTZC_V67()"><i class="fa-solid fa-magnifying-glass"></i> Buscar imagem automaticamente</button>
       </div>
-      ${campoErvaV42('Finalidade_Propriedades','Finalidade / Propriedades',x.Finalidade_Propriedades,false,'c2',true)}
-      ${campoErvaV42('Uso_Espiritual','Uso Espiritual',x.Uso_Espiritual,false,'c2',true)}
-      ${campoErvaV42('Indicacao_Uso','Indicação de Uso',x.Indicacao_Uso,false,'c2',true)}
-      ${campoErvaV42('Modo_Uso','Modo de Uso',x.Modo_Uso,false,'c2',true)}
-      ${campoErvaV42('Cuidados','Cuidados',x.Cuidados,false,'c2',true)}
-      ${campoErvaV42('Observacoes','Observações',x.Observacoes,false,'c2',true)}
+      <div class="c2">${campoErvaV42('Finalidade_Propriedades','Finalidade / Propriedades',x.Finalidade_Propriedades,false,'',true)}<button type="button" class="erva-helper-v68" style="margin-top:6px" onclick="pesquisarDadoErvaTZC_V68('Finalidade e propriedades')"><i class="fa-solid fa-magnifying-glass"></i> Pesquisar</button></div>
+      <div class="c2">${campoErvaV42('Uso_Espiritual','Uso Espiritual',x.Uso_Espiritual,false,'',true)}<button type="button" class="erva-helper-v68" style="margin-top:6px" onclick="pesquisarDadoErvaTZC_V68('uso espiritual Umbanda')"><i class="fa-solid fa-magnifying-glass"></i> Pesquisar</button></div>
+      <div class="c2">${campoErvaV42('Indicacao_Uso','Indicação de Uso',x.Indicacao_Uso,false,'',true)}<button type="button" class="erva-helper-v68" style="margin-top:6px" onclick="pesquisarDadoErvaTZC_V68('indicação de uso')"><i class="fa-solid fa-magnifying-glass"></i> Pesquisar</button></div>
+      <div class="c2">${campoErvaV42('Modo_Uso','Modo de Uso',x.Modo_Uso,false,'',true)}<button type="button" class="erva-helper-v68" style="margin-top:6px" onclick="pesquisarDadoErvaTZC_V68('modo de uso preparo')"><i class="fa-solid fa-magnifying-glass"></i> Pesquisar</button></div>
+      <div class="c2">${campoErvaV42('Cuidados','Cuidados',x.Cuidados,false,'',true)}<button type="button" class="erva-helper-v68" style="margin-top:6px" onclick="pesquisarDadoErvaTZC_V68('cuidados contraindicações toxicidade')"><i class="fa-solid fa-magnifying-glass"></i> Pesquisar</button></div>
+      <div class="c2">${campoErvaV42('Observacoes','Observações',x.Observacoes,false,'',true)}<button type="button" class="erva-helper-v68" style="margin-top:6px" onclick="pesquisarDadoErvaTZC_V68('informações observações')"><i class="fa-solid fa-magnifying-glass"></i> Pesquisar</button></div>
       <div class="ervas-form-actions-v37"><button class="ervas-secondary-v37" onclick="fecharModalErvaV37()">Fechar</button><button class="ervas-primary-v37" onclick="salvarErvaTZC_V37()"><i class="fa-solid fa-floppy-disk"></i> Salvar</button></div>
     </div>`);
+  };
+
+  window.buscarNomeCientificoErvaTZC_V68=async function(){
+    const nome=document.getElementById('erva_Nome_Erva')?.value?.trim()||'';
+    const box=document.getElementById('ervaSugestoesCientificoV68');
+    if(!nome){showToast('Informe primeiro o nome da erva.');return;}
+    if(box)box.innerHTML='<span style="font-size:.72rem;color:#aaa"><i class="fa-solid fa-spinner fa-spin"></i> Pesquisando...</span>';
+    try{
+      const res=await fetch('https://api.gbif.org/v1/species/search?q='+encodeURIComponent(nome)+'&kingdom=Plantae&limit=8');
+      const json=await res.json();
+      const nomes=[...new Set((json.results||[]).map(x=>x.canonicalName||x.scientificName).filter(Boolean))].slice(0,6);
+      if(!box)return; box.innerHTML='';
+      if(!nomes.length){box.innerHTML='<span style="font-size:.72rem;color:#999">Nenhuma sugestão encontrada. O mesmo nome popular pode indicar espécies diferentes.</span>';return;}
+      nomes.forEach(n=>{const b=document.createElement('button');b.type='button';b.className='erva-sugestao-v68';b.textContent=n;b.onclick=()=>{const i=document.getElementById('erva_Nome_Cientifico');if(i)i.value=n;box.innerHTML='';showToast('Nome científico selecionado. Confira antes de salvar.');};box.appendChild(b);});
+    }catch(e){if(box)box.innerHTML='<span style="font-size:.72rem;color:#999">Não foi possível consultar agora.</span>';}
+  };
+
+  window.pesquisarDadoErvaTZC_V68=function(tema){
+    const nome=document.getElementById('erva_Nome_Erva')?.value?.trim()||'';
+    const cientifico=document.getElementById('erva_Nome_Cientifico')?.value?.trim()||'';
+    if(!nome&&!cientifico){showToast('Informe primeiro o nome da erva.');return;}
+    window.open('https://www.google.com/search?q='+encodeURIComponent([nome,cientifico,tema].filter(Boolean).join(' ')),'_blank','noopener,noreferrer');
   };
 
   window.buscarImagemErvaTZC_V67=async function(){
@@ -6237,3 +6269,5 @@ function filtrarEstudosTZC_V55(valor){
 <!-- TZC V66 — Ervas com miniatura na tabela e modal visual foto à esquerda / dados à direita. -->
 
 <!-- TZC V67 — Busca assistida de imagens livres via Wikimedia Commons no modal de Ervas. -->
+
+<!-- TZC V68 — imagens maiores + busca opcional de nome científico + pesquisa opcional por campo. -->

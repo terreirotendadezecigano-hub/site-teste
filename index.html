@@ -4763,6 +4763,13 @@
 
 
 
+
+  /* V76 — pesquisa padronizada: loading pequeno + resultado junto ao campo */
+  .erva-sugestao-campo-v76{margin-top:6px;padding:8px;border:1px solid #4b421c;border-radius:7px;background:#111;font-size:.72rem;line-height:1.38;color:#ddd}
+  .erva-sugestao-campo-v76 .v76fonte{display:block;color:#777;font-size:.62rem;margin-top:5px}
+  .erva-sugestao-campo-v76 .v76acoes{display:flex;gap:6px;justify-content:flex-end;margin-top:7px}
+  .erva-sugestao-campo-v76 button{border:1px solid #8f7620;background:#17150d;color:#e5c83c;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:.68rem;font-weight:700}
+
   /* V74 — níveis de pesquisa por fonte */
   .erva-fontes-v74{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
   .erva-fonte-chip-v74{border:1px solid #49401c;background:#111;color:#d7c56f;border-radius:999px;padding:5px 9px;font-size:.68rem}
@@ -5101,53 +5108,77 @@
     }catch(e){if(box)box.innerHTML='<span style="font-size:.72rem;color:#999">Não foi possível consultar agora.</span>';}
   };
 
-  window.fecharPesquisaErvaTZC_V73=function(){document.getElementById('ervaInfoOverlayV73')?.remove();};
+  window.fecharPesquisaErvaTZC_V73=function(){
+    document.getElementById('ervaInfoOverlayV73')?.remove();
+    document.getElementById('ervaPesquisaLoadingV76')?.remove();
+  };
+
+  function limparSugestoesCampoV76(){
+    document.querySelectorAll('.erva-sugestao-campo-v76').forEach(e=>e.remove());
+  }
+
+  function frasesRelevantesV76(texto,campo){
+    const mapa={
+      Finalidade_Propriedades:['propriedade','efeito','medicinal','terapêut','óleo essencial','composto','atividade'],
+      Indicacao_Uso:['indicad','utilizad','usad','trat','sintoma','medicinal','terapêut'],
+      Modo_Uso:['infusão','decoc','chá','macer','prepar','dose','folhas','flores','uso tópico','banho'],
+      Cuidados:['contraindic','toxic','advers','risco','cuidado','grávid','gesta','interaç','alerg','segurança'],
+      Observacoes:['origin','nativ','espécie','família','gênero','cultiv','distribui','aromát','perene','arbusto'],
+      Uso_Espiritual:['relig','ritual','espiritual','umbanda','banho','defuma','sagrado','tradição']
+    };
+    const ks=mapa[campo]||[];
+    const frases=String(texto||'').replace(/\s+/g,' ').split(/(?<=[.!?])\s+/);
+    return frases.filter(f=>ks.some(k=>f.toLowerCase().includes(k))).slice(0,3).join(' ').trim();
+  }
+
+  async function paginaWikipediaV76(nome){
+    const busca='https://pt.wikipedia.org/w/api.php?origin=*&action=query&list=search&srlimit=5&srnamespace=0&srsearch='+encodeURIComponent(nome)+'&format=json';
+    const j=await (await fetch(busca)).json();
+    const itens=j?.query?.search||[];
+    if(!itens.length)return null;
+    const normal=String(nome).toLowerCase();
+    const escolhido=itens.find(x=>String(x.title).toLowerCase()===normal)||itens[0];
+    const url='https://pt.wikipedia.org/w/api.php?origin=*&action=query&prop=extracts&explaintext=1&exsectionformat=plain&redirects=1&titles='+encodeURIComponent(escolhido.title)+'&format=json';
+    const p=await (await fetch(url)).json();
+    const page=Object.values(p?.query?.pages||{})[0];
+    return page?{titulo:page.title,texto:page.extract||''}:null;
+  }
 
   window.pesquisarDadoErvaTZC_V69=async function(campo,rotulo){
     const nome=document.getElementById('erva_Nome_Erva')?.value?.trim()||'';
     const cientifico=document.getElementById('erva_Nome_Cientifico')?.value?.trim()||'';
     if(!nome&&!cientifico){showToast('Informe primeiro o nome da erva.');return;}
-    fecharPesquisaErvaTZC_V73();
+    fecharPesquisaErvaTZC_V73(); limparSugestoesCampoV76();
 
-    const overlay=document.createElement('div');
-    overlay.id='ervaInfoOverlayV73';overlay.className='erva-info-overlay-v73';
-    overlay.innerHTML=`<div class="erva-info-modal-v73" onclick="event.stopPropagation()">
-      <div class="erva-info-head-v73"><h4><i class="fa-solid fa-magnifying-glass"></i> ${escErvaV37(rotulo)} — ${escErvaV37(nome||cientifico)}</h4><button type="button" onclick="fecharPesquisaErvaTZC_V73()">×</button></div>
-      <div class="erva-pesquisa-status-v69"><i class="fa-solid fa-spinner fa-spin"></i> Pesquisando...</div>
-      <div class="erva-pesquisa-list-v69"></div>
-      <div class="erva-info-footer-v73"><button type="button" class="erva-img-fechar-v71" onclick="fecharPesquisaErvaTZC_V73()"><i class="fa-solid fa-xmark"></i> Fechar</button></div>
-    </div>`;
-    overlay.onclick=()=>fecharPesquisaErvaTZC_V73();
-    document.body.appendChild(overlay);
+    const loading=document.createElement('div');
+    loading.id='ervaPesquisaLoadingV76';loading.className='erva-loading-overlay-v73';
+    loading.innerHTML='<div class="erva-loading-box-v73"><i class="fa-solid fa-spinner fa-spin"></i> Pesquisando...</div>';
+    document.body.appendChild(loading);
 
-    const temas={
-      Finalidade_Propriedades:'propriedades medicinais princípios ativos efeitos',
-      Uso_Espiritual:'Umbanda erva banho defumação ritual espiritual',
-      Indicacao_Uso:'indicações medicinais tratamento sintomas uso terapêutico',
-      Modo_Uso:'como usar preparo chá infusão decocção maceração dose',
-      Cuidados:'contraindicações efeitos adversos toxicidade interação gravidez segurança',
-      Observacoes:'curiosidades botânica origem características cultivo sinonímia'
-    };
-    const planta=cientifico||nome;
-    const q='"'+planta+'" '+(temas[campo]||rotulo);
     try{
-      const url='https://pt.wikipedia.org/w/api.php?origin=*&action=query&list=search&srnamespace=0&srlimit=5&srsearch='+encodeURIComponent(q)+'&format=json';
-      const res=await fetch(url);const json=await res.json();
-      let itens=(json?.query?.search||[]);
-      if(!itens.length&&cientifico){
-        const r2=await fetch('https://pt.wikipedia.org/w/api.php?origin=*&action=query&list=search&srnamespace=0&srlimit=6&srsearch='+encodeURIComponent(cientifico)+'&format=json');
-        const j2=await r2.json();itens=j2?.query?.search||[];
+      let pag=null;
+      if(cientifico) pag=await paginaWikipediaV76(cientifico);
+      if(!pag || !pag.texto) pag=await paginaWikipediaV76(nome);
+      const sugestao=pag?frasesRelevantesV76(pag.texto,campo):'';
+      fecharPesquisaErvaTZC_V73();
+
+      const alvo=document.getElementById('erva_'+campo);
+      const host=alvo?.parentElement;
+      if(!host)return;
+      const box=document.createElement('div');box.className='erva-sugestao-campo-v76';
+
+      if(!sugestao){
+        box.innerHTML=`Não encontrei informação específica para <strong>${escErvaV37(rotulo)}</strong>. Não vou sugerir conteúdo genérico de outra planta.
+        <div class="v76acoes"><button type="button" onclick="this.closest('.erva-sugestao-campo-v76').remove()">Fechar</button></div>`;
+      }else{
+        box.innerHTML=`${escErvaV37(sugestao)}
+        <span class="v76fonte">Fonte: Wikipédia em português — ${escErvaV37(pag.titulo)}</span>
+        <div class="v76acoes"><button type="button" onclick="this.closest('.erva-sugestao-campo-v76').remove()">Descartar</button>
+        <button type="button" data-campo="${escErvaV37(campo)}" data-texto="${encodeURIComponent(sugestao)}" onclick="usarSugestaoErvaTZC_V69(this)"><i class="fa-solid fa-check"></i> Usar</button></div>`;
       }
-      const status=overlay.querySelector('.erva-pesquisa-status-v69');
-      const lista=overlay.querySelector('.erva-pesquisa-list-v69');
-      status.textContent=itens.length?'Resultados relacionados a '+rotulo+'. Escolha somente se a informação realmente servir para este campo.':'Nenhum resultado específico encontrado para este campo.';
-      lista.insertAdjacentHTML('beforeend',itens.map(it=>{
-        const texto=String(it.snippet||'').replace(/<[^>]*>/g,' ').replace(/&quot;/g,'"').replace(/&#039;/g,"'").replace(/&amp;/g,'&').replace(/\s+/g,' ').trim();
-        const sugestao=(it.title+(texto?': '+texto:'')).trim();
-        return `<div class="erva-pesquisa-item-v69"><strong>${escErvaV37(it.title)}</strong><p>${escErvaV37(texto||'Resultado relacionado encontrado na Wikipédia.')}</p><div class="erva-fonte-v69">Fonte aberta: Wikipédia em português</div><div class="erva-pesquisa-actions-v69"><button type="button" class="erva-usar-v69" data-campo="${escErvaV37(campo)}" data-texto="${encodeURIComponent(sugestao)}" onclick="usarSugestaoErvaTZC_V69(this)"><i class="fa-solid fa-check"></i> Usar esta informação</button></div></div>`;
-      }).join(''));
+      host.appendChild(box);
     }catch(e){
-      overlay.querySelector('.erva-pesquisa-status-v69').textContent='Não foi possível pesquisar agora. O campo não foi alterado.';
+      fecharPesquisaErvaTZC_V73();showToast('Não foi possível pesquisar agora.');
     }
   };
 
@@ -5156,10 +5187,13 @@
     let texto=''; try{texto=decodeURIComponent(btn.dataset.texto||'');}catch(e){texto=btn.dataset.texto||'';}
     const inp=document.getElementById('erva_'+campo);
     if(!inp)return;
-    if(inp.value.trim() && !confirm('Este campo já possui conteúdo. Deseja substituir pelo resultado escolhido?'))return;
-    inp.value=texto;
+    if(inp.value.trim() && inp.value.trim()!==texto.trim()){
+      inp.value=(inp.value.trim()+'\n\n'+texto).trim();
+    }else{
+      inp.value=texto;
+    }
     inp.dispatchEvent(new Event('input',{bubbles:true}));
-    fecharPesquisaErvaTZC_V73();
+    btn.closest('.erva-sugestao-campo-v76')?.remove();
     showToast('Sugestão aplicada. Você ainda pode editar antes de salvar.');
   };
 
@@ -6414,3 +6448,5 @@ function filtrarEstudosTZC_V55(valor){
 <!-- TZC V74 — níveis de pesquisa dos demais campos, com fonte e cautela por tipo de dado. -->
 
 <!-- TZC V75 — remove banners repetitivos e diferencia melhor a pesquisa de cada campo. -->
+
+<!-- TZC V76 — sem modal grande; pesquisa pequena padronizada e filtro de conteúdo da própria planta. -->

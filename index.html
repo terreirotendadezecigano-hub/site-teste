@@ -749,7 +749,7 @@
       <li class="nav-item" onclick="switchTab('Guias_Instrucoes', this)"><i class="fa-solid fa-book-open"></i> Orientações</li>
       <li class="nav-item" id="menuMembros" style="display:none;" onclick="switchTab('Membros', this)"><i class="fa-solid fa-users"></i> Membros</li>
 
-          <div class="nav-item" onclick="switchTab('Gestao_Interna', this)"><i class="fa-solid fa-sliders"></i><span>Gestão Interna</span></div>
+          <div class="nav-item" id="menuGestaoInterna" style="display:none;" onclick="switchTab('Gestao_Interna', this)"><i class="fa-solid fa-sliders"></i><span>Gestão Interna</span></div>
     </ul>
   </aside>
 
@@ -2015,6 +2015,14 @@
           'Membros': '<i class="fa-solid fa-users"></i> Gestão de Membros'
         };
         if (tabName === 'Gestao_Interna') {
+          if (!podeAcessarGestaoInternaTZC_V1()) {
+            currentTab = 'Home';
+            document.getElementById('pageTitle').innerHTML = '<i class="fa-solid fa-star"></i> Destaques';
+            generalInfoSection.style.display = 'grid';
+            loadTabData('Home');
+            document.getElementById('sidebar').classList.remove('open');
+            return;
+          }
           document.getElementById('pageTitle').innerHTML = '';
           carregarGestaoInternaTZC_V1();
           document.getElementById('searchInput').value = '';
@@ -2556,20 +2564,27 @@
       isLoggedIn = false;
       loggedUser = null;
       updateAuthUI();
-      if (currentTab === 'Membros') switchTab('Home');
+      if (currentTab === 'Membros' || currentTab === 'Gestao_Interna') switchTab('Home');
       else loadTabData(currentTab);
+    }
+
+    function podeAcessarGestaoInternaTZC_V1() {
+      return !!(isLoggedIn && loggedUser && String(loggedUser.perfil || '').trim().toLowerCase() === 'dirigente');
     }
 
     function updateAuthUI() {
       const container = document.getElementById('authContainer');
       const menuMembros = document.getElementById('menuMembros');
+      const menuGestaoInterna = document.getElementById('menuGestaoInterna');
       if (isLoggedIn && loggedUser) {
         container.innerHTML = `<div class="user-logged"><i class="fa-solid fa-circle-check" style="color: #2ecc71;"></i><span>${loggedUser.nome.split(' ')[0]}</span><i class="fa-solid fa-right-from-bracket" style="cursor:pointer; margin-left:4px;" onclick="logout()" title="Sair"></i></div>`;
-        if (loggedUser.perfil === 'Dirigente') menuMembros.style.display = 'flex';
-        else menuMembros.style.display = 'none';
+        const podeGerir = podeAcessarGestaoInternaTZC_V1();
+        menuMembros.style.display = podeGerir ? 'flex' : 'none';
+        if (menuGestaoInterna) menuGestaoInterna.style.display = podeGerir ? 'flex' : 'none';
       } else {
         container.innerHTML = `<button class="btn-login" onclick="openLoginModal()"><i class="fa-solid fa-lock"></i> Membros</button>`;
         menuMembros.style.display = 'none';
+        if (menuGestaoInterna) menuGestaoInterna.style.display = 'none';
       }
     }
 

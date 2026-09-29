@@ -1846,10 +1846,10 @@
       container.innerHTML = `
         <section class="gestao-interna-home" style="padding:8px 0 30px;">
           <div style="margin-bottom:24px;text-align:center;">
-            <h2 class="tzc-gestao-title-v51" style="margin:0;font-size:1.65rem;font-weight:800;color:#fff;letter-spacing:.01em;line-height:1.12;">
+            <h2 class="tzc-gestao-title-v51" style="margin:0;font-size:1.95rem;font-weight:800;color:#fff;letter-spacing:.01em;line-height:1.12;">
               <i class="fa-solid fa-sliders" style="color:var(--gold-primary);margin-right:8px;"></i>Gestão Interna
             </h2>
-            <p class="tzc-gestao-intro-v51" style="margin:9px auto 0;max-width:860px;color:#c7c7c7;font-size:1.02rem;line-height:1.42;">
+            <p class="tzc-gestao-intro-v51" style="margin:8px auto 0;max-width:900px;color:#c7c7c7;font-size:1.08rem;line-height:1.42;">
               Espaço reservado para organizar conteúdos, estudos e ferramentas internas do Terreiro Tenda de Zé Cigano.
             </p>
             <div style="width:46px;height:1px;background:var(--gold-primary);opacity:.7;margin:11px auto 0;"></div>
@@ -5874,3 +5874,36 @@ function filtrarEstudosTZC_V55(valor){
   });
 })();
 </script>
+
+
+<style id="tzc-v56-gestao-interna-padrao-pagina">
+/* V56 — Gestão Interna recebe o mesmo destaque dos cabeçalhos aprovados.
+   Mantém altura enxuta e não altera os cartões. */
+.gestao-interna-home > div:first-child{
+  margin-bottom:22px!important;
+}
+.gestao-interna-home .tzc-gestao-title-v51{
+  font-size:1.95rem!important;
+  line-height:1.12!important;
+  font-weight:800!important;
+  letter-spacing:.01em!important;
+  color:#fff!important;
+}
+.gestao-interna-home .tzc-gestao-title-v51 i{
+  font-size:.82em!important;
+  vertical-align:.04em;
+  margin-right:7px!important;
+}
+.gestao-interna-home .tzc-gestao-intro-v51{
+  font-size:1.08rem!important;
+  line-height:1.42!important;
+  font-weight:400!important;
+  max-width:900px!important;
+  margin:8px auto 0!important;
+  color:#c7c7c7!important;
+}
+@media(max-width:760px){
+  .gestao-interna-home .tzc-gestao-title-v51{font-size:1.55rem!important}
+  .gestao-interna-home .tzc-gestao-intro-v51{font-size:.96rem!important}
+}
+</style>

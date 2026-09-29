@@ -1575,7 +1575,27 @@
       showToast('Chave PIX copiada!');
     }
 
-    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar) sidebar.classList.toggle('open');
+    }
+
+    // Fecha o menu ao clicar/tocar fora dele.
+    // O clique no próprio botão do menu não fecha imediatamente após abri-lo.
+    document.addEventListener('click', function(event) {
+      const sidebar = document.getElementById('sidebar');
+      const menuButton = document.querySelector('.toggle-menu-btn');
+
+      if (!sidebar || !sidebar.classList.contains('open')) return;
+
+      const clicouDentroDoMenu = sidebar.contains(event.target);
+      const clicouNoBotaoMenu = menuButton && menuButton.contains(event.target);
+
+      if (!clicouDentroDoMenu && !clicouNoBotaoMenu) {
+        sidebar.classList.remove('open');
+      }
+    });
+
     function openLoginModal() { document.getElementById('modalMsg').innerText = ''; document.getElementById('loginModal').style.display = 'flex'; }
     function closeLoginModal() { document.getElementById('loginModal').style.display = 'none'; }
 

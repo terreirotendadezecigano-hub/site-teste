@@ -1119,10 +1119,12 @@
             </div>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
               <button class="btn-toolbar" type="button"
+                style="padding:6px 10px;font-size:12px;min-height:32px;line-height:1;gap:5px;"
                 onclick="shareCurrentItem('${escTZC_V1(estudo['Título'] || estudo.Titulo || 'Estudo da Tenda de Zé Cigano')}', window.location.href + '#estudo-${escTZC_V1(estudo.ID_Estudo || estudo.ID || '')}')">
-                <i class="fa-solid fa-share-nodes"></i> Compartilhar
+                <i class="fa-solid fa-share-nodes" style="font-size:12px;"></i> Compartilhar
               </button>
               <button class="btn-toolbar" type="button"
+                style="width:38px;min-width:38px;height:32px;min-height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:13px;line-height:1;"
                 onclick="document.getElementById('modalEstudoTZC_V1').remove()">
                 <i class="fa-solid fa-xmark"></i>
               </button>

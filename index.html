@@ -4790,13 +4790,13 @@
       Nome_Erva:x.Nome_Erva||x.Nome_Popular||x.Nome||'',
       Nome_Cientifico:x.Nome_Cientifico||'',
       Categoria:x.Categoria||x.Classificacao||'',
-      Tipo_Preparo:x.Tipo_Preparo||x.Modo_Preparo||'',
-      Finalidade_Propriedades:x.Finalidade_Propriedades||x.Para_Que_Serve||x.Indicacao||'',
+      Tipo_Preparo:x.Tipo_Preparo||x.Preparo||x.Modo_Preparo||'',
+      Finalidade_Propriedades:x.Finalidade_Propriedades||x.Para_Que_Serve||x.Finalidade||x.Propriedades||x.Indicacao||'',
       Uso_Espiritual:x.Uso_Espiritual||x.Orixa_Linha||x.Linha_Entidade||'',
       Indicacao_Uso:x.Indicacao_Uso||x.Indicacao||'',
       Modo_Uso:x.Modo_Uso||x.Modo_Preparo||'',
       Cuidados:x.Cuidados||x.Contraindicacoes||'',
-      Observacoes:x.Observacoes||'',
+      Observacoes:x.Observacoes||x.Obs||'',
       Foto_URL:x.Foto_URL||x.Erva_URL||x.Imagem_URL||x.Arquivo_Imagem||'',
       Acesso_Publico:x.Acesso_Publico||x.Acesso||'Sim',
       Status:x.Status||'Ativo'
@@ -4923,20 +4923,30 @@
     const edit=window.tzcErvaEditandoV37;
     d.ID_Erva=edit?.ID_Erva||('ERVA-'+Date.now());
     d.Status=edit?.Status||'Ativo';
-    const payload={acao:edit?'atualizar':'inserir',nomeAba:'Ervas_Banhos',id:d.ID_Erva,idColuna:'ID_Erva',dados:d};
+    // A aba Ervas_Banhos já existe com nomes históricos de colunas.
+    // Enviamos os nomes da interface E os nomes físicos da planilha para que
+    // o backend V69 atualize exatamente as colunas existentes.
+    const dadosPlanilha=Object.assign({},d,{
+      Preparo:d.Tipo_Preparo,
+      Indicacao_Uso:d.Indicacao_Uso,
+      Contraindicacoes:d.Cuidados,
+      Obs:d.Observacoes,
+      Foto_URL:d.Foto_URL
+    });
+    const payload={acao:edit?'atualizar':'inserir',nomeAba:'Ervas_Banhos',id:d.ID_Erva,idColuna:'ID_Erva',dados:dadosPlanilha};
     fecharModalErvaV37();
     if(edit){Object.assign(edit,d);}else{window.tzcErvasAdminV37.unshift(d);}
     atualizarFiltrosErvasV41();
     renderTabelaErvasTZC_V37();
     try{localStorage.setItem('TZC_ERVAS_ADMIN_CACHE_V42',JSON.stringify(window.tzcErvasAdminV37||[]));}catch(e){}
     try{await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});showToast(edit?'Erva atualizada com sucesso.':'Erva cadastrada com sucesso.');}catch(e){showToast('Registro atualizado na tela. A sincronização será conferida novamente.');}
-    setTimeout(carregarErvasAdminTZC_V37,700);
+    setTimeout(carregarErvasAdminTZC_V37,2200);
   };
 
   window.excluirErvaTZC_V37=async function(id){
     const x=(window.tzcErvasAdminV37||[]).find(e=>String(e.ID_Erva||'')===String(id)); if(!x)return;
     abrirModalErvaV37(`<div class="ervas-modal-head-v37"><h3>Excluir erva?</h3><button class="ervas-close-v37" onclick="fecharModalErvaV37()">×</button></div>
-      <p style="color:#ddd;font-size:.88rem">A erva <strong>${escErvaV37(x.Nome_Erva||'')}</strong> será excluída logicamente. O registro continuará na planilha para rastreabilidade.</p>
+      <p style="color:#ddd;font-size:.88rem">Tem certeza que deseja excluir a erva <strong>${escErvaV37(x.Nome_Erva||'')}</strong>?</p>
       <div style="display:flex;justify-content:flex-end;gap:8px"><button class="ervas-secondary-v37" onclick="fecharModalErvaV37()">Cancelar</button><button class="ervas-primary-v37" onclick='confirmarExcluirErvaTZC_V37(${JSON.stringify(String(id))})'>Excluir</button></div>`);
   };
   window.confirmarExcluirErvaTZC_V37=async function(id){
@@ -6055,3 +6065,6 @@ function filtrarEstudosTZC_V55(valor){
 
 <!-- TZC V63 — Gestão de Ervas refinada: CRUD com feedback temático, sem alert branco,
      chips visuais e manutenção do padrão oficial de tabela/modal. -->
+
+<!-- TZC V64 — Ervas: correção de edição/sincronização com os nomes reais das
+     colunas da aba Ervas_Banhos + confirmação de exclusão simplificada. -->

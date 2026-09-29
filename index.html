@@ -731,6 +731,36 @@
     }
 
   </style>
+
+<style id="tzc-v39-altura-automatica">
+  /* V39 — padrão global: a página cresce conforme o conteúdo.
+     Nada de scrollbar vertical criada apenas por min-height fixo. */
+  html, body {
+    min-height: 100%;
+  }
+  body {
+    height: auto !important;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+  main,
+  .main-content,
+  #mainContent,
+  #contentContainer,
+  .content-container,
+  .ervas-admin-v37 {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  #contentContainer {
+    padding-bottom: 18px;
+  }
+  footer {
+    position: relative !important;
+    bottom: auto !important;
+  }
+</style>
+
 </head>
 <body>
 

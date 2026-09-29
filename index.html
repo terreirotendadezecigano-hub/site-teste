@@ -1181,19 +1181,63 @@
       }
     }
 
+    async function fetchSheetData(tabName) {
+      const nomesAba = [];
+      const principal = (tabName === 'Home' || tabName === 'Agenda') ? 'Agenda_Festividades' : tabName;
+
+      nomesAba.push(principal);
+
+      // A aba do mural foi mostrada anteriormente com o nome
+      // "Mural_URL sera as colunas". Mantemos as duas possibilidades para
+      // não deixar o mural vazio caso o nome da aba tenha sido alterado.
+      if (tabName === 'Mural_Imagens') {
+        nomesAba.push('Mural_URL sera as colunas');
+      }
+
+      let ultimoErro = null;
+
+      // 1) Tenta o OpenSheet, que é a fonte usada pelo site.
+      for (const nomeAba of nomesAba) {
+        try {
+          const response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${encodeURIComponent(nomeAba)}`);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
+
+          if (Array.isArray(data)) return data;
+          ultimoErro = new Error(data?.mensagem || data?.error || `A aba "${nomeAba}" não retornou uma lista.`);
+        } catch (err) {
+          ultimoErro = err;
+        }
+      }
+
+      // 2) Se o OpenSheet não responder, usa o Web App do Apps Script.
+      // Isso também evita depender exclusivamente do serviço externo.
+      for (const nomeAba of nomesAba) {
+        try {
+          const response = await fetch(`${WEB_APP_URL}?sheet=${encodeURIComponent(nomeAba)}`);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
+
+          if (Array.isArray(data)) return data;
+          ultimoErro = new Error(data?.mensagem || data?.error || `A aba "${nomeAba}" não retornou uma lista.`);
+        } catch (err) {
+          ultimoErro = err;
+        }
+      }
+
+      throw ultimoErro || new Error('Não foi possível carregar a aba.');
+    }
+
     async function loadTabData(tabName) {
       if (tabName === 'Membros') { carregarEExibirMembros(); return; }
       const loading = document.getElementById('loading');
       const container = document.getElementById('contentContainer');
       loading.style.display = 'block';
+      loading.innerHTML = '<i class="fa-solid fa-spinner fa-spin fa-2x"></i><p style="margin-top:6px; font-size:0.75rem;">Buscando dados...</p>';
       container.innerHTML = '';
 
-      const targetSheet = (tabName === 'Home' || tabName === 'Agenda') ? 'Agenda_Festividades' : tabName;
-
       try {
-        const response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${targetSheet}`);
-        let data = await response.json();
-        currentData = data;
+        currentData = await fetchSheetData(tabName);
         loading.style.display = 'none';
 
         if (tabName === 'Home') buildHomeAgenda(currentData);
@@ -1203,7 +1247,9 @@
         else if (tabName === 'Mural_Imagens') buildMuralDirectView(currentData);
         else renderContent(currentData, tabName);
       } catch (err) {
-        loading.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Erro ao carregar dados.';
+        console.error('Erro ao carregar dados:', err);
+        loading.style.display = 'block';
+        loading.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i><p style="margin-top:6px; font-size:0.75rem;">Erro ao carregar os dados. Verifique o nome da aba e a publicação do Apps Script.</p>';
       }
     }
 

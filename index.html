@@ -4870,10 +4870,10 @@
         </tr></thead>
         <tbody>${dados.map(x=>`<tr>
           <td><strong>${escErvaV37(x.Nome_Erva||'—')}</strong>${x.Nome_Cientifico?`<div class="tzc-table-muted-v44">${escErvaV37(x.Nome_Cientifico)}</div>`:''}</td>
-          <td>${escErvaV37(x.Categoria||'—')}</td>
+          <td><span class="tzc-category-chip-v46">${escErvaV37(x.Categoria||'—')}</span></td>
           <td>${escErvaV37(x.Tipo_Preparo||'—')}</td>
           <td class="tzc-table-muted-v44">${escErvaV37(x.Finalidade_Propriedades||x.Indicacao_Uso||'—')}</td>
-          <td>${escErvaV37(x.Acesso_Publico||'Sim')}</td>
+          <td><span class="tzc-status-chip-v51">${escErvaV37(x.Acesso_Publico||'Sim')}</span></td>
           <td class="tzc-acoes-td-v44"><div class="ervas-actions-v37">
             <button class="btn-icon-only" title="Visualizar" onclick='visualizarErvaTZC_V37(${JSON.stringify(String(x.ID_Erva||''))})'><i class="fa-solid fa-eye"></i></button>
             <button class="btn-icon-only" title="Editar" onclick='editarErvaTZC_V37(${JSON.stringify(String(x.ID_Erva||''))})'><i class="fa-solid fa-pen"></i></button>
@@ -4919,7 +4919,7 @@
   window.salvarErvaTZC_V37=async function(){
     const nomes=['Nome_Erva','Nome_Cientifico','Categoria','Tipo_Preparo','Finalidade_Propriedades','Uso_Espiritual','Indicacao_Uso','Modo_Uso','Cuidados','Observacoes','Foto_URL','Acesso_Publico'];
     const d={}; nomes.forEach(n=>d[n]=document.getElementById('erva_'+n)?.value?.trim()||'');
-    if(!d.Nome_Erva){alert('Informe o nome da erva.');return;}
+    if(!d.Nome_Erva){showToast('Informe o nome da erva.');document.getElementById('erva_Nome_Erva')?.focus();return;}
     const edit=window.tzcErvaEditandoV37;
     d.ID_Erva=edit?.ID_Erva||('ERVA-'+Date.now());
     d.Status=edit?.Status||'Ativo';
@@ -4929,7 +4929,7 @@
     atualizarFiltrosErvasV41();
     renderTabelaErvasTZC_V37();
     try{localStorage.setItem('TZC_ERVAS_ADMIN_CACHE_V42',JSON.stringify(window.tzcErvasAdminV37||[]));}catch(e){}
-    try{await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});}catch(e){}
+    try{await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});showToast(edit?'Erva atualizada com sucesso.':'Erva cadastrada com sucesso.');}catch(e){showToast('Registro atualizado na tela. A sincronização será conferida novamente.');}
     setTimeout(carregarErvasAdminTZC_V37,700);
   };
 
@@ -4945,7 +4945,7 @@
     atualizarFiltrosErvasV41();
     renderTabelaErvasTZC_V37();
     const payload={acao:'excluir',nomeAba:'Ervas_Banhos',id:id,idColuna:'ID_Erva'};
-    try{await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});}catch(e){}
+    try{await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});showToast('Erva excluída com sucesso.');}catch(e){showToast('Exclusão aplicada na tela. A sincronização será conferida novamente.');}
   };
 
   window.abrirModalErvaV37=function(html){fecharModalErvaV37();const d=document.createElement('div');d.id='modalErvaV37';d.className='ervas-modal-v37';d.innerHTML=`<div class="ervas-modal-box-v37">${html}</div>`;d.addEventListener('click',e=>{if(e.target===d)fecharModalErvaV37();});document.body.appendChild(d);};
@@ -6052,3 +6052,6 @@ function filtrarEstudosTZC_V55(valor){
 
 
 <!-- TZC V62 — Visualização com botão Editar em Estudos, Categorias e Ervas -->
+
+<!-- TZC V63 — Gestão de Ervas refinada: CRUD com feedback temático, sem alert branco,
+     chips visuais e manutenção do padrão oficial de tabela/modal. -->

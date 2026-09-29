@@ -1181,51 +1181,77 @@
       }
     }
 
+    async function fetchGoogleSheetGviz(nomeAba) {
+      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(nomeAba)}`;
+      const response = await fetch(url, { cache: 'no-store' });
+      if (!response.ok) throw new Error(`Google Sheets HTTP ${response.status}`);
+      const text = await response.text();
+
+      // O endpoint GViz devolve algo como:
+      // google.visualization.Query.setResponse({...});
+      const ini = text.indexOf('{');
+      const fim = text.lastIndexOf('}');
+      if (ini < 0 || fim <= ini) throw new Error('Resposta do Google Sheets inválida.');
+
+      const payload = JSON.parse(text.slice(ini, fim + 1));
+      if (payload.status && payload.status !== 'ok') {
+        throw new Error(payload.errors?.[0]?.detailed_message || payload.errors?.[0]?.message || 'Google Sheets retornou erro.');
+      }
+
+      const cols = (payload.table?.cols || []).map((c, i) => c.label || c.id || `Coluna_${i + 1}`);
+      const rows = payload.table?.rows || [];
+
+      return rows.map(row => {
+        const obj = {};
+        cols.forEach((col, i) => {
+          const cell = row.c?.[i];
+          let value = cell?.v ?? '';
+          // Datas do GViz podem vir como Date(2026,8,29,...).
+          if (typeof value === 'string' && /^Date\(/.test(value)) value = value;
+          obj[col] = value;
+        });
+        return obj;
+      });
+    }
+
     async function fetchSheetData(tabName) {
       const nomesAba = [];
       const principal = (tabName === 'Home' || tabName === 'Agenda') ? 'Agenda_Festividades' : tabName;
 
       nomesAba.push(principal);
 
-      // A aba do mural foi mostrada anteriormente com o nome
-      // "Mural_URL sera as colunas". Mantemos as duas possibilidades para
-      // não deixar o mural vazio caso o nome da aba tenha sido alterado.
+      // Nome alternativo confirmado na planilha do mural.
       if (tabName === 'Mural_Imagens') {
         nomesAba.push('Mural_URL sera as colunas');
       }
 
-      let ultimoErro = null;
+      let erros = [];
 
-      // 1) Tenta o OpenSheet, que é a fonte usada pelo site.
+      // 1) Tenta diretamente o Google Sheets (GViz), sem depender do OpenSheet.
       for (const nomeAba of nomesAba) {
         try {
-          const response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${encodeURIComponent(nomeAba)}`);
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const data = await response.json();
-
+          const data = await fetchGoogleSheetGviz(nomeAba);
           if (Array.isArray(data)) return data;
-          ultimoErro = new Error(data?.mensagem || data?.error || `A aba "${nomeAba}" não retornou uma lista.`);
         } catch (err) {
-          ultimoErro = err;
+          erros.push(`${nomeAba}: ${err.message || err}`);
         }
       }
 
-      // 2) Se o OpenSheet não responder, usa o Web App do Apps Script.
-      // Isso também evita depender exclusivamente do serviço externo.
+      // 2) Tenta o Apps Script publicado.
       for (const nomeAba of nomesAba) {
         try {
-          const response = await fetch(`${WEB_APP_URL}?sheet=${encodeURIComponent(nomeAba)}`);
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const response = await fetch(`${WEB_APP_URL}?sheet=${encodeURIComponent(nomeAba)}`, { cache: 'no-store' });
+          if (!response.ok) throw new Error(`Apps Script HTTP ${response.status}`);
           const data = await response.json();
-
           if (Array.isArray(data)) return data;
-          ultimoErro = new Error(data?.mensagem || data?.error || `A aba "${nomeAba}" não retornou uma lista.`);
+          if (data?.mensagem) throw new Error(data.mensagem);
+          throw new Error('Apps Script não retornou uma lista de dados.');
         } catch (err) {
-          ultimoErro = err;
+          erros.push(`${nomeAba} / Apps Script: ${err.message || err}`);
         }
       }
 
-      throw ultimoErro || new Error('Não foi possível carregar a aba.');
+      throw new Error(erros.join(' | ') || 'Não foi possível carregar a planilha.');
     }
 
     async function loadTabData(tabName) {

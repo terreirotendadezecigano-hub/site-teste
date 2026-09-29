@@ -179,14 +179,227 @@
     }
 
     .mural-subtitle {
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       color: var(--text-muted);
-      margin-bottom: 15px;
-      line-height: 1.4;
+      margin: 0 auto 14px;
+      line-height: 1.45;
       text-align: center;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 8px;
+      max-width: 780px;
     }
+
+    /* ===== MURAL — visual novo ===== */
+    .mural-section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--gold-primary);
+      font-size: 0.95rem;
+      font-weight: 800;
+      margin: 18px 0 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .mural-section-title i { font-size: 0.85rem; }
+
+    .mural-carousel {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      border: 1px solid rgba(212,175,55,.42);
+      border-radius: 14px;
+      background: linear-gradient(145deg, #181818, #0e0e0e);
+      box-shadow: 0 8px 24px rgba(0,0,0,.28);
+    }
+    .mural-carousel-track {
+      display: flex;
+      transition: transform .35s ease;
+      will-change: transform;
+    }
+    .mural-slide {
+      min-width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(250px, .9fr);
+      min-height: 285px;
+      cursor: pointer;
+    }
+    .mural-slide-media {
+      position: relative;
+      min-height: 285px;
+      background: #050505;
+      overflow: hidden;
+    }
+    .mural-slide-media img {
+      width: 100%;
+      height: 100%;
+      min-height: 285px;
+      object-fit: cover;
+      display: block;
+    }
+    .mural-slide-media::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(0,0,0,0) 45%, rgba(0,0,0,.72) 100%);
+      pointer-events: none;
+    }
+    .mural-slide-media .mural-play {
+      position: absolute;
+      z-index: 2;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%,-50%);
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,.72);
+      color: var(--gold-primary);
+      border: 2px solid rgba(212,175,55,.85);
+      font-size: 1.15rem;
+      box-shadow: 0 0 20px rgba(0,0,0,.45);
+    }
+    .mural-audio-cover {
+      min-height: 285px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: radial-gradient(circle at center, #29220f 0%, #111 55%, #050505 100%);
+      color: var(--gold-primary);
+    }
+    .mural-audio-cover img {
+      width: 104px;
+      height: 104px;
+      min-height: 104px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--gold-primary);
+      box-shadow: 0 0 22px rgba(212,175,55,.22);
+    }
+    .mural-audio-cover span { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
+    .mural-slide-info {
+      padding: 24px 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 8px;
+      background: rgba(15,15,15,.94);
+    }
+    .mural-slide-badge {
+      display: inline-flex;
+      align-self: flex-start;
+      align-items: center;
+      gap: 5px;
+      background: var(--gold-primary);
+      color: #000;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: .65rem;
+      font-weight: 800;
+    }
+    .mural-slide-type {
+      color: var(--gold-light);
+      font-size: .68rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    .mural-slide-title {
+      margin: 0;
+      color: #fff;
+      font-size: 1.35rem;
+      line-height: 1.18;
+    }
+    .mural-slide-date {
+      color: var(--gold-primary);
+      font-size: .8rem;
+      font-weight: 700;
+    }
+    .mural-slide-text {
+      color: var(--text-muted);
+      font-size: .76rem;
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin: 2px 0 0;
+    }
+    .mural-slide-cta {
+      margin-top: 6px;
+      color: var(--gold-primary);
+      font-size: .72rem;
+      font-weight: 800;
+    }
+    .mural-carousel-btn {
+      position: absolute;
+      z-index: 5;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid rgba(212,175,55,.65);
+      background: rgba(0,0,0,.7);
+      color: var(--gold-primary);
+      cursor: pointer;
+    }
+    .mural-carousel-btn.prev { left: 10px; }
+    .mural-carousel-btn.next { right: 10px; }
+    .mural-carousel-dots {
+      position: absolute;
+      z-index: 6;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 5px;
+      padding: 4px 7px;
+      border-radius: 20px;
+      background: rgba(0,0,0,.58);
+    }
+    .mural-carousel-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      border: 0;
+      padding: 0;
+      background: #777;
+      cursor: pointer;
+    }
+    .mural-carousel-dot.active { background: var(--gold-primary); transform: scale(1.15); }
+
+    .mural-archive-title { margin-top: 24px; }
+    .mural-archive-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 14px;
+    }
+    .mural-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 11px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+      min-height: 245px;
+      display: flex;
+      flex-direction: column;
+    }
+    .mural-card:hover { transform: translateY(-3px); border-color: var(--gold-primary); box-shadow: 0 7px 20px rgba(0,0,0,.24); }
+    .mural-card-media { height: 135px; position: relative; overflow: hidden; background: #050505; }
+    .mural-card-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .mural-card-audio { height: 100%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #29220f, #0d0d0d 68%); }
+    .mural-card-audio img { width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--gold-primary); object-fit: cover; }
+    .mural-card-play { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.7); color: var(--gold-primary); border: 1px solid rgba(212,175,55,.75); }
+    .mural-card-body { padding: 10px; display: flex; flex-direction: column; gap: 5px; flex: 1; }
+    .mural-card-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--text-muted); font-size: .64rem; }
+    .mural-card-type { color: var(--gold-light); font-size: .62rem; text-transform: uppercase; letter-spacing: .06em; }
+    .mural-card-title { margin: 0; color: #fff; font-size: .84rem; line-height: 1.25; }
+    .mural-card-text { margin: 0; color: var(--text-muted); font-size: .69rem; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .mural-empty { padding: 24px 10px; text-align: center; color: var(--text-muted); font-size: .8rem; border: 1px dashed var(--border-color); border-radius: 10px; }
 
     .cards-grid { 
       display: grid; 
@@ -1363,89 +1576,225 @@
       return 'outros';
     }
 
+    function muralField(item, names) {
+      for (const name of names) {
+        if (item && item[name] !== undefined && item[name] !== null && String(item[name]).trim() !== '') return item[name];
+      }
+      return '';
+    }
+
+    function muralDateFromItem(item) {
+      // No novo fluxo, Data_Fim_Destaque é a data do evento.
+      // Data_Inicio_Destaque continua disponível como início do período de destaque.
+      return muralField(item, ['Data_Fim_Destaque', 'Data_Inicio_Destaque', 'Data_Criacao', 'Data de Publicação']);
+    }
+
+    function muralDateObject(value) {
+      if (!value) return null;
+      const str = String(value).trim();
+      const g = str.match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})\)$/);
+      if (g) return new Date(Number(g[1]), Number(g[2]), Number(g[3]));
+      return parseLocalDate(str);
+    }
+
+    function muralDateLabel(value) {
+      return value ? formatDateBR(value) : '';
+    }
+
+    function muralIsPast(item, hoje) {
+      const d = muralDateObject(muralDateFromItem(item));
+      return !!(d && d < hoje);
+    }
+
+    function muralIsCurrentOrUpcoming(item, hoje) {
+      const d = muralDateObject(muralDateFromItem(item));
+      return !d || d >= hoje;
+    }
+
+    function muralSafeText(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function muralMediaPreview(item, large = false) {
+      const type = getMuralMediaType(item);
+      const raw = muralField(item, ['Mural_URL', 'Arquivo_URL', 'Arquivo', 'Imagem_URL', 'Imagem', 'Foto_URL', 'Foto']);
+      const clean = getMediaDirectUrl(raw);
+      const title = muralSafeText(muralField(item, ['Titulo', 'Nome_Evento', 'Titulo_Ponto', 'Categoria']) || 'Mural');
+      const sizeClass = large ? 'mural-slide-media' : 'mural-card-media';
+
+      if (type === 'audio') {
+        return `<div class="${sizeClass} mural-audio-cover"><img src="${INSTITUTIONAL_LOGO_URL}" alt="Logo da Tenda"><span><i class="fa-solid fa-volume-high"></i> Áudio</span></div>`;
+      }
+
+      if (type === 'video') {
+        let thumb = '';
+        const videoUrl = muralField(item, ['Video_URL', 'Video', 'Mural_URL', 'Arquivo_URL', 'Arquivo']);
+        const ytId = getYoutubeVideoId(videoUrl);
+        if (ytId) thumb = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+        else {
+          const driveId = String(videoUrl || '').match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1] || String(videoUrl || '').match(/[?&]id=([a-zA-Z0-9_-]+)/)?.[1] || '';
+          if (driveId) thumb = `https://drive.google.com/thumbnail?id=${driveId}&sz=w1000`;
+        }
+        if (thumb) return `<div class="${sizeClass}"><img src="${thumb}" alt="${title}" onerror="this.onerror=null; this.src='${INSTITUTIONAL_LOGO_URL}';"><span class="mural-play"><i class="fa-solid fa-play"></i></span></div>`;
+        return `<div class="${sizeClass}" style="display:flex;align-items:center;justify-content:center;background:#111;color:var(--gold-primary);"><span class="mural-play"><i class="fa-solid fa-play"></i></span><i class="fa-solid fa-video" style="font-size:2rem;opacity:.45;"></i></div>`;
+      }
+
+      if (clean) return `<div class="${sizeClass}"><img src="${clean}" alt="${title}" onerror="this.onerror=null; this.src='${INSTITUTIONAL_LOGO_URL}';"></div>`;
+      return `<div class="${sizeClass}" style="display:flex;align-items:center;justify-content:center;background:#111;color:var(--gold-primary);"><i class="fa-solid fa-image" style="font-size:2rem;opacity:.45;"></i></div>`;
+    }
+
+    function getYoutubeVideoId(url) {
+      if (!url) return '';
+      try {
+        const u = new URL(String(url).trim());
+        if (u.hostname.includes('youtu.be')) return u.pathname.replace(/^\//, '').split('/')[0] || '';
+        if (u.hostname.includes('youtube.com')) {
+          if (u.pathname === '/watch') return u.searchParams.get('v') || '';
+          if (u.pathname.startsWith('/shorts/')) return u.pathname.split('/')[2] || '';
+          if (u.pathname.startsWith('/embed/')) return u.pathname.split('/')[2] || '';
+        }
+      } catch (e) {}
+      return '';
+    }
+
+    function muralItemTitle(item) {
+      return muralField(item, ['Titulo', 'Nome_Evento', 'Titulo_Ponto', 'Categoria']) || 'Aviso';
+    }
+
+    function muralItemText(item) {
+      return muralField(item, ['Descricao', 'Texo_Aviso', 'Texto_Aviso', 'Conteudo_Texto', 'Observacoes']);
+    }
+
+    function muralTypeLabel(item) {
+      const tipo = muralField(item, ['Tipos_de_Midia', 'Tipo_de_Midia', 'TipoMidia', 'Tipo de Mídia']);
+      if (tipo) return tipo;
+      const type = getMuralMediaType(item);
+      return type === 'audio' ? 'Áudio' : type === 'video' ? 'Vídeo' : type === 'image' ? 'Informativo' : 'Aviso';
+    }
+
     function buildMuralDirectView(data) {
-      document.getElementById('searchContainerWrapper').style.display = 'flex';
+      document.getElementById('searchContainerWrapper').style.display = 'none';
       const container = document.getElementById('contentContainer');
 
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
 
-      const sortedData = [...data].sort((a, b) => {
-        const da = parseLocalDate(a.Data_Inicio_Destaque || a.Data_Criacao || '2099-12-31');
-        const db = parseLocalDate(b.Data_Inicio_Destaque || b.Data_Criacao || '2099-12-31');
-        const diffA = Math.abs(da - hoje);
-        const diffB = Math.abs(db - hoje);
-        return diffA - diffB;
-      });
-      currentData = sortedData;
+      const validos = (Array.isArray(data) ? data : []).filter(item => isPublicAccess(item));
+      const semData = validos.filter(item => !muralDateObject(muralDateFromItem(item)));
+      const futuros = validos
+        .filter(item => muralIsCurrentOrUpcoming(item, hoje) && muralDateObject(muralDateFromItem(item)))
+        .sort((a, b) => muralDateObject(muralDateFromItem(a)) - muralDateObject(muralDateFromItem(b)));
+      const arquivados = validos
+        .filter(item => muralIsPast(item, hoje))
+        .sort((a, b) => muralDateObject(muralDateFromItem(b)) - muralDateObject(muralDateFromItem(a)));
+
+      currentData = validos;
 
       document.getElementById('pageSubtitleContainer').innerHTML = `
         <div class="mural-subtitle">
-          Acompanhe aqui os comunicados oficiais, informativos visuais, cartazes de festividades, áudios e mídias importantes do terreiro publicados pela administração.
+          <i class="fa-solid fa-bullhorn" style="color:var(--gold-primary);margin-right:5px;"></i>
+          Avisos, eventos e mídias da Tenda. Os próximos eventos aparecem primeiro; após a data do evento, o conteúdo permanece arquivado abaixo.
         </div>
       `;
 
-      container.innerHTML = `<div id="subpageMuralGridContainer"></div>`;
-      renderMuralGrid(sortedData);
-    }
+      container.innerHTML = `<div id="muralPageContent"></div>`;
+      const page = document.getElementById('muralPageContent');
 
-    function renderMuralGrid(data) {
-      const parentContainer = document.getElementById('subpageMuralGridContainer');
-      if (!parentContainer) return;
-      parentContainer.innerHTML = '';
-
-      const validos = data.filter(item => isPublicAccess(item));
-
-      if (!validos || validos.length === 0) {
-        parentContainer.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">Nenhum aviso encontrado no mural.</p>';
+      if (!validos.length) {
+        page.innerHTML = '<div class="mural-empty"><i class="fa-regular fa-bell-slash"></i><br>Nenhum aviso público encontrado no mural.</div>';
         return;
       }
 
-      const grid = document.createElement('div');
-      grid.className = 'cards-grid';
+      const destaque = futuros.slice(0, Math.min(3, futuros.length));
+      let html = '';
 
-      validos.forEach((item, index) => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        const titulo = item.Titulo || item.Nome_Evento || item.Titulo_Ponto || item.Categoria || 'Aviso';
-        const texto = item.Descricao || item.Texo_Aviso || item.Conteudo_Texto || '';
-        
-        let tipoMidiaVal = '';
-        for (let key in item) {
-          let ck = key.toLowerCase().trim().replace(/[\s_]/g, '');
-          if (ck === 'tiposdemidia' || ck === 'tipodemidia' || ck === 'tipomidia') {
-            tipoMidiaVal = item[key] || '';
-            break;
-          }
+      if (destaque.length) {
+        html += `<div class="mural-section-title"><i class="fa-solid fa-calendar-star"></i> Próximos eventos</div>`;
+        html += `<div class="mural-carousel" id="muralCarousel">
+          <div class="mural-carousel-track" id="muralCarouselTrack">`;
+        destaque.forEach((item) => {
+          const title = muralSafeText(muralItemTitle(item));
+          const text = muralSafeText(muralItemText(item));
+          const date = muralDateLabel(muralDateFromItem(item));
+          const type = muralSafeText(muralTypeLabel(item));
+          html += `<div class="mural-slide">`;
+          html += `${muralMediaPreview(item, true)}<div class="mural-slide-info"><span class="mural-slide-badge"><i class="fa-solid fa-star"></i> Próximo evento</span><span class="mural-slide-type">${type}</span><h2 class="mural-slide-title">${title}</h2>${date ? `<div class="mural-slide-date"><i class="fa-regular fa-calendar"></i> ${date}</div>` : ''}${text ? `<p class="mural-slide-text">${text}</p>` : ''}<div class="mural-slide-cta">Clique para abrir o conteúdo <i class="fa-solid fa-arrow-right"></i></div></div></div>`;
+        });
+        html += `</div>`;
+        if (destaque.length > 1) {
+          html += `<button class="mural-carousel-btn prev" type="button" onclick="muralCarouselMove(-1,event)"><i class="fa-solid fa-chevron-left"></i></button><button class="mural-carousel-btn next" type="button" onclick="muralCarouselMove(1,event)"><i class="fa-solid fa-chevron-right"></i></button>`;
+          html += `<div class="mural-carousel-dots">${destaque.map((_,i)=>`<button class="mural-carousel-dot${i===0?' active':''}" type="button" onclick="muralCarouselGo(${i},event)"></button>`).join('')}</div>`;
         }
+        html += `</div>`;
+      }
 
-        const tMidia = getMuralMediaType(item);
-        let imgHtml = '';
+      if (arquivados.length) {
+        html += `<div class="mural-section-title mural-archive-title"><i class="fa-solid fa-box-archive"></i> Arquivo do mural</div><div class="mural-archive-grid">`;
+        arquivados.forEach((item, idx) => {
+          const title = muralSafeText(muralItemTitle(item));
+          const text = muralSafeText(muralItemText(item));
+          const date = muralDateLabel(muralDateFromItem(item));
+          const type = muralSafeText(muralTypeLabel(item));
+          html += `<div class="mural-card" onclick="openMuralItem(${idx})">${muralMediaPreview(item, false)}<div class="mural-card-body"><div class="mural-card-meta"><span class="mural-card-type">${type}</span><span>${date}</span></div><h3 class="mural-card-title">${title}</h3>${text ? `<p class="mural-card-text">${text}</p>` : ''}</div></div>`;
+        });
+        html += `</div>`;
+      }
 
-        if (tMidia === 'audio') {
-          imgHtml = `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-volume-high fa-2x"></i></div>`;
-        } else if (tMidia === 'video') {
-          imgHtml = `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-video fa-2x"></i></div>`;
-        } else {
-          const imagem = getCleanImageUrl(item);
-          imgHtml = imagem ? `<img src="${imagem}" class="card-img" alt="${titulo}" onerror="this.onerror=null; this.src='https://via.placeholder.com/200x120?text=Aviso';">` : `<div class="card-img" style="display:flex; align-items:center; justify-content:center; background:#161616; color:var(--gold-primary);"><i class="fa-solid fa-image fa-2x"></i></div>`;
-        }
+      if (semData.length) {
+        html += `<div class="mural-section-title mural-archive-title"><i class="fa-solid fa-circle-info"></i> Outros avisos</div><div class="mural-archive-grid">`;
+        semData.forEach((item, idx) => {
+          const title = muralSafeText(muralItemTitle(item));
+          const text = muralSafeText(muralItemText(item));
+          const date = muralDateLabel(muralDateFromItem(item));
+          const type = muralSafeText(muralTypeLabel(item));
+          html += `<div class="mural-card" onclick="openMuralNoDateItem(${idx})">${muralMediaPreview(item, false)}<div class="mural-card-body"><div class="mural-card-meta"><span class="mural-card-type">${type}</span><span>${date || 'Sem data'}</span></div><h3 class="mural-card-title">${title}</h3>${text ? `<p class="mural-card-text">${text}</p>` : ''}</div></div>`;
+        });
+        html += `</div>`;
+      }
 
-        const badgeLabel = tipoMidiaVal || (tMidia === 'audio' ? 'Áudio' : tMidia === 'video' ? 'Vídeo' : 'Informativo');
-        const closestBadge = index === 0 ? `<span class="card-badge-destaque"><i class="fa-solid fa-bolt"></i> Destaque</span>` : '';
-
-        card.innerHTML = `
-          ${imgHtml}
-          <div class="card-body">
-            <div class="card-badges"><span class="card-badge">${badgeLabel}</span>${closestBadge}</div>
-            <h3 class="card-title">${titulo}</h3>
-            ${texto ? `<p class="card-text">${texto}</p>` : ''}
-          </div>
-        `;
-        card.onclick = () => openGenericDetail(item, 'Mural_Imagens');
-        grid.appendChild(card);
+      page.innerHTML = html;
+      window.__muralUpcoming = destaque;
+      window.__muralArchived = arquivados;
+      window.__muralNoDate = semData;
+      window.__muralSlideIndex = 0;
+      document.querySelectorAll('.mural-slide').forEach((slide, i) => {
+        slide.onclick = () => openGenericDetail(destaque[i], 'Mural_Imagens');
       });
-      parentContainer.appendChild(grid);
+    }
+
+    function openMuralItem(index) {
+      const item = (window.__muralArchived || [])[index];
+      if (item) openGenericDetail(item, 'Mural_Imagens');
+    }
+
+    function openMuralNoDateItem(index) {
+      const item = (window.__muralNoDate || [])[index];
+      if (item) openGenericDetail(item, 'Mural_Imagens');
+    }
+
+    function muralCarouselMove(direction, ev) {
+      if (ev) ev.stopPropagation();
+      const total = (window.__muralUpcoming || []).length;
+      if (total < 2) return;
+      let next = (window.__muralSlideIndex || 0) + direction;
+      if (next < 0) next = total - 1;
+      if (next >= total) next = 0;
+      muralCarouselGo(next, ev);
+    }
+
+    function muralCarouselGo(index, ev) {
+      if (ev) ev.stopPropagation();
+      const total = (window.__muralUpcoming || []).length;
+      if (!total) return;
+      window.__muralSlideIndex = Math.max(0, Math.min(index, total - 1));
+      const track = document.getElementById('muralCarouselTrack');
+      if (track) track.style.transform = `translateX(-${window.__muralSlideIndex * 100}%)`;
+      document.querySelectorAll('.mural-carousel-dot').forEach((dot, i) => dot.classList.toggle('active', i === window.__muralSlideIndex));
     }
 
     /* ================= GUIA DE ERVAS ================= */

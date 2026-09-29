@@ -5616,6 +5616,112 @@ function filtrarEstudosTZC_V55(valor){
 }
 </script>
 
+
+<style>
+#midiasAdminTZC{display:none;max-width:1180px;margin:0 auto;padding:22px 18px 45px;color:#fff}
+.midias-head{text-align:center;margin:4px 0 18px}.midias-head h2{color:#fff;font-size:1.55rem;margin:0 0 6px}.midias-head p{color:#aaa;margin:0}
+.midias-tools{display:flex;gap:10px;justify-content:space-between;align-items:center;margin:14px 0}
+.midias-search{flex:1;max-width:520px;background:#111;border:1px solid #2a2a2a;color:#fff;padding:10px 12px;border-radius:8px}
+.midias-btn{border:1px solid #d4af37;background:#15130b;color:#f3d54e;border-radius:7px;padding:8px 11px;cursor:pointer;font-weight:700}
+.midias-btn.primary{background:#d4af37;color:#090909}.midias-table-wrap{overflow:auto;border:1px solid #2a2a2a;border-radius:9px}
+.midias-table{width:100%;border-collapse:collapse;background:#111}.midias-table th,.midias-table td{padding:10px;border-bottom:1px solid #292929;text-align:left;font-size:.82rem}
+.midias-table th{color:#d4af37;background:#161616}.midias-actions{display:flex;gap:5px;white-space:nowrap}.midias-actions button{padding:6px 8px}
+.midias-footer{display:flex;justify-content:space-between;margin-top:16px}
+.midias-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:12000;display:flex;align-items:center;justify-content:center;padding:18px}
+.midias-modal{width:min(680px,96vw);max-height:90vh;overflow:auto;background:#141414;border:1px solid #d4af37;border-radius:11px;box-shadow:0 20px 55px #000;padding:16px}
+.midias-modal-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #333;padding-bottom:10px;margin-bottom:12px}
+.midias-modal-head h3{margin:0;color:#fff;font-size:1.05rem}.midias-x{background:none;border:0;color:#d4af37;font-size:1.35rem;cursor:pointer}
+.midias-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.midias-field label{display:block;color:#e2ca78;font-size:.78rem;margin-bottom:5px}
+.midias-field input,.midias-field select,.midias-field textarea{width:100%;box-sizing:border-box;background:#0d0d0d;border:1px solid #333;border-radius:7px;color:#fff;padding:9px}
+.midias-field.full{grid-column:1/-1}.midias-modal-foot{display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #333;margin-top:13px;padding-top:12px}
+.midias-view p{margin:8px 0;color:#ddd}.midias-view strong{color:#e2ca78}.midias-link{color:#e6c83e;word-break:break-all}
+@media(max-width:700px){.midias-grid{grid-template-columns:1fr}.midias-field.full{grid-column:auto}.midias-tools{align-items:stretch;flex-direction:column}.midias-search{max-width:none}}
+</style>
+<script>
+(function(){
+ const API=typeof WEB_APP_URL!=='undefined'?WEB_APP_URL:(typeof API_URL!=='undefined'?API_URL:'https://script.google.com/macros/s/AKfycbyFje_ocF7a0S7Tq4EYQmM5W3hv9SmHZqxJmWLhPKdkVfudzW-Q3EEbM66U9BiwdBZOJw/exec');
+ let lista=[];
+
+ function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+ function idNovo(){return 'MIDIA-'+Date.now().toString(36).toUpperCase();}
+ function fechar(){document.querySelector('.midias-overlay')?.remove();}
+ window.fecharModalMidiasTZC=fechar;
+
+ function garantirTela(){
+   if(document.getElementById('midiasAdminTZC'))return;
+   const el=document.createElement('section');el.id='midiasAdminTZC';
+   el.innerHTML=`<div class="midias-head"><h2>📱 Mídias Sociais <span id="midiasCount" style="color:#d4af37;font-size:.9rem"></span></h2><p>Gerencie os canais e links oficiais da instituição.</p></div>
+   <div class="midias-tools"><input id="midiasBusca" class="midias-search" placeholder="🔎 Buscar por rede ou nome..." oninput="renderMidiasTZC()"><button class="midias-btn primary" onclick="editarMidiaTZC()">＋ Nova Mídia</button></div>
+   <div class="midias-table-wrap"><table class="midias-table"><thead><tr><th>Rede</th><th>Nome de Exibição</th><th>URL</th><th>Ativo</th><th>Ordem</th><th>Ações</th></tr></thead><tbody id="midiasBody"></tbody></table></div>
+   <div class="midias-footer"><button class="midias-btn" onclick="voltarGestaoMidiasTZC()">← Voltar</button><button class="midias-btn primary" onclick="editarMidiaTZC()">＋ Nova Mídia</button></div>`;
+   document.body.appendChild(el);
+ }
+ window.abrirMidiasSociaisTZC=async function(){
+   garantirTela();
+   document.querySelectorAll('main,section').forEach(x=>{if(x.id!=='midiasAdminTZC')x.dataset.midiasOld=x.style.display||'';});
+   document.querySelectorAll('main,section').forEach(x=>{if(x.id!=='midiasAdminTZC')x.style.display='none';});
+   document.getElementById('midiasAdminTZC').style.display='block';
+   await carregarMidiasTZC();
+ };
+ window.voltarGestaoMidiasTZC=function(){
+   document.getElementById('midiasAdminTZC').style.display='none';
+   document.querySelectorAll('[data-midias-old]').forEach(x=>{x.style.display=x.dataset.midiasOld;delete x.dataset.midiasOld;});
+   if(typeof showInternalManagement==='function')showInternalManagement();
+ };
+ window.carregarMidiasTZC=async function(){
+   try{
+     const u=API+(API.includes('?')?'&':'?')+'aba=Midias_Sociais&_='+Date.now();
+     const r=await fetch(u);const d=await r.json();
+     lista=(Array.isArray(d)?d:(d.dados||d.data||[])).filter(x=>String(x.Ativo||'Sim').toLowerCase()!=='excluido');
+   }catch(e){lista=[];}
+   renderMidiasTZC();
+ };
+ window.renderMidiasTZC=function(){
+   const q=(document.getElementById('midiasBusca')?.value||'').toLowerCase();
+   const arr=lista.filter(x=>(x.Rede+' '+x.Nome_Exibicao+' '+x.URL).toLowerCase().includes(q)).sort((a,b)=>(+a.Ordem||999)-(+b.Ordem||999));
+   document.getElementById('midiasCount').textContent='· '+arr.length+' registros';
+   document.getElementById('midiasBody').innerHTML=arr.length?arr.map(x=>`<tr><td>${esc(x.Rede)}</td><td>${esc(x.Nome_Exibicao)}</td><td>${x.URL?`<a class="midias-link" href="${esc(x.URL)}" target="_blank">Abrir link</a>`:'—'}</td><td>${esc(x.Ativo||'Sim')}</td><td>${esc(x.Ordem||'')}</td><td><div class="midias-actions"><button class="midias-btn" onclick="verMidiaTZC('${esc(x.ID_Midia)}')">👁</button><button class="midias-btn" onclick="editarMidiaTZC('${esc(x.ID_Midia)}')">✏️</button><button class="midias-btn" onclick="excluirMidiaTZC('${esc(x.ID_Midia)}')">🗑️</button></div></td></tr>`).join(''):`<tr><td colspan="6" style="text-align:center;color:#888">Nenhuma mídia encontrada.</td></tr>`;
+ };
+ window.verMidiaTZC=function(id){
+   const x=lista.find(a=>a.ID_Midia===id);if(!x)return;
+   document.body.insertAdjacentHTML('beforeend',`<div class="midias-overlay"><div class="midias-modal"><div class="midias-modal-head"><h3>📱 ${esc(x.Nome_Exibicao||x.Rede)}</h3><button class="midias-x" onclick="fecharModalMidiasTZC()">×</button></div><div class="midias-view"><p><strong>Rede:</strong> ${esc(x.Rede)}</p><p><strong>Nome de Exibição:</strong> ${esc(x.Nome_Exibicao)}</p><p><strong>URL:</strong> ${x.URL?`<a class="midias-link" target="_blank" href="${esc(x.URL)}">${esc(x.URL)}</a>`:'Não informada'}</p><p><strong>Ativo:</strong> ${esc(x.Ativo||'Sim')}</p><p><strong>Ordem:</strong> ${esc(x.Ordem||'')}</p><p><strong>Observações:</strong> ${esc(x.Observacoes||'—')}</p></div><div class="midias-modal-foot"><button class="midias-btn" onclick="fecharModalMidiasTZC()">Fechar</button><button class="midias-btn primary" onclick="fecharModalMidiasTZC();editarMidiaTZC('${esc(id)}')">✏️ Editar</button></div></div></div>`);
+ };
+ window.editarMidiaTZC=function(id){
+   const x=lista.find(a=>a.ID_Midia===id)||{ID_Midia:idNovo(),Rede:'',Nome_Exibicao:'',URL:'',Ativo:'Sim',Ordem:(lista.length+1),Observacoes:''};
+   const edit=!!id;
+   document.body.insertAdjacentHTML('beforeend',`<div class="midias-overlay"><div class="midias-modal"><div class="midias-modal-head"><h3>${edit?'✏️ Editar Mídia':'＋ Nova Mídia'}</h3><button class="midias-x" onclick="fecharModalMidiasTZC()">×</button></div><div class="midias-grid">
+   <div class="midias-field"><label>Rede *</label><input id="mRede" value="${esc(x.Rede)}" placeholder="Ex.: Instagram"></div><div class="midias-field"><label>Nome de Exibição *</label><input id="mNome" value="${esc(x.Nome_Exibicao)}" placeholder="Ex.: Instagram"></div>
+   <div class="midias-field full"><label>URL</label><input id="mURL" value="${esc(x.URL)}" placeholder="https://..."></div><div class="midias-field"><label>Ativo</label><select id="mAtivo"><option ${x.Ativo!=='Não'?'selected':''}>Sim</option><option ${x.Ativo==='Não'?'selected':''}>Não</option></select></div>
+   <div class="midias-field"><label>Ordem</label><input id="mOrdem" type="number" min="1" value="${esc(x.Ordem||'')}"></div><div class="midias-field full"><label>Observações</label><textarea id="mObs" rows="3">${esc(x.Observacoes||'')}</textarea></div></div>
+   <div class="midias-modal-foot"><button class="midias-btn" onclick="fecharModalMidiasTZC()">Fechar</button><button class="midias-btn primary" onclick="salvarMidiaTZC('${esc(x.ID_Midia)}',${edit})">💾 Salvar</button></div></div></div>`);
+ };
+ window.salvarMidiaTZC=async function(id,edit){
+   const dados={ID_Midia:id,Rede:mRede.value.trim(),Nome_Exibicao:mNome.value.trim(),URL:mURL.value.trim(),Ativo:mAtivo.value,Ordem:mOrdem.value,Observacoes:mObs.value.trim(),Atualizado_Em:new Date().toISOString()};
+   if(!dados.Rede||!dados.Nome_Exibicao){alert('Informe Rede e Nome de Exibição.');return;}
+   const payload={acao:edit?'atualizar':'inserir',nomeAba:'Midias_Sociais',id:id,idColuna:'ID_Midia',dados:dados};
+   await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+   const i=lista.findIndex(x=>x.ID_Midia===id);if(i>=0)lista[i]=dados;else lista.push(dados);
+   fechar();renderMidiasTZC();if(typeof showToast==='function')showToast(edit?'Mídia atualizada.':'Mídia cadastrada.');
+   setTimeout(carregarMidiasTZC,1500);
+ };
+ window.excluirMidiaTZC=function(id){
+   const x=lista.find(a=>a.ID_Midia===id);if(!x)return;
+   document.body.insertAdjacentHTML('beforeend',`<div class="midias-overlay"><div class="midias-modal" style="max-width:430px;text-align:center"><div style="font-size:2rem">🗑️</div><h3 style="color:#fff">Excluir mídia?</h3><p style="color:#bbb">Deseja realmente excluir "${esc(x.Nome_Exibicao||x.Rede)}"?</p><div class="midias-modal-foot" style="justify-content:center"><button class="midias-btn" onclick="fecharModalMidiasTZC()">Cancelar</button><button class="midias-btn" style="border-color:#a33;color:#ff7777" onclick="confirmarExcluirMidiaTZC('${esc(id)}')">🗑️ Excluir</button></div></div></div>`);
+ };
+ window.confirmarExcluirMidiaTZC=async function(id){
+   const x=lista.find(a=>a.ID_Midia===id);if(!x)return;
+   const dados=Object.assign({},x,{Ativo:'Excluido',Atualizado_Em:new Date().toISOString()});
+   await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'atualizar',nomeAba:'Midias_Sociais',id:id,idColuna:'ID_Midia',dados:dados})});
+   lista=lista.filter(a=>a.ID_Midia!==id);fechar();renderMidiasTZC();if(typeof showToast==='function')showToast('Mídia excluída.');
+ };
+ // Wire an existing Gestão Interna card if its visible text is Mídias Sociais.
+ document.addEventListener('click',function(e){
+   const el=e.target.closest('button,.management-card,.admin-card,.card,.menu-card');
+   if(el && /m[ií]dias sociais/i.test(el.textContent||'')){e.preventDefault();abrirMidiasSociaisTZC();}
+ });
+})();
+</script>
+
 </body>
 </html>
 

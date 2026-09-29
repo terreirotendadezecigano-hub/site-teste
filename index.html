@@ -1798,7 +1798,7 @@
         </section>`;
 
       try {
-        const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${encodeURIComponent(TZC_CATEGORIAS_SHEET)}?t=${Date.now()}`, {cache:'no-store'});
+        const res = await fetch(`${WEB_APP_URL}?sheet=${encodeURIComponent(TZC_CATEGORIAS_SHEET)}&t=${Date.now()}`, {cache:'no-store'});
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const rows = await res.json();
         window.tzcCategoriasGestaoV1 = Array.isArray(rows) ? rows : [];
@@ -1939,12 +1939,13 @@
         idColuna: 'ID_Categoria',
         dados: {
           ID_Categoria: id,
-          Nome: nome,
           Modulo: modulo,
+          Nome: nome,
           Ativo: 'Sim',
-          Status: 'Ativo',
-          Data_Atualizacao: agora,
-          ...(modo === 'novo' ? {Data_Criacao: agora} : {})
+          Observacoes: modo === 'editar'
+            ? String(((window.tzcCategoriasGestaoV1 || []).find(x => idCategoriaTZC_V1(x) === id) || {}).Observacoes || '')
+            : '',
+          Atualizado_Em: agora
         }
       };
 
@@ -1970,7 +1971,7 @@
       const confirmou = await confirmarExclusaoEstudoTZC_V1(nomeCategoriaTZC_V1(item));
       if (!confirmou) return;
 
-      item.Status = 'Excluido';
+      item.Ativo = 'Não';
       renderCategoriasTZC_V1();
       showToast('Excluindo categoria...');
 
@@ -1990,7 +1991,7 @@
           abrirCategoriasTZC_V1();
         }, 900);
       }).catch(e => {
-        item.Status = 'Ativo';
+        item.Ativo = 'Sim';
         renderCategoriasTZC_V1();
         showToast('Falha ao excluir categoria: ' + e.message);
       });
@@ -1998,7 +1999,7 @@
 
     async function carregarCategoriasEstudosTZC_V1() {
       try {
-        const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${encodeURIComponent(TZC_CATEGORIAS_SHEET)}`);
+        const res = await fetch(`${WEB_APP_URL}?sheet=${encodeURIComponent(TZC_CATEGORIAS_SHEET)}&t=${Date.now()}`, {cache:'no-store'});
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const rows = await res.json();
         const categorias = rows

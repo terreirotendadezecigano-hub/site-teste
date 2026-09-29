@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scalea=1.0, user-scalable=no">
   <title>Tenda de Zé Cigano</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Bibliotecas para exportar PDF e Excel -->
@@ -5081,23 +5081,38 @@ function filtrarCategoriasTZC_V48(valor){
   });
 }
 function visualizarCategoriaTZC_V48(id){
-  const lista=(window.tzcCategoriasV1||window.categoriasTZC_V1||[]);
-  const c=lista.find(x=>String(x.ID_Categoria||x.id||'')===String(id));
+  const lista=Array.isArray(window.tzcCategoriasGestaoV1) ? window.tzcCategoriasGestaoV1 : [];
+  const c=lista.find(x=>String(x.ID_Categoria||x.ID||x.id||'').trim()===String(id).trim());
   if(!c){
-    const rows=[...document.querySelectorAll('#tzcCategoriasTabela tbody tr')];
-    const row=rows.find(r=>r.innerHTML.includes(String(id)));
-    if(row){ alert(row.innerText); }
+    showToast('Categoria não encontrada.');
     return;
   }
-  const nome=c.Nome||c.Categoria||c.Nome_Categoria||'Categoria';
-  const modulo=c.Modulo||'—', ativo=c.Ativo||c.Situacao||'—', obs=c.Observacoes||'—';
+
+  document.querySelector('.tzc-view-overlay-v48')?.remove();
+  const nome=nomeCategoriaTZC_V1(c)||'Categoria';
+  const modulo=String(c.Modulo||c.Area||'Estudos');
+  const ativo=categoriaAtivaTZC_V1(c) ? 'Ativa' : 'Inativa';
+  const obs=String(c.Observacoes||c.Observação||c.Observacao||'').trim() || 'Nenhuma observação cadastrada.';
+
   const overlay=document.createElement('div');
   overlay.className='tzc-view-overlay-v48';
-  overlay.innerHTML=`<div class="tzc-view-box-v48">
-    <div class="tzc-view-head-v48"><strong><i class="fa-solid fa-eye"></i> Visualizar Categoria</strong><button onclick="this.closest('.tzc-view-overlay-v48').remove()" aria-label="Fechar">×</button></div>
-    <div class="tzc-view-grid-v48"><div><label>Categoria</label><span>${nome}</span></div><div><label>Módulo</label><span>${modulo}</span></div><div><label>Situação</label><span>${ativo}</span></div><div class="full"><label>Observações</label><span>${obs}</span></div></div>
-    <div class="tzc-view-foot-v48"><button class="btn-toolbar" onclick="this.closest('.tzc-view-overlay-v48').remove()">Fechar</button></div>
-  </div>`;
+  overlay.style.cssText='position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:18px;';
+  overlay.innerHTML=`
+    <div class="tzc-categoria-modal-box-v50" style="width:min(460px,calc(100vw - 36px));background:#111;border:1px solid var(--gold-primary);border-radius:12px;padding:18px;box-shadow:0 18px 55px rgba(0,0,0,.55);">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:15px;">
+        <h3 style="margin:0;color:#fff;font-size:1rem;"><i class="fa-solid fa-eye tzc-modal-title-icon-v51"></i> Visualizar Categoria</h3>
+        <button type="button" class="tzc-modal-x-v50" aria-label="Fechar" onclick="this.closest('.tzc-view-overlay-v48').remove()">×</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="grid-column:1/-1;"><label>Categoria</label><div class="form-control" style="height:auto;min-height:38px;display:flex;align-items:center;color:#fff;">${escTZC_V1(nome)}</div></div>
+        <div><label>Módulo</label><div class="form-control" style="height:auto;min-height:38px;display:flex;align-items:center;color:#fff;">${escTZC_V1(modulo)}</div></div>
+        <div><label>Situação</label><div class="form-control" style="height:auto;min-height:38px;display:flex;align-items:center;"><span class="card-badge tzc-status-chip-v51">${escTZC_V1(ativo)}</span></div></div>
+        <div style="grid-column:1/-1;"><label>Observações</label><div class="form-control" style="height:auto;min-height:58px;padding-top:10px;color:var(--text-muted);white-space:pre-wrap;">${escTZC_V1(obs)}</div></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:13px;border-top:1px solid var(--border-color);">
+        <button type="button" class="btn-toolbar" onclick="this.closest('.tzc-view-overlay-v48').remove()">Fechar</button>
+      </div>
+    </div>`;
   overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
   document.body.appendChild(overlay);
 }

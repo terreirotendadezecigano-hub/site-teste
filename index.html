@@ -1130,7 +1130,7 @@
         ${sec('Identidade',
           configCampoTZC_V1('Nome_Terreiro','Nome do Terreiro',d.Nome_Terreiro||'Tenda de Zé Cigano')+
           configCampoTZC_V1('Subtitulo','Subtítulo',d.Subtitulo||'Terreiro de Umbanda')+
-          configCampoTZC_V1('Logo_URL','Logo',d.Logo_URL||'Logo atual do site'),'tzc-v33-largo tzc-v33-3')}
+          configCampoTZC_V1('Logo_URL','Logo',d.Logo_URL?'Logo cadastrada':'Não cadastrada'),'tzc-v33-largo tzc-v33-3')}
         ${sec('Institucional',
           configCampoTZC_V1('Quem_Somos','Quem Somos',d.Quem_Somos)+
           configCampoTZC_V1('Endereco','Endereço',d.Endereco)+
@@ -1176,6 +1176,7 @@
       const d=window.tzcGeralV1||{};
       const tipo=tipoCampoConfigTZC_V1(nome);
       let v=d[nome]||'';
+      if(nome==='Logo_URL') v=String(d.Logo_URL||'');
       if(tipo==='color'&&!v) v=nome==='Cor_Fundo'?'#0a0a0a':nome==='Cor_Card'?'#141414':nome==='Cor_Dourado'?'#d4af37':'#60000a';
       const controle=tipo==='textarea'
         ? `<textarea id="tzcEditCampoV33" rows="3">${escHtmlTZC_V1(v)}</textarea>`
@@ -1342,8 +1343,17 @@
         <div style="font-size:.62rem;color:var(--text-muted);margin-top:3px;">Sistema desenvolvido por <span style="color:var(--gold-primary);">SistemasAeR</span></div>`;
     }
 
+    function normalizarLogoTZC_V1(url) {
+      const original=String(url||'').trim();
+      if(!original) return '';
+      let m=original.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
+      if(!m) m=original.match(/[?&]id=([^&#]+)/i);
+      if(m && m[1]) return 'https://lh3.googleusercontent.com/d/'+encodeURIComponent(m[1]);
+      return original;
+    }
+
     function aplicarFaviconTZC_V1(url) {
-      const logoUrl = String(url || '').trim();
+      const logoUrl = normalizarLogoTZC_V1(url);
       if (!logoUrl) return;
       let link = document.querySelector('link[rel="icon"]');
       if (!link) {
@@ -1368,7 +1378,7 @@
       const logo = document.getElementById('tzcHeaderLogoV1');
       if (nome && d.Nome_Terreiro) nome.textContent = d.Nome_Terreiro;
       if (subtitulo && d.Subtitulo) subtitulo.textContent = d.Subtitulo;
-      if (logo && d.Logo_URL) logo.src = d.Logo_URL;
+      if (logo && d.Logo_URL) logo.src = normalizarLogoTZC_V1(d.Logo_URL);
       if (d.Logo_URL) aplicarFaviconTZC_V1(d.Logo_URL);
       aplicarRodapeTZC_V1(d);
     }

@@ -2443,6 +2443,11 @@
                 <i class="fa-solid fa-share-nodes" style="font-size:12px;"></i> Compartilhar
               </button>
               <button class="btn-toolbar" type="button"
+                style="padding:6px 10px;font-size:12px;min-height:32px;line-height:1;gap:5px;"
+                onclick="document.getElementById('modalEstudoTZC_V1')?.remove(); editarEstudoTZC_V1('${escTZC_V1(estudo.ID_Estudo || estudo.ID || '')}')">
+                <i class="fa-solid fa-pen" style="font-size:12px;"></i> Editar
+              </button>
+              <button class="btn-toolbar" type="button"
                 style="width:38px;min-width:38px;height:32px;min-height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:13px;line-height:1;"
                 onclick="document.getElementById('modalEstudoTZC_V1').remove()">
                 <i class="fa-solid fa-xmark"></i>
@@ -4886,7 +4891,10 @@
     abrirModalErvaV37(`<div class="ervas-modal-head-v37"><h3><i class="fa-solid fa-leaf"></i> ${escErvaV37(x.Nome_Erva||'Erva')}</h3><button class="ervas-close-v37" onclick="fecharModalErvaV37()">×</button></div>
       ${x.Foto_URL?`<img src="${escErvaV37(x.Foto_URL)}" style="max-width:180px;max-height:140px;border-radius:10px;object-fit:cover;margin-bottom:12px">`:''}
       ${[['Nome científico',x.Nome_Cientifico],['Categoria',x.Categoria],['Tipo de preparo',x.Tipo_Preparo],['Finalidade / Propriedades',x.Finalidade_Propriedades],['Uso espiritual',x.Uso_Espiritual],['Indicação de uso',x.Indicacao_Uso],['Modo de uso',x.Modo_Uso],['Cuidados',x.Cuidados],['Observações',x.Observacoes],['Acesso público',x.Acesso_Publico]].filter(a=>a[1]).map(a=>`<div style="margin:9px 0"><div style="font-size:.75rem;color:var(--gold-light);font-weight:700">${a[0]}</div><div style="font-size:.88rem;color:#eee;white-space:pre-wrap">${escErvaV37(a[1])}</div></div>`).join('')}
-      <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="ervas-secondary-v37" onclick="fecharModalErvaV37()">Fechar</button></div>`);
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
+        <button class="ervas-secondary-v37" onclick="fecharModalErvaV37()">Fechar</button>
+        <button class="ervas-primary-v37" onclick="fecharModalErvaV37(); editarErvaTZC_V37('${escErvaV37(String(x.ID_Erva||''))}')"><i class="fa-solid fa-pen"></i> Editar</button>
+      </div>`);
   };
 
   window.abrirFormErvaTZC_V37=function(x){
@@ -5111,6 +5119,7 @@ function visualizarCategoriaTZC_V48(id){
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:13px;border-top:1px solid var(--border-color);">
         <button type="button" class="btn-toolbar" onclick="this.closest('.tzc-view-overlay-v48').remove()">Fechar</button>
+        <button type="button" class="btn-toolbar btn-primary" onclick="this.closest('.tzc-view-overlay-v48').remove(); editarCategoriaTZC_V1('${escTZC_V1(id)}')"><i class="fa-solid fa-pen"></i> Editar</button>
       </div>
     </div>`;
   overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
@@ -6040,3 +6049,6 @@ function filtrarEstudosTZC_V55(valor){
   max-width:900px!important;
 }
 </style>
+
+
+<!-- TZC V62 — Visualização com botão Editar em Estudos, Categorias e Ervas -->

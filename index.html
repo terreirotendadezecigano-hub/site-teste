@@ -1325,6 +1325,48 @@
 }
 </style>
 
+
+<style id="tzc-v47-ajustes-finais">
+/* V47: Categorias e Configurações seguem literalmente o cabeçalho de Ervas */
+.tzc-count-v47{color:var(--text-muted);font-size:.72rem;font-weight:600}
+.tzc-head-spacer-v47{width:112px;height:31px;display:block}
+
+/* NOVA ERVA: redução real, não apenas espaçamento */
+.ervas-modal-box-v37{
+  width:min(760px,calc(100vw - 40px))!important;
+  max-width:760px!important;
+  padding:12px!important;
+  border-radius:10px!important;
+}
+.ervas-modal-head-v37{margin-bottom:8px!important;padding-bottom:7px!important}
+.ervas-modal-head-v37 h3{font-size:.92rem!important}
+.ervas-form-v37{gap:7px 9px!important}
+.ervas-field-v37{gap:3px!important}
+.ervas-field-v37 label{font-size:.70rem!important}
+.ervas-field-v37 input,.ervas-field-v37 select,.ervas-field-v37 textarea{
+  min-height:29px!important;
+  padding:5px 7px!important;
+  font-size:.76rem!important;
+  border-radius:5px!important;
+}
+.ervas-field-v37 textarea{
+  min-height:42px!important;
+  height:42px!important;
+  max-height:58px!important;
+}
+.ervas-form-actions-v37{margin-top:1px!important}
+.ervas-form-actions-v37 button{
+  min-height:29px!important;padding:5px 9px!important;font-size:.72rem!important
+}
+@media(max-width:900px){
+  .ervas-modal-box-v37{width:min(700px,calc(100vw - 24px))!important}
+}
+@media(max-width:600px){
+  .ervas-modal-box-v37{width:calc(100vw - 16px)!important}
+  .tzc-head-spacer-v47{display:none}
+}
+</style>
+
 </head>
 <body>
 
@@ -1668,14 +1710,15 @@
 
       container.innerHTML = `
         <section style="padding:8px 0 30px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
-            <div>
-              <div style="font-size:.72rem;color:var(--gold-primary);font-weight:700;text-transform:uppercase;letter-spacing:.04em;">Gestão Interna</div>
-              <h2 style="margin:4px 0 0;color:#fff;font-size:1rem;">Configurações do Terreiro</h2>
+          <div class="tzc-page-head-v44">
+            <button type="button" class="btn-toolbar tzc-page-back-v44" onclick="voltarGestaoInternaTZC_V1()">
+              <i class="fa-solid fa-arrow-left"></i> Gestão Interna
+            </button>
+            <div class="tzc-page-copy-v44">
+              <h2><i class="fa-solid fa-gear"></i> Configurações do Terreiro</h2>
+              <p>Centralize a identidade, os dados institucionais, contatos, giras, rodapé e aparência do sistema.</p>
             </div>
-            <div style="display:flex;gap:8px;">
-              <button type="button" class="btn-toolbar" onclick="voltarGestaoInternaTZC_V1()"><i class="fa-solid fa-arrow-left"></i> Gestão Interna</button>
-            </div>
+            <span class="tzc-head-spacer-v47" aria-hidden="true"></span>
           </div>
           <div id="tzcGeralPainelV1"><div style="padding:22px;color:var(--text-muted);">Carregando configurações...</div></div>
         </section>`;
@@ -2779,19 +2822,17 @@
 
       container.innerHTML = `
         <section style="padding:8px 0 30px;">
-          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
-            <div>
-              <div style="font-size:.72rem;color:var(--gold-primary);font-weight:700;text-transform:uppercase;letter-spacing:.04em;">Gestão Interna</div>
-              <h2 style="margin:4px 0 0;color:#fff;font-size:1rem;">Categorias <span id="tzcCategoriasContadorV1" style="color:var(--text-muted);font-weight:500;font-size:.78rem;"></span></h2>
+          <div class="tzc-page-head-v44">
+            <button type="button" class="btn-toolbar tzc-page-back-v44" onclick="voltarGestaoInternaTZC_V1()">
+              <i class="fa-solid fa-arrow-left"></i> Gestão Interna
+            </button>
+            <div class="tzc-page-copy-v44">
+              <h2><i class="fa-solid fa-tags"></i> Gestão de Categorias <span id="tzcCategoriasContadorV1" class="tzc-count-v47"></span></h2>
+              <p>Organize as categorias usadas nos estudos e nos demais módulos do sistema.</p>
             </div>
-            <div style="display:flex;gap:8px;">
-              <button type="button" class="btn-toolbar" onclick="voltarGestaoInternaTZC_V1()">
-                <i class="fa-solid fa-arrow-left"></i> Gestão Interna
-              </button>
-              <button type="button" class="btn-toolbar btn-primary" onclick="abrirNovaCategoriaTZC_V1()">
-                <i class="fa-solid fa-plus"></i> Nova Categoria
-              </button>
-            </div>
+            <button type="button" class="ervas-primary-v37 tzc-page-new-v44" onclick="abrirNovaCategoriaTZC_V1()">
+              <i class="fa-solid fa-plus"></i> Nova Categoria
+            </button>
           </div>
           <div id="tzcCategoriasTabela"><div style="padding:22px;color:var(--text-muted);">Carregando categorias...</div></div>
         </section>`;

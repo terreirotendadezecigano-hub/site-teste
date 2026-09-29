@@ -992,14 +992,14 @@
       `;
 
       try {
-        const response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Estudos`);
+        const response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Estudo`);
         if (!response.ok) throw new Error('HTTP ' + response.status);
         const dados = await response.json();
         window.tzcEstudosV1 = Array.isArray(dados) ? dados : [];
         renderEstudosTZC_V1(window.tzcEstudosV1);
       } catch (e) {
         document.getElementById('estudosTZCLista').innerHTML =
-          `<p style="color:#d9a9a9;">Não foi possível carregar a aba Estudos ainda. ${e.message}</p>`;
+          `<p style="color:#d9a9a9;">Não foi possível carregar a aba Estudo ainda. ${e.message}</p>`;
       }
     }
 
@@ -1024,10 +1024,10 @@
         card.className = 'card';
         card.style.cursor = 'pointer';
 
-        const titulo = estudo.Titulo || 'Estudo sem título';
+        const titulo = estudo['Título'] || estudo.Titulo || 'Estudo sem título';
         const categoria = estudo.Categoria || 'Estudo';
         const resumo = estudo.Resumo || '';
-        const imagem = estudo.Imagem_URL || '';
+        const imagem = estudo.Estudo_Imagem || estudo.Imagem_URL || '';
 
         card.innerHTML = `
           ${imagem ? `<img src="${imagem}" class="card-img" alt="${escTZC_V1(titulo)}">` : `
@@ -1063,11 +1063,11 @@
           <div style="display:flex;justify-content:space-between;gap:10px;">
             <div>
               <div style="font-size:.75rem;color:var(--gold-primary);">${escTZC_V1(estudo.Categoria || 'Estudo')}</div>
-              <h2 style="margin:5px 0 15px;">${escTZC_V1(estudo.Titulo || '')}</h2>
+              <h2 style="margin:5px 0 15px;">${escTZC_V1(estudo['Título'] || estudo.Titulo || '')}</h2>
             </div>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
               <button class="btn-toolbar" type="button"
-                onclick="shareCurrentItem('${escTZC_V1(estudo.Titulo || 'Estudo da Tenda de Zé Cigano')}', window.location.href + '#estudo-${escTZC_V1(estudo.ID_Estudo || estudo.ID || '')}')">
+                onclick="shareCurrentItem('${escTZC_V1(estudo['Título'] || estudo.Titulo || 'Estudo da Tenda de Zé Cigano')}', window.location.href + '#estudo-${escTZC_V1(estudo.ID_Estudo || estudo.ID || '')}')">
                 <i class="fa-solid fa-share-nodes"></i> Compartilhar
               </button>
               <button class="btn-toolbar" type="button"
@@ -1076,7 +1076,7 @@
               </button>
             </div>
           </div>
-          ${estudo.Imagem_URL ? `<img src="${estudo.Imagem_URL}" style="width:100%;max-height:300px;object-fit:contain;border-radius:8px;margin-bottom:16px;">` : ''}
+          ${estudo.Estudo_Imagem || estudo.Imagem_URL ? `<img src="${estudo.Estudo_Imagem || estudo.Imagem_URL}" style="width:100%;max-height:300px;object-fit:contain;border-radius:8px;margin-bottom:16px;">` : ''}
           ${estudo.Resumo ? `<p style="color:var(--text-muted);font-weight:600;">${escTZC_V1(estudo.Resumo)}</p>` : ''}
           <div style="white-space:pre-wrap;line-height:1.75;">${escTZC_V1(texto)}</div>
           ${estudo.Fonte_Informacao ? `<p style="margin-top:20px;font-size:.78rem;color:var(--text-muted);">Fonte: ${escTZC_V1(estudo.Fonte_Informacao)}</p>` : ''}
@@ -1180,7 +1180,7 @@
                   style="background:#333;color:#fff;border:1px solid #777;border-radius:8px;padding:10px 16px;cursor:pointer;">
                   <i class="fa-solid fa-xmark"></i> Fechar
                 </button>
-                <button class="btn-submit" type="submit" style="max-width:180px;">
+                <button id="btnSalvarEstudoTZC" class="btn-submit" type="submit" style="max-width:180px;">
                   <i class="fa-solid fa-floppy-disk"></i> Salvar Estudo
                 </button>
               </div>
@@ -1212,13 +1212,13 @@
       modal.querySelector('h3').innerHTML =
         '<i class="fa-solid fa-book-open" style="color:var(--gold-primary);"></i> Editar Estudo';
 
-      document.getElementById('tzcEstudoTitulo').value = estudo.Titulo || '';
+      document.getElementById('tzcEstudoTitulo').value = estudo['Título'] || estudo.Titulo || '';
       document.getElementById('tzcEstudoCategoria').value = estudo.Categoria || '';
       document.getElementById('tzcEstudoResumo').value = estudo.Resumo || '';
       document.getElementById('tzcEstudoTexto').value = estudo.Texto || '';
-      document.getElementById('tzcEstudoImagem').value = estudo.Imagem_URL || '';
-      document.getElementById('tzcEstudoFonte').value = estudo.Fonte_Informacao || '';
-      document.getElementById('tzcEstudoVisibilidade').value = estudo.Visibilidade || 'Público';
+      document.getElementById('tzcEstudoImagem').value = estudo.Estudo_Imagem || estudo.Imagem_URL || '';
+      document.getElementById('tzcEstudoFonte').value = estudo.Fonte || estudo.Fonte_Informacao || '';
+      document.getElementById('tzcEstudoVisibilidade').value = estudo.Acesso_Publico || estudo.Visibilidade || 'Público';
 
       const form = modal.querySelector('form');
       form.dataset.modo = 'editar';
@@ -1237,12 +1237,12 @@
         return;
       }
 
-      const titulo = estudo.Titulo || 'este estudo';
+      const titulo = estudo['Título'] || estudo.Titulo || 'este estudo';
       if (!confirm(`Deseja realmente excluir "${titulo}"?`)) return;
 
       const payload = {
         acao: 'excluir',
-        nomeAba: 'Estudos',
+        nomeAba: 'Estudo',
         id: String(id),
         idColuna: 'ID_Estudo'
       };
@@ -1265,35 +1265,63 @@
       event.preventDefault();
 
       const form = event.target;
+      const botaoSalvar = form.querySelector('button[type="submit"]');
+
+      // Bloqueio imediato contra clique duplo.
+      if (form.dataset.salvando === '1') return;
+      form.dataset.salvando = '1';
+
       const modo = form.dataset.modo || 'novo';
-      const idEdicao = form.dataset.idEstudo || ('EST-' + Date.now());
+
+      // O ID é criado uma única vez e reaproveitado durante toda a tentativa.
+      if (!form.dataset.idEstudo) {
+        form.dataset.idEstudo = 'EST-' + Date.now();
+      }
+      const idEdicao = form.dataset.idEstudo;
+
+      const titulo = document.getElementById('tzcEstudoTitulo').value.trim();
+      const categoria = document.getElementById('tzcEstudoCategoria').value.trim();
+      const resumo = document.getElementById('tzcEstudoResumo').value.trim();
+      const textoEstudo = document.getElementById('tzcEstudoTexto').value.trim();
+      const visibilidade = document.getElementById('tzcEstudoVisibilidade').value;
+      const imagem = document.getElementById('tzcEstudoImagem').value.trim();
+      const fonte = document.getElementById('tzcEstudoFonte').value.trim();
+      const autor = (loggedUser && (loggedUser.Nome || loggedUser.Nome_Completo)) || 'Usuário';
+      const agora = new Date().toISOString();
+
+      if (!titulo || !textoEstudo) {
+        form.dataset.salvando = '0';
+        showToast('Preencha o título e o texto do estudo.');
+        return;
+      }
 
       const payload = {
         acao: modo === 'editar' ? 'atualizar' : 'inserir',
-        nomeAba: 'Estudos',
+        nomeAba: 'Estudo',
         id: idEdicao,
         idColuna: 'ID_Estudo',
         valores: [
           idEdicao,
-          document.getElementById('tzcEstudoTitulo').value.trim(),
-          document.getElementById('tzcEstudoCategoria').value.trim(),
-          document.getElementById('tzcEstudoResumo').value.trim(),
-          document.getElementById('tzcEstudoTexto').value.trim(),
-          document.getElementById('tzcEstudoImagem').value.trim(),
-          document.getElementById('tzcEstudoFonte').value.trim(),
-          (loggedUser && (loggedUser.Nome || loggedUser.Nome_Completo)) || 'Usuário',
-          document.getElementById('tzcEstudoVisibilidade').value,
+          titulo,
+          categoria,
+          resumo,
+          textoEstudo,
+          visibilidade,
+          imagem,
+          fonte,
           'Ativo',
-          new Date().toISOString(),
-          new Date().toISOString(),
-          (loggedUser && (loggedUser.Email || loggedUser.email)) || '',
-          (loggedUser && (loggedUser.Email || loggedUser.email)) || ''
+          autor,
+          agora,
+          agora
         ]
       };
 
-      if (!payload.valores[1] || !payload.valores[4]) {
-        showToast('Preencha o título e o texto do estudo.');
-        return;
+      const textoOriginalBotao = botaoSalvar ? botaoSalvar.innerHTML : '';
+      if (botaoSalvar) {
+        botaoSalvar.disabled = true;
+        botaoSalvar.style.opacity = '.7';
+        botaoSalvar.style.cursor = 'wait';
+        botaoSalvar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
       }
 
       try {
@@ -1304,11 +1332,28 @@
           body: JSON.stringify(payload)
         });
 
-        document.getElementById('modalNovoEstudoTZC_V1').remove();
-        showToast(modo === 'editar' ? 'Alterações enviadas para gravação.' : 'Estudo enviado para gravação.');
-        setTimeout(() => abrirEstudosTZC_V1(), 800);
+        // Fecha imediatamente após o envio concluir e dá retorno visual.
+        const modal = document.getElementById('modalNovoEstudoTZC_V1');
+        if (modal) modal.remove();
+
+        showToast(modo === 'editar'
+          ? 'Alterações salvas com sucesso!'
+          : 'Estudo salvo com sucesso!');
+
+        // Recarrega o Acervo após o Google Sheets ter tempo de refletir a gravação.
+        setTimeout(() => abrirEstudosTZC_V1(), 1200);
+
       } catch (e) {
-        showToast('Não foi possível enviar o estudo: ' + e.message);
+        form.dataset.salvando = '0';
+
+        if (botaoSalvar) {
+          botaoSalvar.disabled = false;
+          botaoSalvar.style.opacity = '';
+          botaoSalvar.style.cursor = '';
+          botaoSalvar.innerHTML = textoOriginalBotao;
+        }
+
+        showToast('Não foi possível salvar o estudo: ' + e.message);
       }
     }
 
@@ -1579,25 +1624,7 @@
       showToast('Chave PIX copiada!');
     }
 
-    function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      if (sidebar) sidebar.classList.toggle('open');
-    }
-
-    // Fecha o menu lateral ao clicar fora dele.
-    document.addEventListener('click', function(event) {
-      const sidebar = document.getElementById('sidebar');
-      const menuButton = document.querySelector('.toggle-menu-btn');
-
-      if (!sidebar || !sidebar.classList.contains('open')) return;
-
-      const clicouDentroDoMenu = sidebar.contains(event.target);
-      const clicouNoBotaoMenu = menuButton && menuButton.contains(event.target);
-
-      if (!clicouDentroDoMenu && !clicouNoBotaoMenu) {
-        sidebar.classList.remove('open');
-      }
-    });
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
     function openLoginModal() { document.getElementById('modalMsg').innerText = ''; document.getElementById('loginModal').style.display = 'flex'; }
     function closeLoginModal() { document.getElementById('loginModal').style.display = 'none'; }
 

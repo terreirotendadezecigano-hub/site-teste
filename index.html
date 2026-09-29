@@ -1846,10 +1846,10 @@
       container.innerHTML = `
         <section class="gestao-interna-home" style="padding:8px 0 30px;">
           <div style="margin-bottom:24px;text-align:center;">
-            <h2 class="tzc-gestao-title-v51" style="margin:0;font-size:1rem;font-weight:700;color:#fff;letter-spacing:.01em;">
+            <h2 class="tzc-gestao-title-v51" style="margin:0;font-size:1.65rem;font-weight:800;color:#fff;letter-spacing:.01em;line-height:1.12;">
               <i class="fa-solid fa-sliders" style="color:var(--gold-primary);margin-right:8px;"></i>Gestão Interna
             </h2>
-            <p class="tzc-gestao-intro-v51" style="margin:8px auto 0;max-width:720px;color:var(--text-muted);font-size:.84rem;line-height:1.5;">
+            <p class="tzc-gestao-intro-v51" style="margin:9px auto 0;max-width:860px;color:#c7c7c7;font-size:1.02rem;line-height:1.42;">
               Espaço reservado para organizar conteúdos, estudos e ferramentas internas do Terreiro Tenda de Zé Cigano.
             </p>
             <div style="width:46px;height:1px;background:var(--gold-primary);opacity:.7;margin:11px auto 0;"></div>
@@ -2283,7 +2283,7 @@
     async function abrirEstudosTZC_V1() {
       const container = document.getElementById('contentContainer');
       const search = document.getElementById('searchContainerWrapper');
-      if (search) search.style.display = 'flex';
+      if (search) search.style.display = 'none';
 
       container.innerHTML = `
         <div class="tzc-page-head-v44">
@@ -2297,6 +2297,11 @@
           <button class="btn-toolbar btn-add-membro tzc-page-new-v44" onclick="abrirNovoEstudoTZC_V1()">
             <i class="fa-solid fa-plus"></i> Novo Estudo
           </button>
+        </div>
+
+        <div class="tzc-busca-modulo-v55">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input id="tzcBuscaEstudosV55" type="search" placeholder="Pesquisar nos estudos..." oninput="filtrarEstudosTZC_V55(this.value)">
         </div>
 
         <div id="estudosTZCLista">
@@ -3043,10 +3048,6 @@
 
       container.innerHTML = `
         <section style="padding:8px 0 30px;">
-          <div class="tzc-searchbar-v48">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input id="tzcBuscaCategoriasV48" type="search" placeholder="Pesquisar categorias..." oninput="filtrarCategoriasTZC_V48(this.value)">
-          </div>
           <div class="tzc-page-head-v44">
             <button type="button" class="btn-toolbar tzc-page-back-v44" onclick="voltarGestaoInternaTZC_V1()">
               <i class="fa-solid fa-arrow-left"></i> Gestão Interna
@@ -3058,6 +3059,10 @@
             <button type="button" class="ervas-primary-v37 tzc-page-new-v44" onclick="abrirNovaCategoriaTZC_V1()">
               <i class="fa-solid fa-plus"></i> Nova Categoria
             </button>
+          </div>
+          <div class="tzc-busca-modulo-v55">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input id="tzcBuscaCategoriasV48" type="search" placeholder="Pesquisar categorias..." oninput="filtrarCategoriasTZC_V48(this.value)">
           </div>
           <div id="tzcCategoriasTabela"><div style="padding:22px;color:var(--text-muted);">Carregando categorias...</div></div>
         </section>`;
@@ -4752,10 +4757,6 @@
     const c=document.getElementById('contentContainer');
     c.innerHTML=`
       <div class="ervas-admin-v37">
-        <div class="tzc-top-search-v45">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input id="ervaBuscaV37" placeholder="Pesquisar..." oninput="renderTabelaErvasTZC_V37()">
-        </div>
         <div class="tzc-page-head-v44">
           <button type="button" class="btn-toolbar tzc-page-back-v44" onclick="voltarGestaoInternaTZC_V1()">
             <i class="fa-solid fa-arrow-left"></i> Gestão Interna
@@ -4767,6 +4768,11 @@
           <button type="button" class="ervas-primary-v37 tzc-page-new-v44" onclick="novaErvaTZC_V37()">
             <i class="fa-solid fa-plus"></i> Nova Erva
           </button>
+        </div>
+
+        <div class="tzc-busca-modulo-v55">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input id="ervaBuscaV37" type="search" placeholder="Pesquisar ervas..." oninput="renderTabelaErvasTZC_V37()">
         </div>
 
         <div id="ervasTabelaV37"><div class="ervas-empty-v37">Carregando ervas...</div></div>
@@ -5114,6 +5120,83 @@ function visualizarCategoriaTZC_V48(id){
   }
   document.addEventListener('click',fechaMenuForaTZCV48,true);
 })();
+</script>
+
+
+<style id="tzc-v55-cabecalho-busca">
+/* Cabeçalho oficial de páginas */
+.tzc-page-copy-v44 h2{
+  font-size:1.28rem!important;
+  line-height:1.2!important;
+  font-weight:800!important;
+}
+.tzc-page-copy-v44 p{
+  font-size:.92rem!important;
+  line-height:1.42!important;
+  color:#c7c7c7!important;
+  margin-top:5px!important;
+}
+
+/* Gestão Interna — presença maior sem virar um bloco alto */
+.gestao-interna-home .tzc-gestao-title-v51{
+  font-size:1.65rem!important;
+  line-height:1.12!important;
+  font-weight:800!important;
+}
+.gestao-interna-home .tzc-gestao-intro-v51{
+  font-size:1.02rem!important;
+  line-height:1.42!important;
+  max-width:860px!important;
+  color:#c7c7c7!important;
+}
+
+/* Pesquisa contextual: curta, centralizada e entre cabeçalho e conteúdo */
+.tzc-busca-modulo-v55{
+  width:min(620px,72%);
+  min-width:320px;
+  height:36px;
+  margin:2px auto 14px;
+  padding:0 12px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  background:#151515;
+  border:1px solid #303030;
+  border-radius:9px;
+}
+.tzc-busca-modulo-v55:focus-within{
+  border-color:rgba(212,175,55,.75);
+}
+.tzc-busca-modulo-v55 i{
+  color:var(--gold-primary);
+  font-size:.82rem;
+}
+.tzc-busca-modulo-v55 input{
+  flex:1;
+  min-width:0;
+  height:100%;
+  border:0!important;
+  outline:0!important;
+  background:transparent!important;
+  color:#fff!important;
+  font-size:.86rem!important;
+  box-shadow:none!important;
+}
+.tzc-busca-modulo-v55 input::placeholder{color:#858585}
+
+@media(max-width:760px){
+  .tzc-busca-modulo-v55{width:100%;min-width:0}
+  .gestao-interna-home .tzc-gestao-title-v51{font-size:1.42rem!important}
+  .gestao-interna-home .tzc-gestao-intro-v51{font-size:.94rem!important}
+}
+</style>
+<script>
+function filtrarEstudosTZC_V55(valor){
+  const termo=String(valor||'').toLocaleLowerCase('pt-BR').trim();
+  document.querySelectorAll('#estudosTZCLista tbody tr').forEach(linha=>{
+    linha.style.display=!termo || linha.textContent.toLocaleLowerCase('pt-BR').includes(termo) ? '' : 'none';
+  });
+}
 </script>
 
 </body>

@@ -850,6 +850,19 @@
     let isErvasSubpage = false;
     let isPontosSubpage = false;
 
+    /* ================= CONFIGURAÇÃO FLEXÍVEL TZC =================
+       Preferência: dados editáveis na planilha. O site mantém estes
+       valores como fallback caso alguma aba de configuração ainda não exista.
+    */
+    const TZC_CONFIG_SHEET = 'Configuracoes_Site';
+    const TZC_CATEGORIAS_SHEET = 'Categorias';
+    const TZC_CATEGORIAS_ESTUDO_PADRAO = [
+      'Defumação','Ervas & Banhos','História','Oração','Orientações',
+      'Outros','Pontos Cantados','Simpatia','Umbanda'
+    ];
+    let tzcCategoriasEstudosV1 = [...TZC_CATEGORIAS_ESTUDO_PADRAO];
+    let tzcConfiguracoesV1 = {};
+
     function showToast(mensagem) {
       const toast = document.getElementById('custom-toast');
       toast.textContent = mensagem;
@@ -866,8 +879,10 @@
       return true;
     }
 
-    window.onload = function() {
+    window.onload = async function() {
       updateAuthUI();
+      await carregarConfiguracoesFlexiveisTZC_V1();
+      await carregarCategoriasEstudosTZC_V1();
       loadGeneralData();
       loadTabData('Home');
     };
@@ -954,7 +969,7 @@
             <h2 style="margin:4px 0 0;">Estudos da Tenda de Zé Cigano</h2>
           </div>
           <button class="btn-toolbar btn-add-membro" onclick="abrirNovoEstudoTZC_V1()">
-            <i class="fa-solid fa-plus"></i> Novo estudo
+            <i class="fa-solid fa-plus"></i> Novo Estudo
           </button>
         </div>
         <div id="estudosTZCLista" class="cards-grid">
@@ -1007,7 +1022,7 @@
             </div>`}
           <div class="card-body">
             <div class="card-badges"><span class="card-badge">${escTZC_V1(categoria)}</span></div>
-            <h3 class="card-title" style="color:#fff !important;">${escTZC_V1(titulo)}</h3>
+            <h3 class="card-title" style="color:#ffffff !important;text-shadow:0 0 1px rgba(255,255,255,.35);">${escTZC_V1(titulo)}</h3>
             ${resumo ? `<p class="card-text">${escTZC_V1(resumo)}</p>` : ''}
             <div style="display:flex;justify-content:flex-end;gap:5px;margin-top:8px;">
               <button type="button" class="btn-icon-only" onclick="event.stopPropagation();editarEstudoTZC_V1('${escTZC_V1(estudo.ID_Estudo || estudo.ID || '')}')" title="Editar">
@@ -1036,7 +1051,16 @@
               <div style="font-size:.75rem;color:var(--gold-primary);">${escTZC_V1(estudo.Categoria || 'Estudo')}</div>
               <h2 style="margin:5px 0 15px;">${escTZC_V1(estudo.Titulo || '')}</h2>
             </div>
-            <button class="btn-toolbar" onclick="document.getElementById('modalEstudoTZC_V1').remove()"><i class="fa-solid fa-xmark"></i></button>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+              <button class="btn-toolbar" type="button"
+                onclick="shareCurrentItem('${escTZC_V1(estudo.Titulo || 'Estudo da Tenda de Zé Cigano')}', window.location.href + '#estudo-${escTZC_V1(estudo.ID_Estudo || estudo.ID || '')}')">
+                <i class="fa-solid fa-share-nodes"></i> Compartilhar
+              </button>
+              <button class="btn-toolbar" type="button"
+                onclick="document.getElementById('modalEstudoTZC_V1').remove()">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
           </div>
           ${estudo.Imagem_URL ? `<img src="${estudo.Imagem_URL}" style="width:100%;max-height:300px;object-fit:contain;border-radius:8px;margin-bottom:16px;">` : ''}
           ${estudo.Resumo ? `<p style="color:var(--text-muted);font-weight:600;">${escTZC_V1(estudo.Resumo)}</p>` : ''}
@@ -1100,15 +1124,6 @@
                   <label>Categoria</label>
                   <select id="tzcEstudoCategoria" class="form-control">
                     <option value="">Selecione uma categoria</option>
-                    <option value="Umbanda">Umbanda</option>
-                    <option value="Oração">Oração</option>
-                    <option value="Simpatia">Simpatia</option>
-                    <option value="Ervas & Banhos">Ervas & Banhos</option>
-                    <option value="Defumação">Defumação</option>
-                    <option value="Pontos Cantados">Pontos Cantados</option>
-                    <option value="Orientações">Orientações</option>
-                    <option value="História">História</option>
-                    <option value="Outros">Outros</option>
                   </select>
                 </div>
 
@@ -1157,6 +1172,10 @@
       `;
 
       document.body.appendChild(modal);
+      preencherCategoriasEstudosTZC_V1(
+        document.getElementById('tzcEstudoCategoria')
+      );
+
     }
 
     async function editarEstudoTZC_V1(id) {
@@ -1398,6 +1417,96 @@
       if (dictionary[cleanKey]) return dictionary[cleanKey];
       let formatted = key.replace(/_/g, ' ');
       return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+    }
+
+    async function carregarConfiguracoesFlexiveisTZC_V1() {
+      try {
+        const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${encodeURIComponent(TZC_CONFIG_SHEET)}`);
+        if (!res.ok) return;
+        const rows = await res.json();
+        if (!Array.isArray(rows)) return;
+
+        const cfg = {};
+        rows.forEach(r => {
+          const chave = String(r.Chave || r.Nome || '').trim();
+          const valor = r.Valor ?? r.Conteudo ?? '';
+          const ativo = String(r.Ativo ?? 'Sim').toLowerCase();
+          if (chave && !['nao','não','false','inativo'].includes(ativo)) cfg[chave] = String(valor);
+        });
+        tzcConfiguracoesV1 = cfg;
+
+        const root = document.documentElement;
+        const mapaCores = {
+          COR_PRIMARIA: '--gold-primary',
+          COR_DESTAQUE: '--gold-light',
+          COR_FUNDO: '--bg-primary',
+          COR_CARTAO: '--bg-card',
+          COR_TEXTO: '--text-main',
+          COR_TEXTO_SECUNDARIO: '--text-muted',
+          COR_BORDA: '--border-color',
+          COR_BORDAO: '--red-logo',
+          COR_BORDAO_ESCURA: '--red-logo-dark'
+        };
+        Object.keys(mapaCores).forEach(chave => {
+          if (cfg[chave]) root.style.setProperty(mapaCores[chave], cfg[chave]);
+        });
+
+        const logo = cfg.LOGO_URL || cfg.INSTITUTIONAL_LOGO_URL;
+        if (logo) {
+          document.querySelectorAll('.banner-logo').forEach(img => {
+            img.src = logo;
+            img.alt = cfg.NOME_TERREIRO || 'Tenda de Zé Cigano';
+          });
+        }
+        if (cfg.NOME_TERREIRO) {
+          document.querySelectorAll('.banner-titles h1').forEach(el => el.textContent = cfg.NOME_TERREIRO);
+          document.title = cfg.NOME_TERREIRO;
+        }
+        if (cfg.SUBTITULO_TERREIRO) {
+          document.querySelectorAll('.banner-titles p').forEach(el => el.textContent = cfg.SUBTITULO_TERREIRO);
+        }
+        if (cfg.RODAPE_TEXTO) {
+          const footer = document.querySelector('.footer p');
+          if (footer) footer.innerHTML = `${escTZC_V1(cfg.RODAPE_TEXTO)} | <span>Axé!</span>`;
+        }
+      } catch (e) {
+        console.info('Configurações flexíveis TZC ainda não disponíveis:', e.message);
+      }
+    }
+
+    async function carregarCategoriasEstudosTZC_V1() {
+      try {
+        const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${encodeURIComponent(TZC_CATEGORIAS_SHEET)}`);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const rows = await res.json();
+        const categorias = rows
+          .filter(r => {
+            const modulo = String(r.Modulo || r.Area || '').trim().toLowerCase();
+            const ativo = String(r.Ativo ?? 'Sim').trim().toLowerCase();
+            return (!modulo || modulo === 'estudos') &&
+              !['nao','não','false','inativo','excluido','excluído'].includes(ativo);
+          })
+          .map(r => String(r.Nome || r.Categoria || '').trim())
+          .filter(Boolean);
+
+        if (categorias.length) {
+          tzcCategoriasEstudosV1 = [...new Set(categorias)]
+            .sort((a,b) => a.localeCompare(b, 'pt-BR', {sensitivity:'base'}));
+        }
+      } catch (e) {
+        tzcCategoriasEstudosV1 = [...TZC_CATEGORIAS_ESTUDO_PADRAO]
+          .sort((a,b) => a.localeCompare(b, 'pt-BR', {sensitivity:'base'}));
+      }
+    }
+
+    function preencherCategoriasEstudosTZC_V1(select, valorAtual='') {
+      if (!select) return;
+      const categorias = [...new Set(tzcCategoriasEstudosV1)]
+        .sort((a,b) => a.localeCompare(b, 'pt-BR', {sensitivity:'base'}));
+      select.innerHTML =
+        '<option value="">Selecione uma categoria</option>' +
+        categorias.map(c => `<option value="${escTZC_V1(c)}">${escTZC_V1(c)}</option>`).join('');
+      if (valorAtual) select.value = valorAtual;
     }
 
     async function loadGeneralData() {
@@ -2468,11 +2577,11 @@
       container.appendChild(grid);
     }
 
-    function shareCurrentItem(titulo) {
+    function shareCurrentItem(titulo, urlCompartilhar) {
       const shareData = {
         title: titulo,
         text: `Confira este conteúdo da Tenda de Zé Cigano: ${titulo}`,
-        url: window.location.href
+        url: urlCompartilhar || window.location.href
       };
       if (navigator.share) {
         navigator.share(shareData).catch(() => {});

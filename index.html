@@ -893,6 +893,195 @@
   }
 </style>
 
+
+<style id="tzc-v44-padrao-visual">
+  /* =========================================================
+     V44 — PADRÃO VISUAL OFICIAL
+     Referência: página/tabela de Estudos + harmonia da Home.
+     ========================================================= */
+
+  .tzc-page-head-v44{
+    display:grid;
+    grid-template-columns:auto minmax(0,1fr) auto;
+    align-items:center;
+    gap:14px;
+    margin-bottom:12px;
+  }
+  .tzc-page-copy-v44{text-align:center;min-width:0}
+  .tzc-page-copy-v44 h2{
+    margin:0;
+    color:#fff;
+    font-size:1rem;
+    line-height:1.25;
+    font-weight:700;
+  }
+  .tzc-page-copy-v44 h2 i{color:var(--gold-primary);margin-right:6px}
+  .tzc-page-copy-v44 p{
+    margin:5px auto 0;
+    max-width:720px;
+    color:var(--text-muted);
+    font-size:.78rem;
+    line-height:1.4;
+  }
+  .tzc-page-back-v44{justify-self:start}
+  .tzc-page-new-v44{justify-self:end}
+
+  /* Busca: mesma aparência limpa da tela de Estudos */
+  .ervas-toolbar-v37{margin:10px 0 12px!important}
+  .ervas-toolbar-v37 input{
+    border-radius:20px!important;
+    min-height:34px!important;
+    padding:7px 12px!important;
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif!important;
+    font-size:.78rem!important;
+  }
+
+  /* TABELA DE ERVAS = padrão visual da tabela de Estudos */
+  .ervas-table-wrap-v37{
+    overflow-x:auto!important;
+    border:1px solid #292929!important;
+    border-radius:10px!important;
+    background:#111!important;
+  }
+  .ervas-table-v37{
+    width:100%!important;
+    border-collapse:collapse!important;
+    min-width:820px!important;
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif!important;
+    font-size:var(--tzc-font-sm)!important;
+  }
+  .ervas-table-v37 thead tr{
+    background:linear-gradient(90deg,var(--wine-dark),#2a070b)!important;
+    color:var(--gold-primary)!important;
+  }
+  .ervas-table-v37 th{
+    padding:9px 10px!important;
+    color:var(--gold-primary)!important;
+    background:transparent!important;
+    font-size:var(--tzc-font-sm)!important;
+    font-weight:700!important;
+    text-transform:none!important;
+    letter-spacing:0!important;
+    text-align:left!important;
+  }
+  .ervas-table-v37 td{
+    padding:9px 10px!important;
+    border-bottom:1px solid #292929!important;
+    color:#fff!important;
+    font-size:var(--tzc-font-sm)!important;
+    vertical-align:middle!important;
+  }
+  .ervas-table-v37 tbody tr:last-child td{border-bottom:0!important}
+  .ervas-table-v37 tbody tr:hover{background:rgba(212,175,55,.035)!important}
+  .tzc-table-muted-v44{color:var(--text-muted)!important;font-size:var(--tzc-font-sm)!important;line-height:1.35}
+  .tzc-acoes-th-v44,.tzc-acoes-td-v44{text-align:right!important}
+  .ervas-actions-v37{display:flex!important;justify-content:flex-end!important;gap:6px!important}
+
+  /* MODAIS: uma família visual, tamanho proporcional ao conteúdo */
+  .ervas-modal-v37{
+    background:rgba(0,0,0,.82)!important;
+    backdrop-filter:blur(3px)!important;
+    padding:14px!important;
+  }
+  .ervas-modal-box-v37{
+    width:min(880px,calc(100vw - 28px))!important;
+    max-height:calc(100dvh - 28px)!important;
+    background:#181818!important;
+    border:1px solid var(--gold-primary)!important;
+    border-radius:10px!important;
+    padding:14px!important;
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif!important;
+    overflow-y:auto!important;
+    overflow-x:visible!important;
+  }
+  .ervas-modal-head-v37{
+    margin-bottom:10px!important;
+    padding-bottom:8px!important;
+    border-bottom:1px solid var(--border-color)!important;
+  }
+  .ervas-modal-head-v37 h3{
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif!important;
+    font-size:.95rem!important;
+    font-weight:700!important;
+  }
+  .ervas-close-v37{color:var(--gold-primary)!important;font-size:1.3rem!important}
+  .ervas-form-v37{
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:9px 12px!important;
+  }
+  .ervas-field-v37 label,
+  .tzc-modal-standard-v44 .form-group label{
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif!important;
+    font-size:.78rem!important;
+    color:var(--gold-light)!important;
+    font-weight:600!important;
+  }
+  .ervas-field-v37 input,.ervas-field-v37 select,.ervas-field-v37 textarea,
+  .tzc-modal-standard-v44 .form-control{
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif!important;
+    font-size:.82rem!important;
+    color:#fff!important;
+    background:#111!important;
+    border:1px solid var(--border-color)!important;
+    border-radius:6px!important;
+    padding:7px 9px!important;
+  }
+  .ervas-field-v37 input:focus,.ervas-field-v37 select:focus,.ervas-field-v37 textarea:focus,
+  .tzc-modal-standard-v44 .form-control:focus{
+    outline:none!important;
+    border-color:var(--gold-primary)!important;
+  }
+  .ervas-field-v37 textarea{min-height:54px!important;max-height:78px!important}
+  .ervas-form-actions-v37{margin-top:3px!important}
+  .ervas-primary-v37,.ervas-secondary-v37,
+  .tzc-modal-secondary-v44,.tzc-modal-save-v44{
+    min-height:32px!important;
+    padding:7px 11px!important;
+    border-radius:6px!important;
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif!important;
+    font-size:.78rem!important;
+    font-weight:700!important;
+    cursor:pointer!important;
+  }
+  .ervas-primary-v37,.tzc-modal-save-v44{
+    background:var(--red-logo)!important;
+    border:1px solid #8b1822!important;
+    color:#fff!important;
+  }
+  .ervas-secondary-v37,.tzc-modal-secondary-v44{
+    background:#181818!important;
+    border:1px solid #3a3a3a!important;
+    color:#fff!important;
+  }
+
+  /* Novo Estudo: conteúdo menor = modal menor e menos dominante */
+  .tzc-modal-standard-v44{
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif!important;
+  }
+  .tzc-modal-study-v44{width:min(600px,calc(100vw - 28px))!important}
+  .tzc-modal-study-v44 .modal-header h3{font-size:.95rem!important}
+  .tzc-modal-study-v44 .membros-form-grid{gap:8px 10px!important}
+  .tzc-modal-study-v44 textarea.form-control{resize:vertical}
+  .tzc-modal-study-v44 #tzcEstudoTexto{min-height:120px!important}
+  .tzc-modal-save-v44{width:auto!important;max-width:none!important;flex:0 0 auto!important}
+
+  @media(max-width:900px){
+    .ervas-form-v37{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  }
+  @media(max-width:700px){
+    .tzc-page-head-v44{grid-template-columns:1fr auto}
+    .tzc-page-copy-v44{grid-column:1/-1;grid-row:1;text-align:left}
+    .tzc-page-copy-v44 p{margin-left:0}
+    .tzc-page-back-v44{grid-column:1;grid-row:2}
+    .tzc-page-new-v44{grid-column:2;grid-row:2}
+  }
+  @media(max-width:600px){
+    .ervas-form-v37{grid-template-columns:1fr!important}
+    .ervas-field-v37.c1,.ervas-field-v37.c2{grid-column:span 1!important}
+    .tzc-modal-study-v44{width:calc(100vw - 20px)!important}
+  }
+</style>
+
 </head>
 <body>
 
@@ -1590,20 +1779,17 @@
       if (search) search.style.display = 'flex';
 
       container.innerHTML = `
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
-          <div>
-            <div style="font-size:.68rem;color:var(--gold-primary);text-transform:uppercase;letter-spacing:.09em;font-weight:700;">Acervo</div>
-            <h2 style="margin:4px 0 0;font-size:1.05rem;line-height:1.25;font-weight:700;">Estudos da Tenda de Zé Cigano</h2>
+        <div class="tzc-page-head-v44">
+          <button type="button" class="btn-toolbar tzc-page-back-v44" onclick="voltarGestaoInternaTZC_V1()" title="Voltar para Gestão Interna">
+            <i class="fa-solid fa-arrow-left"></i> Gestão Interna
+          </button>
+          <div class="tzc-page-copy-v44">
+            <h2><i class="fa-solid fa-book-open"></i> Estudos da Tenda de Zé Cigano</h2>
+            <p>Acervo interno para organizar, consultar e manter os estudos e conteúdos de referência do Terreiro.</p>
           </div>
-
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <button type="button" class="btn-toolbar" onclick="voltarGestaoInternaTZC_V1()" title="Voltar para Gestão Interna">
-              <i class="fa-solid fa-arrow-left"></i> Gestão Interna
-            </button>
-            <button class="btn-toolbar btn-add-membro" onclick="abrirNovoEstudoTZC_V1()">
-              <i class="fa-solid fa-plus"></i> Novo Estudo
-            </button>
-          </div>
+          <button class="btn-toolbar btn-add-membro tzc-page-new-v44" onclick="abrirNovoEstudoTZC_V1()">
+            <i class="fa-solid fa-plus"></i> Novo Estudo
+          </button>
         </div>
 
         <div id="estudosTZCLista">
@@ -1773,12 +1959,12 @@
       `;
 
       modal.innerHTML = `
-        <div style="
+        <div class="tzc-modal-standard-v44 tzc-modal-study-v44" style="
           background:#181818;
-          border:2px solid var(--gold-primary);
-          border-radius:12px;
-          padding:16px;
-          width:min(680px, calc(100vw - 24px));
+          border:1px solid var(--gold-primary);
+          border-radius:10px;
+          padding:14px;
+          width:min(600px, calc(100vw - 28px));
           max-height:calc(100dvh - 24px);
           box-shadow:0 10px 30px rgba(0,0,0,.9);
           display:flex;
@@ -1854,10 +2040,10 @@
 
               <div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:10px;">
                 <button type="button" onclick="document.getElementById('modalNovoEstudoTZC_V1').remove()"
-                  style="background:#333;color:#fff;border:1px solid #777;border-radius:8px;padding:10px 16px;cursor:pointer;">
+                  class="tzc-modal-secondary-v44">
                   <i class="fa-solid fa-xmark"></i> Fechar
                 </button>
-                <button id="btnSalvarEstudoTZC" class="btn-submit" type="submit" style="max-width:180px;">
+                <button id="btnSalvarEstudoTZC" class="btn-submit tzc-modal-save-v44" type="submit">
                   <i class="fa-solid fa-floppy-disk"></i> Salvar Estudo
                 </button>
               </div>
@@ -4048,17 +4234,29 @@
   const API = (typeof WEB_APP_URL !== 'undefined' ? WEB_APP_URL : '');
 
   window.abrirGestaoErvasTZC_V1 = async function(){
-    document.getElementById('searchContainerWrapper').style.display='none';
-    document.getElementById('pageTitle').innerHTML='<i class="fa-solid fa-leaf"></i> Gestão de Ervas';
+    const buscaGlobal=document.getElementById('searchContainerWrapper');
+    if(buscaGlobal) buscaGlobal.style.display='none';
+    const tituloGlobal=document.getElementById('pageTitle');
+    if(tituloGlobal) tituloGlobal.style.display='none';
+
     const c=document.getElementById('contentContainer');
     c.innerHTML=`
       <div class="ervas-admin-v37">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
-          <button type="button" class="btn-toolbar" onclick="voltarGestaoInternaTZC_V1()"><i class="fa-solid fa-arrow-left"></i> Gestão Interna</button>
-          <button type="button" class="ervas-primary-v37" onclick="novaErvaTZC_V37()"><i class="fa-solid fa-plus"></i> Nova Erva</button>
+        <div class="tzc-page-head-v44">
+          <button type="button" class="btn-toolbar tzc-page-back-v44" onclick="voltarGestaoInternaTZC_V1()">
+            <i class="fa-solid fa-arrow-left"></i> Gestão Interna
+          </button>
+          <div class="tzc-page-copy-v44">
+            <h2><i class="fa-solid fa-leaf"></i> Gestão de Ervas</h2>
+            <p>Banco de ervas para consulta e manutenção de categorias, preparos, propriedades, usos e cuidados.</p>
+          </div>
+          <button type="button" class="ervas-primary-v37 tzc-page-new-v44" onclick="novaErvaTZC_V37()">
+            <i class="fa-solid fa-plus"></i> Nova Erva
+          </button>
         </div>
+
         <div class="ervas-toolbar-v37">
-          <input id="ervaBuscaV37" placeholder="Buscar em todos os dados das ervas..." oninput="renderTabelaErvasTZC_V37()">
+          <input id="ervaBuscaV37" placeholder="Pesquisar em todos os dados das ervas..." oninput="renderTabelaErvasTZC_V37()">
         </div>
         <div id="ervasTabelaV37"><div class="ervas-empty-v37">Carregando ervas...</div></div>
       </div>`;
@@ -4136,19 +4334,29 @@
       const hay=Object.values(x||{}).map(v=>String(v??'')).join(' ').toLocaleLowerCase('pt-BR');
       return !q || hay.includes(q);
     });
-    if(!dados.length){alvo.innerHTML='<div class="ervas-empty-v37">Nenhuma erva encontrada.</div>';return;}
-    alvo.innerHTML=`<div class="ervas-table-wrap-v37"><table class="ervas-table-v37">
-      <thead><tr><th>Nome</th><th>Categoria</th><th>Preparo</th><th>Finalidade / Uso</th><th>Acesso</th><th>Ações</th></tr></thead>
-      <tbody>${dados.map(x=>`<tr>
-        <td><strong>${escErvaV37(x.Nome_Erva||'—')}</strong>${x.Nome_Cientifico?`<div style="color:#999;font-size:.76rem">${escErvaV37(x.Nome_Cientifico)}</div>`:''}</td>
-        <td>${escErvaV37(x.Categoria||'—')}</td><td>${escErvaV37(x.Tipo_Preparo||'—')}</td>
-        <td>${escErvaV37(x.Finalidade_Propriedades||x.Indicacao_Uso||'—')}</td><td>${escErvaV37(x.Acesso_Publico||'Sim')}</td>
-        <td><div class="ervas-actions-v37">
-          <button class="ervas-btn-v37" title="Visualizar" onclick='visualizarErvaTZC_V37(${JSON.stringify(String(x.ID_Erva||''))})'><i class="fa-solid fa-eye"></i></button>
-          <button class="ervas-btn-v37" title="Editar" onclick='editarErvaTZC_V37(${JSON.stringify(String(x.ID_Erva||''))})'><i class="fa-solid fa-pen"></i></button>
-          ${String(x.Status||'Ativo')!=='Excluido'?`<button class="ervas-btn-v37" title="Excluir" onclick='excluirErvaTZC_V37(${JSON.stringify(String(x.ID_Erva||''))})'><i class="fa-solid fa-trash"></i></button>`:''}
-        </div></td>
-      </tr>`).join('')}</tbody></table></div>`;
+    if(!dados.length){
+      alvo.innerHTML='<div class="ervas-empty-v37">Nenhuma erva encontrada.</div>';
+      return;
+    }
+    alvo.innerHTML=`<div class="ervas-table-wrap-v37">
+      <table class="ervas-table-v37">
+        <thead><tr>
+          <th>Nome</th><th>Categoria</th><th>Preparo</th><th>Finalidade / Uso</th><th>Acesso</th><th class="tzc-acoes-th-v44">Ações</th>
+        </tr></thead>
+        <tbody>${dados.map(x=>`<tr>
+          <td><strong>${escErvaV37(x.Nome_Erva||'—')}</strong>${x.Nome_Cientifico?`<div class="tzc-table-muted-v44">${escErvaV37(x.Nome_Cientifico)}</div>`:''}</td>
+          <td>${escErvaV37(x.Categoria||'—')}</td>
+          <td>${escErvaV37(x.Tipo_Preparo||'—')}</td>
+          <td class="tzc-table-muted-v44">${escErvaV37(x.Finalidade_Propriedades||x.Indicacao_Uso||'—')}</td>
+          <td>${escErvaV37(x.Acesso_Publico||'Sim')}</td>
+          <td class="tzc-acoes-td-v44"><div class="ervas-actions-v37">
+            <button class="btn-icon-only" title="Visualizar" onclick='visualizarErvaTZC_V37(${JSON.stringify(String(x.ID_Erva||''))})'><i class="fa-solid fa-eye"></i></button>
+            <button class="btn-icon-only" title="Editar" onclick='editarErvaTZC_V37(${JSON.stringify(String(x.ID_Erva||''))})'><i class="fa-solid fa-pen"></i></button>
+            <button class="btn-icon-only btn-delete-icon" title="Excluir" onclick='excluirErvaTZC_V37(${JSON.stringify(String(x.ID_Erva||''))})'><i class="fa-solid fa-trash"></i></button>
+          </div></td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
   };
 
   window.novaErvaTZC_V37=function(){ window.tzcErvaEditandoV37=null; abrirFormErvaTZC_V37({Acesso_Publico:'Sim',Status:'Ativo'}); };

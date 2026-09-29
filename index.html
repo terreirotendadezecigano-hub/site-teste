@@ -1007,7 +1007,7 @@
             </div>`}
           <div class="card-body">
             <div class="card-badges"><span class="card-badge">${escTZC_V1(categoria)}</span></div>
-            <h3 class="card-title">${escTZC_V1(titulo)}</h3>
+            <h3 class="card-title" style="color:#fff;">${escTZC_V1(titulo)}</h3>
             ${resumo ? `<p class="card-text">${escTZC_V1(resumo)}</p>` : ''}
           </div>
         `;
@@ -1044,7 +1044,9 @@
       modal.style.cssText = `
         position:fixed;inset:0;background:rgba(0,0,0,.78);
         backdrop-filter:blur(3px);z-index:200000;
-        display:flex;align-items:center;justify-content:center;padding:15px;
+        display:flex;align-items:center;justify-content:center;
+        padding:12px;
+        box-sizing:border-box;
       `;
 
       modal.innerHTML = `
@@ -1052,25 +1054,31 @@
           background:#181818;
           border:2px solid var(--gold-primary);
           border-radius:12px;
-          padding:14px;
-          width:100%;
-          max-width:520px;
-          max-height:85vh;
+          padding:16px;
+          width:min(680px, calc(100vw - 24px));
+          max-height:calc(100dvh - 24px);
           box-shadow:0 10px 30px rgba(0,0,0,.9);
           display:flex;
           flex-direction:column;
-          position:relative;
+          box-sizing:border-box;
+          overflow:hidden;
         ">
-          <div class="modal-header" style="margin-bottom:8px;">
-            <h3 style="font-size:.95rem;margin:0;">
+          <div class="modal-header" style="margin-bottom:10px;flex:0 0 auto;">
+            <h3 style="font-size:1rem;margin:0;color:#fff;">
               <i class="fa-solid fa-book-open" style="color:var(--gold-primary);"></i>
-              Novo estudo
+              Novo Estudo
             </h3>
             <button class="modal-close-icon" type="button"
               onclick="document.getElementById('modalNovoEstudoTZC_V1').remove()">&times;</button>
           </div>
 
-          <div class="modal-body" style="max-height:68vh;">
+          <div class="modal-body" style="
+            overflow-y:auto;
+            overflow-x:hidden;
+            padding-right:4px;
+            max-height:calc(100dvh - 92px);
+            box-sizing:border-box;
+          ">
             <form onsubmit="salvarEstudoTZC_V1(event)">
               <div class="membros-form-grid">
 
@@ -1101,7 +1109,7 @@
 
                 <div class="form-group membros-form-full">
                   <label>Texto do estudo</label>
-                  <textarea id="tzcEstudoTexto" class="form-control" rows="8"
+                  <textarea id="tzcEstudoTexto" class="form-control" rows="7"
                     placeholder="Escreva aqui o conteúdo do estudo..." required></textarea>
                 </div>
 
@@ -1129,7 +1137,7 @@
 
               <div style="display:flex;justify-content:flex-end;margin-top:10px;">
                 <button class="btn-submit" type="submit" style="max-width:180px;">
-                  <i class="fa-solid fa-floppy-disk"></i> Salvar estudo
+                  <i class="fa-solid fa-floppy-disk"></i> Salvar Estudo
                 </button>
               </div>
             </form>

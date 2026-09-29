@@ -4743,6 +4743,16 @@
   .ervas-empty-v37{padding:24px;text-align:center;color:var(--text-muted)}
   @media(max-width:760px){.ervas-form-v37{grid-template-columns:1fr}.ervas-field-v37.full{grid-column:auto}}
 
+  /* V67 — Busca de imagens no Wikimedia Commons */
+  .erva-img-search-v67{margin-top:12px;padding-top:12px;border-top:1px solid #292929}
+  .erva-img-status-v67{font-size:.78rem;color:#aaa;margin:0 0 9px}
+  .erva-img-grid-v67{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+  .erva-img-option-v67{background:#101010;border:1px solid #303030;border-radius:9px;padding:6px;cursor:pointer;text-align:left;color:#ddd}
+  .erva-img-option-v67:hover{border-color:var(--gold-primary)}
+  .erva-img-option-v67 img{width:100%;aspect-ratio:1/1;object-fit:contain;background:#fff;border-radius:6px;display:block}
+  .erva-img-option-v67 small{display:block;margin-top:5px;font-size:.64rem;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  @media(max-width:720px){.erva-img-grid-v67{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
   /* V66 — Ervas: miniatura na tabela + visualização com foto à esquerda */
   .erva-thumb-v66{
     width:42px;height:42px;min-width:42px;border-radius:8px;
@@ -4980,7 +4990,10 @@
       ${campoSelectErvaV42('Categoria','Categoria',x.Categoria,(window.tzcErvasAdminV37||[]).map(e=>e.Categoria),'c1')}
       ${campoSelectErvaV42('Tipo_Preparo','Tipo de Preparo',x.Tipo_Preparo,(window.tzcErvasAdminV37||[]).map(e=>e.Tipo_Preparo),'c1')}
       <div class="ervas-field-v37 c1"><label>Acesso Público</label><select id="erva_Acesso_Publico" title="Define se esta erva poderá aparecer em áreas públicas do sistema" aria-label="Acesso Público"><option ${String(x.Acesso_Publico||'Sim')==='Sim'?'selected':''}>Sim</option><option ${String(x.Acesso_Publico||'')==='Não'?'selected':''}>Não</option></select></div>
-      ${campoErvaV42('Foto_URL','Imagem / link do Drive',x.Foto_URL,false,'c1')}
+      <div class="c1">
+        ${campoErvaV42('Foto_URL','Imagem / link da imagem',x.Foto_URL,false,'')}
+        <button type="button" class="ervas-secondary-v37" style="margin-top:7px;width:100%" onclick="buscarImagemErvaTZC_V67()"><i class="fa-solid fa-magnifying-glass"></i> Buscar imagem automaticamente</button>
+      </div>
       ${campoErvaV42('Finalidade_Propriedades','Finalidade / Propriedades',x.Finalidade_Propriedades,false,'c2',true)}
       ${campoErvaV42('Uso_Espiritual','Uso Espiritual',x.Uso_Espiritual,false,'c2',true)}
       ${campoErvaV42('Indicacao_Uso','Indicação de Uso',x.Indicacao_Uso,false,'c2',true)}
@@ -4989,6 +5002,51 @@
       ${campoErvaV42('Observacoes','Observações',x.Observacoes,false,'c2',true)}
       <div class="ervas-form-actions-v37"><button class="ervas-secondary-v37" onclick="fecharModalErvaV37()">Fechar</button><button class="ervas-primary-v37" onclick="salvarErvaTZC_V37()"><i class="fa-solid fa-floppy-disk"></i> Salvar</button></div>
     </div>`);
+  };
+
+  window.buscarImagemErvaTZC_V67=async function(){
+    const nome=document.getElementById('erva_Nome_Erva')?.value?.trim()||'';
+    const cientifico=document.getElementById('erva_Nome_Cientifico')?.value?.trim()||'';
+    if(!nome && !cientifico){showToast('Informe primeiro o nome da erva.');return;}
+
+    const modal=document.querySelector('#modalErvaV37 .ervas-modal-v37, #modalErvaV37 .ervas-modal-box-v37, .ervas-modal-v37');
+    const alvo=modal||document.getElementById('modalErvaV37');
+    if(!alvo)return;
+    alvo.querySelector('.erva-img-search-v67')?.remove();
+
+    const box=document.createElement('div');
+    box.className='erva-img-search-v67';
+    box.innerHTML='<div class="erva-img-status-v67"><i class="fa-solid fa-spinner fa-spin"></i> Procurando imagens livres no Wikimedia Commons...</div><div class="erva-img-grid-v67"></div>';
+    const actions=alvo.querySelector('.ervas-form-actions-v37');
+    (actions?.parentNode||alvo).insertBefore(box,actions||null);
+
+    try{
+      const termo=(cientifico||nome)+' plant';
+      const url='https://commons.wikimedia.org/w/api.php?origin=*&action=query&generator=search&gsrnamespace=6&gsrlimit=8&gsrsearch='+encodeURIComponent(termo)+'&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=360&format=json';
+      const res=await fetch(url);
+      const json=await res.json();
+      const itens=Object.values(json?.query?.pages||{}).filter(p=>p.imageinfo?.[0]?.thumburl||p.imageinfo?.[0]?.url);
+      box.querySelector('.erva-img-status-v67').textContent=itens.length?'Escolha uma imagem. Ela será salva como link, sem ocupar o armazenamento do sistema.':'Nenhuma imagem encontrada. Tente informar o nome científico.';
+      const grid=box.querySelector('.erva-img-grid-v67');
+      itens.forEach(p=>{
+        const ii=p.imageinfo[0], meta=ii.extmetadata||{};
+        const full=ii.url||ii.thumburl, thumb=ii.thumburl||ii.url;
+        const autor=(meta.Artist?.value||meta.Credit?.value||'Wikimedia Commons').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+        const lic=(meta.LicenseShortName?.value||'Licença informada no Commons').replace(/<[^>]*>/g,' ').trim();
+        const b=document.createElement('button');
+        b.type='button'; b.className='erva-img-option-v67';
+        b.innerHTML=`<img src="${escErvaV37(thumb)}" alt=""><small title="${escErvaV37(autor+' · '+lic)}">${escErvaV37(autor)} · ${escErvaV37(lic)}</small>`;
+        b.onclick=()=>{
+          const inp=document.getElementById('erva_Foto_URL'); if(inp)inp.value=full;
+          box.querySelectorAll('.erva-img-option-v67').forEach(x=>x.style.borderColor='');
+          b.style.borderColor='var(--gold-primary)';
+          showToast('Imagem selecionada. Clique em Salvar para confirmar.');
+        };
+        grid.appendChild(b);
+      });
+    }catch(e){
+      box.querySelector('.erva-img-status-v67').textContent='Não foi possível buscar imagens agora. Você ainda pode informar o link manualmente.';
+    }
   };
 
   window.salvarErvaTZC_V37=async function(){
@@ -6177,3 +6235,5 @@ function filtrarEstudosTZC_V55(valor){
 <!-- TZC V65 — modal oficial de exclusão aplicado também às Ervas. -->
 
 <!-- TZC V66 — Ervas com miniatura na tabela e modal visual foto à esquerda / dados à direita. -->
+
+<!-- TZC V67 — Busca assistida de imagens livres via Wikimedia Commons no modal de Ervas. -->

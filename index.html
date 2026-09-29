@@ -660,6 +660,76 @@
       opacity: 1;
       transform: translateY(0);
     }
+  
+
+    /* ================= TZC V20 — LEI DA HARMONIA VISUAL ================= */
+    :root {
+      --tzc-font-xs: .68rem;
+      --tzc-font-sm: .75rem;
+      --tzc-font-md: .82rem;
+      --tzc-font-lg: .95rem;
+      --tzc-font-title: 1.05rem;
+      --tzc-radius: 8px;
+      --tzc-space: 10px;
+    }
+
+    body { font-size: var(--tzc-font-md); }
+
+    header.banner { padding: 7px 10px; min-height: 56px; }
+    .banner-center { gap: 7px; }
+    .banner-logo { width: 36px; height: 36px; border-width: 1px; }
+    .banner-titles h1 { font-size: .92rem; letter-spacing: .35px; }
+    .banner-titles p { font-size: .64rem; }
+    .toggle-menu-btn { font-size: .82rem; padding: 5px 7px; }
+    .btn-login, .user-logged { font-size: .68rem; }
+
+    .container { max-width: 1120px; padding: 12px; }
+    .search-bar { font-size: var(--tzc-font-sm); padding: 7px 11px; }
+    .section-title { font-size: var(--tzc-font-lg); }
+
+    .btn-toolbar {
+      padding: 6px 10px;
+      min-height: 32px;
+      border-radius: 6px;
+      font-size: var(--tzc-font-sm);
+      font-weight: 700;
+      gap: 5px;
+    }
+    .btn-icon-only { width: 29px; height: 29px; font-size: .75rem; }
+
+    .form-group label { font-size: var(--tzc-font-sm); }
+    .form-control { font-size: var(--tzc-font-sm); padding: 7px 8px; }
+    .modal-box { border-width: 1px; }
+    .modal-close-icon { font-size: 1.35rem; }
+    .btn-submit { font-size: var(--tzc-font-sm); padding: 8px 10px; }
+
+    /* Gestão Interna */
+    .gestao-interna-home > div:first-child h2 { font-size: var(--tzc-font-lg) !important; }
+    .gestao-interna-home > div:first-child p { font-size: var(--tzc-font-sm) !important; }
+    .gestao-interna-home .card { height: 205px; }
+    .gestao-interna-home .card > div { padding: 17px !important; }
+    .gestao-interna-home .card i { font-size: 1.45rem !important; margin-bottom: 10px !important; }
+    .gestao-interna-home .card h3 { font-size: .9rem !important; }
+    .gestao-interna-home .card p { font-size: var(--tzc-font-sm) !important; line-height: 1.4; }
+
+    /* Estudos: mesma hierarquia visual do restante do sistema */
+    #estudosTZCLista table { font-size: var(--tzc-font-sm); }
+    #estudosTZCLista th { padding: 9px 10px !important; font-size: var(--tzc-font-sm); font-weight: 700; }
+    #estudosTZCLista td { padding: 9px 10px !important; font-size: var(--tzc-font-sm); }
+    #estudosTZCLista .card-badge { font-size: .6rem; }
+
+    @media (min-width: 600px) {
+      .banner-logo { width: 38px; height: 38px; }
+      .banner-titles h1 { font-size: .96rem; }
+      .banner-titles p { font-size: .66rem; }
+    }
+
+    @media (max-width: 600px) {
+      header.banner { padding: 6px 8px; }
+      .banner-left, .banner-right { width: 54px; }
+      .gestao-interna-home .card { height: auto; min-height: 170px; }
+    }
+
   </style>
 </head>
 <body>
@@ -972,8 +1042,8 @@
       container.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
           <div>
-            <div style="font-size:.76rem;color:var(--gold-primary);text-transform:uppercase;letter-spacing:.1em;font-weight:700;">Acervo</div>
-            <h2 style="margin:4px 0 0;">Estudos da Tenda de Zé Cigano</h2>
+            <div style="font-size:.68rem;color:var(--gold-primary);text-transform:uppercase;letter-spacing:.09em;font-weight:700;">Acervo</div>
+            <h2 style="margin:4px 0 0;font-size:1.05rem;line-height:1.25;font-weight:700;">Estudos da Tenda de Zé Cigano</h2>
           </div>
 
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">

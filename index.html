@@ -1367,6 +1367,48 @@
 }
 </style>
 
+
+<style id="tzc-v48-final">
+.tzc-searchbar-v48{
+ display:flex;align-items:center;gap:8px;width:100%;height:31px;
+ border:1px solid #2a2a2a;border-radius:16px;background:#141414;
+ padding:0 11px;margin:4px 0 15px;color:#aaa
+}
+.tzc-searchbar-v48 i{font-size:.72rem;color:#aaa}
+.tzc-searchbar-v48 input{
+ flex:1;border:0!important;outline:0!important;background:transparent!important;color:#fff!important;
+ font-family:"Segoe UI",Arial,sans-serif!important;font-size:.75rem!important;padding:0!important;height:28px!important
+}
+.tzc-actions-v48{text-align:right!important;white-space:nowrap}
+.tzc-action-v48{
+ width:29px!important;height:29px!important;min-width:29px!important;padding:0!important;margin-left:4px!important;
+ border:1px solid #303030!important;border-radius:5px!important;background:#202020!important;color:#f3d45a!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;font-size:.76rem!important
+}
+.tzc-action-v48:hover{border-color:#d4af37!important;background:#2a271b!important}
+
+/* X de fechar nunca mais cinza: padrão dourado */
+.modal-close,.close-modal,.tzc-modal-close,
+#tzcCategoriaModalV1 button[aria-label="Fechar"],
+#tzcCategoriaModalV1 .close,
+.tzc-view-head-v48 button{
+ background:transparent!important;border:0!important;color:#d4af37!important;
+ box-shadow:none!important;font-size:1.15rem!important;font-weight:700!important
+}
+
+/* visualização compacta */
+.tzc-view-overlay-v48{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px}
+.tzc-view-box-v48{width:min(480px,calc(100vw - 30px));background:#171717;border:1px solid #d4af37;border-radius:10px;padding:13px;color:#fff;font-family:"Segoe UI",Arial,sans-serif}
+.tzc-view-head-v48{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #2a2a2a;padding-bottom:8px}
+.tzc-view-head-v48 strong{font-size:.9rem}
+.tzc-view-grid-v48{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:11px}
+.tzc-view-grid-v48 .full{grid-column:1/-1}
+.tzc-view-grid-v48 label{display:block;color:#e2c75c;font-size:.69rem;font-weight:700;margin-bottom:3px}
+.tzc-view-grid-v48 span{font-size:.78rem}
+.tzc-view-foot-v48{display:flex;justify-content:flex-end;margin-top:13px}
+@media(max-width:600px){.tzc-view-grid-v48{grid-template-columns:1fr}}
+</style>
+
 </head>
 <body>
 
@@ -2822,6 +2864,10 @@
 
       container.innerHTML = `
         <section style="padding:8px 0 30px;">
+          <div class="tzc-searchbar-v48">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input id="tzcBuscaCategoriasV48" type="search" placeholder="Pesquisar categorias..." oninput="filtrarCategoriasTZC_V48(this.value)">
+          </div>
           <div class="tzc-page-head-v44">
             <button type="button" class="btn-toolbar tzc-page-back-v44" onclick="voltarGestaoInternaTZC_V1()">
               <i class="fa-solid fa-arrow-left"></i> Gestão Interna
@@ -4820,6 +4866,56 @@ document.addEventListener('click',function(e){
     aplicarChipsCategoriaV46();
     obs.observe(document.body,{childList:true,subtree:true});
   }
+})();
+</script>
+
+
+<script id="tzc-v48-js">
+function filtrarCategoriasTZC_V48(valor){
+  const termo=(valor||'').toLowerCase().trim();
+  const tabela=document.querySelector('#tzcCategoriasTabela table');
+  if(!tabela)return;
+  tabela.querySelectorAll('tbody tr').forEach(tr=>{
+    tr.style.display=!termo || tr.innerText.toLowerCase().includes(termo) ? '' : 'none';
+  });
+}
+function visualizarCategoriaTZC_V48(id){
+  const lista=(window.tzcCategoriasV1||window.categoriasTZC_V1||[]);
+  const c=lista.find(x=>String(x.ID_Categoria||x.id||'')===String(id));
+  if(!c){
+    const rows=[...document.querySelectorAll('#tzcCategoriasTabela tbody tr')];
+    const row=rows.find(r=>r.innerHTML.includes(String(id)));
+    if(row){ alert(row.innerText); }
+    return;
+  }
+  const nome=c.Nome||c.Categoria||c.Nome_Categoria||'Categoria';
+  const modulo=c.Modulo||'—', ativo=c.Ativo||c.Situacao||'—', obs=c.Observacoes||'—';
+  const overlay=document.createElement('div');
+  overlay.className='tzc-view-overlay-v48';
+  overlay.innerHTML=`<div class="tzc-view-box-v48">
+    <div class="tzc-view-head-v48"><strong><i class="fa-solid fa-eye"></i> Visualizar Categoria</strong><button onclick="this.closest('.tzc-view-overlay-v48').remove()" aria-label="Fechar">×</button></div>
+    <div class="tzc-view-grid-v48"><div><label>Categoria</label><span>${nome}</span></div><div><label>Módulo</label><span>${modulo}</span></div><div><label>Situação</label><span>${ativo}</span></div><div class="full"><label>Observações</label><span>${obs}</span></div></div>
+    <div class="tzc-view-foot-v48"><button class="btn-toolbar" onclick="this.closest('.tzc-view-overlay-v48').remove()">Fechar</button></div>
+  </div>`;
+  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
+  document.body.appendChild(overlay);
+}
+
+/* restaura o comportamento global: clique fora fecha o menu sem navegar */
+(function(){
+  function fechaMenuForaTZCV48(e){
+    const menu=document.querySelector('.sidebar, #sidebar, .side-menu, #sideMenu, .menu-lateral, #menuLateral');
+    if(!menu)return;
+    const botao=document.querySelector('.toggle-menu-btn, #menuToggle, .menu-toggle, .hamburger');
+    const visivel=menu.classList.contains('active')||menu.classList.contains('open')||menu.classList.contains('show')||
+      getComputedStyle(menu).transform==='none';
+    if(visivel && !menu.contains(e.target) && !(botao&&botao.contains(e.target))){
+      menu.classList.remove('active','open','show');
+      document.body.classList.remove('menu-open','sidebar-open');
+      if(menu.style.left==='0px') menu.style.left='';
+    }
+  }
+  document.addEventListener('click',fechaMenuForaTZCV48,true);
 })();
 </script>
 

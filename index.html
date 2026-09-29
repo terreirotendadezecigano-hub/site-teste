@@ -903,14 +903,11 @@
 
       container.innerHTML = `
         <section class="gestao-interna-home" style="padding:8px 0 30px;">
-          <div style="margin-bottom:18px;">
-            <div style="font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-primary);font-weight:700;">
-              Terreiro Tenda de Zé Cigano
-            </div>
-            <h2 style="margin:5px 0 6px;font-size:1.55rem;">Gestão Interna</h2>
-            <p style="margin:0;color:var(--text-muted);font-size:.9rem;">
-              Conteúdo e ferramentas internas do Terreiro Tenda de Zé Cigano.
-            </p>
+          <div style="margin-bottom:22px;text-align:center;">
+            <h2 style="margin:0;font-size:.9rem;font-weight:700;color:#fff;letter-spacing:.01em;">
+              <i class="fa-solid fa-sliders" style="color:var(--gold-primary);margin-right:7px;"></i>Gestão Interna
+            </h2>
+            <div style="width:46px;height:1px;background:var(--gold-primary);opacity:.7;margin:10px auto 0;"></div>
           </div>
 
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
@@ -1151,7 +1148,7 @@
           'Membros': '<i class="fa-solid fa-users"></i> Gestão de Membros'
         };
         if (tabName === 'Gestao_Interna') {
-          document.getElementById('pageTitle').innerHTML = '<i class="fa-solid fa-sliders"></i> Gestão Interna';
+          document.getElementById('pageTitle').innerHTML = '<span style="color:#fff;font-size:.9rem;font-weight:700;"><i class="fa-solid fa-sliders" style="color:var(--gold-primary);margin-right:7px;"></i>Gestão Interna</span>';
           carregarGestaoInternaTZC_V1();
           document.getElementById('searchInput').value = '';
           document.getElementById('sidebar').classList.remove('open');

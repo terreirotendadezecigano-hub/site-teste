@@ -1776,6 +1776,23 @@
     }
 
     /* ================= GESTÃO INTERNA — CATEGORIAS V1 ================= */
+    function lerCacheCategoriasTZC_V1() {
+      try {
+        const bruto = localStorage.getItem('TZC_CATEGORIAS_CACHE_V1');
+        if (!bruto) return [];
+        const cache = JSON.parse(bruto);
+        return Array.isArray(cache) ? cache : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function salvarCacheCategoriasTZC_V1(dados) {
+      try {
+        localStorage.setItem('TZC_CATEGORIAS_CACHE_V1', JSON.stringify(Array.isArray(dados) ? dados : []));
+      } catch (e) {}
+    }
+
     async function abrirCategoriasTZC_V1() {
       const container = document.getElementById('contentContainer');
       const search = document.getElementById('searchContainerWrapper');
@@ -1800,16 +1817,30 @@
           <div id="tzcCategoriasTabela"><div style="padding:22px;color:var(--text-muted);">Carregando categorias...</div></div>
         </section>`;
 
+      // Mostra imediatamente os dados já conhecidos, sem esperar a rede.
+      const memoria = Array.isArray(window.tzcCategoriasGestaoV1) ? window.tzcCategoriasGestaoV1 : [];
+      const cacheLocal = memoria.length ? memoria : lerCacheCategoriasTZC_V1();
+
+      if (cacheLocal.length) {
+        window.tzcCategoriasGestaoV1 = cacheLocal;
+        renderCategoriasTZC_V1();
+      }
+
+      // Sincroniza silenciosamente com a planilha em segundo plano.
       try {
         const res = await fetch(`${WEB_APP_URL}?sheet=${encodeURIComponent(TZC_CATEGORIAS_SHEET)}&t=${Date.now()}`, {cache:'no-store'});
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const rows = await res.json();
         window.tzcCategoriasGestaoV1 = Array.isArray(rows) ? rows : [];
+        salvarCacheCategoriasTZC_V1(window.tzcCategoriasGestaoV1);
+        renderCategoriasTZC_V1();
       } catch (e) {
-        window.tzcCategoriasGestaoV1 = [];
-        showToast('Não foi possível carregar as categorias.');
+        if (!cacheLocal.length) {
+          window.tzcCategoriasGestaoV1 = [];
+          renderCategoriasTZC_V1();
+          showToast('Não foi possível carregar as categorias.');
+        }
       }
-      renderCategoriasTZC_V1();
     }
 
     function categoriaAtivaTZC_V1(item) {
@@ -1970,6 +2001,7 @@
         lista.push(novoItem);
       }
       window.tzcCategoriasGestaoV1 = lista;
+      salvarCacheCategoriasTZC_V1(window.tzcCategoriasGestaoV1);
       renderCategoriasTZC_V1();
       showToast(modo === 'editar' ? 'Salvando alterações...' : 'Salvando categoria...');
 
@@ -1987,6 +2019,7 @@
         } else {
           window.tzcCategoriasGestaoV1 = lista.filter(x => idCategoriaTZC_V1(x) !== id);
         }
+        salvarCacheCategoriasTZC_V1(window.tzcCategoriasGestaoV1);
         renderCategoriasTZC_V1();
         showToast('Falha ao salvar categoria: ' + e.message);
       });
@@ -1999,6 +2032,7 @@
       if (!confirmou) return;
 
       item.Ativo = 'Não';
+      salvarCacheCategoriasTZC_V1(window.tzcCategoriasGestaoV1);
       renderCategoriasTZC_V1();
       showToast('Excluindo categoria...');
 
@@ -2016,6 +2050,7 @@
         carregarCategoriasEstudosTZC_V1();
       }).catch(e => {
         item.Ativo = 'Sim';
+        salvarCacheCategoriasTZC_V1(window.tzcCategoriasGestaoV1);
         renderCategoriasTZC_V1();
         showToast('Falha ao excluir categoria: ' + e.message);
       });

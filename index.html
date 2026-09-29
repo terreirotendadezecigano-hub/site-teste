@@ -984,7 +984,7 @@
     padding:14px!important;
   }
   .ervas-modal-box-v37{
-    width:min(880px,calc(100vw - 28px))!important;
+    width:min(790px,calc(100vw - 28px))!important;
     max-height:calc(100dvh - 28px)!important;
     background:#181818!important;
     border:1px solid var(--gold-primary)!important;
@@ -1058,7 +1058,7 @@
   .tzc-modal-standard-v44{
     font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif!important;
   }
-  .tzc-modal-study-v44{width:min(600px,calc(100vw - 28px))!important}
+  .tzc-modal-study-v44{width:min(520px,calc(100vw - 28px))!important}
   .tzc-modal-study-v44 .modal-header h3{font-size:.95rem!important}
   .tzc-modal-study-v44 .membros-form-grid{gap:8px 10px!important}
   .tzc-modal-study-v44 textarea.form-control{resize:vertical}
@@ -1079,6 +1079,112 @@
     .ervas-form-v37{grid-template-columns:1fr!important}
     .ervas-field-v37.c1,.ervas-field-v37.c2{grid-column:span 1!important}
     .tzc-modal-study-v44{width:calc(100vw - 20px)!important}
+  }
+</style>
+
+
+<style id="tzc-v45-padrao-geral">
+  /* V45 — refinamento do padrão oficial */
+  .tzc-top-search-v45{
+    width:100%;display:flex;align-items:center;gap:7px;
+    background:#151515;border:1px solid #2a2a2a;border-radius:20px;
+    padding:0 11px;min-height:30px;margin:0 0 12px;
+    color:var(--text-muted);
+  }
+  .tzc-top-search-v45 input{
+    width:100%;border:0!important;outline:0!important;background:transparent!important;
+    color:#fff!important;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif!important;
+    font-size:.76rem!important;padding:6px 0!important;min-height:28px!important;
+  }
+  .tzc-top-search-v45 i{font-size:.72rem;color:#8da7bd}
+
+  .tzc-page-head-v44,.tzc-page-head-v45{
+    display:grid!important;
+    grid-template-columns:auto minmax(0,1fr) auto!important;
+    align-items:center!important;gap:12px!important;margin-bottom:12px!important;
+  }
+  .tzc-page-copy-v45,.tzc-page-copy-v44{text-align:center;min-width:0}
+  .tzc-page-copy-v45 h2,.tzc-page-copy-v44 h2{
+    margin:0!important;color:#fff!important;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif!important;
+    font-size:.98rem!important;line-height:1.25!important;font-weight:700!important;
+  }
+  .tzc-page-copy-v45 h2 i,.tzc-page-copy-v44 h2 i{color:var(--gold-primary)!important;margin-right:6px}
+  .tzc-page-copy-v45 p,.tzc-page-copy-v44 p{
+    margin:4px auto 0!important;max-width:760px;color:#aaa!important;
+    font-size:.74rem!important;line-height:1.35!important;
+  }
+  .tzc-count-v45{font-size:.72rem;color:var(--text-muted);font-weight:600}
+  .tzc-head-spacer-v45{width:108px}
+
+  /* Botões do sistema: nada de cinza no destaque. Secundário = contorno dourado. */
+  .btn-toolbar,.ervas-secondary-v37,.tzc-modal-secondary-v44{
+    background:#171717!important;color:var(--gold-primary)!important;
+    border:1px solid var(--gold-primary)!important;border-radius:6px!important;
+    min-height:31px!important;padding:6px 10px!important;
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif!important;
+    font-size:.76rem!important;font-weight:700!important;
+  }
+  .btn-toolbar:hover,.ervas-secondary-v37:hover,.tzc-modal-secondary-v44:hover{
+    background:rgba(212,175,55,.10)!important;
+  }
+  .btn-add-membro,.ervas-primary-v37,.tzc-modal-save-v44{
+    background:var(--gold-primary)!important;color:#111!important;
+    border:1px solid var(--gold-primary)!important;border-radius:6px!important;
+    min-height:31px!important;padding:6px 10px!important;
+    font-size:.76rem!important;font-weight:700!important;
+  }
+  /* botão de exclusão continua vermelho apenas onde é destrutivo */
+  .btn-delete-icon{color:#fff!important}
+
+  /* Categoria: tabela e ações iguais ao padrão Estudos/Ervas */
+  #categoriasPainelTZC table,#tabelaCategoriasTZC, .categorias-table{
+    width:100%!important;border-collapse:collapse!important;
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif!important;
+    font-size:var(--tzc-font-sm)!important;
+  }
+  #categoriasPainelTZC th,#tabelaCategoriasTZC th,.categorias-table th{
+    color:var(--gold-primary)!important;background:transparent!important;
+    padding:9px 10px!important;font-size:var(--tzc-font-sm)!important;
+    text-transform:none!important;letter-spacing:0!important;
+  }
+  #categoriasPainelTZC td,#tabelaCategoriasTZC td,.categorias-table td{
+    color:#fff!important;padding:9px 10px!important;border-bottom:1px solid #292929!important;
+    font-size:var(--tzc-font-sm)!important;
+  }
+  #categoriasPainelTZC .btn-icon-only,#tabelaCategoriasTZC .btn-icon-only,
+  #categoriasPainelTZC button[title="Editar"],#categoriasPainelTZC button[title="Excluir"]{
+    background:#202020!important;color:var(--gold-light)!important;
+    border:1px solid #303030!important;border-radius:5px!important;
+  }
+
+  /* Modais realmente compactos */
+  .ervas-modal-box-v37{
+    width:min(790px,calc(100vw - 30px))!important;
+    padding:12px!important;border-radius:9px!important;
+  }
+  .ervas-form-v37{gap:7px 10px!important}
+  .ervas-field-v37 textarea{min-height:46px!important;max-height:62px!important}
+  .ervas-field-v37 input,.ervas-field-v37 select,.ervas-field-v37 textarea{
+    padding:6px 8px!important;font-size:.79rem!important;
+  }
+  .ervas-field-v37 label{font-size:.75rem!important}
+  .tzc-modal-study-v44{
+    width:min(520px,calc(100vw - 30px))!important;padding:12px!important;border-radius:9px!important;
+  }
+  .tzc-modal-study-v44 #tzcEstudoTexto{min-height:90px!important}
+  .tzc-modal-study-v44 .form-control{padding:6px 8px!important;font-size:.79rem!important}
+  .tzc-modal-study-v44 .form-group label{font-size:.75rem!important}
+
+  /* Configurações: introdução no mesmo padrão e voltar à esquerda */
+  .tzc-config-head-v45{margin-bottom:12px!important}
+
+  @media(max-width:760px){
+    .tzc-page-head-v44,.tzc-page-head-v45{grid-template-columns:1fr auto!important}
+    .tzc-page-copy-v44,.tzc-page-copy-v45{grid-column:1/-1;grid-row:1;text-align:left!important}
+    .tzc-page-copy-v44 p,.tzc-page-copy-v45 p{margin-left:0!important}
+    .tzc-page-back-v44{grid-column:1;grid-row:2}
+    .tzc-page-new-v44{grid-column:2;grid-row:2}
+    .tzc-head-spacer-v45{display:none}
   }
 </style>
 
@@ -1964,7 +2070,7 @@
           border:1px solid var(--gold-primary);
           border-radius:10px;
           padding:14px;
-          width:min(600px, calc(100vw - 28px));
+          width:min(520px, calc(100vw - 28px));
           max-height:calc(100dvh - 24px);
           box-shadow:0 10px 30px rgba(0,0,0,.9);
           display:flex;
@@ -4242,6 +4348,10 @@
     const c=document.getElementById('contentContainer');
     c.innerHTML=`
       <div class="ervas-admin-v37">
+        <div class="tzc-top-search-v45">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input id="ervaBuscaV37" placeholder="Pesquisar..." oninput="renderTabelaErvasTZC_V37()">
+        </div>
         <div class="tzc-page-head-v44">
           <button type="button" class="btn-toolbar tzc-page-back-v44" onclick="voltarGestaoInternaTZC_V1()">
             <i class="fa-solid fa-arrow-left"></i> Gestão Interna
@@ -4255,9 +4365,6 @@
           </button>
         </div>
 
-        <div class="ervas-toolbar-v37">
-          <input id="ervaBuscaV37" placeholder="Pesquisar em todos os dados das ervas..." oninput="renderTabelaErvasTZC_V37()">
-        </div>
         <div id="ervasTabelaV37"><div class="ervas-empty-v37">Carregando ervas...</div></div>
       </div>`;
     await carregarErvasAdminTZC_V37();
@@ -4481,6 +4588,31 @@
 document.addEventListener('click',function(e){
   if(!e.target.closest('.erva-combo-v43')) fecharCombosErvaV43();
 });
+</script>
+
+
+<script id="tzc-v45-menu-fechar-fora">
+(function(){
+  function fecharMenuV45(){
+    const menu=document.getElementById('sideMenu');
+    const overlay=document.getElementById('menuOverlay');
+    if(menu) menu.classList.remove('open','active','show');
+    if(overlay){
+      overlay.classList.remove('active','show');
+      overlay.style.display='none';
+    }
+    document.body.classList.remove('menu-open');
+  }
+  document.addEventListener('pointerdown', function(e){
+    const menu=document.getElementById('sideMenu');
+    if(!menu) return;
+    const aberto=menu.classList.contains('open')||menu.classList.contains('active')||menu.classList.contains('show');
+    if(!aberto) return;
+    const botao=e.target.closest('#menuToggle,.toggle-menu-btn,[onclick*="toggleMenu"]');
+    if(menu.contains(e.target)||botao) return;
+    fecharMenuV45();
+  }, true);
+})();
 </script>
 
 </body>

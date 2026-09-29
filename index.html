@@ -1015,6 +1015,14 @@
               </div>
             </button>
 
+            <button type="button" class="card" onclick="abrirConfiguracoesTerreiroTZC_V1()" style="text-align:left;border:1px solid var(--border-color);cursor:pointer;background:linear-gradient(145deg,#171717,#0d0d0d);">
+              <div style="padding:20px;">
+                <i class="fa-solid fa-building-columns" style="font-size:1.7rem;color:var(--gold-primary);margin-bottom:12px;"></i>
+                <h3 style="margin:0 0 6px;color:#fff !important;font-size:1rem;">Configurações</h3>
+                <p style="margin:0;color:var(--text-muted);font-size:.82rem;">Dados institucionais, contatos, giras e contribuição.</p>
+              </div>
+            </button>
+
             <div class="card" style="text-align:left;opacity:.65;">
               <div style="padding:20px;">
                 <i class="fa-solid fa-leaf" style="font-size:1.7rem;color:var(--gold-primary);margin-bottom:12px;"></i>
@@ -1040,6 +1048,155 @@
         .find(el => el.textContent.trim().includes('Gestão Interna'));
 
       switchTab('Gestao_Interna', itemGestao || null);
+    }
+
+    const TZC_GERAL_SHEET = 'Geral';
+
+    function lerCacheGeralTZC_V1() {
+      try {
+        const bruto = localStorage.getItem('TZC_GERAL_CACHE_V1');
+        return bruto ? (JSON.parse(bruto) || {}) : {};
+      } catch (e) { return {}; }
+    }
+
+    function salvarCacheGeralTZC_V1(dados) {
+      try { localStorage.setItem('TZC_GERAL_CACHE_V1', JSON.stringify(dados || {})); } catch (e) {}
+    }
+
+    function escHtmlTZC_V1(v) {
+      return String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+    }
+
+    async function abrirConfiguracoesTerreiroTZC_V1() {
+      const container = document.getElementById('contentContainer');
+      const search = document.getElementById('searchContainerWrapper');
+      if (search) search.style.display = 'none';
+
+      container.innerHTML = `
+        <section style="padding:8px 0 30px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+            <div>
+              <div style="font-size:.72rem;color:var(--gold-primary);font-weight:700;text-transform:uppercase;letter-spacing:.04em;">Gestão Interna</div>
+              <h2 style="margin:4px 0 0;color:#fff;font-size:1rem;">Configurações do Terreiro</h2>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button type="button" class="btn-toolbar" onclick="voltarGestaoInternaTZC_V1()"><i class="fa-solid fa-arrow-left"></i> Gestão Interna</button>
+              <button type="button" class="btn-toolbar" onclick="editarConfiguracoesTerreiroTZC_V1()"><i class="fa-solid fa-pen"></i> Editar</button>
+            </div>
+          </div>
+          <div id="tzcGeralPainelV1"><div style="padding:22px;color:var(--text-muted);">Carregando configurações...</div></div>
+        </section>`;
+
+      const cache = window.tzcGeralV1 || lerCacheGeralTZC_V1();
+      if (cache && Object.keys(cache).length) {
+        window.tzcGeralV1 = cache;
+        renderConfiguracoesTerreiroTZC_V1();
+      }
+
+      try {
+        const res = await fetch(`${WEB_APP_URL}?sheet=${encodeURIComponent(TZC_GERAL_SHEET)}&t=${Date.now()}`, {cache:'no-store'});
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const rows = await res.json();
+        window.tzcGeralV1 = Array.isArray(rows) && rows.length ? rows[0] : {};
+        salvarCacheGeralTZC_V1(window.tzcGeralV1);
+        renderConfiguracoesTerreiroTZC_V1();
+      } catch (e) {
+        if (!cache || !Object.keys(cache).length) {
+          document.getElementById('tzcGeralPainelV1').innerHTML = '<div class="card" style="padding:18px;color:var(--text-muted);">Não foi possível carregar os dados da aba Geral.</div>';
+        }
+      }
+    }
+
+    function renderConfiguracoesTerreiroTZC_V1() {
+      const el = document.getElementById('tzcGeralPainelV1');
+      if (!el) return;
+      const d = window.tzcGeralV1 || {};
+      const campo = (titulo, valor) => `
+        <div style="padding:12px 14px;border:1px solid var(--border-color);border-radius:8px;background:#101010;min-height:64px;">
+          <div style="font-size:.7rem;color:var(--gold-primary);font-weight:700;text-transform:uppercase;margin-bottom:5px;">${titulo}</div>
+          <div style="font-size:.82rem;color:#fff;line-height:1.45;overflow-wrap:anywhere;">${escHtmlTZC_V1(valor || '—')}</div>
+        </div>`;
+      el.innerHTML = `
+        <div class="card" style="padding:15px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;">
+            ${campo('Quem Somos', d.Quem_Somos)}
+            ${campo('Endereço', d.Endereco)}
+            ${campo('Telefone / WhatsApp', d.Telefone_Whatsapp)}
+            ${campo('Grupo WhatsApp', d.Grupo_Zap)}
+            ${campo('Instagram', d.Instagram)}
+            ${campo('Facebook', d.Facebook)}
+            ${campo('Horário das Giras', d.Horario_Giras)}
+            ${campo('Valor', d.Valor)}
+            ${campo('PIX', d.PIX)}
+          </div>
+        </div>`;
+    }
+
+    function editarConfiguracoesTerreiroTZC_V1() {
+      const d = window.tzcGeralV1 || {};
+      document.getElementById('modalConfigTerreiroTZC_V1')?.remove();
+      const campos = [
+        ['Quem_Somos','Quem Somos','textarea'],
+        ['Endereco','Endereço','input'],
+        ['Telefone_Whatsapp','Telefone / WhatsApp','input'],
+        ['Grupo_Zap','Grupo WhatsApp','input'],
+        ['Instagram','Instagram','input'],
+        ['Facebook','Facebook','input'],
+        ['Horario_Giras','Horário das Giras','input'],
+        ['Valor','Valor','input'],
+        ['PIX','PIX','input']
+      ];
+      const htmlCampos = campos.map(([id,label,tipo]) => `
+        <label style="display:block;margin-bottom:10px;">
+          <span style="display:block;font-size:.72rem;color:var(--gold-primary);font-weight:700;margin-bottom:5px;">${label}</span>
+          ${tipo === 'textarea'
+            ? `<textarea name="${id}" rows="3" style="width:100%;box-sizing:border-box;background:#0d0d0d;color:#fff;border:1px solid var(--border-color);border-radius:7px;padding:9px;font:inherit;font-size:.8rem;resize:vertical;">${escHtmlTZC_V1(d[id] || '')}</textarea>`
+            : `<input name="${id}" value="${escHtmlTZC_V1(d[id] || '')}" style="width:100%;box-sizing:border-box;background:#0d0d0d;color:#fff;border:1px solid var(--border-color);border-radius:7px;padding:9px;font:inherit;font-size:.8rem;">`}
+        </label>`).join('');
+
+      document.body.insertAdjacentHTML('beforeend', `
+        <div id="modalConfigTerreiroTZC_V1" style="position:fixed;inset:0;background:rgba(0,0,0,.76);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px;" onclick="if(event.target===this)this.remove()">
+          <div style="width:min(620px,96vw);max-height:88vh;overflow:auto;background:#141414;border:1px solid var(--gold-primary);border-radius:10px;box-shadow:0 18px 55px rgba(0,0,0,.65);">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 15px;border-bottom:1px solid var(--border-color);">
+              <div><div style="font-size:.7rem;color:var(--gold-primary);font-weight:700;">CONFIGURAÇÕES</div><h3 style="margin:2px 0 0;font-size:.95rem;color:#fff;">Dados do Terreiro</h3></div>
+              <button type="button" onclick="document.getElementById('modalConfigTerreiroTZC_V1').remove()" style="background:none;border:0;color:#fff;font-size:1.15rem;cursor:pointer;">×</button>
+            </div>
+            <form onsubmit="salvarConfiguracoesTerreiroTZC_V1(event)" style="padding:15px;">
+              ${htmlCampos}
+              <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
+                <button type="button" class="btn-toolbar" onclick="document.getElementById('modalConfigTerreiroTZC_V1').remove()">Fechar</button>
+                <button type="submit" class="btn-toolbar" style="border-color:var(--gold-primary);"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+              </div>
+            </form>
+          </div>
+        </div>`);
+    }
+
+    function salvarConfiguracoesTerreiroTZC_V1(event) {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const dados = {};
+      new FormData(form).forEach((v,k) => dados[k] = String(v).trim());
+
+      const anterior = {...(window.tzcGeralV1 || {})};
+      window.tzcGeralV1 = {...anterior, ...dados};
+      salvarCacheGeralTZC_V1(window.tzcGeralV1);
+      renderConfiguracoesTerreiroTZC_V1();
+      document.getElementById('modalConfigTerreiroTZC_V1')?.remove();
+      showToast('Salvando configurações...');
+
+      fetch(WEB_APP_URL, {
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({acao:'salvar_config', nomeAba:'Geral', dados})
+      }).then(() => {
+        showToast('Configurações atualizadas!');
+      }).catch(e => {
+        window.tzcGeralV1 = anterior;
+        salvarCacheGeralTZC_V1(anterior);
+        renderConfiguracoesTerreiroTZC_V1();
+        showToast('Falha ao salvar configurações: ' + e.message);
+      });
     }
 
     async function abrirEstudosTZC_V1() {

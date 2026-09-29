@@ -4760,6 +4760,16 @@
   .erva-sugestao-v68{border:1px solid #4b421c;background:#111;color:#eee;border-radius:7px;padding:6px 9px;font-size:.74rem;cursor:pointer}
 
 
+
+  /* V70 — seletor de imagens em modal próprio */
+  .erva-img-overlay-v70{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:100000;display:flex;align-items:center;justify-content:center;padding:22px}
+  .erva-img-modal-v70{width:min(900px,96vw);max-height:88vh;overflow:auto;background:#151515;border:1px solid var(--gold-primary);border-radius:12px;padding:16px}
+  .erva-img-head-v70{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:10px;margin-bottom:12px;border-bottom:1px solid #303030}
+  .erva-img-head-v70 h4{margin:0;color:#fff;font-size:1rem}.erva-img-head-v70 button{border:0;background:transparent;color:#d9bd45;font-size:1.4rem;cursor:pointer}
+  .erva-img-modal-v70 .erva-img-grid-v67{grid-template-columns:repeat(3,minmax(180px,1fr))}
+  .erva-img-modal-v70 .erva-img-option-v67 img{height:220px}
+  @media(max-width:700px){.erva-img-modal-v70 .erva-img-grid-v67{grid-template-columns:repeat(2,minmax(130px,1fr))}.erva-img-modal-v70 .erva-img-option-v67 img{height:180px}}
+
   /* V69 — Assistente de pesquisa dentro do modal */
   .erva-pesquisa-v69{grid-column:1/-1;margin-top:8px;padding:13px;border:1px solid #3a3420;border-radius:10px;background:#10100e}
   .erva-pesquisa-head-v69{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
@@ -5034,13 +5044,36 @@
     const nome=document.getElementById('erva_Nome_Erva')?.value?.trim()||'';
     const box=document.getElementById('ervaSugestoesCientificoV68');
     if(!nome){showToast('Informe primeiro o nome da erva.');return;}
-    if(box)box.innerHTML='<span style="font-size:.72rem;color:#aaa"><i class="fa-solid fa-spinner fa-spin"></i> Pesquisando...</span>';
+    if(box)box.innerHTML='<span style="font-size:.72rem;color:#aaa"><i class="fa-solid fa-spinner fa-spin"></i> Procurando pelo nome usado em português...</span>';
     try{
-      const res=await fetch('https://api.gbif.org/v1/species/search?q='+encodeURIComponent(nome)+'&kingdom=Plantae&limit=8');
-      const json=await res.json();
-      const nomes=[...new Set((json.results||[]).map(x=>x.canonicalName||x.scientificName).filter(Boolean))].slice(0,6);
+      // Primeiro procura pelo nome popular na Wikipédia em português.
+      const op=await fetch('https://pt.wikipedia.org/w/api.php?origin=*&action=query&generator=search&gsrsearch='+encodeURIComponent(nome)+'&gsrnamespace=0&gsrlimit=6&prop=pageprops&format=json');
+      const oj=await op.json();
+      const pages=Object.values(oj?.query?.pages||{});
+      const qids=[...new Set(pages.map(p=>p.pageprops?.wikibase_item).filter(Boolean))].slice(0,6);
+      let nomes=[];
+      if(qids.length){
+        const wd=await fetch('https://www.wikidata.org/w/api.php?origin=*&action=wbgetentities&ids='+encodeURIComponent(qids.join('|'))+'&props=claims%7Clabels&languages=pt%7Cen&format=json');
+        const wj=await wd.json();
+        Object.values(wj.entities||{}).forEach(e=>{
+          const claims=e.claims?.P225||[]; // taxon name
+          claims.forEach(c=>{const v=c?.mainsnak?.datavalue?.value;if(typeof v==='string'&&v)nomes.push(v);});
+        });
+      }
+      nomes=[...new Set(nomes)].slice(0,6);
+
+      // Fallback: consulta taxonômica pelo termo, mas só se a fonte em português não resolver.
+      if(!nomes.length){
+        const gb=await fetch('https://api.gbif.org/v1/species/search?q='+encodeURIComponent(nome)+'&kingdom=Plantae&limit=6');
+        const gj=await gb.json();
+        nomes=[...new Set((gj.results||[]).map(x=>x.canonicalName||x.scientificName).filter(Boolean))].slice(0,5);
+      }
       if(!box)return; box.innerHTML='';
-      if(!nomes.length){box.innerHTML='<span style="font-size:.72rem;color:#999">Nenhuma sugestão encontrada. O mesmo nome popular pode indicar espécies diferentes.</span>';return;}
+      if(!nomes.length){box.innerHTML='<span style="font-size:.72rem;color:#999">Não encontrei uma identificação segura. Melhor deixar em branco e conferir manualmente.</span>';return;}
+      const aviso=document.createElement('span');
+      aviso.style.cssText='display:block;width:100%;font-size:.68rem;color:#999;margin-bottom:3px';
+      aviso.textContent='Sugestões ligadas ao nome popular em português. Confirme pela imagem/planta antes de salvar.';
+      box.appendChild(aviso);
       nomes.forEach(n=>{const b=document.createElement('button');b.type='button';b.className='erva-sugestao-v68';b.textContent=n;b.onclick=()=>{const i=document.getElementById('erva_Nome_Cientifico');if(i)i.value=n;box.innerHTML='';showToast('Nome científico selecionado. Confira antes de salvar.');};box.appendChild(b);});
     }catch(e){if(box)box.innerHTML='<span style="font-size:.72rem;color:#999">Não foi possível consultar agora.</span>';}
   };
@@ -5098,48 +5131,45 @@
     showToast('Sugestão aplicada. Você ainda pode editar antes de salvar.');
   };
 
+  window.fecharBuscaImagemErvaTZC_V70=function(){
+    document.getElementById('ervaImgOverlayV70')?.remove();
+  };
+
   window.buscarImagemErvaTZC_V67=async function(){
     const nome=document.getElementById('erva_Nome_Erva')?.value?.trim()||'';
     const cientifico=document.getElementById('erva_Nome_Cientifico')?.value?.trim()||'';
-    if(!nome && !cientifico){showToast('Informe primeiro o nome da erva.');return;}
+    if(!nome&&!cientifico){showToast('Informe primeiro o nome da erva.');return;}
+    fecharBuscaImagemErvaTZC_V70();
 
-    const modal=document.querySelector('#modalErvaV37 .ervas-modal-v37, #modalErvaV37 .ervas-modal-box-v37, .ervas-modal-v37');
-    const alvo=modal||document.getElementById('modalErvaV37');
-    if(!alvo)return;
-    alvo.querySelector('.erva-img-search-v67')?.remove();
-
-    const box=document.createElement('div');
-    box.className='erva-img-search-v67';
-    box.innerHTML='<div class="erva-img-status-v67"><i class="fa-solid fa-spinner fa-spin"></i> Procurando imagens livres no Wikimedia Commons...</div><div class="erva-img-grid-v67"></div>';
-    const actions=alvo.querySelector('.ervas-form-actions-v37');
-    (actions?.parentNode||alvo).insertBefore(box,actions||null);
+    const overlay=document.createElement('div');
+    overlay.id='ervaImgOverlayV70'; overlay.className='erva-img-overlay-v70';
+    overlay.innerHTML=`<div class="erva-img-modal-v70" onclick="event.stopPropagation()">
+      <div class="erva-img-head-v70"><h4><i class="fa-solid fa-images"></i> Escolher imagem — ${escErvaV37(nome||cientifico)}</h4><button type="button" onclick="fecharBuscaImagemErvaTZC_V70()">×</button></div>
+      <div class="erva-img-status-v67"><i class="fa-solid fa-spinner fa-spin"></i> Procurando imagens...</div>
+      <div class="erva-img-grid-v67"></div>
+    </div>`;
+    overlay.onclick=()=>fecharBuscaImagemErvaTZC_V70();
+    document.body.appendChild(overlay);
 
     try{
       const termo=(cientifico||nome)+' plant';
-      const url='https://commons.wikimedia.org/w/api.php?origin=*&action=query&generator=search&gsrnamespace=6&gsrlimit=8&gsrsearch='+encodeURIComponent(termo)+'&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=360&format=json';
-      const res=await fetch(url);
-      const json=await res.json();
+      const url='https://commons.wikimedia.org/w/api.php?origin=*&action=query&generator=search&gsrnamespace=6&gsrlimit=12&gsrsearch='+encodeURIComponent(termo)+'&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=500&format=json';
+      const res=await fetch(url); const json=await res.json();
       const itens=Object.values(json?.query?.pages||{}).filter(p=>p.imageinfo?.[0]?.thumburl||p.imageinfo?.[0]?.url);
-      box.querySelector('.erva-img-status-v67').textContent=itens.length?'Escolha uma imagem. Ela será salva como link, sem ocupar o armazenamento do sistema.':'Nenhuma imagem encontrada. Tente informar o nome científico.';
-      const grid=box.querySelector('.erva-img-grid-v67');
+      const status=overlay.querySelector('.erva-img-status-v67');
+      status.textContent=itens.length?'Clique na foto que deseja usar. A escolha só será gravada quando você clicar em Salvar.':'Nenhuma imagem encontrada. Tente primeiro escolher o nome científico.';
+      const grid=overlay.querySelector('.erva-img-grid-v67');
       itens.forEach(p=>{
-        const ii=p.imageinfo[0], meta=ii.extmetadata||{};
-        const full=ii.url||ii.thumburl, thumb=ii.thumburl||ii.url;
+        const ii=p.imageinfo[0],meta=ii.extmetadata||{},full=ii.url||ii.thumburl,thumb=ii.thumburl||ii.url;
         const autor=(meta.Artist?.value||meta.Credit?.value||'Wikimedia Commons').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
-        const lic=(meta.LicenseShortName?.value||'Licença informada no Commons').replace(/<[^>]*>/g,' ').trim();
-        const b=document.createElement('button');
-        b.type='button'; b.className='erva-img-option-v67';
+        const lic=(meta.LicenseShortName?.value||'Licença no Commons').replace(/<[^>]*>/g,' ').trim();
+        const b=document.createElement('button');b.type='button';b.className='erva-img-option-v67';
         b.innerHTML=`<img src="${escErvaV37(thumb)}" alt=""><small title="${escErvaV37(autor+' · '+lic)}">${escErvaV37(autor)} · ${escErvaV37(lic)}</small>`;
-        b.onclick=()=>{
-          const inp=document.getElementById('erva_Foto_URL'); if(inp)inp.value=full;
-          box.querySelectorAll('.erva-img-option-v67').forEach(x=>x.style.borderColor='');
-          b.style.borderColor='var(--gold-primary)';
-          showToast('Imagem selecionada. Clique em Salvar para confirmar.');
-        };
+        b.onclick=()=>{const inp=document.getElementById('erva_Foto_URL');if(inp)inp.value=full;fecharBuscaImagemErvaTZC_V70();showToast('Imagem escolhida. Clique em Salvar para confirmar.');};
         grid.appendChild(b);
       });
     }catch(e){
-      box.querySelector('.erva-img-status-v67').textContent='Não foi possível buscar imagens agora. Você ainda pode informar o link manualmente.';
+      overlay.querySelector('.erva-img-status-v67').textContent='Não foi possível buscar imagens agora.';
     }
   };
 
@@ -6335,3 +6365,5 @@ function filtrarEstudosTZC_V55(valor){
 <!-- TZC V68 — imagens maiores + busca opcional de nome científico + pesquisa opcional por campo. -->
 
 <!-- TZC V69 — pesquisa de dados dentro do modal, com escolha manual da sugestão. -->
+
+<!-- TZC V70 — nome científico prioriza português/Wikidata + imagens em modal próprio. -->

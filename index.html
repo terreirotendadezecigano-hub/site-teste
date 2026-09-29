@@ -950,7 +950,7 @@
       container.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
           <div>
-            <div style="font-size:.75rem;color:var(--gold-primary);text-transform:uppercase;letter-spacing:.1em;">Acervo</div>
+            <div style="font-size:.76rem;color:var(--gold-primary);text-transform:uppercase;letter-spacing:.1em;font-weight:700;">Acervo</div>
             <h2 style="margin:4px 0 0;">Estudos da Tenda de Zé Cigano</h2>
           </div>
           <button class="btn-toolbar btn-add-membro" onclick="abrirNovoEstudoTZC_V1()">
@@ -1041,29 +1041,102 @@
     function abrirNovoEstudoTZC_V1() {
       const modal = document.createElement('div');
       modal.id = 'modalNovoEstudoTZC_V1';
-      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px;';
+      modal.style.cssText = `
+        position:fixed;inset:0;background:rgba(0,0,0,.78);
+        backdrop-filter:blur(3px);z-index:200000;
+        display:flex;align-items:center;justify-content:center;padding:15px;
+      `;
+
       modal.innerHTML = `
-        <div style="background:#111;border:1px solid var(--gold-primary);max-width:760px;width:100%;max-height:90vh;overflow:auto;border-radius:10px;padding:22px;color:#fff;">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <h2 style="margin:0;"><i class="fa-solid fa-book-open" style="color:var(--gold-primary);"></i> Novo estudo</h2>
-            <button class="btn-toolbar" onclick="document.getElementById('modalNovoEstudoTZC_V1').remove()"><i class="fa-solid fa-xmark"></i></button>
+        <div style="
+          background:#181818;
+          border:2px solid var(--gold-primary);
+          border-radius:12px;
+          padding:14px;
+          width:100%;
+          max-width:520px;
+          max-height:85vh;
+          box-shadow:0 10px 30px rgba(0,0,0,.9);
+          display:flex;
+          flex-direction:column;
+          position:relative;
+        ">
+          <div class="modal-header" style="margin-bottom:8px;">
+            <h3 style="font-size:.95rem;margin:0;">
+              <i class="fa-solid fa-book-open" style="color:var(--gold-primary);"></i>
+              Novo estudo
+            </h3>
+            <button class="modal-close-icon" type="button"
+              onclick="document.getElementById('modalNovoEstudoTZC_V1').remove()">&times;</button>
           </div>
-          <form onsubmit="salvarEstudoTZC_V1(event)" style="margin-top:18px;">
-            <label>Título<input id="tzcEstudoTitulo" required style="width:100%;margin:6px 0 12px;padding:10px;"></label>
-            <label>Categoria<input id="tzcEstudoCategoria" placeholder="Ex.: Ervas, Umbanda, História..." style="width:100%;margin:6px 0 12px;padding:10px;"></label>
-            <label>Resumo<textarea id="tzcEstudoResumo" rows="3" style="width:100%;margin:6px 0 12px;padding:10px;"></textarea></label>
-            <label>Texto do estudo<textarea id="tzcEstudoTexto" required rows="12" style="width:100%;margin:6px 0 12px;padding:10px;"></textarea></label>
-            <label>Imagem (URL, opcional)<input id="tzcEstudoImagem" type="url" style="width:100%;margin:6px 0 12px;padding:10px;"></label>
-            <label>Fonte da informação<input id="tzcEstudoFonte" style="width:100%;margin:6px 0 12px;padding:10px;"></label>
-            <label>Visibilidade
-              <select id="tzcEstudoVisibilidade" style="width:100%;margin:6px 0 16px;padding:10px;">
-                <option value="Fechado">Fechado</option>
-                <option value="Público">Público</option>
-              </select>
-            </label>
-            <button class="btn-toolbar btn-add-membro" type="submit"><i class="fa-solid fa-floppy-disk"></i> Salvar estudo</button>
-          </form>
-        </div>`;
+
+          <div class="modal-body" style="max-height:68vh;">
+            <form onsubmit="salvarEstudoTZC_V1(event)">
+              <div class="membros-form-grid">
+
+                <div class="form-group membros-form-full">
+                  <label>Título</label>
+                  <input type="text" id="tzcEstudoTitulo" class="form-control"
+                    placeholder="Título do estudo" required>
+                </div>
+
+                <div class="form-group membros-form-full">
+                  <label>Categoria</label>
+                  <select id="tzcEstudoCategoria" class="form-control">
+                    <option value="">Selecione uma categoria</option>
+                    <option value="Umbanda">Umbanda</option>
+                    <option value="Ervas & Banhos">Ervas & Banhos</option>
+                    <option value="História">História</option>
+                    <option value="Pontos Cantados">Pontos Cantados</option>
+                    <option value="Orientações">Orientações</option>
+                    <option value="Outros">Outros</option>
+                  </select>
+                </div>
+
+                <div class="form-group membros-form-full">
+                  <label>Resumo</label>
+                  <textarea id="tzcEstudoResumo" class="form-control" rows="2"
+                    placeholder="Breve resumo do conteúdo"></textarea>
+                </div>
+
+                <div class="form-group membros-form-full">
+                  <label>Texto do estudo</label>
+                  <textarea id="tzcEstudoTexto" class="form-control" rows="8"
+                    placeholder="Escreva aqui o conteúdo do estudo..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label>Visibilidade</label>
+                  <select id="tzcEstudoVisibilidade" class="form-control">
+                    <option value="Público">Público</option>
+                    <option value="Fechado">Fechado</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Imagem (URL, opcional)</label>
+                  <input type="url" id="tzcEstudoImagem" class="form-control"
+                    placeholder="https://...">
+                </div>
+
+                <div class="form-group membros-form-full">
+                  <label>Fonte da informação</label>
+                  <input type="text" id="tzcEstudoFonte" class="form-control"
+                    placeholder="Livro, autor, site ou outra referência">
+                </div>
+
+              </div>
+
+              <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+                <button class="btn-submit" type="submit" style="max-width:180px;">
+                  <i class="fa-solid fa-floppy-disk"></i> Salvar estudo
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      `;
+
       document.body.appendChild(modal);
     }
 

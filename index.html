@@ -1147,6 +1147,10 @@
             item('Facebook',d.Facebook))}
           ${sec('Giras e Contribuição',
             item('Horário das Giras',d.Horario_Giras)+item('Valor',d.Valor)+item('PIX',d.PIX))}
+          ${(d.Rodape_Texto || d.Rodape_Link_Texto || d.Rodape_Link_URL) ? sec('Rodapé',
+            opcional('Texto adicional',d.Rodape_Texto)+
+            opcional('Texto do link',d.Rodape_Link_Texto)+
+            opcional('URL do link',d.Rodape_Link_URL)) : ''}
         </div>
         <style>
           @media(max-width:760px){
@@ -1223,6 +1227,11 @@
                 ${input('Valor','Valor',d.Valor)}
                 ${input('PIX','PIX',d.PIX)}
 
+                <div class="tzc-config-sec">Rodapé</div>
+                ${input('Rodape_Texto','Texto adicional do rodapé',d.Rodape_Texto || '')}
+                ${input('Rodape_Link_Texto','Texto do link',d.Rodape_Link_Texto || '')}
+                ${input('Rodape_Link_URL','URL do link',d.Rodape_Link_URL || '')}
+
                 <div class="tzc-config-sec">Aparência · Paleta de Cores</div>
                 <div class="tzc-config-full" style="display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;">
                 <div class="tzc-color-row">
@@ -1262,6 +1271,28 @@
       });
     }
 
+    function aplicarRodapeTZC_V1(d) {
+      const rodape = document.querySelector('footer');
+      if (!rodape) return;
+
+      const nome = (d && d.Nome_Terreiro) ? d.Nome_Terreiro : 'Tenda de Zé Cigano';
+      const extra = String((d && d.Rodape_Texto) || '').trim();
+      const linkTexto = String((d && d.Rodape_Link_Texto) || '').trim();
+      const linkUrl = String((d && d.Rodape_Link_URL) || '').trim();
+
+      let linha = `© ${escHtmlTZC_V1(nome)}`;
+      if (extra) linha += ` | ${escHtmlTZC_V1(extra)}`;
+      if (linkTexto && linkUrl) {
+        linha += ` | <a href="${escHtmlTZC_V1(linkUrl)}" target="_blank" rel="noopener" style="color:var(--gold-primary);text-decoration:none;">${escHtmlTZC_V1(linkTexto)}</a>`;
+      } else if (linkTexto) {
+        linha += ` | ${escHtmlTZC_V1(linkTexto)}`;
+      }
+
+      rodape.innerHTML = `
+        <div style="font-size:.72rem;">${linha}</div>
+        <div style="font-size:.62rem;color:var(--text-muted);margin-top:3px;">Sistema desenvolvido por <span style="color:var(--gold-primary);">SistemasAeR</span></div>`;
+    }
+
     function aplicarIdentidadeVisualTZC_V1(d) {
       if (!d) return;
       const root = document.documentElement;
@@ -1276,6 +1307,7 @@
       if (nome && d.Nome_Terreiro) nome.textContent = d.Nome_Terreiro;
       if (subtitulo && d.Subtitulo) subtitulo.textContent = d.Subtitulo;
       if (logo && d.Logo_URL) logo.src = d.Logo_URL;
+      aplicarRodapeTZC_V1(d);
     }
 
     function salvarConfiguracoesTerreiroTZC_V1(event) {
@@ -3674,14 +3706,21 @@
 </html>
 
 <style id="tzc-v27-compactacao">
-  header.banner{padding:6px 10px!important;min-height:54px!important;border-bottom-width:1px!important}
-  .banner-logo{width:36px!important;height:36px!important;border-width:1px!important;box-shadow:0 0 5px rgba(212,175,55,.35)!important}
+  header.banner{padding:6px 10px!important;min-height:62px!important;border-bottom-width:1px!important}
+  .banner-logo{width:42px!important;height:42px!important;border-width:1px!important;box-shadow:0 0 5px rgba(212,175,55,.35)!important}
   .banner-center{gap:8px!important}
-  .banner-titles h1{font-size:.88rem!important;line-height:1.05!important;letter-spacing:.35px!important}
-  .banner-titles p{font-size:.62rem!important;line-height:1.05!important}
+  .banner-titles h1{font-size:.96rem!important;line-height:1.05!important;letter-spacing:.35px!important}
+  .banner-titles p{font-size:.68rem!important;line-height:1.05!important}
   .toggle-menu-btn,.btn-login,.user-logged{font-size:.68rem!important}
   @media(max-width:680px){
-    header.banner{min-height:50px!important;padding:5px 8px!important}
-    .banner-logo{width:33px!important;height:33px!important}
+    header.banner{min-height:56px!important;padding:5px 8px!important}
+    .banner-logo{width:38px!important;height:38px!important}
   }
+</style>
+
+<style id="tzc-v29-fontes">
+  #modalConfigTerreiroTZC_V1 input,
+  #modalConfigTerreiroTZC_V1 textarea { font-size:.82rem!important; line-height:1.35!important; }
+  #modalConfigTerreiroTZC_V1 label > span { font-size:.74rem!important; }
+  #modalConfigTerreiroTZC_V1 .tzc-config-sec { font-size:.82rem!important; }
 </style>

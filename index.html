@@ -1023,13 +1023,13 @@
               </div>
             </button>
 
-            <div class="card" style="text-align:left;opacity:.65;">
+            <button type="button" class="card" onclick="abrirGestaoErvasTZC_V1()" style="text-align:left;border:1px solid var(--border-color);cursor:pointer;background:linear-gradient(145deg,#171717,#0d0d0d);">
               <div style="padding:20px;">
                 <i class="fa-solid fa-leaf" style="font-size:1.7rem;color:var(--gold-primary);margin-bottom:12px;"></i>
-                <h3 style="margin:0 0 6px;">Ervas</h3>
-                <p style="margin:0;color:var(--text-muted);font-size:.82rem;">Banco de ervas e imagens — próximo módulo.</p>
+                <h3 style="margin:0 0 6px;color:#fff !important;font-size:1rem;">Ervas</h3>
+                <p style="margin:0;color:var(--text-muted);font-size:.82rem;">Cadastrar, consultar, editar e organizar o banco de ervas.</p>
               </div>
-            </div>
+            </button>
 
             <div class="card" style="text-align:left;opacity:.65;">
               <div style="padding:20px;">
@@ -3831,6 +3831,167 @@
 .tzc-v33-cor{display:grid;grid-template-columns:36px 1fr;gap:6px}.tzc-v33-cor input[type=color]{width:36px;height:32px;background:#0d0d0d;border:1px solid var(--border-color);padding:2px}
 @media(max-width:760px){.tzc-v33-3 .tzc-inline-grid{grid-template-columns:1fr!important}}
 </style>
+
+<style id="tzc-v37-ervas">
+  .ervas-admin-v37{width:100%;max-width:none}
+  .ervas-toolbar-v37{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}
+  .ervas-toolbar-v37 input,.ervas-toolbar-v37 select{background:#101010;border:1px solid var(--border-color);color:#fff;border-radius:8px;padding:9px 11px;font-size:.86rem}
+  .ervas-toolbar-v37 input{flex:1;min-width:220px}
+  .ervas-table-wrap-v37{overflow:auto;border:1px solid var(--border-color);border-radius:10px;background:var(--bg-card)}
+  .ervas-table-v37{width:100%;border-collapse:collapse;min-width:780px}
+  .ervas-table-v37 th,.ervas-table-v37 td{padding:11px 12px;border-bottom:1px solid #262626;text-align:left;font-size:.84rem;vertical-align:middle}
+  .ervas-table-v37 th{color:var(--gold-light);font-size:.76rem;text-transform:uppercase;letter-spacing:.04em;background:#101010}
+  .ervas-table-v37 tr:last-child td{border-bottom:0}
+  .ervas-actions-v37{display:flex;gap:6px;white-space:nowrap}
+  .ervas-btn-v37{border:1px solid #3a3a3a;background:#181818;color:#fff;border-radius:7px;padding:6px 8px;cursor:pointer}
+  .ervas-btn-v37:hover{border-color:var(--gold-primary);color:var(--gold-light)}
+  .ervas-modal-v37{position:fixed;inset:0;background:rgba(0,0,0,.76);z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px}
+  .ervas-modal-box-v37{width:min(900px,96vw);max-height:88vh;overflow:auto;background:#111;border:1px solid #333;border-radius:14px;box-shadow:0 18px 60px #000;padding:18px}
+  .ervas-modal-head-v37{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .ervas-modal-head-v37 h3{margin:0;color:#fff;font-size:1rem}
+  .ervas-close-v37{border:0;background:transparent;color:#bbb;font-size:1.35rem;cursor:pointer}
+  .ervas-form-v37{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
+  .ervas-field-v37{display:flex;flex-direction:column;gap:5px}
+  .ervas-field-v37.full{grid-column:1/-1}
+  .ervas-field-v37 label{font-size:.77rem;color:var(--gold-light);font-weight:700}
+  .ervas-field-v37 input,.ervas-field-v37 textarea,.ervas-field-v37 select{width:100%;box-sizing:border-box;background:#0b0b0b;border:1px solid #303030;color:#fff;border-radius:8px;padding:9px 10px;font-size:.86rem}
+  .ervas-field-v37 textarea{min-height:78px;resize:vertical}
+  .ervas-form-actions-v37{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+  .ervas-primary-v37{background:var(--red-logo);border:1px solid #8b1822;color:#fff;border-radius:8px;padding:9px 13px;cursor:pointer;font-weight:700}
+  .ervas-secondary-v37{background:#181818;border:1px solid #3a3a3a;color:#fff;border-radius:8px;padding:9px 13px;cursor:pointer}
+  .ervas-empty-v37{padding:24px;text-align:center;color:var(--text-muted)}
+  @media(max-width:760px){.ervas-form-v37{grid-template-columns:1fr}.ervas-field-v37.full{grid-column:auto}}
+</style>
+
+<script id="tzc-v37-ervas-js">
+(function(){
+  window.tzcErvasAdminV37 = [];
+  window.tzcErvaEditandoV37 = null;
+
+  const API = (typeof WEB_APP_URL !== 'undefined' ? WEB_APP_URL : '');
+
+  window.abrirGestaoErvasTZC_V1 = async function(){
+    document.getElementById('searchContainerWrapper').style.display='none';
+    document.getElementById('pageTitle').innerHTML='<i class="fa-solid fa-leaf"></i> Gestão de Ervas';
+    const c=document.getElementById('contentContainer');
+    c.innerHTML=`
+      <div class="ervas-admin-v37">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <button type="button" class="btn-toolbar" onclick="voltarGestaoInternaTZC_V1()"><i class="fa-solid fa-arrow-left"></i> Gestão Interna</button>
+          <button type="button" class="ervas-primary-v37" onclick="novaErvaTZC_V37()"><i class="fa-solid fa-plus"></i> Nova Erva</button>
+        </div>
+        <div class="ervas-toolbar-v37">
+          <input id="ervaBuscaV37" placeholder="Buscar por nome, categoria, finalidade..." oninput="renderTabelaErvasTZC_V37()">
+          <select id="ervaStatusV37" onchange="renderTabelaErvasTZC_V37()">
+            <option value="Ativo">Ativas</option><option value="">Todas</option><option value="Excluido">Excluídas</option>
+          </select>
+        </div>
+        <div id="ervasTabelaV37"><div class="ervas-empty-v37">Carregando ervas...</div></div>
+      </div>`;
+    await carregarErvasAdminTZC_V37();
+  };
+
+  window.carregarErvasAdminTZC_V37 = async function(){
+    try{
+      const r=await fetch(API+'?sheet=Ervas_Banhos&_='+Date.now());
+      const d=await r.json();
+      window.tzcErvasAdminV37=Array.isArray(d)?d:[];
+      renderTabelaErvasTZC_V37();
+    }catch(e){
+      document.getElementById('ervasTabelaV37').innerHTML='<div class="ervas-empty-v37">Não foi possível carregar a aba Ervas_Banhos. Execute primeiro a função garantirEstruturaErvasTZC_V1() no Apps Script V69.</div>';
+    }
+  };
+
+  window.renderTabelaErvasTZC_V37 = function(){
+    const alvo=document.getElementById('ervasTabelaV37'); if(!alvo)return;
+    const q=(document.getElementById('ervaBuscaV37')?.value||'').toLowerCase().trim();
+    const st=document.getElementById('ervaStatusV37')?.value ?? 'Ativo';
+    const dados=(window.tzcErvasAdminV37||[]).filter(x=>{
+      const status=String(x.Status||'Ativo');
+      if(st && status!==st)return false;
+      const hay=[x.Nome_Erva,x.Nome_Cientifico,x.Categoria,x.Tipo_Preparo,x.Finalidade_Propriedades,x.Indicacao_Uso].join(' ').toLowerCase();
+      return !q||hay.includes(q);
+    });
+    if(!dados.length){alvo.innerHTML='<div class="ervas-empty-v37">Nenhuma erva encontrada.</div>';return;}
+    alvo.innerHTML=`<div class="ervas-table-wrap-v37"><table class="ervas-table-v37">
+      <thead><tr><th>Nome</th><th>Categoria</th><th>Preparo</th><th>Finalidade / Uso</th><th>Acesso</th><th>Ações</th></tr></thead>
+      <tbody>${dados.map(x=>`<tr>
+        <td><strong>${escErvaV37(x.Nome_Erva||'—')}</strong>${x.Nome_Cientifico?`<div style="color:#999;font-size:.76rem">${escErvaV37(x.Nome_Cientifico)}</div>`:''}</td>
+        <td>${escErvaV37(x.Categoria||'—')}</td><td>${escErvaV37(x.Tipo_Preparo||'—')}</td>
+        <td>${escErvaV37(x.Finalidade_Propriedades||x.Indicacao_Uso||'—')}</td><td>${escErvaV37(x.Acesso_Publico||'Sim')}</td>
+        <td><div class="ervas-actions-v37">
+          <button class="ervas-btn-v37" title="Visualizar" onclick='visualizarErvaTZC_V37(${JSON.stringify(String(x.ID_Erva||''))})'><i class="fa-solid fa-eye"></i></button>
+          <button class="ervas-btn-v37" title="Editar" onclick='editarErvaTZC_V37(${JSON.stringify(String(x.ID_Erva||''))})'><i class="fa-solid fa-pen"></i></button>
+          ${String(x.Status||'Ativo')!=='Excluido'?`<button class="ervas-btn-v37" title="Excluir" onclick='excluirErvaTZC_V37(${JSON.stringify(String(x.ID_Erva||''))})'><i class="fa-solid fa-trash"></i></button>`:''}
+        </div></td>
+      </tr>`).join('')}</tbody></table></div>`;
+  };
+
+  window.novaErvaTZC_V37=function(){ window.tzcErvaEditandoV37=null; abrirFormErvaTZC_V37({Acesso_Publico:'Sim',Status:'Ativo'}); };
+  window.editarErvaTZC_V37=function(id){const x=(window.tzcErvasAdminV37||[]).find(e=>String(e.ID_Erva||'')===String(id)); if(x){window.tzcErvaEditandoV37=x;abrirFormErvaTZC_V37(x);}};
+  window.visualizarErvaTZC_V37=function(id){
+    const x=(window.tzcErvasAdminV37||[]).find(e=>String(e.ID_Erva||'')===String(id)); if(!x)return;
+    abrirModalErvaV37(`<div class="ervas-modal-head-v37"><h3><i class="fa-solid fa-leaf"></i> ${escErvaV37(x.Nome_Erva||'Erva')}</h3><button class="ervas-close-v37" onclick="fecharModalErvaV37()">×</button></div>
+      ${x.Foto_URL?`<img src="${escErvaV37(x.Foto_URL)}" style="max-width:180px;max-height:140px;border-radius:10px;object-fit:cover;margin-bottom:12px">`:''}
+      ${[['Nome científico',x.Nome_Cientifico],['Categoria',x.Categoria],['Tipo de preparo',x.Tipo_Preparo],['Finalidade / Propriedades',x.Finalidade_Propriedades],['Uso espiritual',x.Uso_Espiritual],['Indicação de uso',x.Indicacao_Uso],['Modo de uso',x.Modo_Uso],['Cuidados',x.Cuidados],['Observações',x.Observacoes],['Acesso público',x.Acesso_Publico]].filter(a=>a[1]).map(a=>`<div style="margin:9px 0"><div style="font-size:.75rem;color:var(--gold-light);font-weight:700">${a[0]}</div><div style="font-size:.88rem;color:#eee;white-space:pre-wrap">${escErvaV37(a[1])}</div></div>`).join('')}
+      <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="ervas-secondary-v37" onclick="fecharModalErvaV37()">Fechar</button></div>`);
+  };
+
+  window.abrirFormErvaTZC_V37=function(x){
+    abrirModalErvaV37(`<div class="ervas-modal-head-v37"><h3>${window.tzcErvaEditandoV37?'Editar Erva':'Nova Erva'}</h3><button class="ervas-close-v37" onclick="fecharModalErvaV37()">×</button></div>
+    <div class="ervas-form-v37">
+      ${campoErvaV37('Nome_Erva','Nome da Erva',x.Nome_Erva,true)}
+      ${campoErvaV37('Nome_Cientifico','Nome Científico',x.Nome_Cientifico)}
+      ${campoErvaV37('Categoria','Categoria',x.Categoria)}
+      ${campoErvaV37('Tipo_Preparo','Tipo de Preparo',x.Tipo_Preparo)}
+      ${campoErvaV37('Finalidade_Propriedades','Finalidade / Propriedades',x.Finalidade_Propriedades,false,true)}
+      ${campoErvaV37('Uso_Espiritual','Uso Espiritual',x.Uso_Espiritual,false,true)}
+      ${campoErvaV37('Indicacao_Uso','Indicação de Uso',x.Indicacao_Uso,false,true)}
+      ${campoErvaV37('Modo_Uso','Modo de Uso',x.Modo_Uso,false,true)}
+      ${campoErvaV37('Cuidados','Cuidados',x.Cuidados,false,true)}
+      ${campoErvaV37('Observacoes','Observações',x.Observacoes,false,true)}
+      ${campoErvaV37('Foto_URL','Imagem / link do Google Drive',x.Foto_URL,false,false,true)}
+      <div class="ervas-field-v37"><label>Acesso Público</label><select id="erva_Acesso_Publico"><option ${String(x.Acesso_Publico||'Sim')==='Sim'?'selected':''}>Sim</option><option ${String(x.Acesso_Publico||'')==='Não'?'selected':''}>Não</option></select></div>
+      <div class="ervas-form-actions-v37"><button class="ervas-secondary-v37" onclick="fecharModalErvaV37()">Fechar</button><button class="ervas-primary-v37" onclick="salvarErvaTZC_V37()"><i class="fa-solid fa-floppy-disk"></i> Salvar</button></div>
+    </div>`);
+  };
+
+  window.salvarErvaTZC_V37=async function(){
+    const nomes=['Nome_Erva','Nome_Cientifico','Categoria','Tipo_Preparo','Finalidade_Propriedades','Uso_Espiritual','Indicacao_Uso','Modo_Uso','Cuidados','Observacoes','Foto_URL','Acesso_Publico'];
+    const d={}; nomes.forEach(n=>d[n]=document.getElementById('erva_'+n)?.value?.trim()||'');
+    if(!d.Nome_Erva){alert('Informe o nome da erva.');return;}
+    const edit=window.tzcErvaEditandoV37;
+    d.ID_Erva=edit?.ID_Erva||('ERVA-'+Date.now());
+    d.Status=edit?.Status||'Ativo';
+    const payload={acao:edit?'atualizar':'inserir',nomeAba:'Ervas_Banhos',id:d.ID_Erva,idColuna:'ID_Erva',dados:d};
+    fecharModalErvaV37();
+    if(edit){Object.assign(edit,d);}else{window.tzcErvasAdminV37.unshift(d);}
+    renderTabelaErvasTZC_V37();
+    try{await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});}catch(e){}
+    setTimeout(carregarErvasAdminTZC_V37,700);
+  };
+
+  window.excluirErvaTZC_V37=async function(id){
+    const x=(window.tzcErvasAdminV37||[]).find(e=>String(e.ID_Erva||'')===String(id)); if(!x)return;
+    abrirModalErvaV37(`<div class="ervas-modal-head-v37"><h3>Excluir erva?</h3><button class="ervas-close-v37" onclick="fecharModalErvaV37()">×</button></div>
+      <p style="color:#ddd;font-size:.88rem">A erva <strong>${escErvaV37(x.Nome_Erva||'')}</strong> será excluída logicamente. O registro continuará na planilha para rastreabilidade.</p>
+      <div style="display:flex;justify-content:flex-end;gap:8px"><button class="ervas-secondary-v37" onclick="fecharModalErvaV37()">Cancelar</button><button class="ervas-primary-v37" onclick='confirmarExcluirErvaTZC_V37(${JSON.stringify(String(id))})'>Excluir</button></div>`);
+  };
+  window.confirmarExcluirErvaTZC_V37=async function(id){
+    fecharModalErvaV37();
+    const x=(window.tzcErvasAdminV37||[]).find(e=>String(e.ID_Erva||'')===String(id)); if(x)x.Status='Excluido';
+    renderTabelaErvasTZC_V37();
+    const payload={acao:'excluir',nomeAba:'Ervas_Banhos',id:id,idColuna:'ID_Erva'};
+    try{await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});}catch(e){}
+  };
+
+  window.abrirModalErvaV37=function(html){fecharModalErvaV37();const d=document.createElement('div');d.id='modalErvaV37';d.className='ervas-modal-v37';d.innerHTML=`<div class="ervas-modal-box-v37">${html}</div>`;d.addEventListener('click',e=>{if(e.target===d)fecharModalErvaV37();});document.body.appendChild(d);};
+  window.fecharModalErvaV37=function(){document.getElementById('modalErvaV37')?.remove();};
+  window.campoErvaV37=function(n,l,v,req=false,area=false,full=false){const val=escErvaV37(v||'');return `<div class="ervas-field-v37 ${area||full?'full':''}"><label>${l}${req?' *':''}</label>${area?`<textarea id="erva_${n}">${val}</textarea>`:`<input id="erva_${n}" value="${val}" ${req?'required':''}>`}</div>`;};
+  window.escErvaV37=function(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');};
+})();
+</script>
+
 </body>
 </html>
 

@@ -3706,15 +3706,15 @@
 </html>
 
 <style id="tzc-v27-compactacao">
-  header.banner{padding:6px 10px!important;min-height:62px!important;border-bottom-width:1px!important}
-  .banner-logo{width:42px!important;height:42px!important;border-width:1px!important;box-shadow:0 0 5px rgba(212,175,55,.35)!important}
+  header.banner{padding:6px 10px!important;min-height:70px!important;border-bottom-width:1px!important}
+  .banner-logo{width:48px!important;height:48px!important;border-width:1px!important;box-shadow:0 0 5px rgba(212,175,55,.35)!important}
   .banner-center{gap:8px!important}
-  .banner-titles h1{font-size:.96rem!important;line-height:1.05!important;letter-spacing:.35px!important}
-  .banner-titles p{font-size:.68rem!important;line-height:1.05!important}
+  .banner-titles h1{font-size:1.02rem!important;line-height:1.05!important;letter-spacing:.35px!important}
+  .banner-titles p{font-size:.72rem!important;line-height:1.05!important}
   .toggle-menu-btn,.btn-login,.user-logged{font-size:.68rem!important}
   @media(max-width:680px){
-    header.banner{min-height:56px!important;padding:5px 8px!important}
-    .banner-logo{width:38px!important;height:38px!important}
+    header.banner{min-height:62px!important;padding:5px 8px!important}
+    .banner-logo{width:43px!important;height:43px!important}
   }
 </style>
 
@@ -3723,4 +3723,23 @@
   #modalConfigTerreiroTZC_V1 textarea { font-size:.82rem!important; line-height:1.35!important; }
   #modalConfigTerreiroTZC_V1 label > span { font-size:.74rem!important; }
   #modalConfigTerreiroTZC_V1 .tzc-config-sec { font-size:.82rem!important; }
+</style>
+
+<style id="tzc-v30-config-fix">
+  /* Configurações: nunca cortar seções internas */
+  #conteudoConfiguracoesTZC_V1,
+  .tzc-config-view,
+  .tzc-config-view-wrap {
+    max-height:none!important;
+    height:auto!important;
+    overflow:visible!important;
+  }
+
+  /* mantém a página compacta, mas permite que Contato/Rodapé/Aparência apareçam */
+  #paginaConfiguracoesTZC_V1 .tzc-config-view,
+  #paginaConfiguracoesTZC_V1 [data-tzc-config-view="1"] {
+    max-height:none!important;
+    height:auto!important;
+    overflow:visible!important;
+  }
 </style>

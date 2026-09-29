@@ -957,6 +957,13 @@
       `;
     }
 
+    function voltarGestaoInternaTZC_V1() {
+      const itemGestao = Array.from(document.querySelectorAll('.nav-item'))
+        .find(el => el.textContent.trim().includes('Gestão Interna'));
+
+      switchTab('Gestao_Interna', itemGestao || null);
+    }
+
     async function abrirEstudosTZC_V1() {
       const container = document.getElementById('contentContainer');
       const search = document.getElementById('searchContainerWrapper');
@@ -968,10 +975,17 @@
             <div style="font-size:.76rem;color:var(--gold-primary);text-transform:uppercase;letter-spacing:.1em;font-weight:700;">Acervo</div>
             <h2 style="margin:4px 0 0;">Estudos da Tenda de Zé Cigano</h2>
           </div>
-          <button class="btn-toolbar btn-add-membro" onclick="abrirNovoEstudoTZC_V1()">
-            <i class="fa-solid fa-plus"></i> Novo Estudo
-          </button>
+
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <button type="button" class="btn-toolbar" onclick="voltarGestaoInternaTZC_V1()" title="Voltar para Gestão Interna">
+              <i class="fa-solid fa-arrow-left"></i> Gestão Interna
+            </button>
+            <button class="btn-toolbar btn-add-membro" onclick="abrirNovoEstudoTZC_V1()">
+              <i class="fa-solid fa-plus"></i> Novo Estudo
+            </button>
+          </div>
         </div>
+
         <div id="estudosTZCLista" class="cards-grid">
           <p style="color:var(--text-muted);">Carregando estudos...</p>
         </div>

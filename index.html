@@ -759,10 +759,10 @@
       <button class="toggle-menu-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
     </div>
     <div class="banner-center">
-      <img src="https://lh3.googleusercontent.com/d/1tTQCxsP8Z8H5mNnEFEfVq8dEg9VF0U1-" class="banner-logo" alt="Tenda de Zé Cigano">
+      <img id="tzcHeaderLogoV1" src="https://lh3.googleusercontent.com/d/1tTQCxsP8Z8H5mNnEFEfVq8dEg9VF0U1-" class="banner-logo" alt="Tenda de Zé Cigano">
       <div class="banner-titles">
-        <h1>Tenda de Zé Cigano</h1>
-        <p>Terreiro de Umbanda</p>
+        <h1 id="tzcHeaderNomeV1">Tenda de Zé Cigano</h1>
+        <p id="tzcHeaderSubtituloV1">Terreiro de Umbanda</p>
       </div>
     </div>
     <div class="banner-right" id="authContainer">
@@ -1111,28 +1111,41 @@
       const el = document.getElementById('tzcGeralPainelV1');
       if (!el) return;
       const d = window.tzcGeralV1 || {};
-      const campo = (titulo, valor) => `
-        <div style="padding:12px 14px;border:1px solid var(--border-color);border-radius:8px;background:#101010;min-height:64px;">
-          <div style="font-size:.7rem;color:var(--gold-primary);font-weight:700;text-transform:uppercase;margin-bottom:5px;">${titulo}</div>
-          <div style="font-size:.82rem;color:#fff;line-height:1.45;overflow-wrap:anywhere;">${escHtmlTZC_V1(valor || '—')}</div>
+      aplicarIdentidadeVisualTZC_V1(d);
+
+      const item = (titulo, valor, classe='') => `
+        <div class="${classe}" style="min-width:0;">
+          <div style="font-size:.66rem;color:var(--gold-primary);font-weight:700;text-transform:uppercase;margin-bottom:3px;">${titulo}</div>
+          <div style="font-size:.78rem;color:#fff;line-height:1.35;overflow-wrap:anywhere;">${escHtmlTZC_V1(valor || '—')}</div>
         </div>`;
+      const sec = (titulo, conteudo, cols='repeat(3,minmax(0,1fr))') => `
+        <div style="padding:11px 13px;border-bottom:1px solid var(--border-color);">
+          <div style="font-size:.72rem;color:#fff;font-weight:700;margin-bottom:9px;">${titulo}</div>
+          <div style="display:grid;grid-template-columns:${cols};gap:10px 16px;">${conteudo}</div>
+        </div>`;
+
       el.innerHTML = `
-        <div class="card" style="padding:15px;">
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;">
-            ${campo('Nome do Terreiro', d.Nome_Terreiro || 'Tenda de Zé Cigano')}
-            ${campo('Subtítulo', d.Subtitulo || 'Terreiro de Umbanda')}
-            ${campo('Logo', d.Logo_URL || 'Logo atual do site')}
-            ${campo('Quem Somos', d.Quem_Somos)}
-            ${campo('Endereço', d.Endereco)}
-            ${campo('Telefone / WhatsApp', d.Telefone_Whatsapp)}
-            ${campo('Grupo WhatsApp', d.Grupo_Zap)}
-            ${campo('Instagram', d.Instagram)}
-            ${campo('Facebook', d.Facebook)}
-            ${campo('Horário das Giras', d.Horario_Giras)}
-            ${campo('Valor', d.Valor)}
-            ${campo('PIX', d.PIX)}
-          </div>
-        </div>`;
+        <div class="card" style="padding:0;max-width:980px;overflow:hidden;">
+          ${sec('Identidade',
+            item('Nome do Terreiro',d.Nome_Terreiro || 'Tenda de Zé Cigano')+
+            item('Subtítulo',d.Subtitulo || 'Terreiro de Umbanda')+
+            item('Logo',d.Logo_URL || 'Logo atual do site'))}
+          ${sec('Institucional',
+            item('Quem Somos',d.Quem_Somos)+item('Endereço',d.Endereco),
+            'minmax(0,1.6fr) minmax(220px,.8fr)')}
+          ${sec('Contato e Redes',
+            item('Telefone / WhatsApp',d.Telefone_Whatsapp)+
+            item('Grupo WhatsApp',d.Grupo_Zap)+
+            item('Instagram',d.Instagram)+
+            item('Facebook',d.Facebook))}
+          ${sec('Giras e Contribuição',
+            item('Horário das Giras',d.Horario_Giras)+item('Valor',d.Valor)+item('PIX',d.PIX))}
+        </div>
+        <style>
+          @media(max-width:760px){
+            #tzcGeralPainelV1 .card>div>div{grid-template-columns:1fr!important}
+          }
+        </style>`;
     }
 
     function editarConfiguracoesTerreiroTZC_V1() {
@@ -1147,7 +1160,7 @@
 
       document.body.insertAdjacentHTML('beforeend', `
         <div id="modalConfigTerreiroTZC_V1" style="position:fixed;inset:0;background:rgba(0,0,0,.76);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px;" onclick="if(event.target===this)this.remove()">
-          <div style="width:min(760px,96vw);max-height:86vh;overflow:auto;background:#141414;border:1px solid var(--gold-primary);border-radius:10px;box-shadow:0 18px 55px rgba(0,0,0,.65);">
+          <div style="width:min(690px,96vw);max-height:84vh;overflow:auto;background:#141414;border:1px solid var(--gold-primary);border-radius:10px;box-shadow:0 18px 55px rgba(0,0,0,.65);">
             <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 15px;border-bottom:1px solid var(--border-color);position:sticky;top:0;background:#141414;z-index:2;">
               <div><div style="font-size:.68rem;color:var(--gold-primary);font-weight:700;">CONFIGURAÇÕES</div><h3 style="margin:2px 0 0;font-size:.95rem;color:#fff;">Dados do Terreiro</h3></div>
               <button type="button" onclick="document.getElementById('modalConfigTerreiroTZC_V1').remove()" style="background:none;border:0;color:#fff;font-size:1.15rem;cursor:pointer;">×</button>
@@ -1155,19 +1168,19 @@
 
             <form onsubmit="salvarConfiguracoesTerreiroTZC_V1(event)" style="padding:14px;">
               <style>
-                .tzc-config-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px 12px}
+                .tzc-config-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 10px}
                 .tzc-config-full{grid-column:1/-1}
                 .tzc-config-sec{grid-column:1/-1;color:#fff;font-size:.76rem;font-weight:700;border-bottom:1px solid #2a2a2a;padding:4px 0 6px;margin-top:5px}
                 .tzc-color-row{display:grid;grid-template-columns:44px 1fr;gap:7px;align-items:end}
                 .tzc-color-row input[type=color]{width:44px;height:33px;padding:2px;background:#0d0d0d;border:1px solid #2a2a2a;border-radius:7px}
-                @media(max-width:680px){.tzc-config-grid{grid-template-columns:1fr}.tzc-config-full,.tzc-config-sec{grid-column:1}}
+                @media(max-width:760px){.tzc-config-grid{grid-template-columns:1fr 1fr}.tzc-config-full,.tzc-config-sec{grid-column:1/-1}} @media(max-width:520px){.tzc-config-grid{grid-template-columns:1fr}.tzc-config-full,.tzc-config-sec{grid-column:1}}
               </style>
 
               <div class="tzc-config-grid">
                 <div class="tzc-config-sec">Identidade</div>
                 ${input('Nome_Terreiro','Nome do Terreiro',d.Nome_Terreiro || 'Tenda de Zé Cigano')}
                 ${input('Subtitulo','Subtítulo',d.Subtitulo || 'Terreiro de Umbanda')}
-                <div class="tzc-config-full">${input('Logo_URL','URL da Logo',d.Logo_URL || '')}</div>
+                ${input('Logo_URL','URL da Logo',d.Logo_URL || '')}
 
                 <div class="tzc-config-sec">Institucional</div>
                 <label class="tzc-config-full">
@@ -1185,9 +1198,10 @@
                 <div class="tzc-config-sec">Giras e Contribuição</div>
                 ${input('Horario_Giras','Horário das Giras',d.Horario_Giras)}
                 ${input('Valor','Valor',d.Valor)}
-                <div class="tzc-config-full">${input('PIX','PIX',d.PIX)}</div>
+                ${input('PIX','PIX',d.PIX)}
 
                 <div class="tzc-config-sec">Aparência · Paleta de Cores</div>
+                <div class="tzc-config-full" style="display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;">
                 <div class="tzc-color-row">
                   <input type="color" name="Cor_Fundo" value="${escHtmlTZC_V1(d.Cor_Fundo || '#0a0a0a')}">
                   ${input('Cor_Fundo_Texto','Fundo principal',d.Cor_Fundo || '#0a0a0a')}
@@ -1203,6 +1217,7 @@
                 <div class="tzc-color-row">
                   <input type="color" name="Cor_Cabecalho" value="${escHtmlTZC_V1(d.Cor_Cabecalho || '#60000a')}">
                   ${input('Cor_Cabecalho_Texto','Cabeçalho / vinho',d.Cor_Cabecalho || '#60000a')}
+                </div>
                 </div>
               </div>
 
@@ -1231,6 +1246,13 @@
       if (d.Cor_Card) root.style.setProperty('--bg-card', d.Cor_Card);
       if (d.Cor_Dourado) root.style.setProperty('--gold-primary', d.Cor_Dourado);
       if (d.Cor_Cabecalho) root.style.setProperty('--red-logo', d.Cor_Cabecalho);
+
+      const nome = document.getElementById('tzcHeaderNomeV1');
+      const subtitulo = document.getElementById('tzcHeaderSubtituloV1');
+      const logo = document.getElementById('tzcHeaderLogoV1');
+      if (nome && d.Nome_Terreiro) nome.textContent = d.Nome_Terreiro;
+      if (subtitulo && d.Subtitulo) subtitulo.textContent = d.Subtitulo;
+      if (logo && d.Logo_URL) logo.src = d.Logo_URL;
     }
 
     function salvarConfiguracoesTerreiroTZC_V1(event) {
@@ -3616,5 +3638,27 @@
       else renderContent(filtered, currentTab);
     }
   </script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function(){
+    try {
+      const cache = JSON.parse(localStorage.getItem('TZC_GERAL_CACHE_V1') || '{}');
+      if (cache && typeof aplicarIdentidadeVisualTZC_V1 === 'function') aplicarIdentidadeVisualTZC_V1(cache);
+    } catch(e) {}
+  });
+</script>
 </body>
 </html>
+
+<style id="tzc-v27-compactacao">
+  header.banner{padding:4px 9px!important;min-height:46px!important;border-bottom-width:1px!important}
+  .banner-logo{width:30px!important;height:30px!important;border-width:1px!important;box-shadow:0 0 5px rgba(212,175,55,.35)!important}
+  .banner-center{gap:6px!important}
+  .banner-titles h1{font-size:.78rem!important;line-height:1.05!important;letter-spacing:.35px!important}
+  .banner-titles p{font-size:.56rem!important;line-height:1.05!important}
+  .toggle-menu-btn,.btn-login,.user-logged{font-size:.68rem!important}
+  @media(max-width:680px){
+    header.banner{min-height:44px!important;padding:4px 7px!important}
+    .banner-logo{width:28px!important;height:28px!important}
+  }
+</style>

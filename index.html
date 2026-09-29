@@ -1175,7 +1175,11 @@
 
               </div>
 
-              <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+              <div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:10px;">
+                <button type="button" onclick="document.getElementById('modalNovoEstudoTZC_V1').remove()"
+                  style="background:#333;color:#fff;border:1px solid #777;border-radius:8px;padding:10px 16px;cursor:pointer;">
+                  <i class="fa-solid fa-xmark"></i> Fechar
+                </button>
                 <button class="btn-submit" type="submit" style="max-width:180px;">
                   <i class="fa-solid fa-floppy-disk"></i> Salvar Estudo
                 </button>
@@ -1580,8 +1584,7 @@
       if (sidebar) sidebar.classList.toggle('open');
     }
 
-    // Fecha o menu ao clicar/tocar fora dele.
-    // O clique no próprio botão do menu não fecha imediatamente após abri-lo.
+    // Fecha o menu lateral ao clicar fora dele.
     document.addEventListener('click', function(event) {
       const sidebar = document.getElementById('sidebar');
       const menuButton = document.querySelector('.toggle-menu-btn');
@@ -1595,7 +1598,6 @@
         sidebar.classList.remove('open');
       }
     });
-
     function openLoginModal() { document.getElementById('modalMsg').innerText = ''; document.getElementById('loginModal').style.display = 'flex'; }
     function closeLoginModal() { document.getElementById('loginModal').style.display = 'none'; }
 

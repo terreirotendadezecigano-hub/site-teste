@@ -5635,6 +5635,12 @@ function filtrarEstudosTZC_V55(valor){
 .midias-actions-v82{display:flex;gap:6px;justify-content:flex-end;white-space:nowrap}
 .midias-actions-v82 .btn-icon-only{width:29px!important;height:29px!important;min-width:29px!important;padding:0!important;border:1px solid #303030!important;border-radius:5px!important;background:#202020!important;color:#f3d45a!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;font-size:.78rem!important;line-height:1!important;box-shadow:none!important}.midias-actions-v82 .btn-icon-only:hover{background:#2a271b!important;border-color:#d4af37!important;color:#ffe173!important}
 .midias-link-v82{color:var(--gold-light);text-decoration:none}.midias-link-v82:hover{text-decoration:underline}
+.midias-rede-v84{display:flex;align-items:center;gap:9px;font-weight:700}
+.midias-rede-icon-v84{width:29px;height:29px;min-width:29px;border-radius:7px;border:1px solid #343434;background:#1b1b1b;color:var(--gold-primary);display:inline-flex;align-items:center;justify-content:center;font-size:.95rem}
+.midias-rede-icon-v84 i{line-height:1}
+.midias-rede-preview-v84{display:flex;align-items:center;gap:9px;margin-top:6px;color:var(--text-muted);font-size:.74rem}
+.midias-rede-preview-v84 .midias-rede-icon-v84{width:32px;height:32px;min-width:32px;font-size:1.05rem;border-color:var(--gold-primary);color:var(--gold-light)}
+
 .midias-empty-v82{padding:28px;text-align:center;color:var(--text-muted);border:1px solid var(--border-color);border-radius:8px;background:var(--bg-card)}
 .midias-modal-overlay-v82{position:fixed;inset:0;z-index:14000;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;padding:18px}
 .midias-modal-v82{width:min(680px,96vw);max-height:90vh;overflow:auto;background:#151515;border:1px solid var(--gold-primary);border-radius:10px;padding:16px;box-shadow:0 22px 65px #000}
@@ -5652,6 +5658,36 @@ function filtrarEstudosTZC_V55(valor){
  const SHEET=(typeof SHEET_ID!=='undefined'?SHEET_ID:'1BL978swtEmpF208tfvPOZJuv2YS1ecpujQnw4ZoA3Jk');
  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
  const novoId=()=> 'MIDIA-'+Date.now().toString(36).toUpperCase();
+ const iconeRedeV84=rede=>{
+   const r=String(rede||'').toLocaleLowerCase('pt-BR').trim();
+   const mapa=[
+     [/instagram/, 'fa-brands fa-instagram'],
+     [/facebook/, 'fa-brands fa-facebook-f'],
+     [/telegram/, 'fa-brands fa-telegram'],
+     [/whatsapp|zap/, 'fa-brands fa-whatsapp'],
+     [/youtube/, 'fa-brands fa-youtube'],
+     [/tiktok/, 'fa-brands fa-tiktok'],
+     [/linkedin/, 'fa-brands fa-linkedin-in'],
+     [/pinterest/, 'fa-brands fa-pinterest-p'],
+     [/twitter|\bx\b/, 'fa-brands fa-x-twitter'],
+     [/threads/, 'fa-brands fa-threads'],
+     [/discord/, 'fa-brands fa-discord'],
+     [/spotify/, 'fa-brands fa-spotify'],
+     [/soundcloud/, 'fa-brands fa-soundcloud'],
+     [/site|website|portal|web/, 'fa-solid fa-globe'],
+     [/email|e-mail/, 'fa-solid fa-envelope']
+   ];
+   for(const [rx,ico] of mapa) if(rx.test(r)) return ico;
+   return 'fa-solid fa-share-nodes';
+ };
+ const htmlRedeV84=rede=>`<span class="midias-rede-v84"><span class="midias-rede-icon-v84" title="${esc(rede||'Rede social')}"><i class="${iconeRedeV84(rede)}"></i></span><span>${esc(rede||'—')}</span></span>`;
+ window.atualizarPreviewRedeV84=function(){
+   const inp=document.getElementById('mRedeV82'), box=document.getElementById('mRedePreviewV84');
+   if(!inp||!box)return;
+   const rede=inp.value.trim();
+   box.innerHTML=`<span class="midias-rede-icon-v84"><i class="${iconeRedeV84(rede)}"></i></span><span>${rede?esc(rede):'Digite ou escolha a rede para visualizar o ícone'}</span>`;
+ };
+
  const norm=x=>Object.assign({},x||{},{ID_Midia:(x||{}).ID_Midia||(x||{}).ID||'',Rede:(x||{}).Rede||'',Nome_Exibicao:(x||{}).Nome_Exibicao||(x||{}).Nome||'',URL:(x||{}).URL||'',Ativo:(x||{}).Ativo||'Sim',Ordem:(x||{}).Ordem||'',Observacoes:(x||{}).Observacoes||(x||{}).Observacao||'',Atualizado_Em:(x||{}).Atualizado_Em||''});
  window.fecharModalMidiasTZC=()=>document.getElementById('midiasModalOverlayV82')?.remove();
 
@@ -5662,7 +5698,7 @@ function filtrarEstudosTZC_V55(valor){
    c.innerHTML=`<div class="midias-admin-v82">
      <div class="tzc-page-head-v44">
        <button type="button" class="btn-toolbar tzc-page-back-v44" onclick="voltarGestaoInternaTZC_V1()"><i class="fa-solid fa-arrow-left"></i> Gestão Interna</button>
-       <div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-share-nodes"></i> Mídias Sociais <span id="midiasCountV82" class="tzc-count-v47"></span></h2><p>Gerencie os canais, links oficiais e a ordem de exibição das mídias da Tenda.</p></div>
+       <div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-share-nodes"></i> Mídias Sociais <span id="midiasCountV82" class="tzc-count-v47"></span></h2><p>Gerencie os canais e links oficiais das mídias da Tenda.</p></div>
        <button type="button" class="btn-toolbar btn-add-membro tzc-page-new-v44" onclick="editarMidiaTZC()"><i class="fa-solid fa-plus"></i> Nova Mídia</button>
      </div>
      <div class="tzc-busca-modulo-v55"><i class="fa-solid fa-magnifying-glass"></i><input id="midiasBuscaV82" type="search" placeholder="Pesquisar mídias sociais..." oninput="renderMidiasTZC()"></div>
@@ -5685,13 +5721,33 @@ function filtrarEstudosTZC_V55(valor){
    const arr=(window.tzcMidiasAdminV82||[]).filter(x=>(x.Rede+' '+x.Nome_Exibicao+' '+x.URL+' '+x.Observacoes).toLocaleLowerCase('pt-BR').includes(q)).sort((a,b)=>(+a.Ordem||999)-(+b.Ordem||999));
    const ct=document.getElementById('midiasCountV82');if(ct)ct.textContent='· '+arr.length+' registros';
    if(!arr.length){alvo.innerHTML='<div class="midias-empty-v82">Nenhuma mídia encontrada.</div>';return;}
-   alvo.innerHTML=`<div class="midias-table-wrap-v82"><table class="midias-table-v82"><thead><tr><th>Rede</th><th>Nome de Exibição</th><th>URL</th><th>Ativo</th><th style="text-align:right">Ações</th></tr></thead><tbody>${arr.map(x=>`<tr><td><strong>${esc(x.Rede)}</strong></td><td>${esc(x.Nome_Exibicao)}</td><td>${x.URL?`<a class="midias-link-v82" href="${esc(x.URL)}" target="_blank" rel="noopener">Abrir link</a>`:'—'}</td><td>${esc(x.Ativo||'Sim')}</td><td><div class="midias-actions-v82"><button class="btn-icon-only" onclick="verMidiaTZC('${esc(x.ID_Midia)}')" title="Visualizar" aria-label="Visualizar"><i class="fa-solid fa-eye"></i></button><button class="btn-icon-only" onclick="editarMidiaTZC('${esc(x.ID_Midia)}')" title="Editar" aria-label="Editar"><i class="fa-solid fa-pen"></i></button><button class="btn-icon-only btn-delete-icon" onclick="excluirMidiaTZC('${esc(x.ID_Midia)}')" title="Excluir" aria-label="Excluir"><i class="fa-solid fa-trash"></i></button></div></td></tr>`).join('')}</tbody></table></div>`;
+   alvo.innerHTML=`<div class="midias-table-wrap-v82"><table class="midias-table-v82"><thead><tr><th>Rede</th><th>Nome de Exibição</th><th>URL</th><th>Ativo</th><th style="text-align:right">Ações</th></tr></thead><tbody>${arr.map(x=>`<tr><td>${htmlRedeV84(x.Rede)}</td><td>${esc(x.Nome_Exibicao)}</td><td>${x.URL?`<a class="midias-link-v82" href="${esc(x.URL)}" target="_blank" rel="noopener">Abrir link</a>`:'—'}</td><td>${esc(x.Ativo||'Sim')}</td><td><div class="midias-actions-v82"><button class="btn-icon-only" onclick="verMidiaTZC('${esc(x.ID_Midia)}')" title="Visualizar" aria-label="Visualizar"><i class="fa-solid fa-eye"></i></button><button class="btn-icon-only" onclick="editarMidiaTZC('${esc(x.ID_Midia)}')" title="Editar" aria-label="Editar"><i class="fa-solid fa-pen"></i></button><button class="btn-icon-only btn-delete-icon" onclick="excluirMidiaTZC('${esc(x.ID_Midia)}')" title="Excluir" aria-label="Excluir"><i class="fa-solid fa-trash"></i></button></div></td></tr>`).join('')}</tbody></table></div>`;
  };
 
- window.verMidiaTZC=function(id){const x=(window.tzcMidiasAdminV82||[]).find(a=>String(a.ID_Midia)===String(id));if(!x)return;abrirModalMidiasV82(`<div class="midias-modal-head-v82"><h3><i class="fa-solid fa-share-nodes"></i> ${esc(x.Nome_Exibicao||x.Rede)}</h3><button class="midias-x-v82" onclick="fecharModalMidiasTZC()">×</button></div><div class="midias-view-v82"><p><strong>Rede:</strong> ${esc(x.Rede)}</p><p><strong>Nome de Exibição:</strong> ${esc(x.Nome_Exibicao)}</p><p><strong>URL:</strong> ${x.URL?`<a class="midias-link-v82" href="${esc(x.URL)}" target="_blank">${esc(x.URL)}</a>`:'Não informada'}</p><p><strong>Ativo:</strong> ${esc(x.Ativo)}</p><p><strong>Observações:</strong> ${esc(x.Observacoes||'—')}</p></div><div class="midias-modal-foot-v82"><button class="btn-toolbar" onclick="fecharModalMidiasTZC()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="fecharModalMidiasTZC();editarMidiaTZC('${esc(id)}')"><i class="fa-solid fa-pen"></i> Editar</button></div>`)};
+ window.verMidiaTZC=function(id){const x=(window.tzcMidiasAdminV82||[]).find(a=>String(a.ID_Midia)===String(id));if(!x)return;abrirModalMidiasV82(`<div class="midias-modal-head-v82"><h3><i class="${iconeRedeV84(x.Rede)}" style="color:var(--gold-primary);margin-right:6px"></i> ${esc(x.Nome_Exibicao||x.Rede)}</h3><button class="midias-x-v82" onclick="fecharModalMidiasTZC()">×</button></div><div class="midias-view-v82"><p><strong>Rede:</strong> ${htmlRedeV84(x.Rede)}</p><p><strong>Nome de Exibição:</strong> ${esc(x.Nome_Exibicao)}</p><p><strong>URL:</strong> ${x.URL?`<a class="midias-link-v82" href="${esc(x.URL)}" target="_blank">${esc(x.URL)}</a>`:'Não informada'}</p><p><strong>Ativo:</strong> ${esc(x.Ativo)}</p><p><strong>Observações:</strong> ${esc(x.Observacoes||'—')}</p></div><div class="midias-modal-foot-v82"><button class="btn-toolbar" onclick="fecharModalMidiasTZC()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="fecharModalMidiasTZC();editarMidiaTZC('${esc(id)}')"><i class="fa-solid fa-pen"></i> Editar</button></div>`)};
  function abrirModalMidiasV82(html){fecharModalMidiasTZC();document.body.insertAdjacentHTML('beforeend',`<div id="midiasModalOverlayV82" class="midias-modal-overlay-v82"><div class="midias-modal-v82">${html}</div></div>`)}
 
- window.editarMidiaTZC=function(id){const x=(window.tzcMidiasAdminV82||[]).find(a=>String(a.ID_Midia)===String(id))||{ID_Midia:novoId(),Rede:'',Nome_Exibicao:'',URL:'',Ativo:'Sim',Ordem:(window.tzcMidiasAdminV82||[]).length+1,Observacoes:''};const edit=!!id;abrirModalMidiasV82(`<div class="midias-modal-head-v82"><h3>${edit?'<i class="fa-solid fa-pen"></i> Editar Mídia':'<i class="fa-solid fa-plus"></i> Nova Mídia'}</h3><button class="midias-x-v82" onclick="fecharModalMidiasTZC()">×</button></div><div class="midias-grid-v82"><div class="midias-field-v82"><label>Rede *</label><input id="mRedeV82" value="${esc(x.Rede)}" placeholder="Ex.: Instagram"></div><div class="midias-field-v82"><label>Nome de Exibição *</label><input id="mNomeV82" value="${esc(x.Nome_Exibicao)}"></div><div class="midias-field-v82 full"><label>URL</label><input id="mURLV82" value="${esc(x.URL)}" placeholder="https://..."></div><div class="midias-field-v82 full"><label>Ativo</label><select id="mAtivoV82"><option ${x.Ativo!=='Não'?'selected':''}>Sim</option><option ${x.Ativo==='Não'?'selected':''}>Não</option></select></div><div class="midias-field-v82 full"><label>Observações</label><textarea id="mObsV82" rows="3">${esc(x.Observacoes)}</textarea></div></div><div class="midias-modal-foot-v82"><button class="btn-toolbar" onclick="fecharModalMidiasTZC()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="salvarMidiaTZC('${esc(x.ID_Midia)}',${edit})"><i class="fa-solid fa-floppy-disk"></i> Salvar</button></div>`)};
+ window.editarMidiaTZC=function(id){
+   const x=(window.tzcMidiasAdminV82||[]).find(a=>String(a.ID_Midia)===String(id))||{ID_Midia:novoId(),Rede:'',Nome_Exibicao:'',URL:'',Ativo:'Sim',Ordem:(window.tzcMidiasAdminV82||[]).length+1,Observacoes:''};
+   const edit=!!id;
+   abrirModalMidiasV82(`<div class="midias-modal-head-v82"><h3>${edit?'<i class="fa-solid fa-pen"></i> Editar Mídia':'<i class="fa-solid fa-plus"></i> Nova Mídia'}</h3><button class="midias-x-v82" onclick="fecharModalMidiasTZC()">×</button></div>
+   <div class="midias-grid-v82">
+     <div class="midias-field-v82">
+       <label>Rede *</label>
+       <input id="mRedeV82" list="mRedesV84" value="${esc(x.Rede)}" placeholder="Ex.: Instagram" oninput="atualizarPreviewRedeV84()">
+       <datalist id="mRedesV84">
+         <option value="Instagram"><option value="Facebook"><option value="Telegram"><option value="WhatsApp"><option value="YouTube"><option value="TikTok"><option value="Threads"><option value="X"><option value="Discord"><option value="Spotify"><option value="Site"><option value="E-mail">
+       </datalist>
+       <div id="mRedePreviewV84" class="midias-rede-preview-v84"></div>
+     </div>
+     <div class="midias-field-v82"><label>Nome de Exibição *</label><input id="mNomeV82" value="${esc(x.Nome_Exibicao)}"></div>
+     <div class="midias-field-v82 full"><label>URL</label><input id="mURLV82" value="${esc(x.URL)}" placeholder="https://..."></div>
+     <div class="midias-field-v82 full"><label>Ativo</label><select id="mAtivoV82"><option ${x.Ativo!=='Não'?'selected':''}>Sim</option><option ${x.Ativo==='Não'?'selected':''}>Não</option></select></div>
+     <div class="midias-field-v82 full"><label>Observações</label><textarea id="mObsV82" rows="3">${esc(x.Observacoes)}</textarea></div>
+   </div>
+   <div class="midias-modal-foot-v82"><button class="btn-toolbar" onclick="fecharModalMidiasTZC()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="salvarMidiaTZC('${esc(x.ID_Midia)}',${edit})"><i class="fa-solid fa-floppy-disk"></i> Salvar</button></div>`);
+   setTimeout(atualizarPreviewRedeV84,0);
+ };
 
  window.xOrdemMidiaTZCV83=function(id){const x=(window.tzcMidiasAdminV82||[]).find(a=>String(a.ID_Midia)===String(id));return x&&x.Ordem?x.Ordem:(window.tzcMidiasAdminV82||[]).reduce((m,a)=>Math.max(m,+a.Ordem||0),0)+1};
  window.salvarMidiaTZC=async function(id,edit){const dados={ID_Midia:id,Rede:document.getElementById('mRedeV82').value.trim(),Nome_Exibicao:document.getElementById('mNomeV82').value.trim(),URL:document.getElementById('mURLV82').value.trim(),Ativo:document.getElementById('mAtivoV82').value,Ordem:xOrdemMidiaTZCV83(id),Observacoes:document.getElementById('mObsV82').value.trim(),Status:'Ativo',Atualizado_Em:new Date().toISOString()};if(!dados.Rede||!dados.Nome_Exibicao){showToast?.('Informe Rede e Nome de Exibição.');return;}const payload={acao:edit?'atualizar':'inserir',nomeAba:'Midias_Sociais',id,idColuna:'ID_Midia',dados};fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});const i=window.tzcMidiasAdminV82.findIndex(a=>String(a.ID_Midia)===String(id));if(i>=0)window.tzcMidiasAdminV82[i]=dados;else window.tzcMidiasAdminV82.push(dados);fecharModalMidiasTZC();renderMidiasTZC();if(typeof showToast==='function')showToast(edit?'Mídia atualizada!':'Mídia cadastrada!');setTimeout(carregarMidiasTZC,1700)};

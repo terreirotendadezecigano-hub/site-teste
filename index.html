@@ -1081,7 +1081,6 @@
             </div>
             <div style="display:flex;gap:8px;">
               <button type="button" class="btn-toolbar" onclick="voltarGestaoInternaTZC_V1()"><i class="fa-solid fa-arrow-left"></i> Gestão Interna</button>
-              <button type="button" class="btn-toolbar" onclick="editarConfiguracoesTerreiroTZC_V1()"><i class="fa-solid fa-pen"></i> Editar</button>
             </div>
           </div>
           <div id="tzcGeralPainelV1"><div style="padding:22px;color:var(--text-muted);">Carregando configurações...</div></div>
@@ -1107,95 +1106,103 @@
       }
     }
 
-    function renderConfiguracoesTerreiroTZC_V1() {
-      const el = document.getElementById('tzcGeralPainelV1');
-      if (!el) return;
-      const d = window.tzcGeralV1 || {};
-      aplicarIdentidadeVisualTZC_V1(d);
-
-      const val = v => escHtmlTZC_V1(v || '—');
-      const linha = (titulo, valor) => `<div class="tzc-i-item"><span>${titulo}</span><div>${val(valor)}</div></div>`;
-      const opc = (titulo, valor) => String(valor||'').trim() ? linha(titulo,valor) : '';
-      const sec = (id,titulo,conteudo) => `
-        <section class="tzc-inline-sec" id="tzcSec_${id}">
-          <div class="tzc-inline-head"><strong>${titulo}</strong>
-            <button class="btn-toolbar" type="button" onclick="editarSecaoConfigTZC_V1('${id}')"><i class="fa-solid fa-pen"></i> Editar</button>
-          </div>
-          <div class="tzc-inline-grid">${conteudo}</div>
-        </section>`;
-
-      el.innerHTML = `
-        <div class="tzc-inline-wrap">
-          ${sec('identidade','Identidade',
-            linha('Nome do Terreiro',d.Nome_Terreiro || 'Tenda de Zé Cigano')+
-            linha('Subtítulo',d.Subtitulo || 'Terreiro de Umbanda')+
-            linha('Logo',d.Logo_URL || 'Logo atual do site'))}
-          ${sec('institucional','Institucional',
-            linha('Quem Somos',d.Quem_Somos)+linha('Endereço',d.Endereco)+
-            opc('CNPJ',d.CNPJ)+opc('Inscrição Estadual',d.Inscricao_Estadual)+
-            opc('Visão',d.Visao)+opc('Missão',d.Missao)+opc('Valores',d.Valores))}
-          ${sec('contato','Contato e Redes',
-            linha('Telefone / WhatsApp',d.Telefone_Whatsapp)+linha('Grupo WhatsApp',d.Grupo_Zap)+
-            linha('Instagram',d.Instagram)+linha('Facebook',d.Facebook))}
-          ${sec('giras','Giras e Contribuição',
-            linha('Horário das Giras',d.Horario_Giras)+linha('Valor',d.Valor)+linha('PIX',d.PIX))}
-          ${sec('rodape','Rodapé',
-            linha('Texto adicional',d.Rodape_Texto)+linha('Texto do link',d.Rodape_Link_Texto)+linha('URL do link',d.Rodape_Link_URL))}
-          ${sec('aparencia','Aparência',
-            linha('Fundo principal',d.Cor_Fundo || '#0a0a0a')+linha('Fundo dos painéis',d.Cor_Card || '#141414')+
-            linha('Destaque / dourado',d.Cor_Dourado || '#d4af37')+linha('Cabeçalho / vinho',d.Cor_Cabecalho || '#60000a'))}
+    function configCampoTZC_V1(nome,label,valor,opcional=false) {
+      const vazio=!String(valor||'').trim();
+      if(opcional && vazio) {
+        return `<div class="tzc-campo-v33 tzc-campo-vazio">
+          <div class="tzc-campo-top"><span>${label}</span><button type="button" title="Cadastrar ${label}" onclick="editarCampoConfigTZC_V1('${nome}','${label.replace("'","&#39;")}')"><i class="fa-solid fa-plus"></i></button></div>
+          <div class="tzc-campo-valor">Não cadastrado</div>
         </div>`;
+      }
+      return `<div class="tzc-campo-v33" id="tzcCampo_${nome}">
+        <div class="tzc-campo-top"><span>${label}</span><button type="button" title="Editar ${label}" onclick="editarCampoConfigTZC_V1('${nome}','${label.replace("'","&#39;")}')"><i class="fa-solid fa-pen"></i></button></div>
+        <div class="tzc-campo-valor">${escHtmlTZC_V1(valor || '—')}</div>
+      </div>`;
     }
 
-    function camposSecaoConfigTZC_V1(id) {
-      return {
-        identidade:[['Nome_Terreiro','Nome do Terreiro'],['Subtitulo','Subtítulo'],['Logo_URL','URL da Logo']],
-        institucional:[['CNPJ','CNPJ'],['Inscricao_Estadual','Inscrição Estadual'],['Endereco','Endereço'],['Quem_Somos','Quem Somos','textarea'],['Visao','Visão','textarea'],['Missao','Missão','textarea'],['Valores','Valores','textarea']],
-        contato:[['Telefone_Whatsapp','Telefone / WhatsApp'],['Grupo_Zap','Grupo WhatsApp'],['Instagram','Instagram'],['Facebook','Facebook']],
-        giras:[['Horario_Giras','Horário das Giras'],['Valor','Valor'],['PIX','PIX']],
-        rodape:[['Rodape_Texto','Texto adicional'],['Rodape_Link_Texto','Texto do link'],['Rodape_Link_URL','URL do link']],
-        aparencia:[['Cor_Fundo','Fundo principal','color'],['Cor_Card','Fundo dos painéis','color'],['Cor_Dourado','Destaque / dourado','color'],['Cor_Cabecalho','Cabeçalho / vinho','color']]
-      }[id] || [];
-    }
-
-    function editarSecaoConfigTZC_V1(id) {
-      const sec=document.getElementById('tzcSec_'+id);
-      if(!sec) return;
+    function renderConfiguracoesTerreiroTZC_V1() {
+      const el=document.getElementById('tzcGeralPainelV1');
+      if(!el)return;
       const d=window.tzcGeralV1||{};
-      const campos=camposSecaoConfigTZC_V1(id);
-      const titulo=sec.querySelector('.tzc-inline-head strong')?.textContent || '';
-      const campoHtml=([nome,label,tipo])=>{
-        const v=d[nome] || (nome==='Cor_Fundo'?'#0a0a0a':nome==='Cor_Card'?'#141414':nome==='Cor_Dourado'?'#d4af37':nome==='Cor_Cabecalho'?'#60000a':'');
-        if(tipo==='textarea') return `<label class="tzc-edit-field"><span>${label}</span><textarea name="${nome}" rows="3">${escHtmlTZC_V1(v)}</textarea></label>`;
-        if(tipo==='color') return `<label class="tzc-edit-field"><span>${label}</span><div class="tzc-color-inline"><input type="color" name="${nome}" value="${escHtmlTZC_V1(v)}"><input type="text" data-cor="${nome}" value="${escHtmlTZC_V1(v)}"></div></label>`;
-        return `<label class="tzc-edit-field"><span>${label}</span><input name="${nome}" value="${escHtmlTZC_V1(v)}"></label>`;
-      };
-      sec.innerHTML=`<div class="tzc-inline-head"><strong>${titulo}</strong><div class="tzc-inline-actions"><button class="btn-toolbar" type="button" onclick="renderConfiguracoesTerreiroTZC_V1()">Cancelar</button><button class="btn-toolbar" type="button" onclick="salvarSecaoConfigTZC_V1('${id}')"><i class="fa-solid fa-floppy-disk"></i> Salvar</button></div></div><div class="tzc-edit-grid">${campos.map(campoHtml).join('')}</div>`;
-      sec.querySelectorAll('input[type=color]').forEach(c=>{
-        const txt=sec.querySelector(`[data-cor="${c.name}"]`);
-        c.addEventListener('input',()=>{txt.value=c.value});
-        txt?.addEventListener('input',()=>{if(/^#[0-9a-f]{6}$/i.test(txt.value))c.value=txt.value});
-      });
+      aplicarIdentidadeVisualTZC_V1(d);
+      const sec=(titulo,conteudo,cls='')=>`<section class="tzc-inline-sec ${cls}"><div class="tzc-inline-head"><strong>${titulo}</strong></div><div class="tzc-inline-grid">${conteudo}</div></section>`;
+      el.innerHTML=`<div class="tzc-inline-wrap">
+        ${sec('Identidade',
+          configCampoTZC_V1('Nome_Terreiro','Nome do Terreiro',d.Nome_Terreiro||'Tenda de Zé Cigano')+
+          configCampoTZC_V1('Subtitulo','Subtítulo',d.Subtitulo||'Terreiro de Umbanda')+
+          configCampoTZC_V1('Logo_URL','Logo',d.Logo_URL||'Logo atual do site'),'tzc-v33-largo tzc-v33-3')}
+        ${sec('Institucional',
+          configCampoTZC_V1('Quem_Somos','Quem Somos',d.Quem_Somos)+
+          configCampoTZC_V1('Endereco','Endereço',d.Endereco)+
+          configCampoTZC_V1('CNPJ','CNPJ',d.CNPJ,true)+
+          configCampoTZC_V1('Inscricao_Estadual','Inscrição Estadual',d.Inscricao_Estadual,true)+
+          configCampoTZC_V1('Visao','Visão',d.Visao,true)+
+          configCampoTZC_V1('Missao','Missão',d.Missao,true)+
+          configCampoTZC_V1('Valores','Valores',d.Valores,true),'tzc-v33-largo tzc-v33-3')}
+        ${sec('Contato e Redes',
+          configCampoTZC_V1('Telefone_Whatsapp','Telefone / WhatsApp',d.Telefone_Whatsapp)+
+          configCampoTZC_V1('Grupo_Zap','Grupo WhatsApp',d.Grupo_Zap)+
+          configCampoTZC_V1('Instagram','Instagram',d.Instagram)+
+          configCampoTZC_V1('Facebook','Facebook',d.Facebook))}
+        ${sec('Giras e Contribuição',
+          configCampoTZC_V1('Horario_Giras','Horário das Giras',d.Horario_Giras)+
+          configCampoTZC_V1('Valor','Valor',d.Valor)+
+          configCampoTZC_V1('PIX','PIX',d.PIX))}
+        ${sec('Rodapé',
+          configCampoTZC_V1('Rodape_Texto','Texto adicional',d.Rodape_Texto,true)+
+          configCampoTZC_V1('Rodape_Link_Texto','Texto do link',d.Rodape_Link_Texto,true)+
+          configCampoTZC_V1('Rodape_Link_URL','URL do link',d.Rodape_Link_URL,true))}
+        ${sec('Aparência',
+          configCampoTZC_V1('Cor_Fundo','Fundo principal',d.Cor_Fundo||'#0a0a0a')+
+          configCampoTZC_V1('Cor_Card','Fundo dos painéis',d.Cor_Card||'#141414')+
+          configCampoTZC_V1('Cor_Dourado','Destaque / dourado',d.Cor_Dourado||'#d4af37')+
+          configCampoTZC_V1('Cor_Cabecalho','Cabeçalho / vinho',d.Cor_Cabecalho||'#60000a'))}
+      </div>`;
     }
 
-    async function salvarSecaoConfigTZC_V1(id) {
-      const sec=document.getElementById('tzcSec_'+id);
-      if(!sec) return;
-      const dados={...(window.tzcGeralV1||{})};
-      camposSecaoConfigTZC_V1(id).forEach(([nome,,tipo])=>{
-        let el=sec.querySelector(`[name="${nome}"]`);
-        if(tipo==='color'){
-          const txt=sec.querySelector(`[data-cor="${nome}"]`);
-          dados[nome]=String((txt&&txt.value)||el?.value||'').trim();
-        } else dados[nome]=String(el?.value||'').trim();
+    function tipoCampoConfigTZC_V1(nome){
+      if(['Quem_Somos','Visao','Missao','Valores'].includes(nome)) return 'textarea';
+      if(['Cor_Fundo','Cor_Card','Cor_Dourado','Cor_Cabecalho'].includes(nome)) return 'color';
+      return 'text';
+    }
+
+    function editarCampoConfigTZC_V1(nome,label){
+      renderConfiguracoesTerreiroTZC_V1();
+      const alvo=[...document.querySelectorAll('.tzc-campo-v33')].find(x=>{
+        const b=x.querySelector('button');
+        return b && (b.getAttribute('onclick')||'').includes(`'${nome}'`);
       });
+      if(!alvo)return;
+      const d=window.tzcGeralV1||{};
+      const tipo=tipoCampoConfigTZC_V1(nome);
+      let v=d[nome]||'';
+      if(tipo==='color'&&!v) v=nome==='Cor_Fundo'?'#0a0a0a':nome==='Cor_Card'?'#141414':nome==='Cor_Dourado'?'#d4af37':'#60000a';
+      const controle=tipo==='textarea'
+        ? `<textarea id="tzcEditCampoV33" rows="3">${escHtmlTZC_V1(v)}</textarea>`
+        : tipo==='color'
+          ? `<div class="tzc-v33-cor"><input type="color" id="tzcEditCorV33" value="${escHtmlTZC_V1(v)}"><input id="tzcEditCampoV33" value="${escHtmlTZC_V1(v)}"></div>`
+          : `<input id="tzcEditCampoV33" value="${escHtmlTZC_V1(v)}">`;
+      alvo.innerHTML=`<div class="tzc-campo-top"><span>${label}</span><div class="tzc-v33-acoes"><button type="button" title="Cancelar" onclick="renderConfiguracoesTerreiroTZC_V1()"><i class="fa-solid fa-xmark"></i></button><button type="button" title="Salvar" onclick="salvarCampoConfigTZC_V1('${nome}')"><i class="fa-solid fa-floppy-disk"></i></button></div></div>${controle}`;
+      if(tipo==='color'){
+        const cor=document.getElementById('tzcEditCorV33'),txt=document.getElementById('tzcEditCampoV33');
+        cor.addEventListener('input',()=>txt.value=cor.value);
+        txt.addEventListener('input',()=>{if(/^#[0-9a-f]{6}$/i.test(txt.value))cor.value=txt.value});
+      }
+      document.getElementById('tzcEditCampoV33')?.focus();
+    }
+
+    async function salvarCampoConfigTZC_V1(nome){
+      const el=document.getElementById('tzcEditCampoV33');
+      if(!el)return;
+      const dados={...(window.tzcGeralV1||{})};
+      dados[nome]=String(el.value||'').trim();
       window.tzcGeralV1=dados;
       aplicarIdentidadeVisualTZC_V1(dados);
       renderConfiguracoesTerreiroTZC_V1();
-      try { localStorage.setItem('TZC_GERAL_CACHE_V1',JSON.stringify(dados)); } catch(e) {}
+      try{localStorage.setItem('TZC_GERAL_CACHE_V1',JSON.stringify(dados));}catch(e){}
       try{
         await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'salvar_config',nomeAba:'Geral',dados})});
-        if(typeof mostrarToastTZC_V1==='function') mostrarToastTZC_V1('Configurações salvas.');
+        if(typeof mostrarToastTZC_V1==='function') mostrarToastTZC_V1('Campo salvo.');
       }catch(e){
         if(typeof mostrarToastTZC_V1==='function') mostrarToastTZC_V1('Não foi possível salvar.');
       }
@@ -3794,6 +3801,25 @@
 #tzcSec_identidade .tzc-inline-grid,#tzcSec_identidade .tzc-edit-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 #tzcSec_institucional .tzc-inline-grid,#tzcSec_institucional .tzc-edit-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media(max-width:760px){.tzc-inline-wrap{grid-template-columns:1fr}.tzc-inline-sec{grid-column:1!important}.tzc-inline-grid,.tzc-edit-grid,#tzcSec_identidade .tzc-inline-grid,#tzcSec_identidade .tzc-edit-grid,#tzcSec_institucional .tzc-inline-grid,#tzcSec_institucional .tzc-edit-grid{grid-template-columns:1fr}}
+</style>
+
+<style id="tzc-v33-campo-a-campo">
+.tzc-inline-wrap{max-width:980px!important}
+.tzc-inline-sec.tzc-v33-largo{grid-column:1/-1}
+.tzc-v33-3 .tzc-inline-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.tzc-inline-head{margin-bottom:8px!important}
+.tzc-campo-v33{min-width:0;padding:2px 0}
+.tzc-campo-top{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:3px}
+.tzc-campo-top>span{color:var(--gold-primary);font-size:.72rem;font-weight:700}
+.tzc-campo-top button{border:0;background:transparent;color:var(--gold-primary);padding:2px 4px;cursor:pointer;font-size:.68rem;border-radius:4px}
+.tzc-campo-top button:hover{background:rgba(212,175,55,.1)}
+.tzc-campo-valor{font-size:.82rem;color:#fff;line-height:1.4;overflow-wrap:anywhere;min-height:1.15em}
+.tzc-campo-vazio .tzc-campo-valor{color:var(--text-muted);font-style:italic;font-size:.76rem}
+.tzc-campo-v33>input,.tzc-campo-v33>textarea,.tzc-v33-cor input[type=text],#tzcEditCampoV33{width:100%;box-sizing:border-box;background:#0d0d0d;color:#fff;border:1px solid var(--gold-primary);border-radius:6px;padding:6px 7px;font:inherit;font-size:.82rem}
+.tzc-campo-v33>textarea{resize:vertical;min-height:62px}
+.tzc-v33-acoes{display:flex;gap:2px}
+.tzc-v33-cor{display:grid;grid-template-columns:36px 1fr;gap:6px}.tzc-v33-cor input[type=color]{width:36px;height:32px;background:#0d0d0d;border:1px solid var(--border-color);padding:2px}
+@media(max-width:760px){.tzc-v33-3 .tzc-inline-grid{grid-template-columns:1fr!important}}
 </style>
 </body>
 </html>

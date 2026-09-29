@@ -5113,8 +5113,6 @@
     overlay.id='ervaInfoOverlayV73';overlay.className='erva-info-overlay-v73';
     overlay.innerHTML=`<div class="erva-info-modal-v73" onclick="event.stopPropagation()">
       <div class="erva-info-head-v73"><h4><i class="fa-solid fa-magnifying-glass"></i> ${escErvaV37(rotulo)} — ${escErvaV37(nome||cientifico)}</h4><button type="button" onclick="fecharPesquisaErvaTZC_V73()">×</button></div>
-      <div class="erva-fontes-v74"><span class="erva-fonte-chip-v74">Fonte aberta</span>${campo==='Uso_Espiritual'?'<span class="erva-fonte-chip-v74">Tradição / conferir na casa</span>':'<span class="erva-fonte-chip-v74">Saúde: conferir fonte oficial</span>'}</div>
-      <div class="erva-aviso-v74">${campo==='Uso_Espiritual'?'Uso espiritual varia entre tradições e casas. O resultado é apenas referência para sua avaliação.':'Informações medicinais e de segurança devem ser conferidas antes do uso. A pesquisa serve como sugestão para cadastro.'}</div>
       <div class="erva-pesquisa-status-v69"><i class="fa-solid fa-spinner fa-spin"></i> Pesquisando...</div>
       <div class="erva-pesquisa-list-v69"></div>
       <div class="erva-info-footer-v73"><button type="button" class="erva-img-fechar-v71" onclick="fecharPesquisaErvaTZC_V73()"><i class="fa-solid fa-xmark"></i> Fechar</button></div>
@@ -5123,16 +5121,17 @@
     document.body.appendChild(overlay);
 
     const temas={
-      Finalidade_Propriedades:'planta medicinal propriedades farmacologia uso tradicional',
-      Uso_Espiritual:'Umbanda banho erva uso ritual tradição',
-      Indicacao_Uso:'planta medicinal indicação uso tradicional',
-      Modo_Uso:'planta medicinal modo de preparo infusão decocção maceração',
-      Cuidados:'planta medicinal contraindicações toxicidade interações advertências',
-      Observacoes:'planta botânica características sinonímia distribuição'
+      Finalidade_Propriedades:'propriedades medicinais princípios ativos efeitos',
+      Uso_Espiritual:'Umbanda erva banho defumação ritual espiritual',
+      Indicacao_Uso:'indicações medicinais tratamento sintomas uso terapêutico',
+      Modo_Uso:'como usar preparo chá infusão decocção maceração dose',
+      Cuidados:'contraindicações efeitos adversos toxicidade interação gravidez segurança',
+      Observacoes:'curiosidades botânica origem características cultivo sinonímia'
     };
-    const q=[cientifico||nome,nome,temas[campo]||rotulo].filter(Boolean).join(' ');
+    const planta=cientifico||nome;
+    const q='"'+planta+'" '+(temas[campo]||rotulo);
     try{
-      const url='https://pt.wikipedia.org/w/api.php?origin=*&action=query&list=search&srnamespace=0&srlimit=6&srsearch='+encodeURIComponent(q)+'&format=json';
+      const url='https://pt.wikipedia.org/w/api.php?origin=*&action=query&list=search&srnamespace=0&srlimit=5&srsearch='+encodeURIComponent(q)+'&format=json';
       const res=await fetch(url);const json=await res.json();
       let itens=(json?.query?.search||[]);
       if(!itens.length&&cientifico){
@@ -5141,13 +5140,7 @@
       }
       const status=overlay.querySelector('.erva-pesquisa-status-v69');
       const lista=overlay.querySelector('.erva-pesquisa-list-v69');
-      if(campo!=='Uso_Espiritual'){
-        const oficial=document.createElement('div');
-        oficial.className='erva-pesquisa-item-v69';
-        oficial.innerHTML='<strong>Consulta técnica oficial</strong><p>Para informações de preparo, indicação, segurança e advertências, consulte também as publicações oficiais brasileiras antes de confirmar o cadastro.</p><div class="erva-fonte-v69">Referência: Ministério da Saúde / Anvisa</div>';
-        lista.appendChild(oficial);
-      }
-      status.textContent=itens.length?'Escolha uma sugestão. Nada será alterado até você clicar em “Usar esta informação”.':'Nenhum resultado útil encontrado nesta fonte.';
+      status.textContent=itens.length?'Resultados relacionados a '+rotulo+'. Escolha somente se a informação realmente servir para este campo.':'Nenhum resultado específico encontrado para este campo.';
       lista.insertAdjacentHTML('beforeend',itens.map(it=>{
         const texto=String(it.snippet||'').replace(/<[^>]*>/g,' ').replace(/&quot;/g,'"').replace(/&#039;/g,"'").replace(/&amp;/g,'&').replace(/\s+/g,' ').trim();
         const sugestao=(it.title+(texto?': '+texto:'')).trim();
@@ -6419,3 +6412,5 @@ function filtrarEstudosTZC_V55(valor){
 <!-- TZC V73 — carregamento compacto de imagens + pesquisa de informações em modal próprio. -->
 
 <!-- TZC V74 — níveis de pesquisa dos demais campos, com fonte e cautela por tipo de dado. -->
+
+<!-- TZC V75 — remove banners repetitivos e diferencia melhor a pesquisa de cada campo. -->

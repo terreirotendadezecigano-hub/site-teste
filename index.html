@@ -1409,6 +1409,185 @@
 @media(max-width:600px){.tzc-view-grid-v48{grid-template-columns:1fr}}
 </style>
 
+
+<style id="tzc-v49-modal-padrao-unico">
+/* =========================================================
+   V49 — PADRÃO ÚNICO DE MODAIS
+   Base visual oficial para Estudos, Ervas, Categorias etc.
+   ========================================================= */
+
+/* 1. Botões de ação das tabelas: escuros + ícones dourados */
+#tzcCategoriasTabela td:last-child button,
+.tzc-actions-v48 button,
+.tzc-action-v48{
+  width:29px!important;height:29px!important;min-width:29px!important;
+  padding:0!important;margin-left:4px!important;
+  border:1px solid #303030!important;border-radius:5px!important;
+  background:#202020!important;color:#f3d45a!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  font-size:.78rem!important;line-height:1!important;box-shadow:none!important;
+}
+#tzcCategoriasTabela td:last-child button:hover,
+.tzc-action-v48:hover{
+  border-color:#d4af37!important;background:#2a271b!important;color:#ffe173!important;
+}
+
+/* 2. Caixa/base de TODOS os modais conhecidos */
+.modal-content,
+.modal-box,
+.modal-container,
+.tzc-modal-content,
+.tzc-modal-box,
+#modalCategoria .modal-content,
+#tzcCategoriaModalV1 .modal-content,
+#modalErva .modal-content,
+#modalEstudo .modal-content{
+  background:#171717!important;
+  color:#fff!important;
+  border:1px solid #d4af37!important;
+  border-radius:10px!important;
+  box-shadow:0 18px 55px rgba(0,0,0,.65)!important;
+  font-family:"Segoe UI",Arial,sans-serif!important;
+}
+
+/* Modal categoria: largura e respiro equivalentes ao padrão compacto */
+#tzcCategoriaModalV1 .modal-content,
+#modalCategoria .modal-content{
+  width:min(500px,calc(100vw - 32px))!important;
+  max-width:500px!important;
+  padding:16px 18px!important;
+}
+
+/* 3. Títulos */
+.modal-content h2,.modal-content h3,
+.modal-box h2,.modal-box h3,
+.tzc-modal-content h2,.tzc-modal-content h3,
+#tzcCategoriaModalV1 h2,#tzcCategoriaModalV1 h3,
+#modalCategoria h2,#modalCategoria h3{
+  color:#fff!important;
+  font-size:1rem!important;
+  line-height:1.25!important;
+  font-weight:700!important;
+  margin:0 0 14px!important;
+}
+
+/* 4. Labels — legíveis, dourado suave */
+.modal-content label,.modal-box label,.tzc-modal-content label,
+#tzcCategoriaModalV1 label,#modalCategoria label,
+#modalErva label,#modalEstudo label{
+  display:block!important;
+  color:#e7d79b!important;
+  font-family:"Segoe UI",Arial,sans-serif!important;
+  font-size:.78rem!important;
+  line-height:1.25!important;
+  font-weight:700!important;
+  margin:0 0 6px!important;
+}
+
+/* 5. Campos — agora a caixa fica VISÍVEL de verdade */
+.modal-content input,.modal-content select,.modal-content textarea,
+.modal-box input,.modal-box select,.modal-box textarea,
+.tzc-modal-content input,.tzc-modal-content select,.tzc-modal-content textarea,
+#tzcCategoriaModalV1 input,#tzcCategoriaModalV1 select,#tzcCategoriaModalV1 textarea,
+#modalCategoria input,#modalCategoria select,#modalCategoria textarea,
+#modalErva input,#modalErva select,#modalErva textarea,
+#modalEstudo input,#modalEstudo select,#modalEstudo textarea{
+  background:#101010!important;
+  color:#fff!important;
+  border:1px solid #3a3a3a!important;
+  border-radius:6px!important;
+  font-family:"Segoe UI",Arial,sans-serif!important;
+  font-size:.82rem!important;
+  min-height:34px!important;
+  padding:7px 10px!important;
+  outline:none!important;
+  box-sizing:border-box!important;
+}
+.modal-content textarea,.modal-box textarea,.tzc-modal-content textarea,
+#modalErva textarea,#modalEstudo textarea{min-height:54px!important}
+.modal-content input:focus,.modal-content select:focus,.modal-content textarea:focus,
+.modal-box input:focus,.modal-box select:focus,.modal-box textarea:focus,
+#tzcCategoriaModalV1 input:focus,#tzcCategoriaModalV1 select:focus,
+#modalCategoria input:focus,#modalCategoria select:focus{
+  border-color:#d4af37!important;
+  box-shadow:0 0 0 1px rgba(212,175,55,.16)!important;
+}
+.modal-content input::placeholder,.modal-content textarea::placeholder,
+.modal-box input::placeholder,.modal-box textarea::placeholder{
+  color:#777!important;opacity:1!important;
+}
+
+/* 6. Rodapé e botões — paleta única */
+.modal-footer,.modal-actions,.tzc-modal-actions{
+  border-top:1px solid #2a2a2a!important;
+  padding-top:12px!important;
+  margin-top:12px!important;
+  gap:8px!important;
+}
+.modal-footer button,.modal-actions button,.tzc-modal-actions button,
+#tzcCategoriaModalV1 button,#modalCategoria button{
+  font-family:"Segoe UI",Arial,sans-serif!important;
+  font-size:.76rem!important;font-weight:700!important;
+  min-height:32px!important;border-radius:6px!important;
+}
+.modal-footer button:not(.btn-primary):not(.btn-danger),
+.modal-actions button:not(.btn-primary):not(.btn-danger),
+#tzcCategoriaModalV1 button:not([type="submit"]):not(.btn-primary):not(.btn-danger),
+#modalCategoria button:not([type="submit"]):not(.btn-primary):not(.btn-danger){
+  background:#171717!important;color:#f3d45a!important;
+  border:1px solid #d4af37!important;
+}
+.modal-footer .btn-primary,.modal-actions .btn-primary,
+#tzcCategoriaModalV1 button[type="submit"],#modalCategoria button[type="submit"]{
+  background:#d4af37!important;color:#090909!important;border:1px solid #d4af37!important;
+}
+
+/* 7. X: SEM quadrado branco/cinza. Dourado, limpo e discreto */
+.modal-close,.close-modal,.tzc-modal-close,
+#tzcCategoriaModalV1 .close,#modalCategoria .close,
+#tzcCategoriaModalV1 button[aria-label="Fechar"],
+#modalCategoria button[aria-label="Fechar"]{
+  width:28px!important;height:28px!important;min-width:28px!important;
+  padding:0!important;margin:0!important;
+  background:transparent!important;border:0!important;
+  color:#d4af37!important;box-shadow:none!important;
+  font-size:1.18rem!important;font-weight:700!important;
+  line-height:28px!important;
+}
+.modal-close:hover,.close-modal:hover,.tzc-modal-close:hover,
+#tzcCategoriaModalV1 .close:hover,#modalCategoria .close:hover{
+  color:#ffe173!important;background:transparent!important;
+}
+
+/* 8. Compactação do modal de Ervas sem sacrificar legibilidade */
+#modalErva .modal-content,
+.modal-erva .modal-content,
+.modal-content.modal-erva{
+  width:min(760px,calc(100vw - 34px))!important;
+  max-width:760px!important;
+  padding:14px 16px!important;
+}
+#modalErva .form-group,.modal-erva .form-group{margin-bottom:9px!important}
+
+/* 9. Modal Estudos */
+#modalEstudo .modal-content,
+.modal-estudo .modal-content,
+.modal-content.modal-estudo{
+  width:min(610px,calc(100vw - 34px))!important;
+  max-width:610px!important;
+  padding:15px 17px!important;
+}
+
+@media(max-width:650px){
+  #tzcCategoriaModalV1 .modal-content,#modalCategoria .modal-content,
+  #modalErva .modal-content,#modalEstudo .modal-content{
+    width:calc(100vw - 20px)!important;padding:13px!important;
+  }
+  .modal-content label,.modal-box label,.tzc-modal-content label{font-size:.76rem!important}
+  .modal-content input,.modal-content select,.modal-content textarea{font-size:.80rem!important}
+}
+</style>
+
 </head>
 <body>
 

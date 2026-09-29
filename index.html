@@ -4897,12 +4897,12 @@
       Nome_Cientifico:x.Nome_Cientifico||'',
       Categoria:x.Categoria||x.Classificacao||'',
       Tipo_Preparo:x.Tipo_Preparo||x.Preparo||x.Modo_Preparo||'',
-      Finalidade_Propriedades:x.Finalidade_Propriedades||x.Para_Que_Serve||x.Finalidade||x.Propriedades||x.Indicacao||'',
+      Finalidade_Propriedades:x.Finalidade_Propriedades||x.Finalidade_Propriedade||x.Finalidade_Propried||x.Para_Que_Serve||x.Finalidade||x.Propriedades||x.Indicacao||'',
       Uso_Espiritual:x.Uso_Espiritual||x.Orixa_Linha||x.Linha_Entidade||'',
-      Indicacao_Uso:x.Indicacao_Uso||x.Indicacao||'',
-      Modo_Uso:x.Modo_Uso||x.Modo_Preparo||'',
-      Cuidados:x.Cuidados||x.Contraindicacoes||'',
-      Observacoes:x.Observacoes||x.Obs||'',
+      Indicacao_Uso:x.Indicacao_Uso||x.Indicacao_de_Uso||x.Indicacao||'',
+      Modo_Uso:x.Modo_Uso||x.Modo_de_Uso||x.Modo_Preparo||'',
+      Cuidados:x.Cuidados||x.Contraindicacoes||x.Contra_indicacoes||'',
+      Observacoes:x.Observacoes||x.Observacao||x.Obs||'',
       Foto_URL:x.Foto_URL||x.Erva_URL||x.Imagem_URL||x.Arquivo_Imagem||'',
       Acesso_Publico:x.Acesso_Publico||x.Acesso||'Sim',
       Status:x.Status||'Ativo'
@@ -4915,8 +4915,22 @@
 
   window.carregarErvasAdminTZC_V37 = async function(){
     const cacheKey='TZC_ERVAS_ADMIN_CACHE_V42';
-    const aplicar=(d)=>{
-      window.tzcErvasAdminV37=(Array.isArray(d)?d:[]).map(normalizarErvaAdminV41);
+    const aplicar=(d,mesclarLocal=false)=>{
+      let remoto=(Array.isArray(d)?d:[]).map(normalizarErvaAdminV41);
+      if(mesclarLocal){
+        let local=[];
+        try{local=JSON.parse(localStorage.getItem(cacheKey)||'[]').map(normalizarErvaAdminV41);}catch(e){}
+        const porId=new Map(local.map(x=>[String(x.ID_Erva||''),x]));
+        remoto=remoto.map(r=>{
+          const l=porId.get(String(r.ID_Erva||''));
+          if(!l)return r;
+          const campos=['Nome_Erva','Nome_Cientifico','Categoria','Tipo_Preparo','Finalidade_Propriedades','Uso_Espiritual','Indicacao_Uso','Modo_Uso','Cuidados','Observacoes','Foto_URL','Acesso_Publico'];
+          const z=Object.assign({},r);
+          campos.forEach(c=>{if(!String(z[c]||'').trim() && String(l[c]||'').trim())z[c]=l[c];});
+          return z;
+        });
+      }
+      window.tzcErvasAdminV37=remoto;
       atualizarFiltrosErvasV41();
       renderTabelaErvasTZC_V37();
     };
@@ -4924,7 +4938,7 @@
     // Mostra imediatamente o último resultado conhecido enquanto atualiza.
     try{
       const cache=JSON.parse(localStorage.getItem(cacheKey)||'[]');
-      if(Array.isArray(cache) && cache.length) aplicar(cache);
+      if(Array.isArray(cache) && cache.length) aplicar(cache,false);
     }catch(e){}
 
     try{
@@ -4933,8 +4947,8 @@
       if(!r.ok) throw new Error('OpenSheet indisponível');
       const d=await r.json();
       if(!Array.isArray(d)) throw new Error('Resposta inválida');
-      localStorage.setItem(cacheKey,JSON.stringify(d));
-      aplicar(d);
+      aplicar(d,true);
+      localStorage.setItem(cacheKey,JSON.stringify(window.tzcErvasAdminV37||[]));
       return;
     }catch(e){}
 
@@ -4943,8 +4957,8 @@
       const r=await fetch(API+'?sheet=Ervas_Banhos');
       const d=await r.json();
       if(!Array.isArray(d)) throw new Error('Resposta inválida');
-      localStorage.setItem(cacheKey,JSON.stringify(d));
-      aplicar(d);
+      aplicar(d,true);
+      localStorage.setItem(cacheKey,JSON.stringify(window.tzcErvasAdminV37||[]));
     }catch(e){
       if(!(window.tzcErvasAdminV37||[]).length){
         document.getElementById('ervasTabelaV37').innerHTML='<div class="ervas-empty-v37">Não foi possível atualizar os dados agora. Tente novamente em alguns segundos.</div>';
@@ -5261,7 +5275,11 @@
     // o backend V69 atualize exatamente as colunas existentes.
     const dadosPlanilha=Object.assign({},d,{
       Preparo:d.Tipo_Preparo,
+      Finalidade_Propriedade:d.Finalidade_Propriedades,
+      Finalidade_Propried:d.Finalidade_Propriedades,
       Indicacao_Uso:d.Indicacao_Uso,
+      Indicacao_de_Uso:d.Indicacao_Uso,
+      Modo_de_Uso:d.Modo_Uso,
       Contraindicacoes:d.Cuidados,
       Obs:d.Observacoes,
       Foto_URL:d.Foto_URL
@@ -5272,7 +5290,11 @@
     atualizarFiltrosErvasV41();
     renderTabelaErvasTZC_V37();
     try{localStorage.setItem('TZC_ERVAS_ADMIN_CACHE_V42',JSON.stringify(window.tzcErvasAdminV37||[]));}catch(e){}
-    try{await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});showToast(edit?'Erva atualizada com sucesso.':'Erva cadastrada com sucesso.');}catch(e){showToast('Registro atualizado na tela. A sincronização será conferida novamente.');}
+    try{
+      await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+      showToast(edit?'Erva atualizada com sucesso.':'Erva cadastrada com sucesso.');
+      setTimeout(()=>{carregarErvasAdminTZC_V37();},1800);
+    }catch(e){showToast('Registro atualizado na tela. A sincronização será conferida novamente.');}
     setTimeout(carregarErvasAdminTZC_V37,2200);
   };
 
@@ -6459,3 +6481,5 @@ function filtrarEstudosTZC_V55(valor){
 <!-- TZC V77 — respostas curtas e estritamente relacionadas ao campo; sem biografia genérica da planta. -->
 
 <!-- TZC V78 — resultado compacto centralizado sobre o formulário. -->
+
+<!-- TZC V79 — corrige reabertura do modal: aliases históricos + cache mesclado + recarga pós-save. Preparado para enriquecimento por fontes/livro sem perder dados existentes. -->

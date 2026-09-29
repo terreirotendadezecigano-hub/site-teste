@@ -5697,3 +5697,97 @@ function visualizarCategoriaTZC_V48(id){
 }
 </style>
 
+
+
+<style id="tzc-v54-ajuste-direto-estudo-cabecalhos">
+/* =========================================================
+   V54 — CORREÇÃO DIRETA DO NOVO ESTUDO
+   Referência oficial: modal NOVA CATEGORIA
+   ========================================================= */
+
+/* O Novo Estudo é criado dinamicamente com este ID.
+   Agora o seletor atinge EXATAMENTE o modal correto. */
+#modalNovoEstudoTZC_V1 .tzc-modal-study-v44{
+  font-size:.90rem!important;
+}
+#modalNovoEstudoTZC_V1 .modal-header h3{
+  font-size:1.05rem!important;
+  line-height:1.3!important;
+  font-weight:700!important;
+}
+#modalNovoEstudoTZC_V1 .form-group label{
+  font-size:.84rem!important;
+  line-height:1.35!important;
+  font-weight:600!important;
+  margin-bottom:6px!important;
+}
+#modalNovoEstudoTZC_V1 input.form-control,
+#modalNovoEstudoTZC_V1 select.form-control,
+#modalNovoEstudoTZC_V1 textarea.form-control{
+  font-size:.90rem!important;
+  line-height:1.4!important;
+}
+#modalNovoEstudoTZC_V1 input.form-control,
+#modalNovoEstudoTZC_V1 select.form-control{
+  min-height:36px!important;
+}
+#modalNovoEstudoTZC_V1 .tzc-modal-secondary-v44,
+#modalNovoEstudoTZC_V1 .tzc-modal-save-v44{
+  font-size:.84rem!important;
+  min-height:32px!important;
+}
+
+/* =========================================================
+   CABEÇALHO VISUAL OFICIAL DAS PÁGINAS
+   Mais presença sem aumentar demais a altura ocupada
+   ========================================================= */
+.gestao-interna-home > div:first-child{
+  margin-bottom:24px!important;
+}
+.gestao-interna-home .tzc-gestao-title-v51{
+  font-size:1.82rem!important;
+  line-height:1.08!important;
+  font-weight:800!important;
+  letter-spacing:.01em!important;
+}
+.gestao-interna-home .tzc-gestao-intro-v51{
+  font-size:1.16rem!important;
+  line-height:1.38!important;
+  max-width:900px!important;
+  margin-top:9px!important;
+}
+
+/* Em telas menores mantém presença sem exagerar */
+@media (max-width:760px){
+  .gestao-interna-home .tzc-gestao-title-v51{
+    font-size:1.48rem!important;
+  }
+  .gestao-interna-home .tzc-gestao-intro-v51{
+    font-size:1rem!important;
+  }
+}
+</style>
+
+<script id="tzc-v54-limpeza-pesquisa-global">
+/* A barra de pesquisa geral não deve disputar atenção com o cabeçalho
+   dos módulos de Gestão Interna. Cada módulo usa sua busca contextual. */
+(function(){
+  const nomes = [
+    'carregarGestaoInternaTZC_V1',
+    'abrirEstudosTZC_V1',
+    'abrirCategoriasTZC_V1',
+    'abrirErvasTZC_V37',
+    'abrirConfiguracoesTerreiroTZC_V1'
+  ];
+  nomes.forEach(nome=>{
+    const original = window[nome];
+    if(typeof original !== 'function') return;
+    window[nome] = function(){
+      const r = original.apply(this, arguments);
+      const busca = document.getElementById('searchContainerWrapper');
+      if(busca) busca.style.display='none';
+      return r;
+    };
+  });
+})();
+</script>

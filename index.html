@@ -986,7 +986,7 @@
           </div>
         </div>
 
-        <div id="estudosTZCLista" class="cards-grid">
+        <div id="estudosTZCLista">
           <p style="color:var(--text-muted);">Carregando estudos...</p>
         </div>
       `;
@@ -1024,10 +1024,21 @@
       const lista = document.getElementById('estudosTZCLista');
       if (!lista) return;
 
-      const ativos = (dados || []).filter(x => String(x.Status || 'Ativo').toLowerCase() !== 'excluido');
+      const ativos = (dados || [])
+        .filter(x => String(x.Status || 'Ativo').toLowerCase() !== 'excluido')
+        .sort((a, b) => {
+          const catA = String(a.Categoria || 'Estudo');
+          const catB = String(b.Categoria || 'Estudo');
+          const porCategoria = catA.localeCompare(catB, 'pt-BR', { sensitivity: 'base' });
+          if (porCategoria !== 0) return porCategoria;
+          return String(a['Título'] || a.Titulo || '').localeCompare(
+            String(b['Título'] || b.Titulo || ''), 'pt-BR', { sensitivity: 'base' }
+          );
+        });
+
       if (!ativos.length) {
         lista.innerHTML = `
-          <div style="grid-column:1/-1;text-align:center;padding:35px 15px;color:var(--text-muted);">
+          <div style="text-align:center;padding:35px 15px;color:var(--text-muted);border:1px solid #292929;border-radius:10px;background:#111;">
             <i class="fa-solid fa-book-open" style="font-size:2rem;color:var(--gold-primary);margin-bottom:10px;"></i>
             <p>Nenhum estudo cadastrado ainda.</p>
             <button class="btn-toolbar" onclick="abrirNovoEstudoTZC_V1()">Criar o primeiro estudo</button>
@@ -1035,39 +1046,52 @@
         return;
       }
 
-      lista.innerHTML = '';
-      ativos.forEach(estudo => {
-        const card = document.createElement('article');
-        card.className = 'card';
-        card.style.cursor = 'pointer';
-
+      const linhas = ativos.map(estudo => {
+        const id = estudo.ID_Estudo || estudo.ID || '';
         const titulo = estudo['Título'] || estudo.Titulo || 'Estudo sem título';
         const categoria = estudo.Categoria || 'Estudo';
         const resumo = estudo.Resumo || '';
-        const imagem = estudo.Estudo_Imagem || estudo.Imagem_URL || '';
+        const visibilidade = estudo.Acesso_Publico || estudo.Visibilidade || '—';
+        const indice = window.tzcEstudosV1.indexOf(estudo);
 
-        card.innerHTML = `
-          ${imagem ? `<img src="${imagem}" class="card-img" alt="${escTZC_V1(titulo)}">` : `
-            <div class="card-img" style="display:flex;align-items:center;justify-content:center;background:#161616;color:var(--gold-primary);">
-              <i class="fa-solid fa-book-open fa-2x"></i>
-            </div>`}
-          <div class="card-body">
-            <div class="card-badges"><span class="card-badge">${escTZC_V1(categoria)}</span></div>
-            <h3 class="card-title" style="color:#ffffff !important;text-shadow:0 0 1px rgba(255,255,255,.35);">${escTZC_V1(titulo)}</h3>
-            ${resumo ? `<p class="card-text">${escTZC_V1(resumo)}</p>` : ''}
-            <div style="display:flex;justify-content:flex-end;gap:5px;margin-top:8px;">
-              <button type="button" class="btn-icon-only" onclick="event.stopPropagation();editarEstudoTZC_V1('${escTZC_V1(estudo.ID_Estudo || estudo.ID || '')}')" title="Editar">
-                <i class="fa-solid fa-pen"></i>
-              </button>
-              <button type="button" class="btn-icon-only btn-delete-icon" onclick="event.stopPropagation();excluirEstudoTZC_V1('${escTZC_V1(estudo.ID_Estudo || estudo.ID || '')}')" title="Excluir">
-                <i class="fa-solid fa-trash"></i>
-              </button>
-            </div>
-          </div>
-        `;
-        card.onclick = () => abrirVisualizacaoEstudoTZC_V1(estudo);
-        lista.appendChild(card);
-      });
+        return `
+          <tr class="tzc-estudo-row" data-search="${escTZC_V1([categoria,titulo,resumo,visibilidade].join(' ').toLowerCase())}" style="border-bottom:1px solid #292929;">
+            <td style="padding:12px;vertical-align:middle;"><span class="card-badge">${escTZC_V1(categoria)}</span></td>
+            <td style="padding:12px;vertical-align:middle;font-weight:700;color:#fff;">${escTZC_V1(titulo)}</td>
+            <td style="padding:12px;vertical-align:middle;color:var(--text-muted);min-width:220px;">${escTZC_V1(resumo || '—')}</td>
+            <td style="padding:12px;vertical-align:middle;white-space:nowrap;">${escTZC_V1(visibilidade)}</td>
+            <td style="padding:8px 12px;vertical-align:middle;white-space:nowrap;text-align:right;">
+              <div style="display:flex;gap:6px;justify-content:flex-end;">
+                <button type="button" class="btn-icon-only" onclick="abrirVisualizacaoEstudoTZC_V1(window.tzcEstudosV1[${indice}])" title="Visualizar" aria-label="Visualizar">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+                <button type="button" class="btn-icon-only" onclick="editarEstudoTZC_V1('${escTZC_V1(id)}')" title="Editar" aria-label="Editar">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button type="button" class="btn-icon-only btn-delete-icon" onclick="excluirEstudoTZC_V1('${escTZC_V1(id)}')" title="Excluir" aria-label="Excluir">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+
+      lista.innerHTML = `
+        <div style="overflow-x:auto;border:1px solid #292929;border-radius:10px;background:#111;">
+          <table style="width:100%;border-collapse:collapse;min-width:820px;">
+            <thead>
+              <tr style="background:linear-gradient(90deg,var(--wine-dark),#2a070b);color:var(--gold-primary);text-align:left;">
+                <th style="padding:12px;">Categoria</th>
+                <th style="padding:12px;">Título</th>
+                <th style="padding:12px;">Resumo</th>
+                <th style="padding:12px;">Visibilidade</th>
+                <th style="padding:12px;text-align:right;">Ações</th>
+              </tr>
+            </thead>
+            <tbody>${linhas}</tbody>
+          </table>
+        </div>
+        <div style="margin-top:8px;color:var(--text-muted);font-size:.78rem;">${ativos.length} registro${ativos.length === 1 ? '' : 's'} no Acervo</div>`;
     }
 
     function abrirVisualizacaoEstudoTZC_V1(estudo) {
@@ -2859,6 +2883,15 @@
 
     function filterCards() {
       const query = document.getElementById('searchInput').value.toLowerCase();
+
+      // Acervo de Estudos: filtra diretamente as linhas da tabela sem desmontar a página.
+      const linhasEstudos = document.querySelectorAll('#estudosTZCLista .tzc-estudo-row');
+      if (linhasEstudos.length) {
+        linhasEstudos.forEach(linha => {
+          linha.style.display = (linha.dataset.search || linha.textContent.toLowerCase()).includes(query) ? '' : 'none';
+        });
+        return;
+      }
       
       if (currentTab === 'Membros') {
         const linhas = document.querySelectorAll('#membrosTableBody tr');

@@ -9296,6 +9296,56 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
 })();
 </script>
 
+
+<!-- ============================================================
+     TZC V151 — FECHAR MODAL ÁREA DE MEMBROS AO CLICAR FORA
+     Alteração única desta versão.
+     Mantém a página que já estava aberta.
+     ============================================================ -->
+<script id="tzc-v151-fechar-modal-membros-fora">
+(function(){
+  document.addEventListener('click', function(ev){
+    const alvo = ev.target;
+    if(!(alvo instanceof Element)) return;
+
+    /* Procura somente um fundo de modal aberto que contenha
+       o acesso/login da Área de Membros. */
+    const fundos = document.querySelectorAll(
+      '.modal-overlay, .modal-backdrop, .tzc-modal-overlay, [class*="modal"][class*="overlay"]'
+    );
+
+    for(const fundo of fundos){
+      if(alvo !== fundo) continue;
+
+      const txt = String(fundo.textContent || '').toLowerCase();
+      const ehAreaMembros =
+        txt.includes('área de membros') ||
+        txt.includes('area de membros');
+
+      if(!ehAreaMembros) continue;
+
+      /* Usa primeiro o X/Fechar já existente no próprio modal.
+         Assim preservamos exatamente a rotina atual de fechamento,
+         sem navegar, recarregar ou mandar o usuário para Início. */
+      const fechar = fundo.querySelector(
+        '[aria-label*="fechar" i], [title*="fechar" i], .modal-close, .close-modal, .btn-close, .close'
+      );
+
+      if(fechar){
+        fechar.click();
+      }else{
+        fundo.style.display = 'none';
+        fundo.classList.remove('show','open','active');
+      }
+
+      ev.preventDefault();
+      ev.stopPropagation();
+      break;
+    }
+  }, true);
+})();
+</script>
+
 </body>
 </html>
 

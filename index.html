@@ -8733,6 +8733,66 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
 })();
 </script>
 
+
+<!-- TZC V140 — PASSO 6: somente visibilidade do menu Controle de Presenças -->
+<script id="tzc-v140-menu-controle-presencas">
+(function(){
+  function perfilV140(){
+    try{
+      const u=(typeof loggedUser!=='undefined' && loggedUser) ? loggedUser : null;
+      return String((u && (u.perfil||u.Perfil))||'').trim().toLowerCase();
+    }catch(e){ return ''; }
+  }
+
+  function podeControlarV140(){
+    return ['dirigente','administrador','colaborador','editor/colaborador','editor'].includes(perfilV140());
+  }
+
+  function garantirMenuControleV140(){
+    const nav=document.getElementById('navList');
+    if(!nav)return;
+
+    let item=document.getElementById('menuPresencasV134');
+
+    if(!podeControlarV140()){
+      if(item)item.remove();
+      return;
+    }
+
+    if(!item){
+      item=document.createElement('li');
+      item.id='menuPresencasV134';
+      item.className='nav-item';
+      item.innerHTML='<i class="fa-solid fa-users-viewfinder"></i> Controle de Presenças';
+      const eventos=document.getElementById('menuEventosV128');
+      if(eventos) eventos.insertAdjacentElement('afterend',item);
+      else nav.appendChild(item);
+    }
+
+    item.onclick=async function(){
+      try{document.getElementById('sidebar')?.classList.remove('open')}catch(e){}
+      if(typeof window.abrirEventosTZC_V126==='function'){
+        await window.abrirEventosTZC_V126();
+      }
+    };
+  }
+
+  /* O login real deste site atualiza updateAuthUI.
+     V134 observava outro nome de função; por isso o menu podia não nascer após o login. */
+  const authAnteriorV140=window.updateAuthUI;
+  if(typeof authAnteriorV140==='function'){
+    window.updateAuthUI=function(){
+      const r=authAnteriorV140.apply(this,arguments);
+      setTimeout(garantirMenuControleV140,0);
+      return r;
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(garantirMenuControleV140,400));
+  setTimeout(garantirMenuControleV140,700);
+})();
+</script>
+
 </body>
 </html>
 

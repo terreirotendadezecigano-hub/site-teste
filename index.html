@@ -8732,6 +8732,77 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
 })();
 </script>
 
+
+<!-- TZC V143 — PASSO 8: RESTAURA O MENU CONTROLE DE PRESENÇAS
+     Correção isolada: o código V134 escutava updateUserInterface,
+     mas o login real desta base chama updateAuthUI. -->
+<script id="tzc-v143-restaura-menu-presencas">
+(function(){
+  function perfilV143(){
+    try{
+      return String((typeof loggedUser!=='undefined' && loggedUser)
+        ? (loggedUser.perfil || loggedUser.Perfil || '')
+        : '').trim().toLowerCase();
+    }catch(e){ return ''; }
+  }
+
+  function podeControlarV143(){
+    return ['dirigente','administrador','colaborador','editor/colaborador','editor']
+      .includes(perfilV143());
+  }
+
+  function sincronizarMenuPresencasV143(){
+    const nav = document.getElementById('navList');
+    if(!nav) return;
+
+    let item = document.getElementById('menuPresencasV134');
+
+    if(!podeControlarV143()){
+      if(item) item.remove();
+      return;
+    }
+
+    if(!item){
+      item = document.createElement('li');
+      item.id = 'menuPresencasV134';
+      item.className = 'nav-item';
+      item.innerHTML = '<i class="fa-solid fa-users-viewfinder"></i> Controle de Presenças';
+      item.onclick = async function(){
+        try{ document.getElementById('sidebar')?.classList.remove('open'); }catch(e){}
+        if(typeof window.abrirEventosTZC_V126 === 'function'){
+          await window.abrirEventosTZC_V126();
+          if(typeof showToast === 'function'){
+            showToast('Use o ícone de usuário com check no evento para abrir o controle de presenças.');
+          }
+        }
+      };
+    }
+
+    const eventos = document.getElementById('menuEventosV128');
+    if(eventos && item.previousElementSibling !== eventos){
+      eventos.insertAdjacentElement('afterend', item);
+    }else if(!eventos && !item.parentElement){
+      nav.appendChild(item);
+    }
+  }
+
+  /* Ponto real usado pelo login/logout nesta base. */
+  const authAnteriorV143 = window.updateAuthUI;
+  if(typeof authAnteriorV143 === 'function'){
+    window.updateAuthUI = function(){
+      const r = authAnteriorV143.apply(this, arguments);
+      setTimeout(sincronizarMenuPresencasV143, 0);
+      return r;
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(sincronizarMenuPresencasV143, 400);
+  });
+  setTimeout(sincronizarMenuPresencasV143, 600);
+})();
+</script>
+
 </body>
 </html>
 

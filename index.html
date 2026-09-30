@@ -9078,6 +9078,98 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
 .tzc-controle-pres-v145 table{width:100%}
 </style>
 
+
+<!-- ============================================================
+     TZC V146 — SOMENTE CORREÇÃO DO CARREGAMENTO DOS EVENTOS
+     NO CONTROLE DE PRESENÇAS
+     ============================================================ -->
+<script id="tzc-v146-presencas-carrega-eventos">
+(function(){
+  const API146=(typeof WEB_APP_URL!=='undefined' && WEB_APP_URL)
+    ? WEB_APP_URL
+    : 'https://script.google.com/macros/s/AKfycbyFje_ocF7a0S7Tq4EYQmM5W3hv9SmHZqxJmWLhPKdkVfudzW-Q3EEbM66U9BiwdBZOJw/exec';
+
+  const esc146=v=>String(v??'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+
+  const fmt146=v=>{
+    if(!v)return '—';
+    try{
+      const d=new Date(v);
+      if(isNaN(d.getTime()))return esc146(v);
+      return new Intl.DateTimeFormat('pt-BR',{
+        day:'2-digit',month:'2-digit',year:'numeric',
+        hour:'2-digit',minute:'2-digit',
+        timeZone:'America/Sao_Paulo'
+      }).format(d).replace(',',' às');
+    }catch(e){return esc146(v)}
+  };
+
+  async function carregarEventos146(){
+    const r=await fetch(`${API146}?sheet=Eventos&t=${Date.now()}`,{cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    return Array.isArray(j)?j:[];
+  }
+
+  const abrir145=window.abrirControlePresencasV145;
+  if(typeof abrir145!=='function')return;
+
+  window.abrirControlePresencasV145=async function(){
+    /* deixa a V145 montar a tela e preservar toda a navegação aprovada */
+    await abrir145.apply(this,arguments);
+
+    const body=document.getElementById('controlePresBodyV145');
+    const count=document.getElementById('controlePresCountV145');
+    if(!body)return;
+
+    body.innerHTML='<tr><td colspan="5"><i class="fa-solid fa-spinner fa-spin"></i> Carregando eventos...</td></tr>';
+
+    try{
+      let lista=await carregarEventos146();
+
+      lista=lista
+        .filter(x=>{
+          const st=String(x.Status||'Ativo').trim().toLowerCase();
+          return st!=='excluido' && st!=='cancelado';
+        })
+        .sort((a,b)=>{
+          const da=new Date(a.Data_Inicio||0).getTime()||0;
+          const db=new Date(b.Data_Inicio||0).getTime()||0;
+          return da-db;
+        });
+
+      if(count)count.textContent='· '+lista.length+' registros';
+
+      if(!lista.length){
+        body.innerHTML='<tr><td colspan="5" style="text-align:center;color:#aaa">Nenhum evento disponível.</td></tr>';
+        return;
+      }
+
+      body.innerHTML=lista.map(x=>`
+        <tr>
+          <td><strong>${esc146(x.Titulo||'Evento')}</strong></td>
+          <td>${esc146(x.Tipo||'—')}</td>
+          <td>${fmt146(x.Data_Inicio)}</td>
+          <td>${esc146(x.Local||'—')}</td>
+          <td style="text-align:right">
+            <button type="button" class="btn-toolbar"
+              onclick="abrirPresencasTZCV127('${esc146(x.ID_Evento||'')}')">
+              <i class="fa-solid fa-user-check"></i> Abrir controle
+            </button>
+          </td>
+        </tr>`).join('');
+    }catch(e){
+      console.error('TZC V146 - erro ao carregar Eventos:',e);
+      if(count)count.textContent='· 0 registros';
+      body.innerHTML='<tr><td colspan="5" style="text-align:center;color:#aaa">Não foi possível carregar os eventos.</td></tr>';
+    }
+  };
+})();
+</script>
+
 </body>
 </html>
 

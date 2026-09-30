@@ -1631,7 +1631,7 @@
     <ul class="nav-list" id="navList">
       <li class="nav-item active" onclick="switchTab('Home', this)"><i class="fa-solid fa-house"></i> Início</li>
       <li class="nav-item" onclick="abrirQuemSomosPublicoTZC_V103(this)"><i class="fa-solid fa-landmark"></i> Quem Somos</li>
-      <li class="nav-item" onclick="abrirMensagemDiaTZC_V103(this)"><i class="fa-solid fa-feather-pointed"></i> Mensagem do Dia</li>
+      <li class="nav-item" onclick="abrirMensagemDiaTZC_V103(this)"><i class="fa-solid fa-envelope-open-text"></i> Mensagem do Dia</li>
       <li class="nav-item" onclick="abrirBanhoSemanaTZC_V104(this)"><i class="fa-solid fa-spa"></i> Banho da Semana</li>
       <li class="nav-item" onclick="switchTab('Agenda', this)"><i class="fa-solid fa-calendar-days"></i> Agenda</li>
       <li class="nav-item" onclick="switchTab('Mural_Imagens', this)"><i class="fa-solid fa-photo-film"></i> Mural de Avisos</li>
@@ -2908,7 +2908,7 @@
       const searchContainerWrapper = document.getElementById('searchContainerWrapper');
       document.getElementById('pageSubtitleContainer').innerHTML = '';
 
-      if (tabName === 'Ervas_Banhos' || tabName === 'Pontos_Cantados') {
+      if (tabName === 'Home' || tabName === 'Ervas_Banhos' || tabName === 'Pontos_Cantados') {
         searchContainerWrapper.style.display = 'none';
       } else {
         searchContainerWrapper.style.display = 'flex';
@@ -6549,12 +6549,13 @@ function filtrarEstudosTZC_V55(valor){
         Data_Publicacao:'2026-09-30'
       };
     }
+    window._tzcMsgDiaAtualV109=m;
     const d=document.createElement('div');d.id='tzcMsgDiaV105';d.className='tzc-msgdia-overlay-v105';
     d.innerHTML=`<div class="tzc-msgdia-box-v105" role="dialog" aria-modal="true" aria-label="Mensagem do Dia">
       <div class="tzc-msgdia-head-v105"><h3><i class="fa-solid fa-feather-pointed"></i> Mensagem do Dia</h3><button class="tzc-msgdia-close-v105" onclick="fecharMensagemDiaTZC_V105()" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button></div>
       <div class="tzc-msgdia-title-v105">${escV105(m.Titulo||'Mensagem do Dia')}</div>
       <div class="tzc-msgdia-text-v105">${escV105(m.Conteudo||'')}</div>
-      <div class="tzc-msgdia-foot-v105"><span class="tzc-msgdia-date-v105">${dataV105(m.Data_Publicacao)}</span><button class="btn-toolbar" onclick="fecharMensagemDiaTZC_V105()">Fechar</button></div>
+      <div class="tzc-msgdia-foot-v105"><span class="tzc-msgdia-date-v105">${dataV105(m.Data_Publicacao)}</span><div class="tzc-msgdia-actions-v109"><button class="btn-toolbar" onclick="compartilharMensagemDiaTZC_V109()"><i class="fa-solid fa-share-nodes"></i> Compartilhar</button><button class="btn-toolbar" onclick="fecharMensagemDiaTZC_V105()">Fechar</button></div></div>
     </div>`;
     d.addEventListener('click',e=>{if(e.target===d)fecharV105()});
     document.body.appendChild(d);
@@ -6757,7 +6758,7 @@ function filtrarEstudosTZC_V55(valor){
 
   /* Menu agora abre histórico, não o modal. */
   window.abrirMensagemDiaTZC_V103=function(el){
-    pagina107('Mensagem do Dia','fa-feather-pointed','Mensagens para começar o dia com fé, serenidade e esperança.',el);
+    pagina107('Mensagem do Dia','fa-envelope-open-text','Mensagens para começar o dia com fé, serenidade e esperança.',el);
   };
   window.abrirBanhoSemanaTZC_V104=function(el){
     pagina107('Banho da Semana','fa-spa','Consulte os banhos semanais e suas orientações.',el);
@@ -6886,6 +6887,158 @@ function filtrarEstudosTZC_V55(valor){
     originalBanho(el);
     refinarIconeV108('Banho da Semana');
   };
+})();
+</script>
+
+
+<style id="tzc-v109-padrao-definitivo">
+/* =========================================================
+   V109 — PADRÃO É PADRÃO :)
+   Mensagem do Dia e Banho da Semana = cabeçalho de Publicações
+   ========================================================= */
+
+/* Cabeçalho das páginas públicas: exatamente a régua de .tzc-page-copy-v44 */
+.tzc-publicacoes-copy-v107 h2{
+  margin:0!important;
+  color:#fff!important;
+  font-size:1rem!important;
+  line-height:1.25!important;
+  font-weight:700!important;
+}
+.tzc-publicacoes-copy-v107 h2 i{
+  color:var(--gold-primary)!important;
+  font-size:1rem!important;
+  width:auto!important;
+  margin-right:6px!important;
+}
+.tzc-publicacoes-copy-v107 p{
+  margin:5px auto 0!important;
+  max-width:720px!important;
+  color:var(--text-muted)!important;
+  font-size:.78rem!important;
+  line-height:1.4!important;
+}
+.tzc-publicacoes-count-v107{
+  color:#777!important;
+  font-size:.68rem!important;
+  font-weight:400!important;
+}
+
+/* Pesquisa das páginas públicas: mesma largura/proporção do módulo Publicações */
+.tzc-publicacoes-search-v107{
+  position:relative!important;
+  width:100%!important;
+  max-width:none!important;
+  margin:0 0 14px!important;
+}
+.tzc-publicacoes-search-v107 input{
+  width:100%!important;
+  min-height:34px!important;
+  box-sizing:border-box!important;
+  background:#151515!important;
+  border:1px solid var(--border-color)!important;
+  border-radius:20px!important;
+  color:#fff!important;
+  padding:7px 12px 7px 34px!important;
+  font-size:.75rem!important;
+  outline:none!important;
+}
+.tzc-publicacoes-search-v107 i{
+  position:absolute!important;
+  left:12px!important;
+  top:50%!important;
+  transform:translateY(-50%)!important;
+  color:var(--gold-primary)!important;
+  font-size:.72rem!important;
+}
+
+/* Mensagem do Dia: rodapé com compartilhar + fechar */
+.tzc-msgdia-actions-v109{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+/* PADRÃO GLOBAL dos botões Salvar:
+   fundo amarelo, texto "Salvar", igual ao modal Nova Erva */
+button.tzc-salvar-padrao-v109{
+  background:var(--gold-primary)!important;
+  color:#111!important;
+  border:1px solid var(--gold-primary)!important;
+  font-weight:700!important;
+}
+button.tzc-salvar-padrao-v109:hover{
+  filter:brightness(1.08)!important;
+}
+</style>
+
+<script id="tzc-v109-comportamentos">
+(function(){
+  /* Compartilhar Mensagem do Dia */
+  window.compartilharMensagemDiaTZC_V109=async function(){
+    const m=window._tzcMsgDiaAtualV109||{};
+    const titulo=String(m.Titulo||'Mensagem do Dia').trim();
+    const conteudo=String(m.Conteudo||'').trim();
+    const texto=(titulo?titulo+'\n\n':'')+conteudo+'\n\nTenda de Zé Cigano';
+    try{
+      if(navigator.share){
+        await navigator.share({title:'Mensagem do Dia — Tenda de Zé Cigano',text:texto});
+        return;
+      }
+      await navigator.clipboard.writeText(texto);
+      if(typeof showToast==='function') showToast('Mensagem copiada para compartilhar!');
+      else alert('Mensagem copiada para compartilhar!');
+    }catch(e){
+      if(e && e.name==='AbortError') return;
+      try{
+        await navigator.clipboard.writeText(texto);
+        if(typeof showToast==='function') showToast('Mensagem copiada para compartilhar!');
+      }catch(_){}
+    }
+  };
+
+  /* Todos os botões de salvar dos modais seguem o padrão da Nova Erva.
+     Mantemos o ícone de disquete e apenas o texto "Salvar". */
+  function padronizarSalvarV109(root){
+    const base=root||document;
+    base.querySelectorAll('button').forEach(btn=>{
+      const txt=(btn.textContent||'').trim();
+      if(/^Salvar(?:\s+Estudo|\s+Alterações)?$/i.test(txt)){
+        btn.classList.add('tzc-salvar-padrao-v109');
+        const icone=btn.querySelector('i');
+        btn.innerHTML='';
+        if(icone){
+          const novo=icone.cloneNode(true);
+          btn.appendChild(novo);
+          btn.appendChild(document.createTextNode(' Salvar'));
+        }else{
+          btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Salvar';
+        }
+      }
+    });
+  }
+
+  padronizarSalvarV109(document);
+  const obs=new MutationObserver(muts=>{
+    muts.forEach(m=>m.addedNodes.forEach(n=>{
+      if(n.nodeType===1) padronizarSalvarV109(n);
+    }));
+  });
+  obs.observe(document.body,{childList:true,subtree:true});
+
+  /* Garantia: Home realmente não exibe a pesquisa global. */
+  const switchOriginal=window.switchTab;
+  if(typeof switchOriginal==='function'){
+    window.switchTab=function(tabName,element){
+      const r=switchOriginal.apply(this,arguments);
+      if(tabName==='Home'){
+        const s=document.getElementById('searchContainerWrapper');
+        if(s)s.style.display='none';
+      }
+      return r;
+    };
+  }
 })();
 </script>
 

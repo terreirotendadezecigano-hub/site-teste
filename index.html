@@ -8803,6 +8803,78 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
 })();
 </script>
 
+
+<!-- TZC V144 — PASSO 9: EVENTOS / PRESENÇAS EM TELA INTEIRA
+     Alteração isolada: impede a Home de permanecer ocupando a parte superior
+     quando Dirigente/Administrador/Colaborador abre Eventos/Controle de Presenças. -->
+<style id="tzc-v144-eventos-tela-inteira">
+  body.tzc-v144-pagina-eventos-aberta #homeContent,
+  body.tzc-v144-pagina-eventos-aberta #home-content,
+  body.tzc-v144-pagina-eventos-aberta .home-content,
+  body.tzc-v144-pagina-eventos-aberta #homeCards,
+  body.tzc-v144-pagina-eventos-aberta #home-cards{
+    display:none!important;
+  }
+</style>
+<script id="tzc-v144-eventos-tela-inteira-js">
+(function(){
+  function marcarEventosV144(){
+    document.body.classList.add('tzc-v144-pagina-eventos-aberta');
+  }
+  function limparEventosV144(){
+    document.body.classList.remove('tzc-v144-pagina-eventos-aberta');
+  }
+
+  /* Eventos administrativo */
+  const abrirEventosAnteriorV144 = window.abrirEventosTZC_V126;
+  if(typeof abrirEventosAnteriorV144 === 'function'){
+    window.abrirEventosTZC_V126 = async function(){
+      marcarEventosV144();
+      try{
+        return await abrirEventosAnteriorV144.apply(this, arguments);
+      }catch(e){
+        limparEventosV144();
+        throw e;
+      }
+    };
+  }
+
+  /* Qualquer navegação real de volta ao Início restaura a Home. */
+  const goHomeAnteriorV144 = window.goHome;
+  if(typeof goHomeAnteriorV144 === 'function'){
+    window.goHome = function(){
+      limparEventosV144();
+      return goHomeAnteriorV144.apply(this, arguments);
+    };
+  }
+
+  const showSectionAnteriorV144 = window.showSection;
+  if(typeof showSectionAnteriorV144 === 'function'){
+    window.showSection = function(sectionId){
+      const id = String(sectionId || '').toLowerCase();
+      if(id === 'home' || id === 'inicio') limparEventosV144();
+      return showSectionAnteriorV144.apply(this, arguments);
+    };
+  }
+
+  /* Logout já corrigido na V142: garante que a Home volte limpa. */
+  const logoutAnteriorV144 = window.logout;
+  if(typeof logoutAnteriorV144 === 'function'){
+    window.logout = function(){
+      limparEventosV144();
+      return logoutAnteriorV144.apply(this, arguments);
+    };
+  }
+
+  /* O botão de Presenças da V143 abre a mesma página administrativa de Eventos;
+     por isso recebe exatamente o mesmo tratamento de tela inteira. */
+  document.addEventListener('click', function(ev){
+    const el = ev.target && ev.target.closest ? ev.target.closest('#menuPresencasV134') : null;
+    if(el) marcarEventosV144();
+  }, true);
+})();
+</script>
+
 </body>
 </html>
 

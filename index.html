@@ -6727,7 +6727,7 @@ function filtrarEstudosTZC_V55(valor){
           <p>${intro}</p>
         </div><span></span>
       </div>
-      <div class="tzc-publicacoes-search-v107"><i class="fa-solid fa-magnifying-glass"></i><input id="pubPublicBusca107" placeholder="Pesquisar..." oninput="renderPublicacoesPublicasTZC_V107('${tipo.replace(/'/g,"\\'")}')"></div>
+      
       <div id="pubPublicLista107" class="tzc-publicacoes-list-v107"><div class="tzc-publicacao-vazio-v107">Carregando...</div></div>
     </div>`;
     carregar107().then(()=>window.renderPublicacoesPublicasTZC_V107(tipo)).catch(()=>{

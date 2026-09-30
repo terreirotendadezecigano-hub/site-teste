@@ -1674,12 +1674,6 @@
         <button type="button" class="btn-toolbar" onclick="abrirQuemSomosPublicoTZC_V103()"><i class="fa-solid fa-arrow-right"></i> Conheça nossa casa</button>
       </div>
       <div class="general-card">
-        <h3><i class="fa-solid fa-feather-pointed"></i> Mensagem do Dia</h3>
-        <p style="font-size:.8rem;color:var(--text-muted);margin:0 0 8px;">Bom dia, alma gentil. 🌹</p>
-        <p style="font-size:.76rem;color:#888;margin:0 0 10px;">Que a aurora encontre teu coração em paz e derrame sobre teus caminhos a doce luz de um novo dia.</p>
-        <button type="button" class="btn-toolbar" onclick="abrirMensagemDiaTZC_V103()"><i class="fa-solid fa-book-open"></i> Ler mensagem</button>
-      </div>
-      <div class="general-card">
         <h3><i class="fa-solid fa-address-book"></i> Contatos & Atendimento</h3>
         <ul class="info-list" id="txtContatosGeral">
           <li>Carregando contatos...</li>
@@ -6246,8 +6240,7 @@ function filtrarEstudosTZC_V55(valor){
         <p>Fé, caridade, acolhimento e desenvolvimento espiritual.</p>
       </div>
 
-      <section class="tzc-publico-sec-v103">
-        <h3>Quem Somos</h3>
+      <section class="tzc-publico-sec-v103 tzc-publico-primeira-v105">
         <p>A Tenda de Zé Cigano é um espaço de fé, caridade, acolhimento e desenvolvimento espiritual, fundamentado nos princípios da Umbanda e no respeito às diferentes manifestações da espiritualidade.</p>
         <p>Somos uma casa que busca preservar e transmitir os ensinamentos da nossa tradição, compreendendo a espiritualidade como um caminho de transformação interior, fraternidade, responsabilidade e evolução.</p>
         <p>Em nossa caminhada, honramos as forças da natureza, os Orixás e as diferentes linhas de trabalho espiritual que se manifestam na Umbanda, sempre valorizando a caridade, a humildade, o respeito e o amor ao próximo.</p>
@@ -6398,9 +6391,9 @@ function filtrarEstudosTZC_V55(valor){
  };
 
  window.abrirPublicacoesTZC_V104=async function(){
-   preparar(); document.getElementById('pageTitle').innerHTML='<i class="fa-solid fa-newspaper"></i> Publicações';
+   preparar(); document.getElementById('pageTitle').innerHTML='';
    const c=document.getElementById('contentContainer');
-   c.innerHTML=`<div><div class="tzc-page-head-v44"><button class="btn-toolbar tzc-page-back-v44" onclick="voltarGestaoInternaTZC_V1()"><i class="fa-solid fa-arrow-left"></i> Gestão Interna</button><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-newspaper"></i> Publicações <span id="pubCountV104" class="tzc-count-v47"></span></h2><p>Gerencie conteúdos periódicos da Tenda.</p></div><button class="btn-toolbar tzc-page-new-v44" onclick="novaPublicacaoTZC_V104()"><i class="fa-solid fa-plus"></i> Nova Publicação</button></div><div class="tzc-pub-toolbar-v104"><div class="tzc-search-wrap-v104"><i class="fa-solid fa-magnifying-glass"></i><input id="pubBuscaV104" placeholder="Pesquisar publicações..." oninput="renderPublicacoesTZC_V104()"></div></div><div style="overflow:auto"><table class="tzc-pub-table-v104"><thead><tr><th>Tipo</th><th>Título</th><th>Data</th><th>Acesso</th><th>Ações</th></tr></thead><tbody id="pubBodyV104"></tbody></table></div></div>`;
+   c.innerHTML=`<div><div class="tzc-page-head-v44"><button class="btn-toolbar tzc-page-back-v44" onclick="voltarGestaoInternaTZC_V1()"><i class="fa-solid fa-arrow-left"></i> Gestão Interna</button><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-newspaper"></i> Publicações <span id="pubCountV104" class="tzc-count-v47"></span></h2><p>Gerencie conteúdos periódicos da Tenda.</p></div><button class="btn-toolbar tzc-page-new-v44 tzc-btn-gold-v105" onclick="novaPublicacaoTZC_V104()"><i class="fa-solid fa-plus"></i> Nova Publicação</button></div><div class="tzc-pub-toolbar-v104"><div class="tzc-search-wrap-v104"><i class="fa-solid fa-magnifying-glass"></i><input id="pubBuscaV104" placeholder="Pesquisar publicações..." oninput="renderPublicacoesTZC_V104()"></div></div><div style="overflow:auto"><table class="tzc-pub-table-v104"><thead><tr><th>Tipo</th><th>Título</th><th>Data</th><th>Acesso</th><th>Ações</th></tr></thead><tbody id="pubBodyV104"></tbody></table></div></div>`;
    try{await carregar();renderPublicacoesTZC_V104()}catch(e){document.getElementById('pubBodyV104').innerHTML='<tr><td colspan="5">Não foi possível carregar as publicações.</td></tr>'}
  };
  window.renderPublicacoesTZC_V104=function(){
@@ -6415,7 +6408,7 @@ function filtrarEstudosTZC_V55(valor){
  window.visualizarPublicacaoTZC_V104=function(id){const r=lista.find(x=>x.ID_Publicacao===id);if(!r)return;const save=document.getElementById('contentContainer').innerHTML;leitura(r,r.Tipo);window._pubVoltarV104=save;document.querySelector('.tzc-publico-v103 button').setAttribute('onclick',"abrirPublicacoesTZC_V104()")};
  function modalForm(r){
    const d=document.createElement('div');d.className='tzc-pub-modal-v104';d.id='pubModalV104';
-   d.innerHTML=`<div class="tzc-pub-box-v104"><div class="tzc-pub-head-v104"><h3>${editando?'Editar':'Nova'} Publicação</h3><button class="tzc-pub-x-v104" onclick="document.getElementById('pubModalV104').remove()"><i class="fa-solid fa-xmark"></i></button></div><div class="tzc-pub-form-v104">
+   d.innerHTML=`<div class="tzc-pub-box-v104"><div class="tzc-pub-head-v104"><h3><i class="fa-solid ${editando?'fa-pen':'fa-plus'}"></i> ${editando?'Editar':'Nova'} Publicação</h3><button class="tzc-pub-x-v104" onclick="document.getElementById('pubModalV104').remove()"><i class="fa-solid fa-xmark"></i></button></div><div class="tzc-pub-form-v104">
    <div class="tzc-pub-field-v104"><label>Tipo *</label><select id="pTipo"><option>Mensagem do Dia</option><option>Banho da Semana</option><option>Reflexão/Ensinamento</option></select></div>
    <div class="tzc-pub-field-v104"><label>Data da publicação</label><input id="pData" type="date"></div>
    <div class="tzc-pub-field-v104 full"><label>Título *</label><input id="pTitulo"></div>
@@ -6444,6 +6437,134 @@ function filtrarEstudosTZC_V55(valor){
    if(!confirm(`Deseja realmente excluir "${r.Titulo}"?`))return;
    const res=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'excluir',nomeAba:SHEET,id,idColuna:'ID_Publicacao'})});const j=await res.json().catch(()=>({status:'sucesso'}));if(j.status==='erro'){alert(j.mensagem||'Erro ao excluir.');return}await carregar();renderPublicacoesTZC_V104();
  };
+})();
+</script>
+
+
+<style id="tzc-v105-ajustes-publicacoes-institucional">
+/* Quem Somos — separação visual mais clara sem pesar a página */
+.tzc-publico-sec-v103{
+  border:1px solid #303030!important;
+  border-left:3px solid rgba(212,175,55,.48)!important;
+  background:linear-gradient(145deg,#181818,#101010)!important;
+  box-shadow:0 1px 0 rgba(255,255,255,.02) inset!important;
+}
+.tzc-publico-sec-v103 + .tzc-publico-sec-v103{margin-top:14px!important}
+.tzc-publico-primeira-v105{padding-top:18px!important}
+
+/* Botão principal — padrão dourado */
+.tzc-btn-gold-v105{
+  background:var(--gold-primary)!important;
+  color:#111!important;
+  border:1px solid var(--gold-primary)!important;
+  font-weight:700!important;
+}
+.tzc-btn-gold-v105:hover{filter:brightness(1.08)!important}
+
+/* Publicações — modal compacto, no padrão do sistema */
+.tzc-pub-modal-v104{padding:16px!important}
+.tzc-pub-box-v104{
+  width:min(920px,calc(100vw - 32px))!important;
+  max-height:calc(100dvh - 32px)!important;
+  padding:14px 16px!important;
+  border-radius:10px!important;
+  overflow:auto!important;
+}
+.tzc-pub-head-v104{margin-bottom:10px!important;padding-bottom:8px!important;border-bottom:1px solid #2b2b2b!important}
+.tzc-pub-head-v104 h3{font-size:.95rem!important;color:#fff!important}
+.tzc-pub-head-v104 h3 i{color:var(--gold-primary)!important;margin-right:6px!important}
+.tzc-pub-form-v104{
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:8px 12px!important;
+}
+.tzc-pub-field-v104{grid-column:span 2!important}
+.tzc-pub-field-v104.full{grid-column:1/-1!important}
+.tzc-pub-field-v104 label{font-size:.74rem!important}
+.tzc-pub-field-v104 input,.tzc-pub-field-v104 select,.tzc-pub-field-v104 textarea{
+  padding:7px 9px!important;font-size:.8rem!important;border-radius:7px!important;
+}
+.tzc-pub-field-v104 textarea{min-height:54px!important;max-height:82px!important}
+#pConteudo{min-height:82px!important;max-height:115px!important}
+.tzc-pub-actions-v104{grid-column:1/-1!important;margin-top:2px!important}
+.tzc-pub-actions-v104 .btn-toolbar:last-child{
+  background:var(--gold-primary)!important;color:#111!important;border-color:var(--gold-primary)!important;font-weight:700!important
+}
+@media(max-width:760px){
+  .tzc-pub-form-v104{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .tzc-pub-field-v104{grid-column:span 1!important}
+  .tzc-pub-field-v104.full{grid-column:1/-1!important}
+}
+@media(max-width:520px){
+  .tzc-pub-form-v104{grid-template-columns:1fr!important}
+  .tzc-pub-field-v104,.tzc-pub-field-v104.full{grid-column:1!important}
+}
+
+/* Mensagem do Dia — modal público ao carregar */
+.tzc-msgdia-overlay-v105{
+  position:fixed;inset:0;z-index:100500;background:rgba(0,0,0,.78);
+  display:flex;align-items:center;justify-content:center;padding:18px;
+}
+.tzc-msgdia-box-v105{
+  width:min(620px,calc(100vw - 36px));max-height:calc(100dvh - 36px);overflow:auto;
+  background:linear-gradient(145deg,#191919,#0f0f0f);border:1px solid var(--gold-primary);
+  border-radius:11px;padding:18px 20px;box-shadow:0 18px 50px rgba(0,0,0,.7)
+}
+.tzc-msgdia-head-v105{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:9px;margin-bottom:12px;border-bottom:1px solid #303030}
+.tzc-msgdia-head-v105 h3{margin:0;color:#fff;font-size:1rem}
+.tzc-msgdia-head-v105 h3 i{color:var(--gold-primary);margin-right:7px}
+.tzc-msgdia-close-v105{border:0;background:transparent;color:#aaa;font-size:1.1rem;cursor:pointer;padding:4px}
+.tzc-msgdia-title-v105{color:var(--gold-light);font-size:.95rem;font-weight:700;margin:0 0 10px}
+.tzc-msgdia-text-v105{color:#d2d2d2;font-size:.88rem;line-height:1.75;white-space:pre-line}
+.tzc-msgdia-foot-v105{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;padding-top:10px;border-top:1px solid #292929}
+.tzc-msgdia-date-v105{color:#888;font-size:.72rem}
+</style>
+
+<script id="tzc-v105-mensagem-dia-modal">
+(function(){
+  function escV105(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+  function dataV105(v){if(!v)return'';try{return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo'}).format(new Date(v))}catch(e){return String(v)}}
+  function fecharV105(){document.getElementById('tzcMsgDiaV105')?.remove()}
+  window.fecharMensagemDiaTZC_V105=fecharV105;
+
+  async function buscarMensagemV105(){
+    try{
+      const api=(typeof WEB_APP_URL!=='undefined'?WEB_APP_URL:'');
+      const r=await fetch(`${api}?sheet=Publicacoes&t=${Date.now()}`,{cache:'no-store'});
+      const j=await r.json();
+      if(!Array.isArray(j)) return null;
+      return j.filter(x=>x.Tipo==='Mensagem do Dia' &&
+        String(x.Status||'Ativo').toLowerCase()!=='excluido' &&
+        String(x.Acesso_Publico||'Sim').toLowerCase()!=='não')
+        .sort((a,b)=>new Date(b.Data_Publicacao||b.Data_Criacao||0)-new Date(a.Data_Publicacao||a.Data_Criacao||0))[0]||null;
+    }catch(e){return null}
+  }
+
+  window.mostrarMensagemDiaTZC_V105=async function(){
+    fecharV105();
+    let m=await buscarMensagemV105();
+    if(!m){
+      m={
+        Titulo:'Bom dia, alma gentil. 🌹',
+        Conteudo:'Que a aurora, ao abrir suas cortinas sobre o mundo, encontre teu coração em paz e derrame sobre teus caminhos a doce luz de um novo dia.\\n\\nQue nenhuma sombra seja longa demais, nem vento algum perturbe a serenidade do teu espírito. E que, entre os pequenos acontecimentos desta manhã, encontres motivos para sorrir — pois até o mais simples instante pode esconder a beleza de um verso.\\n\\nSegue teu dia com leveza, como quem caminha sob a bênção dos céus, e guarda contigo a certeza de que há beleza naqueles que tornam o mundo mais amável apenas por existirem.\\n\\nQue teu dia seja doce, tranquilo e digno de ser lembrado. 🌷✨',
+        Data_Publicacao:'2026-09-30'
+      };
+    }
+    const d=document.createElement('div');d.id='tzcMsgDiaV105';d.className='tzc-msgdia-overlay-v105';
+    d.innerHTML=`<div class="tzc-msgdia-box-v105" role="dialog" aria-modal="true" aria-label="Mensagem do Dia">
+      <div class="tzc-msgdia-head-v105"><h3><i class="fa-solid fa-feather-pointed"></i> Mensagem do Dia</h3><button class="tzc-msgdia-close-v105" onclick="fecharMensagemDiaTZC_V105()" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="tzc-msgdia-title-v105">${escV105(m.Titulo||'Mensagem do Dia')}</div>
+      <div class="tzc-msgdia-text-v105">${escV105(m.Conteudo||'')}</div>
+      <div class="tzc-msgdia-foot-v105"><span class="tzc-msgdia-date-v105">${dataV105(m.Data_Publicacao)}</span><button class="btn-toolbar" onclick="fecharMensagemDiaTZC_V105()">Fechar</button></div>
+    </div>`;
+    d.addEventListener('click',e=>{if(e.target===d)fecharV105()});
+    document.body.appendChild(d);
+  };
+
+  /* Menu Mensagem do Dia também abre o mesmo modal, sem trocar de página. */
+  window.abrirMensagemDiaTZC_V103=function(){window.mostrarMensagemDiaTZC_V105()};
+
+  /* Uma vez por carregamento real da página. */
+  window.addEventListener('load',()=>setTimeout(()=>window.mostrarMensagemDiaTZC_V105(),700));
 })();
 </script>
 

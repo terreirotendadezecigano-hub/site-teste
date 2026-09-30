@@ -5954,6 +5954,16 @@ function filtrarEstudosTZC_V55(valor){
   window.tzcUsuariosV99 = [];
 
   function escU(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+  function formatarDataHoraTZCV100(v){
+    if(!v) return '—';
+    const d = new Date(v);
+    if(Number.isNaN(d.getTime())) return escU(v);
+    return new Intl.DateTimeFormat('pt-BR',{
+      day:'2-digit',month:'2-digit',year:'numeric',
+      hour:'2-digit',minute:'2-digit',
+      hour12:false,timeZone:'America/Sao_Paulo'
+    }).format(d).replace(',', ' às');
+  }
   function podeGerenciarU(){
     const u = (typeof loggedUser !== 'undefined' && loggedUser) ? loggedUser : {};
     const p = String(u.perfil||'').toLowerCase();
@@ -6013,7 +6023,7 @@ function filtrarEstudosTZC_V55(valor){
         <td style="padding:9px 10px;color:#cfcfcf;">${escU(u.Email||'—')}</td>
         <td style="padding:9px 10px;color:#cfcfcf;">${escU(u.Perfil||'Membro')}</td>
         <td style="padding:9px 10px;"><span class="tzc-status-cinza-v90">${ativo?'Ativo':'Inativo'}</span></td>
-        <td style="padding:9px 10px;color:#aaa;">${escU(u.Ultimo_Acesso||'—')}</td>
+        <td style="padding:9px 10px;color:#aaa;white-space:nowrap;">${formatarDataHoraTZCV100(u.Ultimo_Acesso)}</td>
         <td style="padding:7px 10px;text-align:right;white-space:nowrap;">
           <button class="btn-icon-only" title="Editar" onclick="editarUsuarioPermissaoTZC('${escU(u.ID_Usuario)}')"><i class="fas fa-pen"></i></button>
           <button class="btn-icon-only" title="${ativo?'Desativar':'Ativar'}" onclick="alterarStatusUsuarioTZC('${escU(u.ID_Usuario)}','${ativo?'Inativo':'Ativo'}')"><i class="fas fa-${ativo?'ban':'check'}"></i></button>

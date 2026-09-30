@@ -8875,6 +8875,209 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
 })();
 </script>
 
+
+<!-- ============================================================
+     TZC V145 — CORREÇÃO REAL: EVENTOS + CONTROLE DE PRESENÇAS
+     Base: V144
+     1) usa os elementos REAIS da Home: #generalInfoSection e #searchContainerWrapper
+     2) Eventos administrativo ocupa a página corretamente
+     3) Controle de Presenças abre página própria para escolher o evento
+     ============================================================ -->
+<script id="tzc-v145-eventos-presencas-correcao-real">
+(function(){
+  function perfilV145(){
+    try{
+      const u=(typeof loggedUser!=='undefined' && loggedUser)?loggedUser:null;
+      return String((u && (u.perfil||u.Perfil))||'').trim().toLowerCase();
+    }catch(e){ return ''; }
+  }
+
+  function podeGerenciarV145(){
+    return ['dirigente','administrador','colaborador','editor/colaborador','editor']
+      .includes(perfilV145());
+  }
+
+  function prepararPaginaInternaV145(){
+    const info=document.getElementById('generalInfoSection');
+    const busca=document.getElementById('searchContainerWrapper');
+    const titulo=document.getElementById('pageTitle');
+    const subt=document.getElementById('pageSubtitleContainer');
+
+    if(info) info.style.display='none';
+    if(busca) busca.style.display='none';
+    if(titulo){
+      titulo.style.display='none';
+      titulo.classList.remove('tzc-home-destaque-v110');
+    }
+    if(subt) subt.innerHTML='';
+    window.scrollTo({top:0,behavior:'auto'});
+  }
+
+  function escV145(v){
+    return String(v??'')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+      .replace(/'/g,'&#039;');
+  }
+
+  function fmtV145(v){
+    if(!v)return '—';
+    const d=new Date(v);
+    if(isNaN(d.getTime()))return escV145(v);
+    try{
+      return new Intl.DateTimeFormat('pt-BR',{
+        day:'2-digit',month:'2-digit',year:'numeric',
+        hour:'2-digit',minute:'2-digit',
+        timeZone:'America/Sao_Paulo'
+      }).format(d).replace(',',' às');
+    }catch(e){return escV145(v)}
+  }
+
+  /* EVENTOS ADMINISTRATIVO:
+     chama a função aprovada existente, mas primeiro limpa a Home REAL. */
+  const abrirEventosBaseV145=window.abrirEventosTZC_V126;
+  if(typeof abrirEventosBaseV145==='function'){
+    window.abrirEventosTZC_V126=async function(){
+      prepararPaginaInternaV145();
+      return await abrirEventosBaseV145.apply(this,arguments);
+    };
+  }
+
+  /* CONTROLE DE PRESENÇAS:
+     página própria de seleção de evento; não redireciona mais simplesmente para Eventos. */
+  window.abrirControlePresencasV145=async function(){
+    if(!podeGerenciarV145()){
+      if(typeof showToast==='function')showToast('Acesso restrito à equipe de gestão.');
+      return;
+    }
+
+    prepararPaginaInternaV145();
+    try{ document.getElementById('sidebar')?.classList.remove('open'); }catch(e){}
+
+    const c=document.getElementById('contentContainer');
+    if(!c)return;
+
+    c.innerHTML=`
+      <div class="tzc-controle-pres-v145">
+        <div class="tzc-page-head-v44">
+          <button type="button" class="btn-toolbar tzc-page-back-v44"
+            onclick="switchTab('Home',document.querySelector('#navList .nav-item'))">
+            <i class="fa-solid fa-arrow-left"></i> Início
+          </button>
+
+          <div class="tzc-page-copy-v44">
+            <h2><i class="fa-solid fa-users-viewfinder"></i> Controle de Presenças
+              <span id="controlePresCountV145" class="tzc-count-v47"></span>
+            </h2>
+            <p>Painel de controle de presença: escolha um evento para visualizar as confirmações dos participantes e registrar a presença no dia.</p>
+          </div>
+          <div></div>
+        </div>
+
+        <div style="overflow:auto">
+          <table class="tzc-pres-v127-table">
+            <thead>
+              <tr>
+                <th>Evento</th>
+                <th>Tipo</th>
+                <th>Data</th>
+                <th>Local</th>
+                <th style="text-align:right">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="controlePresBodyV145">
+              <tr><td colspan="5">Carregando eventos...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+
+    try{
+      let lista=[];
+      if(typeof getSheet==='function'){
+        lista=await getSheet('Eventos');
+      }else if(Array.isArray(window.eventos)){
+        lista=window.eventos;
+      }
+
+      lista=(Array.isArray(lista)?lista:[])
+        .filter(x=>!['excluido','cancelado'].includes(String(x.Status||'Ativo').trim().toLowerCase()))
+        .sort((a,b)=>(new Date(a.Data_Inicio||0).getTime()||0)-(new Date(b.Data_Inicio||0).getTime()||0));
+
+      const count=document.getElementById('controlePresCountV145');
+      if(count)count.textContent='· '+lista.length+' registros';
+
+      const body=document.getElementById('controlePresBodyV145');
+      if(!body)return;
+
+      if(!lista.length){
+        body.innerHTML='<tr><td colspan="5">Nenhum evento disponível.</td></tr>';
+        return;
+      }
+
+      body.innerHTML=lista.map(x=>`
+        <tr>
+          <td><strong>${escV145(x.Titulo||'Evento')}</strong></td>
+          <td>${escV145(x.Tipo||'—')}</td>
+          <td>${fmtV145(x.Data_Inicio)}</td>
+          <td>${escV145(x.Local||'—')}</td>
+          <td style="text-align:right">
+            <button type="button" class="btn-toolbar"
+              onclick="abrirPresencasTZCV127('${escV145(x.ID_Evento||'')}')">
+              <i class="fa-solid fa-user-check"></i> Abrir controle
+            </button>
+          </td>
+        </tr>`).join('');
+    }catch(e){
+      const body=document.getElementById('controlePresBodyV145');
+      if(body)body.innerHTML='<tr><td colspan="5">Não foi possível carregar os eventos.</td></tr>';
+    }
+  };
+
+  /* Corrige o item já criado pelas versões anteriores. */
+  function corrigirMenuV145(){
+    const item=document.getElementById('menuPresencasV134');
+    if(!item)return;
+    if(!podeGerenciarV145()){
+      item.remove();
+      return;
+    }
+    item.onclick=function(){
+      window.abrirControlePresencasV145();
+    };
+  }
+
+  /* Ao voltar à Home, deixa a função original restaurar a página e
+     reaplica somente o clique correto do menu de Presenças. */
+  const switchBaseV145=window.switchTab;
+  if(typeof switchBaseV145==='function'){
+    window.switchTab=function(tabName,element){
+      const r=switchBaseV145.apply(this,arguments);
+      setTimeout(corrigirMenuV145,0);
+      return r;
+    };
+  }
+
+  const authBaseV145=window.updateAuthUI;
+  if(typeof authBaseV145==='function'){
+    window.updateAuthUI=function(){
+      const r=authBaseV145.apply(this,arguments);
+      setTimeout(corrigirMenuV145,30);
+      return r;
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(corrigirMenuV145,500));
+  setTimeout(corrigirMenuV145,700);
+})();
+</script>
+
+<style id="tzc-v145-controle-presencas">
+.tzc-controle-pres-v145{width:100%;box-sizing:border-box}
+.tzc-controle-pres-v145 .tzc-page-head-v44{width:100%;box-sizing:border-box}
+.tzc-controle-pres-v145 table{width:100%}
+</style>
+
 </body>
 </html>
 

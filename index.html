@@ -9158,3 +9158,190 @@ html body #loginModal #loginEmail::placeholder {
 })();
 </script>
 
+
+<!-- =========================================================
+     TZC V123 — PADRÃO DEFINITIVO DE CAMPOS / INTRODUÇÕES
+     Esta regra está fisicamente no FIM do arquivo para vencer
+     todas as camadas CSS antigas existentes no projeto.
+     ========================================================= -->
+<style id="tzc-v123-padrao-definitivo-campos">
+/* CAMPOS CINZA OFICIAIS */
+html body #modalNovoEstudoTZC_V1 input:not([type="hidden"]),
+html body #modalNovoEstudoTZC_V1 select,
+html body #modalNovoEstudoTZC_V1 textarea,
+html body #modalCategoriaTZC_V1 input:not([type="hidden"]),
+html body #modalCategoriaTZC_V1 select,
+html body #modalCategoriaTZC_V1 textarea,
+html body #midiasModalOverlayV82 input,
+html body #midiasModalOverlayV82 select,
+html body #midiasModalOverlayV82 textarea,
+html body #artesOverlayV85 input:not([type="hidden"]),
+html body #artesOverlayV85 select,
+html body #artesOverlayV85 textarea,
+html body #modalUsuarioV99 input:not([type="hidden"]),
+html body #modalUsuarioV99 select,
+html body #modalUsuarioV99 textarea,
+html body #pubModalV104 input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+html body #pubModalV104 select,
+html body #pubModalV104 textarea,
+html body #tzcEditCampoV33 {
+  background:#505050 !important;
+  background-image:none !important;
+  border:1px solid rgba(212,175,55,.62) !important;
+  color:#202020 !important;
+  -webkit-text-fill-color:#202020 !important;
+  caret-color:#202020 !important;
+  font-family:inherit !important;
+  font-style:normal !important;
+  font-weight:500 !important;
+  opacity:1 !important;
+  box-shadow:none !important;
+}
+
+/* INTRODUÇÃO/ORIENTAÇÃO: SEMPRE BRANCA + ITÁLICA ("palavras tombadas" rsrsrs) */
+html body #modalNovoEstudoTZC_V1 input::placeholder,
+html body #modalNovoEstudoTZC_V1 textarea::placeholder,
+html body #modalCategoriaTZC_V1 input::placeholder,
+html body #modalCategoriaTZC_V1 textarea::placeholder,
+html body #midiasModalOverlayV82 input::placeholder,
+html body #midiasModalOverlayV82 textarea::placeholder,
+html body #artesOverlayV85 input::placeholder,
+html body #artesOverlayV85 textarea::placeholder,
+html body #modalUsuarioV99 input::placeholder,
+html body #modalUsuarioV99 textarea::placeholder,
+html body #pubModalV104 input::placeholder,
+html body #pubModalV104 textarea::placeholder,
+html body #tzcEditCampoV33::placeholder {
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+  opacity:1 !important;
+  font-family:inherit !important;
+  font-style:italic !important;
+  font-weight:400 !important;
+}
+
+/* SELECT = orientação/seleção visível: branco e itálico, igual ao padrão pedido. */
+html body #modalNovoEstudoTZC_V1 select,
+html body #modalCategoriaTZC_V1 select,
+html body #midiasModalOverlayV82 select,
+html body #artesOverlayV85 select,
+html body #modalUsuarioV99 select,
+html body #pubModalV104 select {
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+  font-family:inherit !important;
+  font-style:italic !important;
+  font-weight:400 !important;
+}
+
+/* Opções abertas do select. */
+html body #modalNovoEstudoTZC_V1 option,
+html body #modalCategoriaTZC_V1 option,
+html body #midiasModalOverlayV82 option,
+html body #artesOverlayV85 option,
+html body #modalUsuarioV99 option,
+html body #pubModalV104 option {
+  background:#505050 !important;
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+  font-family:inherit !important;
+  font-style:normal !important;
+}
+
+/* Foco mantém exatamente a mesma família visual. */
+html body #modalNovoEstudoTZC_V1 input:focus,
+html body #modalNovoEstudoTZC_V1 select:focus,
+html body #modalNovoEstudoTZC_V1 textarea:focus,
+html body #modalCategoriaTZC_V1 input:focus,
+html body #modalCategoriaTZC_V1 select:focus,
+html body #midiasModalOverlayV82 input:focus,
+html body #midiasModalOverlayV82 select:focus,
+html body #midiasModalOverlayV82 textarea:focus,
+html body #artesOverlayV85 input:focus,
+html body #artesOverlayV85 select:focus,
+html body #artesOverlayV85 textarea:focus,
+html body #modalUsuarioV99 input:focus,
+html body #modalUsuarioV99 select:focus,
+html body #modalUsuarioV99 textarea:focus,
+html body #pubModalV104 input:focus,
+html body #pubModalV104 select:focus,
+html body #pubModalV104 textarea:focus,
+html body #tzcEditCampoV33:focus {
+  background:#575757 !important;
+  border-color:var(--gold-primary) !important;
+  outline:none !important;
+  box-shadow:0 0 0 1px rgba(212,175,55,.18) !important;
+}
+
+/* QUEM SOMOS — texto público branco, conforme solicitado. */
+html body #txtQuemSomos {
+  color:#fff !important;
+}
+
+/* GESTÃO INTERNA — somente UM card marcado, nunca o Estudos por padrão. */
+html body .gestao-interna-home .card {
+  border-color:var(--border-color) !important;
+  box-shadow:none !important;
+}
+html body .gestao-interna-home .card.tzc-card-retorno-v121 {
+  border-color:var(--gold-primary) !important;
+  box-shadow:0 0 0 1px rgba(212,175,55,.18),0 8px 22px rgba(0,0,0,.28) !important;
+  background:linear-gradient(145deg,#1d1b13,#0d0d0d) !important;
+}
+</style>
+
+<script id="tzc-v123-introducoes-campos">
+(function(){
+  function ph(id,texto){
+    const el=document.getElementById(id);
+    if(el) el.setAttribute('placeholder',texto);
+  }
+
+  function aplicarV123(){
+    /* Estudos */
+    ph('tzcEstudoTitulo','Digite o título do estudo...');
+    ph('tzcEstudoResumo','Digite um breve resumo do conteúdo...');
+    ph('tzcEstudoTexto','Escreva aqui o conteúdo completo do estudo...');
+    ph('tzcEstudoImagem','Cole aqui o link da imagem...');
+    ph('tzcEstudoFonte','Informe livro, autor, site ou outra referência...');
+
+    /* Categoria */
+    const cat=document.querySelector('#modalCategoriaTZC_V1 input');
+    if(cat) cat.placeholder='Ex.: Umbanda, Oração, Ervas & Banhos...';
+
+    /* Mídias Sociais */
+    ph('mRedeV82','Ex.: Instagram');
+    ph('mNomeV82','Digite o nome de exibição...');
+    ph('mURLV82','Cole aqui o link da mídia...');
+    ph('mObsV82','Digite uma observação sobre esta mídia...');
+
+    /* Artes e PDFs */
+    ph('aTituloV85','Digite o título do material...');
+    ph('aArquivoV85','Cole aqui o link do arquivo...');
+    ph('aCapaV85','Cole aqui o link da imagem ou capa...');
+    ph('aDescricaoV85','Digite uma breve descrição do material...');
+
+    /* Usuários */
+    ph('uNomeV99','Digite o nome do usuário...');
+    ph('uEmailV99','Digite o e-mail do usuário...');
+    ph('uObsV99','Digite uma observação sobre o usuário...');
+
+    /* Publicações — IDs atuais + fallback por rótulo/ordem */
+    const pub=document.getElementById('pubModalV104');
+    if(pub){
+      const inputs=[...pub.querySelectorAll('input:not([type="hidden"]):not([type="date"])')];
+      const areas=[...pub.querySelectorAll('textarea')];
+      if(inputs[0] && !inputs[0].placeholder) inputs[0].placeholder='Digite o título da publicação...';
+      if(inputs[1] && !inputs[1].placeholder) inputs[1].placeholder='Digite o nome do autor...';
+      if(areas[0] && !areas[0].placeholder) areas[0].placeholder='Digite o conteúdo completo da publicação...';
+    }
+
+    /* Configurações — editor inline também segue o mesmo padrão. */
+    const cfg=document.getElementById('tzcEditCampoV33');
+    if(cfg && !cfg.placeholder) cfg.placeholder='Digite a informação...';
+  }
+
+  aplicarV123();
+  new MutationObserver(aplicarV123).observe(document.body,{childList:true,subtree:true});
+})();
+</script>

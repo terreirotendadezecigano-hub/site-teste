@@ -8916,6 +8916,208 @@ html body #presBodyV127 .btn-icon-only:hover{
 })();
 </script>
 
+
+<!-- =========================================================
+     TZC V136 — CORREÇÃO DE ESTADO/NAVEGAÇÃO DE EVENTOS,
+     LOGIN APÓS LOGOUT E CARREGAMENTO DO CONTROLE DE PRESENÇAS
+     ========================================================= -->
+<style id="tzc-v136-fix">
+/* O botão de retorno permanece sempre pequeno/discreto. */
+html body .tzc-page-head-v44 .tzc-page-back-v44,
+html body .tzc-eventos-toolbar-v133 > button{
+  width:auto!important;min-width:0!important;max-width:max-content!important;
+  min-height:32px!important;padding:6px 10px!important;justify-self:start!important
+}
+</style>
+
+<script id="tzc-v136-fix-script">
+(function(){
+  const API136=(typeof WEB_APP_URL!=='undefined'?WEB_APP_URL:'');
+  const esc136=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const perfil136=()=>{
+    try{
+      const u=(typeof loggedUser!=='undefined'&&loggedUser)?loggedUser:window.loggedUser;
+      return String(u?.perfil||u?.Perfil||'').trim().toLowerCase();
+    }catch(e){return ''}
+  };
+  const gestor136=()=>['dirigente','administrador','colaborador','editor/colaborador','editor'].includes(perfil136());
+
+  async function sheet136(nome){
+    const r=await fetch(`${API136}?sheet=${encodeURIComponent(nome)}&t=${Date.now()}`,{cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    return Array.isArray(j)?j:[];
+  }
+  const fmt136=v=>{
+    if(!v)return '—';
+    try{
+      const d=new Date(v); if(isNaN(d))return String(v);
+      return new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'}).format(d).replace(',',' às');
+    }catch(e){return String(v)}
+  };
+
+  /* LOGIN: a V135 removia o próprio #loginModal do DOM no logout.
+     Agora o modal permanente nunca é removido; apenas overlays transitórios são fechados. */
+  const logoutBase136 = (typeof window.logout==='function') ? window.logout : null;
+  window.logout=function(){
+    try{
+      document.querySelectorAll(
+        '.tzc-evento-overlay-v126,.tzc-confirm-v128-overlay,.tzc-guest-v130-overlay,.tzc-pres-v127-overlay'
+      ).forEach(x=>x.remove());
+      const lm=document.getElementById('loginModal');
+      if(lm)lm.style.display='none';
+
+      isLoggedIn=false;
+      loggedUser=null;
+      try{localStorage.removeItem('loggedUser')}catch(e){}
+      try{sessionStorage.removeItem('loggedUser')}catch(e){}
+      updateAuthUI?.();
+
+      /* volta à Home sem destruir o modal de login */
+      if(typeof switchTab==='function') switchTab('Home',null);
+      else {
+        document.querySelectorAll('#navList .nav-item').forEach(x=>x.classList.remove('active'));
+        document.querySelector('#navList .nav-item')?.click();
+      }
+    }catch(e){
+      if(logoutBase136) try{logoutBase136()}catch(_){}
+    }
+    setTimeout(aplicarMenus136,100);
+  };
+
+  /* Página pública/membro em tela inteira.
+     Há uma segunda aplicação curta apenas se a Home terminar uma requisição antiga
+     e tentar repintar "Destaques" depois do clique. */
+  function telaInteiraEventos136(){
+    const g=document.getElementById('generalInfoSection'); if(g)g.style.display='none';
+    const s=document.getElementById('searchContainerWrapper'); if(s)s.style.display='none';
+    const l=document.getElementById('loading'); if(l)l.style.display='none';
+    const t=document.getElementById('pageTitle'); if(t)t.innerHTML='';
+    const st=document.getElementById('pageSubtitleContainer'); if(st)st.innerHTML='';
+  }
+
+  const membroBase136=window.abrirEventosMembrosTZCV128;
+  if(typeof membroBase136==='function'){
+    window.abrirEventosMembrosTZCV128=async function(el){
+      telaInteiraEventos136();
+      const r=await membroBase136.call(this,el);
+      telaInteiraEventos136();
+      return r;
+    };
+  }
+
+  function abrirEventosMenu136(item){
+    document.querySelectorAll('#navList .nav-item').forEach(x=>x.classList.remove('active'));
+    item?.classList.add('active');
+    document.getElementById('sidebar')?.classList.remove('open');
+    telaInteiraEventos136();
+
+    if(gestor136()) {
+      window.abrirEventosTZC_V126?.();
+    } else {
+      window.abrirEventosMembrosTZCV128?.(item);
+      /* neutraliza somente a corrida da Home no PRIMEIRO clique */
+      setTimeout(()=>{
+        const titulo=(document.getElementById('pageTitle')?.textContent||'').trim();
+        const conteudo=document.getElementById('contentContainer');
+        const eventosNaTela=conteudo?.querySelector('.tzc-eventos-membro-v128');
+        if(!eventosNaTela || /destaques/i.test(titulo)){
+          telaInteiraEventos136();
+          window.abrirEventosMembrosTZCV128?.(item);
+        }
+      },350);
+    }
+  }
+
+  /* Controle de Presenças: V135 chamava getSheet(), que estava fechado
+     dentro do script V127 e por isso não existia aqui. V136 usa fetch próprio. */
+  window.abrirControlePresencasV135=async function(){
+    if(!gestor136()){showToast?.('Este painel é destinado a dirigentes e colaboradores.');return}
+    document.querySelectorAll('#navList .nav-item').forEach(x=>x.classList.remove('active'));
+    document.getElementById('menuPresencasV134')?.classList.add('active');
+    document.getElementById('sidebar')?.classList.remove('open');
+    telaInteiraEventos136();
+
+    const c=document.getElementById('contentContainer');
+    c.innerHTML=`<div class="tzc-pres-control-v135">
+      <div class="tzc-page-head-v44">
+        <button class="btn-toolbar tzc-page-back-v44" onclick="voltarInicioEventosV133()"><i class="fa-solid fa-arrow-left"></i> Início</button>
+        <div class="tzc-page-copy-v44">
+          <h2><i class="fa-solid fa-user-check"></i> Controle de Presenças</h2>
+          <p><strong>Painel de controle de presença:</strong> escolha um evento para visualizar as confirmações dos participantes e registrar a presença no dia.</p>
+        </div>
+        <span></span>
+      </div>
+      <div class="tzc-eventos-search-v126" style="margin-bottom:12px">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input id="presEventoBuscaV135" placeholder="Pesquisar eventos..." oninput="filtrarControlePresencasV135(this.value)">
+      </div>
+      <div id="presEventosListaV135" class="tzc-pres-control-list-v135">
+        <div style="text-align:center;color:#aaa;padding:18px"><i class="fa-solid fa-spinner fa-spin"></i> Carregando eventos...</div>
+      </div>
+    </div>`;
+
+    try{
+      const arr=await sheet136('Eventos');
+      const agora=Date.now();
+      arr.sort((a,b)=>{
+        const da=new Date(a.Data_Inicio||0).getTime()||0,db=new Date(b.Data_Inicio||0).getTime()||0;
+        const af=da>=agora,bf=db>=agora;
+        if(af&&bf)return da-db;if(af!==bf)return af?-1:1;return db-da;
+      });
+      const ativos=arr.filter(x=>String(x.Status||'Ativo').toLowerCase()!=='excluido');
+      const box=document.getElementById('presEventosListaV135');
+      if(!box)return;
+      box.innerHTML=ativos.map(x=>`<article class="tzc-pres-control-card-v135">
+        <div>
+          <h3>${esc136(x.Titulo||'Evento')}</h3>
+          <p><i class="fa-solid fa-calendar-day" style="color:var(--gold-primary)"></i> ${fmt136(x.Data_Inicio)}
+          &nbsp; · &nbsp; ${esc136(x.Tipo||'Evento')}
+          &nbsp; · &nbsp; ${esc136(x.Local||'Local a confirmar')}</p>
+        </div>
+        <button class="btn-icon-only" title="Abrir controle de presenças"
+          onclick="abrirPresencasTZCV127('${esc136(x.ID_Evento)}')">
+          <i class="fa-solid fa-user-check"></i>
+        </button>
+      </article>`).join('')||'<div style="text-align:center;color:#aaa;padding:18px">Nenhum evento cadastrado.</div>';
+    }catch(e){
+      const box=document.getElementById('presEventosListaV135');
+      if(box)box.innerHTML='<div style="text-align:center;color:#aaa;padding:18px">Não foi possível carregar os eventos.</div>';
+    }
+  };
+
+  function aplicarMenus136(){
+    const ev=document.getElementById('menuEventosV128');
+    if(ev)ev.onclick=function(){abrirEventosMenu136(this)};
+
+    const pr=document.getElementById('menuPresencasV134');
+    if(pr){
+      if(gestor136()){
+        pr.style.display='';
+        pr.onclick=()=>window.abrirControlePresencasV135();
+      }else pr.remove();
+    }
+  }
+
+  /* garante que Área de Membros continue abrindo depois de sair */
+  const openLogin136=window.openLoginModal;
+  window.openLoginModal=function(){
+    const modal=document.getElementById('loginModal');
+    if(modal){
+      const msg=document.getElementById('modalMsg'); if(msg)msg.innerText='';
+      modal.style.display='flex';
+      return;
+    }
+    if(openLogin136) return openLogin136();
+  };
+
+  const obs136=new MutationObserver(()=>aplicarMenus136());
+  obs136.observe(document.documentElement,{childList:true,subtree:true});
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(aplicarMenus136,100));
+  setTimeout(aplicarMenus136,250);
+})();
+</script>
+
 </body>
 </html>
 

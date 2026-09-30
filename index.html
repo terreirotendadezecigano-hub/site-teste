@@ -8006,7 +8006,7 @@ html body .gestao-interna-home .card.tzc-card-retorno-v121 {
  const esc=s=>String(s??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]));
  const idP=()=>`PRE_${Date.now()}_${Math.random().toString(36).slice(2,7).toUpperCase()}`;
  async function getSheet(nome){const r=await fetch(`${API}?sheet=${encodeURIComponent(nome)}&t=${Date.now()}`,{cache:'no-store'});const j=await r.json();return Array.isArray(j)?j:[]}
- function nomeUsuario(id){const u=usuariosV127.find(x=>String(x.ID_Usuario)===String(id));return u?.Nome||u?.Email||id||'—'}
+ function nomeUsuario(id){const p=presencasV127.find(x=>String(x.ID_Usuario)===String(id));if(String(id||'').startsWith('VISITANTE_')&&String(p?.Nome_Visitante||'').trim())return String(p.Nome_Visitante).trim();const u=usuariosV127.find(x=>String(x.ID_Usuario)===String(id));return u?.Nome||u?.Email||id||'—'}
  /* acrescenta ação Confirmações/Presenças sem mexer no CRUD já aprovado */
  const renderAnt=window.renderEventosTZC_V126;
  window.renderEventosTZC_V126=function(){renderAnt();document.querySelectorAll('#eventoBodyV126 tr').forEach(tr=>{const edit=tr.querySelector('button[title="Editar"]');if(!edit||tr.querySelector('.tzc-pres-btn-v127'))return;const m=edit.getAttribute('onclick')?.match(/'([^']+)'/);if(!m)return;edit.insertAdjacentHTML('beforebegin',`<button class="btn-icon-only tzc-pres-btn-v127" title="Confirmações e Presenças" onclick="abrirPresencasTZCV127('${esc(m[1])}')"><i class="fa-solid fa-user-check"></i></button>`)})};

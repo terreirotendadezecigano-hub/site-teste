@@ -7543,6 +7543,205 @@ button.tzc-salvar-padrao-v109:hover{
 }
 </style>
 
+
+
+<!-- =========================================================
+     TZC V121 — PADRÃO VISUAL FINAL DOS CAMPOS + CARD DE RETORNO
+     ========================================================= -->
+<style id="tzc-v121-campos-padronizados">
+/* Regra visual oficial dos formulários de cadastro:
+   campo cinza visível antes do clique + borda dourada suave;
+   placeholder claro; texto preenchido escuro; foco dourado. */
+html body #studyModal input:not([type="hidden"]),
+html body #studyModal select,
+html body #studyModal textarea,
+html body #categoryModal input:not([type="hidden"]),
+html body #categoryModal select,
+html body #categoryModal textarea,
+html body #usuarioModalV99 input:not([type="hidden"]),
+html body #usuarioModalV99 select,
+html body #usuarioModalV99 textarea,
+html body .artes-modal-v85 input:not([type="hidden"]),
+html body .artes-modal-v85 select,
+html body .artes-modal-v85 textarea,
+html body .tzc-artes-modal-v85 input:not([type="hidden"]),
+html body .tzc-artes-modal-v85 select,
+html body .tzc-artes-modal-v85 textarea,
+html body .tzc-pub-modal-v104 input:not([type="hidden"]),
+html body .tzc-pub-modal-v104 select,
+html body .tzc-pub-modal-v104 textarea,
+html body #modalConfigTerreiroTZC_V1 input:not([type="hidden"]),
+html body #modalConfigTerreiroTZC_V1 select,
+html body #modalConfigTerreiroTZC_V1 textarea,
+html body .ervas-modal-v37 input:not([type="hidden"]),
+html body .ervas-modal-v37 select,
+html body .ervas-modal-v37 textarea {
+  background:#505050 !important;
+  background-image:none !important;
+  color:#202020 !important;
+  -webkit-text-fill-color:#202020 !important;
+  border:1px solid rgba(212,175,55,.62) !important;
+  caret-color:#202020 !important;
+  box-shadow:none !important;
+}
+
+html body #studyModal input::placeholder,
+html body #studyModal textarea::placeholder,
+html body #categoryModal input::placeholder,
+html body #categoryModal textarea::placeholder,
+html body #usuarioModalV99 input::placeholder,
+html body #usuarioModalV99 textarea::placeholder,
+html body .artes-modal-v85 input::placeholder,
+html body .artes-modal-v85 textarea::placeholder,
+html body .tzc-artes-modal-v85 input::placeholder,
+html body .tzc-artes-modal-v85 textarea::placeholder,
+html body .tzc-pub-modal-v104 input::placeholder,
+html body .tzc-pub-modal-v104 textarea::placeholder,
+html body #modalConfigTerreiroTZC_V1 input::placeholder,
+html body #modalConfigTerreiroTZC_V1 textarea::placeholder,
+html body .ervas-modal-v37 input::placeholder,
+html body .ervas-modal-v37 textarea::placeholder {
+  color:#eeeeee !important;
+  -webkit-text-fill-color:#eeeeee !important;
+  opacity:1 !important;
+}
+
+html body #studyModal input:focus, html body #studyModal select:focus, html body #studyModal textarea:focus,
+html body #categoryModal input:focus, html body #categoryModal select:focus, html body #categoryModal textarea:focus,
+html body #usuarioModalV99 input:focus, html body #usuarioModalV99 select:focus, html body #usuarioModalV99 textarea:focus,
+html body .artes-modal-v85 input:focus, html body .artes-modal-v85 select:focus, html body .artes-modal-v85 textarea:focus,
+html body .tzc-artes-modal-v85 input:focus, html body .tzc-artes-modal-v85 select:focus, html body .tzc-artes-modal-v85 textarea:focus,
+html body .tzc-pub-modal-v104 input:focus, html body .tzc-pub-modal-v104 select:focus, html body .tzc-pub-modal-v104 textarea:focus,
+html body #modalConfigTerreiroTZC_V1 input:focus, html body #modalConfigTerreiroTZC_V1 select:focus, html body #modalConfigTerreiroTZC_V1 textarea:focus,
+html body .ervas-modal-v37 input:focus, html body .ervas-modal-v37 select:focus, html body .ervas-modal-v37 textarea:focus {
+  background:#595959 !important;
+  border-color:var(--gold-primary) !important;
+  outline:none !important;
+  box-shadow:0 0 0 1px rgba(212,175,55,.18) !important;
+}
+
+/* Configurações do Terreiro: caixas de edição pelo lápis/+ seguem o mesmo padrão. */
+html body #tzcGeralPainelV1 #tzcEditCampoV33,
+html body #tzcGeralPainelV1 .tzc-v33-cor input:not([type="color"]),
+html body #tzcGeralPainelV1 .tzc-edit-field input,
+html body #tzcGeralPainelV1 .tzc-edit-field select,
+html body #tzcGeralPainelV1 .tzc-edit-field textarea {
+  background:#505050 !important;
+  color:#202020 !important;
+  -webkit-text-fill-color:#202020 !important;
+  border:1px solid rgba(212,175,55,.62) !important;
+  caret-color:#202020 !important;
+}
+html body #tzcGeralPainelV1 #tzcEditCampoV33::placeholder,
+html body #tzcGeralPainelV1 .tzc-edit-field input::placeholder,
+html body #tzcGeralPainelV1 .tzc-edit-field textarea::placeholder {
+  color:#eeeeee !important;
+  -webkit-text-fill-color:#eeeeee !important;
+  opacity:1 !important;
+}
+html body #tzcGeralPainelV1 #tzcEditCampoV33:focus,
+html body #tzcGeralPainelV1 .tzc-edit-field input:focus,
+html body #tzcGeralPainelV1 .tzc-edit-field select:focus,
+html body #tzcGeralPainelV1 .tzc-edit-field textarea:focus {
+  background:#595959 !important;
+  border-color:var(--gold-primary) !important;
+  outline:none !important;
+}
+
+/* Opções dos selects: leitura consistente. */
+html body #studyModal option,
+html body #categoryModal option,
+html body #usuarioModalV99 option,
+html body .artes-modal-v85 option,
+html body .tzc-artes-modal-v85 option,
+html body .tzc-pub-modal-v104 option,
+html body #modalConfigTerreiroTZC_V1 option,
+html body .ervas-modal-v37 option {
+  background:#ededed !important;
+  color:#202020 !important;
+}
+
+/* O login da Área dos Membros permanece como aprovado. */
+html body #loginModal #loginEmail,
+html body #loginModal #loginEmail:focus {
+  background:#e8edf3 !important;
+  color:#202020 !important;
+  -webkit-text-fill-color:#202020 !important;
+}
+
+/* Card de onde o usuário voltou: destaque discreto e inequívoco. */
+html body .gestao-interna-home .card.tzc-card-retorno-v121 {
+  border-color:var(--gold-primary) !important;
+  box-shadow:0 0 0 1px rgba(212,175,55,.18),0 8px 22px rgba(0,0,0,.28) !important;
+  background:linear-gradient(145deg,#1d1b13,#0d0d0d) !important;
+}
+</style>
+
+<script id="tzc-v121-card-retorno">
+(function(){
+  const MAPA = [
+    ['abrirEstudosTZC_V1','abrirEstudosTZC_V1()'],
+    ['abrirCategoriasTZC_V1','abrirCategoriasTZC_V1()'],
+    ['abrirConfiguracoesTerreiroTZC_V1','abrirConfiguracoesTerreiroTZC_V1()'],
+    ['abrirGestaoErvasTZC_V1','abrirGestaoErvasTZC_V1()'],
+    ['abrirMidiasSociaisTZC','abrirMidiasSociaisTZC()'],
+    ['abrirArtesPdfTZC','abrirArtesPdfTZC()'],
+    ['abrirUsuariosPermissoesTZC','abrirUsuariosPermissoesTZC()']
+  ];
+
+  function guardar(chave){
+    try{ sessionStorage.setItem('TZC_GESTAO_CARD_RETORNO_V121',chave); }catch(e){}
+  }
+  function ler(){
+    try{return sessionStorage.getItem('TZC_GESTAO_CARD_RETORNO_V121')||'';}catch(e){return '';}
+  }
+  function marcar(){
+    const chave=ler();
+    document.querySelectorAll('.gestao-interna-home .card').forEach(c=>c.classList.remove('tzc-card-retorno-v121'));
+    if(!chave)return;
+    const card=[...document.querySelectorAll('.gestao-interna-home .card')].find(c=>(c.getAttribute('onclick')||'').includes(chave.replace('()','')));
+    if(card) card.classList.add('tzc-card-retorno-v121');
+  }
+
+  function instalar(){
+    MAPA.forEach(([nome,chave])=>{
+      const original=window[nome];
+      if(typeof original!=='function' || original.__tzcV121)return;
+      const novo=function(){guardar(chave);return original.apply(this,arguments)};
+      novo.__tzcV121=true;
+      window[nome]=novo;
+    });
+
+    const voltarOriginal=window.voltarGestaoInternaTZC_V1;
+    if(typeof voltarOriginal==='function' && !voltarOriginal.__tzcV121){
+      const novoVoltar=function(){
+        const r=voltarOriginal.apply(this,arguments);
+        setTimeout(marcar,0);
+        setTimeout(marcar,80);
+        return r;
+      };
+      novoVoltar.__tzcV121=true;
+      window.voltarGestaoInternaTZC_V1=novoVoltar;
+    }
+
+    const carregarOriginal=window.carregarGestaoInternaTZC_V1;
+    if(typeof carregarOriginal==='function' && !carregarOriginal.__tzcV121){
+      const novoCarregar=function(){
+        const r=carregarOriginal.apply(this,arguments);
+        setTimeout(marcar,0);
+        return r;
+      };
+      novoCarregar.__tzcV121=true;
+      window.carregarGestaoInternaTZC_V1=novoCarregar;
+    }
+  }
+
+  instalar();
+  document.addEventListener('DOMContentLoaded',instalar);
+  setTimeout(instalar,100);
+})();
+</script>
+
 </body>
 </html>
 

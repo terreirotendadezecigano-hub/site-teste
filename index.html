@@ -1889,7 +1889,7 @@
           </div>
 
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
-            <button type="button" class="card" onclick="abrirEstudosTZC_V1()" style="text-align:left;border:1px solid var(--gold-primary);cursor:pointer;background:linear-gradient(145deg,#171717,#0d0d0d);">
+            <button type="button" class="card" onclick="abrirEstudosTZC_V1()" style="text-align:left;border:1px solid var(--border-color);cursor:pointer;background:linear-gradient(145deg,#171717,#0d0d0d);">
               <div style="padding:20px;">
                 <i class="fa-solid fa-book-open" style="font-size:1.7rem;color:var(--gold-primary);margin-bottom:12px;"></i>
                 <h3 style="margin:0 0 6px;color:#fff !important;font-size:1rem;">Estudos</h3>
@@ -7739,6 +7739,141 @@ html body .gestao-interna-home .card.tzc-card-retorno-v121 {
   instalar();
   document.addEventListener('DOMContentLoaded',instalar);
   setTimeout(instalar,100);
+})();
+</script>
+
+
+
+<!-- =========================================================
+     TZC V122 — CORREÇÃO REAL DOS SELETORES DOS MODAIS
+     Os modais Estudos/Categoria/Usuário usam IDs reais diferentes
+     dos seletores antigos. Esta camada final vence inclusive estilos inline.
+     ========================================================= -->
+<style id="tzc-v122-correcao-real-campos">
+/* Padrão único: fundo cinza, borda dourada suave, texto do dado escuro. */
+html body #modalNovoEstudoTZC_V1 input:not([type="hidden"]),
+html body #modalNovoEstudoTZC_V1 select,
+html body #modalNovoEstudoTZC_V1 textarea,
+html body #modalCategoriaTZC_V1 input:not([type="hidden"]),
+html body #modalCategoriaTZC_V1 select,
+html body #modalCategoriaTZC_V1 textarea,
+html body #modalUsuarioV99 input:not([type="hidden"]),
+html body #modalUsuarioV99 select,
+html body #modalUsuarioV99 textarea,
+html body #artesOverlayV85 .artes-modal-v85 input:not([type="hidden"]),
+html body #artesOverlayV85 .artes-modal-v85 select,
+html body #artesOverlayV85 .artes-modal-v85 textarea,
+html body #pubModalV104 input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+html body #pubModalV104 select,
+html body #pubModalV104 textarea {
+  background:#505050 !important;
+  background-image:none !important;
+  border:1px solid rgba(212,175,55,.62) !important;
+  color:#202020 !important;
+  -webkit-text-fill-color:#202020 !important;
+  caret-color:#202020 !important;
+  box-shadow:none !important;
+  opacity:1 !important;
+}
+
+/* Placeholder/orientação permanece clara. */
+html body #modalNovoEstudoTZC_V1 input::placeholder,
+html body #modalNovoEstudoTZC_V1 textarea::placeholder,
+html body #modalCategoriaTZC_V1 input::placeholder,
+html body #modalCategoriaTZC_V1 textarea::placeholder,
+html body #modalUsuarioV99 input::placeholder,
+html body #modalUsuarioV99 textarea::placeholder,
+html body #artesOverlayV85 .artes-modal-v85 input::placeholder,
+html body #artesOverlayV85 .artes-modal-v85 textarea::placeholder,
+html body #pubModalV104 input::placeholder,
+html body #pubModalV104 textarea::placeholder {
+  color:#eeeeee !important;
+  -webkit-text-fill-color:#eeeeee !important;
+  opacity:1 !important;
+  font-weight:400 !important;
+}
+
+/* Selects Tipo/Acesso/Categoria/Perfil etc.: valor selecionado escuro. */
+html body #modalNovoEstudoTZC_V1 select,
+html body #modalCategoriaTZC_V1 select,
+html body #modalUsuarioV99 select,
+html body #artesOverlayV85 .artes-modal-v85 select,
+html body #pubModalV104 select {
+  color:#202020 !important;
+  -webkit-text-fill-color:#202020 !important;
+  font-weight:500 !important;
+}
+
+/* Lista aberta do select: clara e legível. */
+html body #modalNovoEstudoTZC_V1 option,
+html body #modalCategoriaTZC_V1 option,
+html body #modalUsuarioV99 option,
+html body #artesOverlayV85 .artes-modal-v85 option,
+html body #pubModalV104 option {
+  background:#ededed !important;
+  color:#202020 !important;
+  -webkit-text-fill-color:#202020 !important;
+}
+
+/* Foco sem trocar o padrão visual. */
+html body #modalNovoEstudoTZC_V1 input:focus,
+html body #modalNovoEstudoTZC_V1 select:focus,
+html body #modalNovoEstudoTZC_V1 textarea:focus,
+html body #modalCategoriaTZC_V1 input:focus,
+html body #modalCategoriaTZC_V1 select:focus,
+html body #modalCategoriaTZC_V1 textarea:focus,
+html body #modalUsuarioV99 input:focus,
+html body #modalUsuarioV99 select:focus,
+html body #modalUsuarioV99 textarea:focus,
+html body #artesOverlayV85 .artes-modal-v85 input:focus,
+html body #artesOverlayV85 .artes-modal-v85 select:focus,
+html body #artesOverlayV85 .artes-modal-v85 textarea:focus,
+html body #pubModalV104 input:focus,
+html body #pubModalV104 select:focus,
+html body #pubModalV104 textarea:focus {
+  background:#595959 !important;
+  border-color:var(--gold-primary) !important;
+  color:#202020 !important;
+  -webkit-text-fill-color:#202020 !important;
+  outline:none !important;
+  box-shadow:0 0 0 1px rgba(212,175,55,.18) !important;
+}
+
+/* Gestão Interna: nenhum card nasce marcado. O destaque só vem da classe de retorno. */
+html body .gestao-interna-home .card {
+  border-color:var(--border-color) !important;
+}
+html body .gestao-interna-home .card.tzc-card-retorno-v121 {
+  border-color:var(--gold-primary) !important;
+}
+</style>
+
+<script id="tzc-v122-placeholders-ids-reais">
+(function(){
+  function aplicarV122(){
+    const estudo=document.getElementById('modalNovoEstudoTZC_V1');
+    if(estudo){
+      const titulo=document.getElementById('tzcEstudoTitulo');
+      const resumo=document.getElementById('tzcEstudoResumo');
+      const texto=document.getElementById('tzcEstudoTexto');
+      const imagem=document.getElementById('tzcEstudoImagem');
+      const fonte=document.getElementById('tzcEstudoFonte');
+      if(titulo) titulo.placeholder='Digite o título do estudo...';
+      if(resumo) resumo.placeholder='Digite um breve resumo do conteúdo...';
+      if(texto) texto.placeholder='Escreva aqui o conteúdo completo do estudo...';
+      if(imagem) imagem.placeholder='Cole aqui o link da imagem...';
+      if(fonte) fonte.placeholder='Informe livro, autor, site ou outra referência...';
+    }
+    const usuario=document.getElementById('modalUsuarioV99');
+    if(usuario){
+      const n=document.getElementById('uNomeV99'), e=document.getElementById('uEmailV99'), o=document.getElementById('uObsV99');
+      if(n) n.placeholder='Digite o nome do usuário...';
+      if(e) e.placeholder='Digite o e-mail do usuário...';
+      if(o) o.placeholder='Digite uma observação sobre o usuário...';
+    }
+  }
+  aplicarV122();
+  new MutationObserver(aplicarV122).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
 

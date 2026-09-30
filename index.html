@@ -8677,32 +8677,6 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
 })();
 </script>
 
-
-<!-- TZC V135 — PASSO 1 SEGURO: SOMENTE VISUAL/TEXTO, SEM ALTERAR CARREGAMENTO -->
-<style id="tzc-v135-passo1-seguro">
-.tzc-eventos-toolbar-v133 > .btn-toolbar{
-  width:auto!important;min-width:0!important;justify-self:start!important;
-  padding:6px 10px!important;min-height:32px!important;flex:none!important;
-}
-.tzc-eventos-toolbar-v133{
-  grid-template-columns:auto minmax(280px,620px) 1fr!important;
-}
-@media(max-width:720px){
-  .tzc-eventos-toolbar-v133{grid-template-columns:auto minmax(0,1fr)!important}
-  .tzc-eventos-toolbar-v133 .tzc-v133-spacer{display:none!important}
-}
-</style>
-<script id="tzc-v135-passo1-textos">
-(function(){
-  function textoPainelV135(){
-    document.querySelectorAll('.tzc-pres-admin-note-v128').forEach(function(n){
-      n.innerHTML='<strong style="color:#fff">Painel de controle de presença:</strong> escolha um evento para visualizar as confirmações dos participantes e registrar a presença no dia.';
-    });
-  }
-  document.addEventListener('DOMContentLoaded',textoPainelV135);
-})();
-</script>
-
 </body>
 </html>
 

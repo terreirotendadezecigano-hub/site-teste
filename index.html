@@ -9495,6 +9495,16 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
     const nome=nomeEventoV154();
     const logo='https://lh3.googleusercontent.com/d/1tTQCxsP8Z8H5mNnEFEfVq8dEg9VF0U1-';
 
+    /* V159 — resumo das respostas, calculado a partir da própria lista. */
+    const normalizarRespostaV159=v=>String(v||'').trim().toLowerCase();
+    const qtdSim=dados.filter(x=>normalizarRespostaV159(x['Resposta'])==='sim').length;
+    const qtdTalvez=dados.filter(x=>normalizarRespostaV159(x['Resposta'])==='talvez').length;
+    const qtdNao=dados.filter(x=>{
+      const r=normalizarRespostaV159(x['Resposta']);
+      return r==='não' || r==='nao';
+    }).length;
+    const totalRespostas=dados.length;
+
     const linhas=dados.map((x,i)=>`
       <tr style="background:${i%2===0?'#ffffff':'#f7f7f7'}">
         <td>${x['Participante']}</td>
@@ -9526,9 +9536,28 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
           </div>
         </div>
 
-        <div style="border-left:4px solid #d4af37;background:#f7f5ef;padding:8px 11px;margin-bottom:12px">
+        <div style="border-left:4px solid #d4af37;background:#f7f5ef;padding:8px 11px;margin-bottom:8px">
           <div style="font-size:10.5px;color:#777;text-transform:uppercase;letter-spacing:.6px">Evento</div>
           <div style="font-size:17px;font-weight:700;color:#60000a;margin-top:2px">${nome}</div>
+        </div>
+
+        <div style="display:flex;gap:7px;margin:0 0 12px">
+          <div style="flex:1;border:1px solid #ddd;border-top:3px solid #d4af37;border-radius:4px;padding:7px 9px;background:#fff">
+            <div style="font-size:9px;color:#777;text-transform:uppercase">Confirmados</div>
+            <div style="font-size:16px;font-weight:700;color:#60000a;margin-top:1px">${qtdSim}</div>
+          </div>
+          <div style="flex:1;border:1px solid #ddd;border-top:3px solid #d4af37;border-radius:4px;padding:7px 9px;background:#fff">
+            <div style="font-size:9px;color:#777;text-transform:uppercase">Talvez</div>
+            <div style="font-size:16px;font-weight:700;color:#60000a;margin-top:1px">${qtdTalvez}</div>
+          </div>
+          <div style="flex:1;border:1px solid #ddd;border-top:3px solid #d4af37;border-radius:4px;padding:7px 9px;background:#fff">
+            <div style="font-size:9px;color:#777;text-transform:uppercase">Não</div>
+            <div style="font-size:16px;font-weight:700;color:#60000a;margin-top:1px">${qtdNao}</div>
+          </div>
+          <div style="flex:1;border:1px solid #ddd;border-top:3px solid #60000a;border-radius:4px;padding:7px 9px;background:#fff">
+            <div style="font-size:9px;color:#777;text-transform:uppercase">Total de respostas</div>
+            <div style="font-size:16px;font-weight:700;color:#60000a;margin-top:1px">${totalRespostas}</div>
+          </div>
         </div>
 
         <table style="width:100%;border-collapse:collapse;font-size:11.5px">

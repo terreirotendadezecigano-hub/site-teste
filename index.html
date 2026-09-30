@@ -1681,7 +1681,7 @@
       </div>
     </div>
 
-    <h2 class="section-title" id="pageTitle"><i class="fa-solid fa-wand-magic-sparkles"></i> Destaque</h2>
+    <h2 class="section-title" id="pageTitle"><i class="fa-solid fa-wand-magic-sparkles"></i> Destaques</h2>
     <div id="pageSubtitleContainer"></div>
 
     <div id="loading"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><p style="margin-top:6px; font-size:0.75rem;">Buscando dados...</p></div>
@@ -2916,7 +2916,7 @@
 
       if (tabName === 'Home') {
         generalInfoSection.style.display = 'grid';
-        document.getElementById('pageTitle').innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Destaque';
+        document.getElementById('pageTitle').innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Destaques';
         loadTabData('Home');
       } else {
         generalInfoSection.style.display = 'none';
@@ -2932,7 +2932,7 @@
         if (tabName === 'Gestao_Interna') {
           if (!podeAcessarGestaoInternaTZC_V1()) {
             currentTab = 'Home';
-            document.getElementById('pageTitle').innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Destaque';
+            document.getElementById('pageTitle').innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Destaques';
             generalInfoSection.style.display = 'grid';
             loadTabData('Home');
             document.getElementById('sidebar').classList.remove('open');
@@ -3480,7 +3480,7 @@
           sincronizarUsuarioAcessoTZC_V98(loggedUser);
           updateAuthUI();
           closeLoginModal();
-          loadTabData(currentTab);
+          /* V113: após login, permanece exatamente na página/tela em que estava. */
         } else {
           msgBox.innerText = 'E-mail não localizado no cadastro.';
         }
@@ -7138,7 +7138,7 @@ button.tzc-salvar-padrao-v109:hover{
     if(!t)return;
     t.style.display='flex';
     t.classList.add('tzc-home-destaque-v110');
-    t.innerHTML='<i class="fa-solid fa-wand-magic-sparkles"></i> Destaque';
+    t.innerHTML='<i class="fa-solid fa-wand-magic-sparkles"></i> Destaques';
   }
 
   /* Corrige um efeito antigo: alguns módulos escondiam #pageTitle e a Home
@@ -7266,42 +7266,63 @@ button.tzc-salvar-padrao-v109:hover{
 </script>
 
 
-<style id="tzc-v112-pesquisa-publicacoes-igual-estudos">
-/* V112 — Mensagem do Dia e Banho da Semana:
-   pesquisa com a mesma largura/altura/raio da página Estudos */
-.tzc-publicacoes-page-v107 .tzc-publicacoes-search-v107{
-  width:min(620px,100%)!important;
-  max-width:620px!important;
-  height:37px!important;
-  min-height:37px!important;
-  margin:10px auto 14px!important;
+<style id="tzc-v113-pesquisa-publicacoes-EXATAMENTE-estudos">
+/* V113 — Mensagem do Dia e Banho da Semana:
+   barra copiada da régua oficial de Estudos (.tzc-busca-modulo-v55). */
+.tzc-publicacoes-search-v107{
+  position:relative!important;
+  width:min(620px,72%)!important;
+  max-width:none!important;
+  min-width:320px!important;
+  height:36px!important;
+  min-height:36px!important;
+  margin:2px auto 14px!important;
   padding:0 12px!important;
-  border:1px solid #333!important;
-  border-radius:8px!important;
-  background:#141414!important;
   display:flex!important;
   align-items:center!important;
-  gap:10px!important;
+  gap:9px!important;
   box-sizing:border-box!important;
+  background:#151515!important;
+  border:1px solid #303030!important;
+  border-radius:9px!important;
 }
-.tzc-publicacoes-page-v107 .tzc-publicacoes-search-v107 i{
+.tzc-publicacoes-search-v107:focus-within{
+  border-color:rgba(212,175,55,.75)!important;
+}
+.tzc-publicacoes-search-v107 i{
+  position:static!important;
+  left:auto!important;
+  top:auto!important;
+  transform:none!important;
+  flex:0 0 auto!important;
   color:var(--gold-primary)!important;
   font-size:.82rem!important;
-  flex:0 0 auto!important;
-}
-.tzc-publicacoes-page-v107 .tzc-publicacoes-search-v107 input{
-  width:100%!important;
-  height:35px!important;
-  min-height:35px!important;
-  padding:0!important;
   margin:0!important;
+}
+.tzc-publicacoes-search-v107 input{
+  flex:1!important;
+  width:auto!important;
+  min-width:0!important;
+  height:100%!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
   border:0!important;
+  border-radius:0!important;
   outline:0!important;
-  box-shadow:none!important;
   background:transparent!important;
   color:#fff!important;
-  font-size:.82rem!important;
-  border-radius:0!important;
+  font-size:.86rem!important;
+  box-shadow:none!important;
+}
+.tzc-publicacoes-search-v107 input::placeholder{
+  color:#858585!important;
+}
+@media(max-width:760px){
+  .tzc-publicacoes-search-v107{
+    width:100%!important;
+    min-width:0!important;
+  }
 }
 </style>
 

@@ -6408,17 +6408,17 @@ function filtrarEstudosTZC_V55(valor){
  window.visualizarPublicacaoTZC_V104=function(id){const r=lista.find(x=>x.ID_Publicacao===id);if(!r)return;const save=document.getElementById('contentContainer').innerHTML;leitura(r,r.Tipo);window._pubVoltarV104=save;document.querySelector('.tzc-publico-v103 button').setAttribute('onclick',"abrirPublicacoesTZC_V104()")};
  function modalForm(r){
    const d=document.createElement('div');d.className='tzc-pub-modal-v104';d.id='pubModalV104';
-   d.innerHTML=`<div class="tzc-pub-box-v104"><div class="tzc-pub-head-v104"><h3><i class="fa-solid ${editando?'fa-pen':'fa-plus'}" style="color:var(--gold-primary);margin-right:7px;"></i>${editando?'Editar':'Nova'} Publicação</h3><button class="tzc-pub-x-v104" onclick="document.getElementById('pubModalV104').remove()"><i class="fa-solid fa-xmark"></i></button></div><div class="tzc-pub-form-v104">
+   d.innerHTML=`<div class="tzc-pub-box-v104"><div class="tzc-pub-head-v104"><h3><i class="fa-solid ${editando?'fa-pen':'fa-newspaper'}" style="color:var(--gold-primary);margin-right:7px;"></i>${editando?'Editar':'Nova'} Publicação</h3><button class="tzc-pub-x-v104" onclick="document.getElementById('pubModalV104').remove()"><i class="fa-solid fa-xmark"></i></button></div><div class="tzc-pub-form-v104">
    <div class="tzc-pub-field-v104"><label>Tipo *</label><select id="pTipo" onchange="ajustarCamposPublicacaoTZC_V106()"><option>Mensagem do Dia</option><option>Banho da Semana</option><option>Reflexão/Ensinamento</option></select></div>
    <div class="tzc-pub-field-v104"><label>Data da publicação</label><input id="pData" type="date"></div>
-   <div class="tzc-pub-field-v104 full"><label>Título *</label><input id="pTitulo"></div>
-   <div class="tzc-pub-field-v104 full pub-opcional-v106 pub-resumo-v106"><label>Resumo</label><textarea id="pResumo"></textarea></div>
-   <div class="tzc-pub-field-v104 full"><label>Conteúdo *</label><textarea id="pConteudo" style="min-height:140px"></textarea></div>
-   <div class="tzc-pub-field-v104 full pub-opcional-v106 pub-banho-v106"><label>Ingredientes</label><textarea id="pIngredientes"></textarea></div>
-   <div class="tzc-pub-field-v104 full pub-opcional-v106 pub-banho-v106"><label>Modo de preparo</label><textarea id="pPreparo"></textarea></div>
-   <div class="tzc-pub-field-v104 full pub-opcional-v106 pub-orientacoes-v106"><label>Orientações</label><textarea id="pOrientacoes"></textarea></div>
+   <div class="tzc-pub-field-v104 full"><label>Título *</label><input id="pTitulo" placeholder="Digite o título da publicação..."></div>
+   <div class="tzc-pub-field-v104 full pub-opcional-v106 pub-resumo-v106"><label>Resumo</label><textarea id="pResumo" placeholder="Digite um breve resumo da publicação..."></textarea></div>
+   <div class="tzc-pub-field-v104 full"><label>Conteúdo *</label><textarea id="pConteudo" style="min-height:140px" placeholder="Digite o conteúdo completo da publicação..."></textarea></div>
+   <div class="tzc-pub-field-v104 full pub-opcional-v106 pub-banho-v106"><label>Ingredientes</label><textarea id="pIngredientes" placeholder="Digite os ingredientes do banho..."></textarea></div>
+   <div class="tzc-pub-field-v104 full pub-opcional-v106 pub-banho-v106"><label>Modo de preparo</label><textarea id="pPreparo" placeholder="Digite o modo de preparo..."></textarea></div>
+   <div class="tzc-pub-field-v104 full pub-opcional-v106 pub-orientacoes-v106"><label>Orientações</label><textarea id="pOrientacoes" placeholder="Digite as orientações de uso..."></textarea></div>
    <div class="tzc-pub-field-v104"><label>Acesso público</label><select id="pAcesso"><option>Sim</option><option>Não</option></select></div>
-   <div class="tzc-pub-field-v104"><label>Autor</label><input id="pAutor"></div>
+   <div class="tzc-pub-field-v104"><label>Autor</label><input id="pAutor" placeholder="Digite o nome do autor..."></div>
    <div class="tzc-pub-actions-v104"><button class="btn-toolbar" onclick="document.getElementById('pubModalV104').remove()">Fechar</button><button class="btn-toolbar" onclick="salvarPublicacaoTZC_V104()"><i class="fa-solid fa-floppy-disk"></i> Salvar</button></div></div></div>`;
    document.body.appendChild(d);
    pTipo.value=r.Tipo||'Mensagem do Dia';pTitulo.value=r.Titulo||'';pResumo.value=r.Resumo||'';pConteudo.value=r.Conteudo||'';pIngredientes.value=r.Ingredientes||'';pPreparo.value=r.Modo_Preparo||'';pOrientacoes.value=r.Orientacoes||'';pAcesso.value=r.Acesso_Publico||'Sim';pAutor.value=r.Autor||'';
@@ -6553,7 +6553,7 @@ function filtrarEstudosTZC_V55(valor){
     window._tzcMsgDiaAtualV109=m;
     const d=document.createElement('div');d.id='tzcMsgDiaV105';d.className='tzc-msgdia-overlay-v105';
     d.innerHTML=`<div class="tzc-msgdia-box-v105" role="dialog" aria-modal="true" aria-label="Mensagem do Dia">
-      <div class="tzc-msgdia-head-v105"><h3><i class="fa-solid fa-feather-pointed"></i> Mensagem do Dia</h3><button class="tzc-msgdia-close-v105" onclick="fecharMensagemDiaTZC_V105()" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="tzc-msgdia-head-v105"><h3><i class="fa-solid fa-envelope-open-text"></i> Mensagem do Dia</h3><button class="tzc-msgdia-close-v105" onclick="fecharMensagemDiaTZC_V105()" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button></div>
       <div class="tzc-msgdia-title-v105">${escV105(m.Titulo||'Mensagem do Dia')}</div>
       <div class="tzc-msgdia-text-v105">${escV105(m.Conteudo||'')}</div>
       <div class="tzc-msgdia-foot-v105"><span class="tzc-msgdia-date-v105">${dataV105(m.Data_Publicacao)}</span><div class="tzc-msgdia-actions-v109"><button class="btn-toolbar" onclick="compartilharMensagemDiaTZC_V109()"><i class="fa-solid fa-share-nodes"></i> Compartilhar</button><button class="btn-toolbar" onclick="fecharMensagemDiaTZC_V105()">Fechar</button></div></div>
@@ -7325,6 +7325,124 @@ button.tzc-salvar-padrao-v109:hover{
   }
 }
 </style>
+
+
+<style id="tzc-v114-campos-modais-e-destaques">
+/* =========================================================
+   V114 — PADRÃO OFICIAL PARA CAMPOS DE MODAIS
+   O campo precisa ser visível mesmo sobre o fundo preto.
+   ========================================================= */
+.tzc-pub-field-v104 input,
+.tzc-pub-field-v104 select,
+.tzc-pub-field-v104 textarea,
+.modal-content input,
+.modal-content select,
+.modal-content textarea,
+.modal-box input,
+.modal-box select,
+.modal-box textarea,
+.estudo-modal-content input,
+.estudo-modal-content select,
+.estudo-modal-content textarea,
+.ervas-modal-box-v37 input,
+.ervas-modal-box-v37 select,
+.ervas-modal-box-v37 textarea,
+.artes-modal-v85 input,
+.artes-modal-v85 select,
+.artes-modal-v85 textarea,
+[role="dialog"] input:not([type="checkbox"]):not([type="radio"]),
+[role="dialog"] select,
+[role="dialog"] textarea{
+  background:#191919!important;
+  border:1px solid #4a4a4a!important;
+  color:#fff!important;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.28)!important;
+}
+.tzc-pub-field-v104 input:focus,
+.tzc-pub-field-v104 select:focus,
+.tzc-pub-field-v104 textarea:focus,
+.modal-content input:focus,
+.modal-content select:focus,
+.modal-content textarea:focus,
+.modal-box input:focus,
+.modal-box select:focus,
+.modal-box textarea:focus,
+.estudo-modal-content input:focus,
+.estudo-modal-content select:focus,
+.estudo-modal-content textarea:focus,
+.ervas-modal-box-v37 input:focus,
+.ervas-modal-box-v37 select:focus,
+.ervas-modal-box-v37 textarea:focus,
+.artes-modal-v85 input:focus,
+.artes-modal-v85 select:focus,
+.artes-modal-v85 textarea:focus,
+[role="dialog"] input:focus,
+[role="dialog"] select:focus,
+[role="dialog"] textarea:focus{
+  border-color:var(--gold-primary)!important;
+  outline:none!important;
+  box-shadow:0 0 0 1px rgba(212,175,55,.18)!important;
+}
+.tzc-pub-field-v104 input::placeholder,
+.tzc-pub-field-v104 textarea::placeholder,
+.modal-content input::placeholder,
+.modal-content textarea::placeholder,
+.modal-box input::placeholder,
+.modal-box textarea::placeholder,
+.estudo-modal-content input::placeholder,
+.estudo-modal-content textarea::placeholder,
+.ervas-modal-box-v37 input::placeholder,
+.ervas-modal-box-v37 textarea::placeholder,
+.artes-modal-v85 input::placeholder,
+.artes-modal-v85 textarea::placeholder,
+[role="dialog"] input::placeholder,
+[role="dialog"] textarea::placeholder{
+  color:#8f8f8f!important;
+  opacity:1!important;
+}
+
+/* Destaques da Home = mesma escala oficial do título de Estudos (V111). */
+#pageTitle.tzc-home-destaque-v110{
+  font-size:1.28rem!important;
+  font-weight:800!important;
+  line-height:1.2!important;
+}
+#pageTitle.tzc-home-destaque-v110 i{
+  font-size:1.05rem!important;
+}
+</style>
+
+<script id="tzc-v114-placeholders-automaticos-modais">
+(function(){
+  function textoCampoV114(label){
+    return String(label||'')
+      .replace(/\*/g,'')
+      .replace(/\s+/g,' ')
+      .trim()
+      .toLowerCase();
+  }
+  function aplicarV114(root){
+    const base=root||document;
+    const modais=base.matches?.('.tzc-pub-modal-v104,.modal,.modal-overlay,[role="dialog"]')
+      ? [base]
+      : [...base.querySelectorAll?.('.tzc-pub-modal-v104,.modal,.modal-overlay,[role="dialog"]')||[]];
+
+    modais.forEach(modal=>{
+      modal.querySelectorAll('input:not([type]),input[type="text"],input[type="url"],input[type="email"],textarea').forEach(campo=>{
+        if(campo.placeholder) return;
+        const grupo=campo.closest('.form-group,.tzc-pub-field-v104,label,.field,.campo') || campo.parentElement;
+        const label=grupo?.querySelector?.('label')?.textContent || grupo?.querySelector?.('span')?.textContent || '';
+        const nome=textoCampoV114(label);
+        if(nome) campo.placeholder='Digite '+nome+'...';
+      });
+    });
+  }
+  aplicarV114(document);
+  new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{
+    if(n.nodeType===1) aplicarV114(n);
+  }))).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
 
 </body>
 </html>

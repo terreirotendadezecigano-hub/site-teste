@@ -7894,8 +7894,28 @@ html body .gestao-interna-home .card.tzc-card-retorno-v121 {
  const APIE=(typeof WEB_APP_URL!=='undefined'?WEB_APP_URL:''); const SHE='Eventos'; let eventos=[]; let editando=null;
  const escE=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
  const idE=()=> 'EVT_'+Date.now()+'_'+Math.random().toString(36).slice(2,7).toUpperCase();
- const dataE=v=>{if(!v)return '—';try{const d=new Date(v);if(isNaN(d))return String(v);return new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short',timeZone:'America/Sao_Paulo'}).format(d).replace(',',' às')}catch(e){return String(v)}};
- const inputDataE=v=>{if(!v)return '';try{const d=new Date(v);if(isNaN(d))return '';const z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}`}catch(e){return ''}};
+ /* V167 — Data_Inicio é horário LOCAL do evento, não instante UTC.
+    Não converter fuso horário: 2026-10-02 19:30 deve continuar 02/10/2026 às 19:30. */
+ const partesDataLocalV167=v=>{
+   const t=String(v||'').trim();
+   let m=t.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/);
+   if(m)return {y:m[1],mo:m[2],d:m[3],h:m[4],mi:m[5]};
+   m=t.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+às\s+|\s+)(\d{2}):(\d{2})/i);
+   if(m)return {y:m[3],mo:m[2],d:m[1],h:m[4],mi:m[5]};
+   return null;
+ };
+ const dataE=v=>{
+   if(!v)return '—';
+   const p=partesDataLocalV167(v);
+   if(p)return `${p.d}/${p.mo}/${p.y} às ${p.h}:${p.mi}`;
+   return String(v);
+ };
+ const inputDataE=v=>{
+   if(!v)return '';
+   const p=partesDataLocalV167(v);
+   if(p)return `${p.y}-${p.mo}-${p.d}T${p.h}:${p.mi}`;
+   return '';
+ };
  async function carregarE(){const r=await fetch(`${APIE}?sheet=${SHE}&t=${Date.now()}`,{cache:'no-store'});const j=await r.json();eventos=Array.isArray(j)?j:[];return eventos}
  function fecharE(){document.getElementById('eventoModalV126')?.remove()}
  window.fecharEventoTZC_V126=fecharE;

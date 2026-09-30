@@ -6771,6 +6771,124 @@ function filtrarEstudosTZC_V55(valor){
 })();
 </script>
 
+
+<style id="tzc-v108-padrao-real-paginas-publicas">
+/* V108 — Mensagem/Banho seguem a mesma régua visual das páginas já aprovadas */
+.tzc-publicacoes-publicas-v107{
+  max-width:none!important;
+  width:100%!important;
+  margin:0!important;
+}
+.tzc-publicacoes-head-v107{
+  grid-template-columns:auto 1fr auto!important;
+  gap:12px!important;
+  margin:0 0 14px!important;
+  min-height:48px!important;
+}
+.tzc-publicacoes-copy-v107 h2{
+  margin:0 0 4px!important;
+  color:#fff!important;
+  font-size:1.05rem!important;
+  line-height:1.2!important;
+  font-weight:700!important;
+}
+.tzc-publicacoes-copy-v107 h2 i{
+  color:var(--gold-primary)!important;
+  font-size:1.05rem!important;
+  width:20px!important;
+  text-align:center!important;
+  margin-right:7px!important;
+}
+.tzc-publicacoes-copy-v107 p{
+  margin:0!important;
+  color:var(--text-muted)!important;
+  font-size:.82rem!important;
+  line-height:1.4!important;
+}
+.tzc-publicacoes-count-v107{
+  color:#888!important;
+  font-size:.72rem!important;
+  font-weight:400!important;
+}
+
+/* Barra de pesquisa = mesma linguagem visual de Estudos/Gestão */
+.tzc-publicacoes-search-v107{
+  position:relative!important;
+  width:min(620px,100%)!important;
+  margin:0 auto 14px!important;
+}
+.tzc-publicacoes-search-v107 input{
+  width:100%!important;
+  height:37px!important;
+  box-sizing:border-box!important;
+  background:#151515!important;
+  border:1px solid #343434!important;
+  border-radius:7px!important;
+  color:#fff!important;
+  padding:7px 12px 7px 37px!important;
+  font-size:.82rem!important;
+  outline:none!important;
+}
+.tzc-publicacoes-search-v107 input:focus{
+  border-color:rgba(212,175,55,.65)!important;
+  box-shadow:0 0 0 1px rgba(212,175,55,.08)!important;
+}
+.tzc-publicacoes-search-v107 i{
+  left:13px!important;
+  color:var(--gold-primary)!important;
+  font-size:.82rem!important;
+}
+
+/* Lista: tipografia do restante do sistema */
+.tzc-publicacao-card-v107{padding:11px 13px!important}
+.tzc-publicacao-card-v107 .meta{font-size:.72rem!important}
+.tzc-publicacao-card-v107 h3{font-size:.82rem!important;font-weight:700!important}
+.tzc-publicacao-card-v107 p{font-size:.76rem!important;line-height:1.45!important}
+.tzc-publicacao-vazio-v107{font-size:.78rem!important;padding:20px!important}
+
+/* ícone próprio para Mensagem do Dia */
+.tzc-icone-msg-v108{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  color:var(--gold-primary)!important;
+  margin-right:7px!important;
+  font-size:1rem!important;
+}
+</style>
+
+<script id="tzc-v108-ajuste-icones-publicacoes">
+(function(){
+  const originalMensagem=window.abrirMensagemDiaTZC_V103;
+  const originalBanho=window.abrirBanhoSemanaTZC_V104;
+
+  function refinarIconeV108(tipo){
+    requestAnimationFrame(()=>{
+      const h=document.querySelector('.tzc-publicacoes-copy-v107 h2');
+      if(!h)return;
+      const i=h.querySelector('i');
+      if(tipo==='Mensagem do Dia' && i){
+        i.className='fa-solid fa-envelope-open-text';
+        i.setAttribute('title','Mensagem do Dia');
+      }
+      if(tipo==='Banho da Semana' && i){
+        i.className='fa-solid fa-spa';
+        i.setAttribute('title','Banho da Semana');
+      }
+    });
+  }
+
+  window.abrirMensagemDiaTZC_V103=function(el){
+    originalMensagem(el);
+    refinarIconeV108('Mensagem do Dia');
+  };
+  window.abrirBanhoSemanaTZC_V104=function(el){
+    originalBanho(el);
+    refinarIconeV108('Banho da Semana');
+  };
+})();
+</script>
+
 </body>
 </html>
 

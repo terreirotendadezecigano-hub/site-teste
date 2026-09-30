@@ -9317,6 +9317,187 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
 })();
 </script>
 
+
+<!-- ============================================================
+     TZC V154 — EXPORTAR CONFIRMAÇÕES/PRESENÇAS PARA EXCEL E PDF
+     Alteração única desta versão.
+     ============================================================ -->
+<style id="tzc-v154-export-presencas-style">
+.tzc-pres-evento-v148{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.tzc-pres-evento-info-v154{min-width:0}
+.tzc-pres-export-v154{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  flex:0 0 auto;
+}
+.tzc-pres-export-v154 .btn-icon-only{
+  width:29px;
+  height:29px;
+  min-width:29px;
+  padding:0;
+  border:0;
+  background:transparent;
+  box-shadow:none;
+  color:var(--gold-primary);
+  cursor:pointer;
+  border-radius:6px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:.92rem;
+}
+.tzc-pres-export-v154 .btn-icon-only:hover{
+  background:rgba(212,175,55,.10);
+}
+@media(max-width:560px){
+  .tzc-pres-evento-v148{align-items:flex-start}
+}
+</style>
+
+<script id="tzc-v154-export-presencas-js">
+(function(){
+  function txtV154(v){
+    return String(v == null ? '' : v).replace(/\s+/g,' ').trim();
+  }
+  function seguroV154(v){
+    return txtV154(v).replace(/[\\/:*?"<>|]+/g,'_').slice(0,80) || 'Evento';
+  }
+  function dadosTabelaV154(){
+    const tabela=document.querySelector('#contentContainer .tzc-pres-v127-table');
+    if(!tabela) return [];
+    return Array.from(tabela.querySelectorAll('tbody tr')).map(tr=>{
+      const td=tr.querySelectorAll('td');
+      if(td.length < 5 || td[0].hasAttribute('colspan')) return null;
+      return {
+        'Participante': txtV154(td[0].textContent),
+        'Resposta': txtV154(td[1].textContent),
+        'Presença': txtV154(td[2].textContent),
+        'Data da resposta': txtV154(td[3].textContent),
+        'Observações': txtV154(td[4].textContent)
+      };
+    }).filter(Boolean);
+  }
+  function nomeEventoV154(){
+    return txtV154(document.querySelector('.tzc-pres-evento-v148 h3')?.textContent || 'Evento');
+  }
+
+  window.exportarPresencasExcelV154=function(){
+    const dados=dadosTabelaV154();
+    if(!dados.length){ showToast?.('Nenhum registro para exportar.'); return; }
+    if(typeof XLSX==='undefined'){ alert('Não foi possível carregar o recurso de Excel.'); return; }
+
+    const nome=nomeEventoV154();
+    const linhas=[
+      ['Tenda de Zé Cigano'],
+      ['Confirmações e Presenças'],
+      ['Evento', nome],
+      [],
+      ['Participante','Resposta','Presença','Data da resposta','Observações']
+    ];
+    dados.forEach(x=>linhas.push([
+      x['Participante'],x['Resposta'],x['Presença'],x['Data da resposta'],x['Observações']
+    ]));
+
+    const ws=XLSX.utils.aoa_to_sheet(linhas);
+    ws['!cols']=[{wch:30},{wch:15},{wch:15},{wch:22},{wch:38}];
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Presenças');
+    XLSX.writeFile(wb,`Presencas_${seguroV154(nome)}.xlsx`);
+    showToast?.('Lista exportada para Excel!');
+  };
+
+  window.exportarPresencasPDFV154=function(){
+    const dados=dadosTabelaV154();
+    if(!dados.length){ showToast?.('Nenhum registro para gerar PDF.'); return; }
+    if(typeof html2pdf==='undefined'){ alert('Não foi possível carregar o recurso de PDF.'); return; }
+
+    const nome=nomeEventoV154();
+    const linhas=dados.map(x=>`
+      <tr>
+        <td>${x['Participante']}</td>
+        <td>${x['Resposta']}</td>
+        <td>${x['Presença']}</td>
+        <td>${x['Data da resposta']}</td>
+        <td>${x['Observações']}</td>
+      </tr>`).join('');
+
+    const el=document.createElement('div');
+    el.style.cssText='background:#fff;color:#222;padding:22px;font-family:Arial,sans-serif;';
+    el.innerHTML=`
+      <div style="text-align:center;border-bottom:2px solid #222;padding-bottom:10px;margin-bottom:14px">
+        <h2 style="margin:0;font-size:17px">Tenda de Zé Cigano</h2>
+        <h3 style="margin:7px 0 2px;font-size:14px">Confirmações e Presenças</h3>
+        <div style="font-size:12px"><strong>Evento:</strong> ${nome}</div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px">
+        <thead>
+          <tr style="background:#111;color:#fff">
+            <th style="padding:7px;text-align:left">Participante</th>
+            <th style="padding:7px;text-align:left">Resposta</th>
+            <th style="padding:7px;text-align:left">Presença</th>
+            <th style="padding:7px;text-align:left">Data da resposta</th>
+            <th style="padding:7px;text-align:left">Observações</th>
+          </tr>
+        </thead>
+        <tbody>${linhas}</tbody>
+      </table>
+      <style>
+        td{padding:7px;border-bottom:1px solid #ddd;vertical-align:top}
+      </style>`;
+
+    html2pdf().from(el).set({
+      margin:10,
+      filename:`Presencas_${seguroV154(nome)}.pdf`,
+      image:{type:'jpeg',quality:.98},
+      html2canvas:{scale:2,useCORS:true},
+      jsPDF:{unit:'mm',format:'a4',orientation:'landscape'}
+    }).save();
+    showToast?.('Gerando PDF da lista...');
+  };
+
+  const abrirAntV154=window.abrirPresencasTZCV127;
+  if(typeof abrirAntV154!=='function') return;
+
+  window.abrirPresencasTZCV127=async function(){
+    await abrirAntV154.apply(this,arguments);
+
+    const bloco=document.querySelector('#contentContainer .tzc-pres-evento-v148');
+    if(!bloco || bloco.querySelector('.tzc-pres-export-v154')) return;
+
+    const h3=bloco.querySelector('h3');
+    const p=bloco.querySelector('p');
+    if(h3 && p){
+      const info=document.createElement('div');
+      info.className='tzc-pres-evento-info-v154';
+      bloco.insertBefore(info,h3);
+      info.appendChild(h3);
+      info.appendChild(p);
+    }
+
+    const acoes=document.createElement('div');
+    acoes.className='tzc-pres-export-v154';
+    acoes.innerHTML=`
+      <button type="button" class="btn-icon-only"
+        title="Exportar para Excel" aria-label="Exportar para Excel"
+        onclick="exportarPresencasExcelV154()">
+        <i class="fa-solid fa-file-excel"></i>
+      </button>
+      <button type="button" class="btn-icon-only"
+        title="Gerar PDF" aria-label="Gerar PDF"
+        onclick="exportarPresencasPDFV154()">
+        <i class="fa-solid fa-file-pdf"></i>
+      </button>`;
+    bloco.appendChild(acoes);
+  };
+})();
+</script>
+
 </body>
 </html>
 

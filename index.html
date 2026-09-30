@@ -9624,18 +9624,30 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
   if(typeof abrirAntV154!=='function') return;
 
   window.abrirPresencasTZCV127=async function(){
-    /* V163: captura data/hora enquanto a tabela Eventos ainda está na tela. */
+    /* V165: busca a data/hora diretamente no registro salvo em Eventos.
+       O modal mostra Data e Hora separadas, mas ao salvar elas são reunidas
+       no campo Data_Inicio (AAAA-MM-DDTHH:MM). */
     window.__tzcDataHoraEventoV163='';
     const idEventoV163=String(arguments[0]||'');
-    const linhasV163=Array.from(document.querySelectorAll('#eventoBodyV126 tr'));
-    for(const tr of linhasV163){
-      const edit=tr.querySelector('button[title="Editar"]');
-      const onclick=edit?.getAttribute('onclick') || '';
-      if(idEventoV163 && onclick.includes(idEventoV163)){
-        const td=tr.querySelectorAll('td');
-        if(td.length>=3) window.__tzcDataHoraEventoV163=txtV154(td[2].textContent);
-        break;
+
+    try{
+      if(idEventoV163 && typeof getSheet==='function'){
+        const listaEventosV165=await getSheet('Eventos');
+        const eventoV165=(Array.isArray(listaEventosV165)?listaEventosV165:[])
+          .find(x=>String(x.ID_Evento||'')===idEventoV163);
+
+        const inicioV165=String(eventoV165?.Data_Inicio||'').trim();
+        const mV165=inicioV165.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/);
+
+        if(mV165){
+          window.__tzcDataHoraEventoV163=
+            `${mV165[3]}/${mV165[2]}/${mV165[1]} às ${mV165[4]}:${mV165[5]}`;
+        }else if(inicioV165){
+          window.__tzcDataHoraEventoV163=inicioV165;
+        }
       }
+    }catch(e){
+      console.warn('V165: não foi possível carregar Data_Inicio do evento.',e);
     }
 
     await abrirAntV154.apply(this,arguments);

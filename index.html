@@ -6408,21 +6408,22 @@ function filtrarEstudosTZC_V55(valor){
  window.visualizarPublicacaoTZC_V104=function(id){const r=lista.find(x=>x.ID_Publicacao===id);if(!r)return;const save=document.getElementById('contentContainer').innerHTML;leitura(r,r.Tipo);window._pubVoltarV104=save;document.querySelector('.tzc-publico-v103 button').setAttribute('onclick',"abrirPublicacoesTZC_V104()")};
  function modalForm(r){
    const d=document.createElement('div');d.className='tzc-pub-modal-v104';d.id='pubModalV104';
-   d.innerHTML=`<div class="tzc-pub-box-v104"><div class="tzc-pub-head-v104"><h3><i class="fa-solid ${editando?'fa-pen':'fa-plus'}"></i> ${editando?'Editar':'Nova'} Publicação</h3><button class="tzc-pub-x-v104" onclick="document.getElementById('pubModalV104').remove()"><i class="fa-solid fa-xmark"></i></button></div><div class="tzc-pub-form-v104">
-   <div class="tzc-pub-field-v104"><label>Tipo *</label><select id="pTipo"><option>Mensagem do Dia</option><option>Banho da Semana</option><option>Reflexão/Ensinamento</option></select></div>
+   d.innerHTML=`<div class="tzc-pub-box-v104"><div class="tzc-pub-head-v104"><h3><i class="fa-solid ${editando?'fa-pen':'fa-plus'}" style="color:var(--gold-primary);margin-right:7px;"></i>${editando?'Editar':'Nova'} Publicação</h3><button class="tzc-pub-x-v104" onclick="document.getElementById('pubModalV104').remove()"><i class="fa-solid fa-xmark"></i></button></div><div class="tzc-pub-form-v104">
+   <div class="tzc-pub-field-v104"><label>Tipo *</label><select id="pTipo" onchange="ajustarCamposPublicacaoTZC_V106()"><option>Mensagem do Dia</option><option>Banho da Semana</option><option>Reflexão/Ensinamento</option></select></div>
    <div class="tzc-pub-field-v104"><label>Data da publicação</label><input id="pData" type="date"></div>
    <div class="tzc-pub-field-v104 full"><label>Título *</label><input id="pTitulo"></div>
-   <div class="tzc-pub-field-v104 full"><label>Resumo</label><textarea id="pResumo"></textarea></div>
+   <div class="tzc-pub-field-v104 full pub-opcional-v106 pub-resumo-v106"><label>Resumo</label><textarea id="pResumo"></textarea></div>
    <div class="tzc-pub-field-v104 full"><label>Conteúdo *</label><textarea id="pConteudo" style="min-height:140px"></textarea></div>
-   <div class="tzc-pub-field-v104 full"><label>Ingredientes <span style="color:#777">(use para Banho da Semana)</span></label><textarea id="pIngredientes"></textarea></div>
-   <div class="tzc-pub-field-v104 full"><label>Modo de preparo</label><textarea id="pPreparo"></textarea></div>
-   <div class="tzc-pub-field-v104 full"><label>Orientações</label><textarea id="pOrientacoes"></textarea></div>
+   <div class="tzc-pub-field-v104 full pub-opcional-v106 pub-banho-v106"><label>Ingredientes</label><textarea id="pIngredientes"></textarea></div>
+   <div class="tzc-pub-field-v104 full pub-opcional-v106 pub-banho-v106"><label>Modo de preparo</label><textarea id="pPreparo"></textarea></div>
+   <div class="tzc-pub-field-v104 full pub-opcional-v106 pub-orientacoes-v106"><label>Orientações</label><textarea id="pOrientacoes"></textarea></div>
    <div class="tzc-pub-field-v104"><label>Acesso público</label><select id="pAcesso"><option>Sim</option><option>Não</option></select></div>
    <div class="tzc-pub-field-v104"><label>Autor</label><input id="pAutor"></div>
    <div class="tzc-pub-actions-v104"><button class="btn-toolbar" onclick="document.getElementById('pubModalV104').remove()">Fechar</button><button class="btn-toolbar" onclick="salvarPublicacaoTZC_V104()"><i class="fa-solid fa-floppy-disk"></i> Salvar</button></div></div></div>`;
    document.body.appendChild(d);
    pTipo.value=r.Tipo||'Mensagem do Dia';pTitulo.value=r.Titulo||'';pResumo.value=r.Resumo||'';pConteudo.value=r.Conteudo||'';pIngredientes.value=r.Ingredientes||'';pPreparo.value=r.Modo_Preparo||'';pOrientacoes.value=r.Orientacoes||'';pAcesso.value=r.Acesso_Publico||'Sim';pAutor.value=r.Autor||'';
    if(r.Data_Publicacao){try{pData.value=new Date(r.Data_Publicacao).toISOString().slice(0,10)}catch(e){}} else pData.value=new Date().toISOString().slice(0,10);
+   setTimeout(()=>window.ajustarCamposPublicacaoTZC_V106?.(),0);
  }
  window.salvarPublicacaoTZC_V104=async function(){
    if(!pTitulo.value.trim()||!pConteudo.value.trim()){alert('Informe o título e o conteúdo.');return}
@@ -6565,6 +6566,80 @@ function filtrarEstudosTZC_V55(valor){
 
   /* Uma vez por carregamento real da página. */
   window.addEventListener('load',()=>setTimeout(()=>window.mostrarMensagemDiaTZC_V105(),700));
+})();
+</script>
+
+
+<style id="tzc-v106-refino-final-publicacoes">
+/* X superior: padrão dourado */
+.tzc-pub-x-v104,.tzc-msgdia-close-v105{
+  color:var(--gold-primary)!important;
+  opacity:1!important;
+}
+.tzc-pub-x-v104:hover,.tzc-msgdia-close-v105:hover{
+  color:var(--gold-light)!important;
+  background:rgba(212,175,55,.08)!important;
+  border-radius:5px!important;
+}
+
+/* Mensagem do Dia: leitura centralizada e confortável */
+.tzc-msgdia-title-v105{text-align:center!important;font-size:1rem!important;margin:3px 0 12px!important}
+.tzc-msgdia-text-v105{
+  text-align:center!important;
+  max-width:540px!important;
+  margin:0 auto!important;
+  font-size:.88rem!important;
+  line-height:1.8!important;
+}
+.tzc-msgdia-date-v105{font-size:.73rem!important}
+
+/* Nova Publicação: proporção equivalente aos modais já aprovados */
+.tzc-pub-box-v104{
+  width:min(660px,calc(100vw - 34px))!important;
+  padding:13px 14px!important;
+}
+.tzc-pub-form-v104{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:8px 11px!important;
+}
+.tzc-pub-field-v104{grid-column:span 1!important}
+.tzc-pub-field-v104.full{grid-column:1/-1!important}
+.tzc-pub-field-v104 label{
+  font-size:.75rem!important;
+  font-weight:600!important;
+  color:var(--gold-light)!important;
+}
+.tzc-pub-field-v104 input,.tzc-pub-field-v104 select,.tzc-pub-field-v104 textarea{
+  font-size:.8rem!important;
+  min-height:34px!important;
+  box-sizing:border-box!important;
+}
+.tzc-pub-field-v104 textarea{min-height:52px!important;max-height:74px!important}
+#pConteudo{min-height:96px!important;max-height:125px!important}
+.tzc-pub-actions-v104{grid-column:1/-1!important;padding-top:2px!important}
+@media(max-width:600px){
+  .tzc-pub-form-v104{grid-template-columns:1fr!important}
+  .tzc-pub-field-v104,.tzc-pub-field-v104.full{grid-column:1!important}
+}
+</style>
+
+<script id="tzc-v106-campos-dinamicos-publicacoes">
+(function(){
+  window.ajustarCamposPublicacaoTZC_V106=function(){
+    const tipo=document.getElementById('pTipo')?.value||'Mensagem do Dia';
+    const resumo=document.querySelectorAll('.pub-resumo-v106');
+    const banho=document.querySelectorAll('.pub-banho-v106');
+    const orient=document.querySelectorAll('.pub-orientacoes-v106');
+    const show=(nodes,on)=>nodes.forEach(n=>n.style.display=on?'flex':'none');
+
+    if(tipo==='Mensagem do Dia'){
+      show(resumo,false); show(banho,false); show(orient,false);
+    }else if(tipo==='Banho da Semana'){
+      show(resumo,true); show(banho,true); show(orient,true);
+    }else{
+      show(resumo,true); show(banho,false); show(orient,false);
+    }
+  };
 })();
 </script>
 

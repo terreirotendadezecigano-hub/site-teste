@@ -8658,3 +8658,169 @@ html body #artesOverlayV85 textarea:not(:placeholder-shown) {
 }
 </style>
 
+
+<!-- V120 — PADRONIZAÇÃO FINAL DOS FORMULÁRIOS/MODAIS DE CADASTRO -->
+<style id="tzc-v120-padrao-final-modais">
+/*
+  PADRÃO OFICIAL:
+  modal escuro + campos cinza visíveis + borda dourada suave;
+  placeholder claro; conteúdo digitado escuro; foco dourado.
+  Aplicado também aos modais antigos que ainda tinham CSS próprio.
+*/
+
+/* ESTUDOS */
+html body #studyModal input,
+html body #studyModal textarea,
+html body #studyModal select,
+/* CATEGORIAS */
+html body #categoryModal input,
+html body #categoryModal textarea,
+html body #categoryModal select,
+/* USUÁRIOS E PERMISSÕES */
+html body #usuarioModalV99 input,
+html body #usuarioModalV99 textarea,
+html body #usuarioModalV99 select,
+/* ARTES/PDFS */
+html body #artesOverlayV85 input,
+html body #artesOverlayV85 textarea,
+html body #artesOverlayV85 select,
+/* PUBLICAÇÕES */
+html body #pubModalV104 input,
+html body #pubModalV104 textarea,
+html body #pubModalV104 select {
+  background:#505050 !important;
+  background-image:none !important;
+  border:1px solid rgba(212,175,55,.58) !important;
+  color:#171717 !important;
+  -webkit-text-fill-color:#171717 !important;
+  caret-color:#171717 !important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.025) !important;
+}
+
+html body #studyModal input::placeholder,
+html body #studyModal textarea::placeholder,
+html body #categoryModal input::placeholder,
+html body #categoryModal textarea::placeholder,
+html body #usuarioModalV99 input::placeholder,
+html body #usuarioModalV99 textarea::placeholder,
+html body #artesOverlayV85 input::placeholder,
+html body #artesOverlayV85 textarea::placeholder,
+html body #pubModalV104 input::placeholder,
+html body #pubModalV104 textarea::placeholder {
+  color:#ededed !important;
+  -webkit-text-fill-color:#ededed !important;
+  opacity:.92 !important;
+  font-weight:400 !important;
+}
+
+html body #studyModal input:focus,
+html body #studyModal textarea:focus,
+html body #studyModal select:focus,
+html body #categoryModal input:focus,
+html body #categoryModal textarea:focus,
+html body #categoryModal select:focus,
+html body #usuarioModalV99 input:focus,
+html body #usuarioModalV99 textarea:focus,
+html body #usuarioModalV99 select:focus,
+html body #artesOverlayV85 input:focus,
+html body #artesOverlayV85 textarea:focus,
+html body #artesOverlayV85 select:focus,
+html body #pubModalV104 input:focus,
+html body #pubModalV104 textarea:focus,
+html body #pubModalV104 select:focus {
+  background:#575757 !important;
+  border-color:#d4af37 !important;
+  outline:none !important;
+  box-shadow:0 0 0 2px rgba(212,175,55,.12) !important;
+}
+
+/* opções dos selects continuam legíveis ao abrir a lista */
+html body #studyModal option,
+html body #categoryModal option,
+html body #usuarioModalV99 option,
+html body #artesOverlayV85 option,
+html body #pubModalV104 option {
+  background:#303030 !important;
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+}
+
+/* Área dos Membros mantém o campo claro aprovado, mas texto digitado escuro. */
+html body #loginModal #loginEmail,
+html body #loginModal #loginEmail:focus {
+  background:#e8edf3 !important;
+  background-image:none !important;
+  color:#202020 !important;
+  -webkit-text-fill-color:#202020 !important;
+  border:1px solid rgba(212,175,55,.80) !important;
+  caret-color:#202020 !important;
+}
+html body #loginModal #loginEmail::placeholder {
+  color:#727982 !important;
+  -webkit-text-fill-color:#727982 !important;
+  opacity:1 !important;
+}
+</style>
+
+<script id="tzc-v120-placeholders-modais">
+(function(){
+  function aplicar(){
+    const regras = [
+      ['#studyModal input[type="text"]', 'Digite o título do estudo...'],
+      ['#categoryModal input[type="text"]', 'Digite o nome da categoria...'],
+
+      ['#usuarioModalV99 input[type="text"]', 'Digite o nome do usuário...'],
+      ['#usuarioModalV99 input[type="email"]', 'Digite o e-mail do usuário...'],
+      ['#usuarioModalV99 textarea', 'Digite uma observação sobre o usuário...']
+    ];
+
+    regras.forEach(([sel, ph])=>{
+      document.querySelectorAll(sel).forEach(el=>{
+        if(!el.getAttribute('placeholder')) el.setAttribute('placeholder',ph);
+      });
+    });
+
+    /* Estudos: campos identificados pelos próprios rótulos/ordem, sem alterar dados. */
+    const sm=document.querySelector('#studyModal');
+    if(sm){
+      const areas=sm.querySelectorAll('textarea');
+      if(areas[0] && !areas[0].placeholder) areas[0].placeholder='Digite um breve resumo do conteúdo...';
+      if(areas[1] && !areas[1].placeholder) areas[1].placeholder='Escreva aqui o conteúdo completo do estudo...';
+
+      const inputs=[...sm.querySelectorAll('input')];
+      inputs.forEach(el=>{
+        const p=(el.getAttribute('placeholder')||'').toLowerCase();
+        if(p==='https://...' || p.includes('imagem')) el.placeholder='Cole aqui o link da imagem...';
+        if(p.includes('livro') || p.includes('autor') || p.includes('referência') || p.includes('referencia'))
+          el.placeholder='Informe livro, autor, site ou outra referência...';
+      });
+    }
+
+    /* Categorias */
+    const cm=document.querySelector('#categoryModal');
+    if(cm){
+      const nome=cm.querySelector('input');
+      if(nome) nome.placeholder='Ex.: Umbanda, Oração, Ervas & Banhos...';
+    }
+
+    /* Usuários: garante orientação mesmo nos campos gerados dinamicamente. */
+    const um=document.querySelector('#usuarioModalV99');
+    if(um){
+      const labels=[...um.querySelectorAll('label')];
+      labels.forEach(label=>{
+        const txt=(label.textContent||'').trim().toLowerCase();
+        const campo=label.parentElement && label.parentElement.querySelector('input,textarea');
+        if(!campo) return;
+        if(txt.includes('nome')) campo.placeholder='Digite o nome do usuário...';
+        else if(txt.includes('e-mail') || txt.includes('email')) campo.placeholder='Digite o e-mail do usuário...';
+        else if(txt.includes('observ')) campo.placeholder='Digite uma observação sobre o usuário...';
+      });
+    }
+  }
+
+  aplicar();
+  const obs=new MutationObserver(()=>aplicar());
+  obs.observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+

@@ -8677,6 +8677,62 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
 })();
 </script>
 
+
+<!-- TZC V135 — PASSO 1: EVENTOS ABRE A TELA CORRETA PELO PERFIL.
+     Não altera login, logout, fetch global ou inicialização do site. -->
+<script id="tzc-v135-eventos-perfil-seguro">
+(function(){
+  function perfilV135(){
+    try{
+      const u=(typeof loggedUser!=='undefined' && loggedUser)?loggedUser:null;
+      return String((u && (u.perfil||u.Perfil))||'').trim().toLowerCase();
+    }catch(e){ return ''; }
+  }
+
+  function podeGerenciarEventosV135(){
+    const p=perfilV135();
+    return p==='dirigente' ||
+           p==='administrador' ||
+           p==='colaborador' ||
+           p==='editor/colaborador' ||
+           p==='editor';
+  }
+
+  function instalarCliqueEventosV135(){
+    const item=document.getElementById('menuEventosV128');
+    if(!item)return;
+
+    item.onclick=function(){
+      try{ document.getElementById('sidebar')?.classList.remove('open'); }catch(e){}
+
+      if(podeGerenciarEventosV135() && typeof window.abrirEventosTZC_V126==='function'){
+        return window.abrirEventosTZC_V126();
+      }
+
+      if(typeof window.abrirEventosMembrosTZCV128==='function'){
+        return window.abrirEventosMembrosTZCV128(item);
+      }
+    };
+  }
+
+  /* Reaplica somente o clique do item Eventos quando a interface muda de usuário.
+     Não interfere no mecanismo de login/logout. */
+  const uiAnteriorV135=window.updateUserInterface;
+  if(typeof uiAnteriorV135==='function'){
+    window.updateUserInterface=function(){
+      const r=uiAnteriorV135.apply(this,arguments);
+      setTimeout(instalarCliqueEventosV135,0);
+      return r;
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(instalarCliqueEventosV135,350);
+  });
+  setTimeout(instalarCliqueEventosV135,500);
+})();
+</script>
+
 </body>
 </html>
 

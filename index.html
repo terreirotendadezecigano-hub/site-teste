@@ -1901,6 +1901,14 @@
                 <p style="margin:0;color:var(--text-muted);font-size:.82rem;font-weight:400;">Geração de materiais — próximo módulo.</p>
               </div>
             </button>
+
+            <button type="button" class="card" onclick="abrirUsuariosPermissoesTZC()" style="text-align:left;border:1px solid var(--border-color);cursor:pointer;background:linear-gradient(145deg,#171717,#0d0d0d);">
+              <div style="padding:20px;">
+                <i class="fa-solid fa-user-shield" style="font-size:1.7rem;color:var(--gold-primary);margin-bottom:12px;"></i>
+                <h3 style="margin:0 0 6px;color:#fff !important;font-size:1rem;">Usuários e Permissões</h3>
+                <p style="margin:0;color:var(--text-muted);font-size:.82rem;font-weight:400;">Gerenciar usuários, perfis e status de acesso ao sistema.</p>
+              </div>
+            </button>
           </div>
         </section>
       `;
@@ -5934,6 +5942,142 @@ function filtrarEstudosTZC_V55(valor){
       }
     }catch(e){}
     return fetchOriginalTZCV98(input, init);
+  };
+})();
+</script>
+
+
+<script id="tzc-v99-usuarios-permissoes">
+/* TZC V99 — Usuários e Permissões */
+(function(){
+  const APIU = (typeof WEB_APP_URL !== 'undefined' ? WEB_APP_URL : (typeof API !== 'undefined' ? API : ''));
+  window.tzcUsuariosV99 = [];
+
+  function escU(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+  function podeGerenciarU(){
+    const u = (typeof loggedUser !== 'undefined' && loggedUser) ? loggedUser : {};
+    const p = String(u.perfil||'').toLowerCase();
+    return p==='dirigente' || p==='administrador';
+  }
+  function containerU(){return document.getElementById('contentContainer');}
+  function fecharModalU(){document.getElementById('modalUsuarioV99')?.remove();}
+  window.fecharModalUsuarioTZC=fecharModalU;
+
+  window.abrirUsuariosPermissoesTZC = async function(){
+    if(!podeGerenciarU()){
+      if(typeof showToast==='function') showToast('Acesso restrito a Dirigente ou Administrador.');
+      return;
+    }
+    const c=containerU(); if(!c)return;
+    const s=document.getElementById('searchContainerWrapper'); if(s)s.style.display='none';
+    c.innerHTML=`<div>
+      <div class="tzc-page-head-v44">
+        <button type="button" class="btn-toolbar tzc-page-back-v44" onclick="voltarGestaoInternaTZC_V1()"><i class="fa-solid fa-arrow-left"></i> Gestão Interna</button>
+        <div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-user-shield"></i> Usuários e Permissões <span id="usuariosCountV99" class="tzc-count-v47"></span></h2><p>Gerencie usuários, perfis e status de acesso ao sistema.</p></div>
+        <button type="button" class="btn-toolbar btn-add-membro tzc-page-new-v44" onclick="editarUsuarioPermissaoTZC()"><i class="fa-solid fa-plus"></i> Novo Usuário</button>
+      </div>
+      <div style="max-width:760px;margin:0 auto 14px;">
+        <input id="buscaUsuarioV99" type="search" placeholder="Buscar por nome, e-mail, perfil ou status..." oninput="renderUsuariosPermissoesTZC()" style="width:100%;background:#101010;border:1px solid var(--border-color);color:#fff;border-radius:7px;padding:9px 11px;font-size:.82rem;outline:none;">
+      </div>
+      <div style="overflow:auto;border:1px solid var(--border-color);border-radius:8px;background:#101010;">
+        <table style="width:100%;border-collapse:collapse;min-width:760px;font-size:.78rem;">
+          <thead><tr style="color:var(--gold-primary);text-align:left;border-bottom:1px solid var(--border-color);">
+            <th style="padding:10px;">Nome</th><th style="padding:10px;">E-mail</th><th style="padding:10px;">Perfil</th><th style="padding:10px;">Status</th><th style="padding:10px;">Último acesso</th><th style="padding:10px;text-align:right;">Ações</th>
+          </tr></thead><tbody id="usuariosBodyV99"></tbody>
+        </table>
+      </div>
+    </div>`;
+    await carregarUsuariosPermissoesTZC();
+  };
+
+  window.carregarUsuariosPermissoesTZC = async function(){
+    try{
+      const r=await fetch(APIU+'?sheet=Usuarios_Acesso&_='+Date.now());
+      const d=await r.json();
+      window.tzcUsuariosV99=Array.isArray(d)?d:[];
+      renderUsuariosPermissoesTZC();
+    }catch(e){
+      if(typeof showToast==='function')showToast('Não foi possível carregar os usuários.');
+    }
+  };
+
+  window.renderUsuariosPermissoesTZC = function(){
+    const body=document.getElementById('usuariosBodyV99'); if(!body)return;
+    const q=String(document.getElementById('buscaUsuarioV99')?.value||'').trim().toLowerCase();
+    const arr=window.tzcUsuariosV99.filter(u=>[u.Nome,u.Email,u.Perfil,u.Status].join(' ').toLowerCase().includes(q));
+    const count=document.getElementById('usuariosCountV99'); if(count)count.textContent='· '+arr.length+' registro'+(arr.length===1?'':'s');
+    body.innerHTML=arr.length?arr.map(u=>{
+      const ativo=String(u.Status||'Ativo').toLowerCase()==='ativo';
+      return `<tr style="border-bottom:1px solid #242424;">
+        <td style="padding:9px 10px;color:#fff;">${escU(u.Nome||'—')}</td>
+        <td style="padding:9px 10px;color:#cfcfcf;">${escU(u.Email||'—')}</td>
+        <td style="padding:9px 10px;color:#cfcfcf;">${escU(u.Perfil||'Membro')}</td>
+        <td style="padding:9px 10px;"><span class="tzc-status-cinza-v90">${ativo?'Ativo':'Inativo'}</span></td>
+        <td style="padding:9px 10px;color:#aaa;">${escU(u.Ultimo_Acesso||'—')}</td>
+        <td style="padding:7px 10px;text-align:right;white-space:nowrap;">
+          <button class="btn-icon-only" title="Editar" onclick="editarUsuarioPermissaoTZC('${escU(u.ID_Usuario)}')"><i class="fas fa-pen"></i></button>
+          <button class="btn-icon-only" title="${ativo?'Desativar':'Ativar'}" onclick="alterarStatusUsuarioTZC('${escU(u.ID_Usuario)}','${ativo?'Inativo':'Ativo'}')"><i class="fas fa-${ativo?'ban':'check'}"></i></button>
+        </td>
+      </tr>`;
+    }).join(''):`<tr><td colspan="6" style="padding:20px;text-align:center;color:#888;">Nenhum usuário encontrado.</td></tr>`;
+  };
+
+  window.editarUsuarioPermissaoTZC = function(id){
+    const u=window.tzcUsuariosV99.find(x=>String(x.ID_Usuario)===String(id))||{};
+    const edit=!!id;
+    document.body.insertAdjacentHTML('beforeend',`<div id="modalUsuarioV99" style="position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:10050;display:flex;align-items:center;justify-content:center;padding:18px;" onclick="if(event.target===this)fecharModalUsuarioTZC()">
+      <div style="width:min(520px,96vw);background:#111;border:1px solid var(--gold-primary);border-radius:9px;padding:18px;position:relative;">
+        <button type="button" onclick="fecharModalUsuarioTZC()" style="position:absolute;right:12px;top:10px;background:none;border:0;color:#aaa;font-size:1.2rem;cursor:pointer;">×</button>
+        <h3 style="margin:0 0 16px;color:#fff;font-size:1.05rem;"><i class="fa-solid fa-user-shield" style="color:var(--gold-primary);"></i> ${edit?'Editar Usuário':'Novo Usuário'}</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;">
+          <label style="color:var(--gold-light);font-size:.75rem;">Nome<input id="uNomeV99" value="${escU(u.Nome||'')}" style="display:block;width:100%;margin-top:5px;background:#0b0b0b;border:1px solid #333;color:#fff;border-radius:6px;padding:8px;"></label>
+          <label style="color:var(--gold-light);font-size:.75rem;">E-mail<input id="uEmailV99" type="email" value="${escU(u.Email||'')}" style="display:block;width:100%;margin-top:5px;background:#0b0b0b;border:1px solid #333;color:#fff;border-radius:6px;padding:8px;"></label>
+          <label style="color:var(--gold-light);font-size:.75rem;">Perfil<select id="uPerfilV99" style="display:block;width:100%;margin-top:5px;background:#0b0b0b;border:1px solid #333;color:#fff;border-radius:6px;padding:8px;">
+            ${['Dirigente','Administrador','Editor/Colaborador','Membro'].map(p=>`<option ${String(u.Perfil||'Membro')===p?'selected':''}>${p}</option>`).join('')}
+          </select></label>
+          <label style="color:var(--gold-light);font-size:.75rem;">Status<select id="uStatusV99" style="display:block;width:100%;margin-top:5px;background:#0b0b0b;border:1px solid #333;color:#fff;border-radius:6px;padding:8px;"><option ${String(u.Status||'Ativo')==='Ativo'?'selected':''}>Ativo</option><option ${String(u.Status||'')==='Inativo'?'selected':''}>Inativo</option></select></label>
+        </div>
+        <label style="display:block;color:var(--gold-light);font-size:.75rem;margin-top:11px;">Observações<textarea id="uObsV99" rows="3" style="display:block;width:100%;margin-top:5px;background:#0b0b0b;border:1px solid #333;color:#fff;border-radius:6px;padding:8px;resize:vertical;">${escU(u.Observacoes||'')}</textarea></label>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+          <button class="btn-toolbar" onclick="fecharModalUsuarioTZC()">Fechar</button>
+          <button class="btn-toolbar btn-add-membro" onclick="salvarUsuarioPermissaoTZC('${escU(id||'')}')"><i class="fas fa-save"></i> Salvar</button>
+        </div>
+      </div></div>`);
+  };
+
+  window.salvarUsuarioPermissaoTZC = async function(id){
+    const nome=document.getElementById('uNomeV99').value.trim();
+    const email=document.getElementById('uEmailV99').value.trim().toLowerCase();
+    if(!nome||!email){if(typeof showToast==='function')showToast('Informe nome e e-mail.');return;}
+    const old=window.tzcUsuariosV99.find(x=>String(x.ID_Usuario)===String(id))||{};
+    const edit=!!id;
+    const dados={
+      ID_Usuario:id||('USR-'+Date.now()),
+      Google_Sub:old.Google_Sub||'',
+      Email:email,Nome:nome,
+      Perfil:document.getElementById('uPerfilV99').value,
+      Status:document.getElementById('uStatusV99').value,
+      Data_Cadastro:old.Data_Cadastro||new Date().toISOString(),
+      Ultimo_Acesso:old.Ultimo_Acesso||'',
+      Observacoes:document.getElementById('uObsV99').value.trim()
+    };
+    await fetch(APIU,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:edit?'atualizar':'inserir',nomeAba:'Usuarios_Acesso',id:dados.ID_Usuario,idColuna:'ID_Usuario',dados})});
+    fecharModalU();
+    if(typeof showToast==='function')showToast(edit?'Usuário atualizado!':'Usuário cadastrado!');
+    setTimeout(carregarUsuariosPermissoesTZC,900);
+  };
+
+  window.alterarStatusUsuarioTZC = async function(id,status){
+    const u=window.tzcUsuariosV99.find(x=>String(x.ID_Usuario)===String(id)); if(!u)return;
+    const eu=(typeof loggedUser!=='undefined'&&loggedUser)?loggedUser:{};
+    if(String(u.Email||'').toLowerCase()===String(eu.email||'').toLowerCase() && status==='Inativo'){
+      if(typeof showToast==='function')showToast('Você não pode desativar o próprio acesso.');
+      return;
+    }
+    const dados=Object.assign({},u,{Status:status});
+    await fetch(APIU,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'atualizar',nomeAba:'Usuarios_Acesso',id:id,idColuna:'ID_Usuario',dados})});
+    if(typeof showToast==='function')showToast(status==='Ativo'?'Usuário ativado!':'Usuário desativado!');
+    setTimeout(carregarUsuariosPermissoesTZC,900);
   };
 })();
 </script>

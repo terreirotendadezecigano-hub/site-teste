@@ -6230,12 +6230,12 @@ function filtrarEstudosTZC_V55(valor){
 
   window.abrirQuemSomosPublicoTZC_V103=function(el){
     prepararPaginaPublicaV103(); ativarMenuV103(el);
-    const t=document.getElementById('pageTitle'); if(t) t.innerHTML='<i class="fa-solid fa-landmark"></i> Quem Somos';
+    const t=document.getElementById('pageTitle'); if(t){ t.innerHTML=''; t.style.display='none'; }
     const c=document.getElementById('contentContainer'); if(!c)return;
     c.innerHTML=`<div class="tzc-publico-v103">
       ${botaoVoltarV103()}
       <div class="tzc-publico-head-v103 tzc-publico-head-padrao-v110">
-        <h2><i class="fa-solid fa-landmark"></i> Quem Somos</h2>
+        <h2><i class="fa-solid fa-landmark"></i> Tenda de Zé Cigano</h2>
         <p>Conheça a Tenda de Zé Cigano, nossa missão, valores e caminhada espiritual.</p>
       </div>
 
@@ -7162,6 +7162,105 @@ button.tzc-salvar-padrao-v109:hover{
     document.addEventListener('DOMContentLoaded',()=>setTimeout(aplicarDestaqueHomeV110,250));
   }else{
     setTimeout(aplicarDestaqueHomeV110,250);
+  }
+})();
+</script>
+
+
+<style id="tzc-v111-padrao-real-estudos">
+/* =========================================================
+   V111 — A RÉGUA REAL É A DE ESTUDOS (V55)
+   Título: 1.28rem / 800
+   Introdução: .92rem
+   ========================================================= */
+
+/* QUEM SOMOS — mesmo cabeçalho de Estudos */
+.tzc-publico-head-v103.tzc-publico-head-padrao-v110{
+  margin:0 auto 14px!important;
+  max-width:none!important;
+  text-align:center!important;
+}
+.tzc-publico-head-padrao-v110 h2{
+  margin:0!important;
+  color:#fff!important;
+  font-size:1.28rem!important;
+  line-height:1.2!important;
+  font-weight:800!important;
+}
+.tzc-publico-head-padrao-v110 h2 i{
+  color:var(--gold-primary)!important;
+  font-size:1.28rem!important;
+  margin:0 7px 0 0!important;
+}
+.tzc-publico-head-padrao-v110 p{
+  margin:5px auto 0!important;
+  max-width:860px!important;
+  color:#c7c7c7!important;
+  font-size:.92rem!important;
+  line-height:1.42!important;
+}
+
+/* "Quem Somos" do primeiro quadro = exatamente os outros títulos amarelos */
+.tzc-publico-sec-v103.tzc-publico-primeira-v105 h3{
+  margin:0 0 10px!important;
+  color:var(--gold-primary)!important;
+  font-size:.95rem!important;
+  line-height:normal!important;
+  font-weight:700!important;
+}
+
+/* MENSAGEM DO DIA + BANHO DA SEMANA — mesma régua de Estudos */
+.tzc-publicacoes-copy-v107 h2{
+  margin:0!important;
+  color:#fff!important;
+  font-size:1.28rem!important;
+  line-height:1.2!important;
+  font-weight:800!important;
+}
+.tzc-publicacoes-copy-v107 h2 i{
+  color:var(--gold-primary)!important;
+  font-size:1.28rem!important;
+  margin-right:7px!important;
+}
+.tzc-publicacoes-copy-v107 p{
+  margin:5px auto 0!important;
+  max-width:860px!important;
+  color:#c7c7c7!important;
+  font-size:.92rem!important;
+  line-height:1.42!important;
+}
+
+/* Mantém contador discreto, como em Estudos */
+.tzc-publicacoes-count-v107{
+  font-size:.68rem!important;
+  font-weight:400!important;
+  color:#aaa!important;
+  vertical-align:middle!important;
+}
+</style>
+
+<script id="tzc-v111-home-sem-pesquisa">
+(function(){
+  function homeSemPesquisaV111(){
+    const busca=document.getElementById('searchContainerWrapper');
+    if(busca) busca.style.display='none';
+  }
+
+  /* Home aberta inicialmente */
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',()=>setTimeout(homeSemPesquisaV111,300));
+  }else{
+    setTimeout(homeSemPesquisaV111,300);
+  }
+
+  /* Home acessada depois de navegar pelo menu */
+  const switchV111=window.switchTab;
+  if(typeof switchV111==='function'){
+    window.switchTab=function(tabName,element){
+      const r=switchV111.apply(this,arguments);
+      if(tabName==='Home') homeSemPesquisaV111();
+      return r;
+    };
   }
 })();
 </script>

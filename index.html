@@ -9405,8 +9405,83 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
     ]));
 
     const ws=XLSX.utils.aoa_to_sheet(linhas);
-    ws['!cols']=[{wch:30},{wch:15},{wch:15},{wch:22},{wch:38}];
+
+    /* V155 — apresentação mais profissional da planilha.
+       Mantém os mesmos dados e a mesma exportação da V154. */
+    ws['!cols']=[
+      {wch:32},{wch:16},{wch:16},{wch:23},{wch:42}
+    ];
+    ws['!rows']=[
+      {hpt:24},{hpt:20},{hpt:20},{hpt:8},{hpt:22}
+    ];
+    ws['!merges']=[
+      {s:{r:0,c:0},e:{r:0,c:4}},
+      {s:{r:1,c:0},e:{r:1,c:4}}
+    ];
+    ws['!autofilter']={ref:`A5:E${Math.max(5,linhas.length)}`};
+    ws['!freeze']={xSplit:0,ySplit:5,topLeftCell:'A6',activePane:'bottomLeft',state:'frozen'};
+
+    /* Algumas versões do SheetJS disponíveis no navegador preservam
+       estes estilos no XLSX; nas que não preservarem, largura,
+       mesclagem, filtro e organização continuam funcionando. */
+    const borda={
+      top:{style:'thin',color:{rgb:'D4AF37'}},
+      bottom:{style:'thin',color:{rgb:'D4AF37'}},
+      left:{style:'thin',color:{rgb:'D4AF37'}},
+      right:{style:'thin',color:{rgb:'D4AF37'}}
+    };
+
+    if(ws['A1']) ws['A1'].s={
+      font:{bold:true,sz:16,color:{rgb:'60000A'}},
+      alignment:{horizontal:'center',vertical:'center'}
+    };
+    if(ws['A2']) ws['A2'].s={
+      font:{bold:true,sz:12,color:{rgb:'D4AF37'}},
+      alignment:{horizontal:'center',vertical:'center'}
+    };
+    if(ws['A3']) ws['A3'].s={
+      font:{bold:true,color:{rgb:'60000A'}},
+      alignment:{vertical:'center'}
+    };
+    if(ws['B3']) ws['B3'].s={
+      font:{bold:true,color:{rgb:'000000'}},
+      alignment:{vertical:'center'}
+    };
+
+    ['A5','B5','C5','D5','E5'].forEach(c=>{
+      if(!ws[c]) return;
+      ws[c].s={
+        font:{bold:true,color:{rgb:'FFFFFF'}},
+        fill:{fgColor:{rgb:'60000A'}},
+        alignment:{horizontal:'center',vertical:'center'},
+        border:borda
+      };
+    });
+
+    for(let r=6;r<=linhas.length;r++){
+      for(let c=0;c<5;c++){
+        const cel=XLSX.utils.encode_cell({r:r-1,c});
+        if(!ws[cel]) continue;
+        ws[cel].s={
+          alignment:{
+            vertical:'center',
+            horizontal:(c===1||c===2)?'center':'left',
+            wrapText:true
+          },
+          border:{
+            bottom:{style:'thin',color:{rgb:'D9D9D9'}}
+          }
+        };
+      }
+    }
+
     const wb=XLSX.utils.book_new();
+    wb.Props={
+      Title:`Confirmações e Presenças - ${nome}`,
+      Subject:'Controle de Presenças',
+      Author:'Tenda de Zé Cigano',
+      Company:'Tenda de Zé Cigano'
+    };
     XLSX.utils.book_append_sheet(wb,ws,'Presenças');
     XLSX.writeFile(wb,`Presencas_${seguroV154(nome)}.xlsx`);
     showToast?.('Lista exportada para Excel!');

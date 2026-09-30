@@ -8572,16 +8572,14 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
   }))).observe(document.documentElement,{childList:true,subtree:true});
   document.addEventListener('DOMContentLoaded',()=>padronizarSalvar134());
 
-  /* Salvar EVENTO: fecha o formulário imediatamente e mostra um aviso próprio.
-     Assim ninguém fica olhando para o modal parado enquanto a rede grava. */
+  /* V168 — CORREÇÃO ÚNICA DO SALVAMENTO DE EVENTOS.
+     O wrapper V134 removia #eventoModalV126 ANTES da função original ler
+     evTitulo/evDataV130/evHoraV130 e os demais campos. Isso interrompia o
+     cadastro antes do POST. Agora o modal permanece no DOM durante a gravação;
+     a própria função original fecha o formulário somente após salvar. */
   const salvarEventoAnterior=window.salvarEventoTZC_V126;
   if(typeof salvarEventoAnterior==='function'){
     window.salvarEventoTZC_V126=async function(){
-      const modal=document.getElementById('eventoModalV126');
-      const obrigatorios=[...modal?.querySelectorAll('[required]')||[]];
-      const faltou=obrigatorios.some(x=>!String(x.value||'').trim());
-      if(faltou){return salvarEventoAnterior.apply(this,arguments)}
-      modal?.remove();
       mostrarSalvandoTZCV134('Salvando evento...');
       try{
         await salvarEventoAnterior.apply(this,arguments);

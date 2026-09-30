@@ -9345,3 +9345,148 @@ html body .gestao-interna-home .card.tzc-card-retorno-v121 {
   new MutationObserver(aplicarV123).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
+
+<!-- =========================================================
+     V124 — PADRÃO DEFINITIVO DOS CAMPOS DOS MODAIS
+     Referência visual aprovada: NOVA ERVA
+     Regra:
+     - placeholder/orientação: branco + itálico
+     - valor digitado: branco + normal
+     - select/escolha: branco + normal (NUNCA itálico)
+     - data: branco + normal
+     - fundo: cinza #505050 + borda dourada suave
+     ========================================================= -->
+<style id="tzc-v124-padrao-nova-erva-definitivo">
+/* CAMPOS — mesmos princípios visuais do modal Nova Erva. */
+html body #modalNovoEstudoTZC_V1 input:not([type="hidden"]),
+html body #modalNovoEstudoTZC_V1 select,
+html body #modalNovoEstudoTZC_V1 textarea,
+html body #modalCategoriaTZC_V1 input:not([type="hidden"]),
+html body #modalCategoriaTZC_V1 select,
+html body #modalCategoriaTZC_V1 textarea,
+html body #midiasModalOverlayV82 input:not([type="hidden"]),
+html body #midiasModalOverlayV82 select,
+html body #midiasModalOverlayV82 textarea,
+html body #artesOverlayV85 input:not([type="hidden"]),
+html body #artesOverlayV85 select,
+html body #artesOverlayV85 textarea,
+html body #modalUsuarioV99 input:not([type="hidden"]),
+html body #modalUsuarioV99 select,
+html body #modalUsuarioV99 textarea,
+html body #pubModalV104 input:not([type="hidden"]),
+html body #pubModalV104 select,
+html body #pubModalV104 textarea,
+html body #tzcEditCampoV33 {
+  background:#505050 !important;
+  background-image:none !important;
+  border:1px solid rgba(212,175,55,.62) !important;
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+  caret-color:#fff !important;
+  font-family:inherit !important;
+  font-style:normal !important;
+  font-weight:400 !important;
+  opacity:1 !important;
+  box-shadow:none !important;
+}
+
+/* PLACEHOLDER / INTRODUÇÃO — somente estes ficam em itálico. */
+html body #modalNovoEstudoTZC_V1 input::placeholder,
+html body #modalNovoEstudoTZC_V1 textarea::placeholder,
+html body #modalCategoriaTZC_V1 input::placeholder,
+html body #modalCategoriaTZC_V1 textarea::placeholder,
+html body #midiasModalOverlayV82 input::placeholder,
+html body #midiasModalOverlayV82 textarea::placeholder,
+html body #artesOverlayV85 input::placeholder,
+html body #artesOverlayV85 textarea::placeholder,
+html body #modalUsuarioV99 input::placeholder,
+html body #modalUsuarioV99 textarea::placeholder,
+html body #pubModalV104 input::placeholder,
+html body #pubModalV104 textarea::placeholder,
+html body #tzcEditCampoV33::placeholder {
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+  opacity:1 !important;
+  font-family:inherit !important;
+  font-style:italic !important;
+  font-weight:400 !important;
+}
+
+/* SELECT / CAIXA DE ESCOLHA — branco e NORMAL. Nunca itálico. */
+html body #modalNovoEstudoTZC_V1 select,
+html body #modalCategoriaTZC_V1 select,
+html body #midiasModalOverlayV82 select,
+html body #artesOverlayV85 select,
+html body #modalUsuarioV99 select,
+html body #pubModalV104 select {
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+  font-family:inherit !important;
+  font-style:normal !important;
+  font-weight:400 !important;
+}
+
+/* Opções abertas dos selects. */
+html body #modalNovoEstudoTZC_V1 option,
+html body #modalCategoriaTZC_V1 option,
+html body #midiasModalOverlayV82 option,
+html body #artesOverlayV85 option,
+html body #modalUsuarioV99 option,
+html body #pubModalV104 option {
+  background:#505050 !important;
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+  font-family:inherit !important;
+  font-style:normal !important;
+  font-weight:400 !important;
+}
+
+/* DATA DA PUBLICAÇÃO — branca, legível e sem itálico. */
+html body #pubModalV104 input[type="date"] {
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+  font-style:normal !important;
+  color-scheme:dark !important;
+}
+html body #pubModalV104 input[type="date"]::-webkit-datetime-edit,
+html body #pubModalV104 input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+html body #pubModalV104 input[type="date"]::-webkit-datetime-edit-text,
+html body #pubModalV104 input[type="date"]::-webkit-datetime-edit-month-field,
+html body #pubModalV104 input[type="date"]::-webkit-datetime-edit-day-field,
+html body #pubModalV104 input[type="date"]::-webkit-datetime-edit-year-field {
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+  font-style:normal !important;
+}
+
+/* Foco — mantém o padrão Nova Erva. */
+html body #modalNovoEstudoTZC_V1 input:focus,
+html body #modalNovoEstudoTZC_V1 select:focus,
+html body #modalNovoEstudoTZC_V1 textarea:focus,
+html body #modalCategoriaTZC_V1 input:focus,
+html body #modalCategoriaTZC_V1 select:focus,
+html body #modalCategoriaTZC_V1 textarea:focus,
+html body #midiasModalOverlayV82 input:focus,
+html body #midiasModalOverlayV82 select:focus,
+html body #midiasModalOverlayV82 textarea:focus,
+html body #artesOverlayV85 input:focus,
+html body #artesOverlayV85 select:focus,
+html body #artesOverlayV85 textarea:focus,
+html body #modalUsuarioV99 input:focus,
+html body #modalUsuarioV99 select:focus,
+html body #modalUsuarioV99 textarea:focus,
+html body #pubModalV104 input:focus,
+html body #pubModalV104 select:focus,
+html body #pubModalV104 textarea:focus,
+html body #tzcEditCampoV33:focus {
+  background:#595959 !important;
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+  border-color:var(--gold-primary) !important;
+  outline:none !important;
+  box-shadow:0 0 0 1px rgba(212,175,55,.18) !important;
+}
+
+/* Quem Somos — texto público branco. */
+html body #txtQuemSomos { color:#fff !important; }
+</style>

@@ -9220,6 +9220,79 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
 })();
 </script>
 
+
+<!-- ============================================================
+     TZC V148 — DESTAQUE DO EVENTO EM CONFIRMAÇÕES E PRESENÇAS
+     Alteração única desta versão.
+     ============================================================ -->
+<style id="tzc-v148-destaque-evento-presencas">
+.tzc-pres-evento-v148{
+  margin:0 0 12px;
+  padding:10px 12px;
+  background:#121212;
+  border:1px solid #292929;
+  border-left:3px solid var(--gold-primary);
+  border-radius:7px;
+}
+.tzc-pres-evento-v148 h3{
+  margin:0 0 3px;
+  color:var(--gold-primary);
+  font-size:.95rem;
+  font-weight:700;
+}
+.tzc-pres-evento-v148 p{
+  margin:0;
+  color:#aaa;
+  font-size:.76rem;
+  font-weight:400;
+}
+</style>
+
+<script id="tzc-v148-destaque-evento-presencas-js">
+(function(){
+  const abrirAnteriorV148 = window.abrirPresencasTZCV127;
+  if(typeof abrirAnteriorV148 !== 'function') return;
+
+  window.abrirPresencasTZCV127 = async function(idEvento){
+    await abrirAnteriorV148.apply(this, arguments);
+
+    const pagina = document.getElementById('contentContainer');
+    if(!pagina) return;
+
+    const head = pagina.querySelector('.tzc-page-head-v44');
+    const intro = head?.querySelector('.tzc-page-copy-v44 p');
+    const busca = pagina.querySelector('.tzc-pres-v127-search');
+    if(!head || !intro || !busca) return;
+
+    /* O título do evento já foi carregado pela rotina aprovada.
+       Aproveitamos esse valor sem fazer nova chamada ao servidor. */
+    const textoAtual = String(intro.textContent || '').trim();
+    let nomeEvento = textoAtual.split('·')[0].trim();
+    if(!nomeEvento) nomeEvento = 'Evento';
+
+    /* Introdução geral da página */
+    intro.innerHTML =
+      '<strong style="color:#fff">Painel de controle de presença:</strong> ' +
+      'acompanhe as confirmações dos participantes e registre a presença real no dia do evento.';
+
+    /* Remove a antiga caixa informativa duplicada, se existir. */
+    pagina.querySelectorAll('.tzc-pres-admin-note-v128').forEach(function(n){
+      n.remove();
+    });
+
+    /* Destaque do evento ENTRE a pesquisa e a tabela. */
+    pagina.querySelector('.tzc-pres-evento-v148')?.remove();
+    const bloco = document.createElement('div');
+    bloco.className = 'tzc-pres-evento-v148';
+    bloco.innerHTML =
+      '<h3></h3>' +
+      '<p>Acompanhe respostas e presença dos participantes.</p>';
+    bloco.querySelector('h3').textContent = nomeEvento;
+    busca.insertAdjacentElement('afterend', bloco);
+  };
+})();
+</script>
+
 </body>
 </html>
 

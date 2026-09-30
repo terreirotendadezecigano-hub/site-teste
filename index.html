@@ -3423,7 +3423,14 @@
 
         if (filho) {
           isLoggedIn = true;
-          loggedUser = { id: filho.ID_Filho || filho.id, nome: filho.Nome_Completo || filho.Nome, email: emailInput, perfil: filho.Perfil || 'Membro' };
+          loggedUser = {
+            id: filho.ID_Filho || filho.id,
+            googleSub: filho.Google_Sub || filho.GoogleSub || '',
+            nome: filho.Nome_Completo || filho.Nome || emailInput,
+            email: emailInput,
+            perfil: filho.Perfil || 'Membro'
+          };
+          sincronizarUsuarioAcessoTZC_V98(loggedUser);
           updateAuthUI();
           closeLoginModal();
           loadTabData(currentTab);
@@ -5868,6 +5875,66 @@ function filtrarEstudosTZC_V55(valor){
  window.salvarArtePdfTZC=function(id,edit){const dados={ID_Material:id,Tipo:document.getElementById('aTipoV85').value,Titulo:document.getElementById('aTituloV85').value.trim(),Categoria:document.getElementById('aCategoriaV85').value.trim(),Descricao:document.getElementById('aDescricaoV85').value.trim(),Arquivo_URL:document.getElementById('aArquivoV85').value.trim(),Capa_URL:document.getElementById('aCapaV85').value.trim(),Acesso_Publico:document.getElementById('aAcessoV85').value,Status:'Ativo',Data_Atualizacao:new Date().toISOString()};if(!dados.Titulo){if(typeof showToast==='function')showToast('Informe o título.');return;}const old=window.tzcArtesV85.find(a=>String(a.ID_Material)===String(id));if(old?.Data_Criacao)dados.Data_Criacao=old.Data_Criacao;else dados.Data_Criacao=new Date().toISOString();fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:edit?'atualizar':'inserir',nomeAba:'Artes_PDFs',id,idColuna:'ID_Material',dados})});const i=window.tzcArtesV85.findIndex(a=>String(a.ID_Material)===String(id));if(i>=0)window.tzcArtesV85[i]=dados;else window.tzcArtesV85.push(dados);fecharModalArtesTZC();renderArtesPdfTZC();if(typeof showToast==='function')showToast(edit?'Material atualizado!':'Material cadastrado!');setTimeout(carregarArtesPdfTZC,1700)};
  window.excluirArtePdfTZC=function(id){const x=window.tzcArtesV85.find(a=>String(a.ID_Material)===String(id));if(!x)return;fecharModalArtesTZC();document.body.insertAdjacentHTML('beforeend',`<div id="artesOverlayV85" class="artes-overlay-v85" style="background:rgba(0,0,0,.68)"><div style="width:min(420px,94vw);background:#111;border:1px solid var(--gold-primary);border-radius:14px;padding:20px;box-shadow:0 20px 60px #000"><div style="display:flex;gap:13px;align-items:flex-start"><div style="width:36px;height:36px;min-width:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#351014;color:#ff6b72;font-size:.95rem"><i class="fa-solid fa-trash"></i></div><div style="flex:1"><h3 style="color:#fff;font-size:18px;margin:2px 0 7px">Excluir material?</h3><p style="color:#bbb;margin:0;line-height:1.45">Deseja realmente excluir “${esc(x.Titulo)}”?</p></div></div><div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #303030;margin-top:16px;padding-top:12px"><button class="btn-toolbar" onclick="fecharModalArtesTZC()">Cancelar</button><button class="btn-toolbar" style="background:#8f1f28;border-color:#b52b35;color:#fff" onclick="confirmarExcluirArtePdfTZC('${esc(id)}')"><i class="fa-solid fa-trash"></i> Excluir</button></div></div></div>`)};
  window.confirmarExcluirArtePdfTZC=function(id){fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'excluir',nomeAba:'Artes_PDFs',id,idColuna:'ID_Material'})});window.tzcArtesV85=window.tzcArtesV85.filter(a=>String(a.ID_Material)!==String(id));fecharModalArtesTZC();renderArtesPdfTZC();if(typeof showToast==='function')showToast('Material excluído!')};
+})();
+</script>
+
+
+<script id="tzc-v98-usuario-auditoria">
+/* =========================================================
+   TZC V98 — USUÁRIO + AUDITORIA
+   - Mantém o login existente.
+   - Sincroniza o usuário autenticado com Usuarios_Acesso.
+   - Acrescenta a identificação do usuário automaticamente
+     em todo POST enviado ao Web App.
+   ========================================================= */
+(function(){
+  window.tzcAuditoriaUsuarioV98 = function(){
+    if (!(window.isLoggedIn || (typeof isLoggedIn !== 'undefined' && isLoggedIn)) ||
+        !(window.loggedUser || (typeof loggedUser !== 'undefined' && loggedUser))) return null;
+    const u = window.loggedUser || loggedUser;
+    return {
+      googleSub: String(u.googleSub || u.Google_Sub || ''),
+      email: String(u.email || u.Email || '').trim().toLowerCase(),
+      nome: String(u.nome || u.Nome || u.Nome_Completo || '').trim(),
+      perfil: String(u.perfil || u.Perfil || 'Membro').trim()
+    };
+  };
+
+  window.sincronizarUsuarioAcessoTZC_V98 = function(u){
+    if (!u || !u.email || typeof WEB_APP_URL === 'undefined') return;
+    const payload = {
+      acao:'registrar_acesso_usuario',
+      nomeAba:'Usuarios_Acesso',
+      usuario:{
+        googleSub:String(u.googleSub || ''),
+        email:String(u.email || '').trim().toLowerCase(),
+        nome:String(u.nome || '').trim(),
+        perfil:String(u.perfil || 'Membro').trim()
+      }
+    };
+    fetch(WEB_APP_URL,{
+      method:'POST',
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(payload)
+    }).catch(function(){});
+  };
+
+  const fetchOriginalTZCV98 = window.fetch.bind(window);
+  window.fetch = function(input, init){
+    try{
+      const url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+      const alvoWebApp = typeof WEB_APP_URL !== 'undefined' && url.indexOf(WEB_APP_URL) === 0;
+      const metodo = String((init && init.method) || 'GET').toUpperCase();
+      if (alvoWebApp && metodo === 'POST' && init && typeof init.body === 'string'){
+        const obj = JSON.parse(init.body);
+        const aud = window.tzcAuditoriaUsuarioV98();
+        if (aud && !obj.auditoria) obj.auditoria = aud;
+        init = Object.assign({}, init, {body:JSON.stringify(obj)});
+      }
+    }catch(e){}
+    return fetchOriginalTZCV98(input, init);
+  };
 })();
 </script>
 

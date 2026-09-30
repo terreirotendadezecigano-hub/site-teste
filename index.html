@@ -1630,6 +1630,8 @@
     </div>
     <ul class="nav-list" id="navList">
       <li class="nav-item active" onclick="switchTab('Home', this)"><i class="fa-solid fa-house"></i> Início</li>
+      <li class="nav-item" onclick="abrirQuemSomosPublicoTZC_V103(this)"><i class="fa-solid fa-landmark"></i> Quem Somos</li>
+      <li class="nav-item" onclick="abrirMensagemDiaTZC_V103(this)"><i class="fa-solid fa-feather-pointed"></i> Mensagem do Dia</li>
       <li class="nav-item" onclick="switchTab('Agenda', this)"><i class="fa-solid fa-calendar-days"></i> Agenda</li>
       <li class="nav-item" onclick="switchTab('Mural_Imagens', this)"><i class="fa-solid fa-photo-film"></i> Mural de Avisos</li>
       <li class="nav-item" onclick="switchTab('Pontos_Cantados', this)"><i class="fa-solid fa-music"></i> Pontos Cantados</li>
@@ -1664,10 +1666,17 @@
       <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Pesquisar..." onkeyup="filterCards()">
     </div>
 
-    <div id="generalInfoSection" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:12px;">
+    <div id="generalInfoSection" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;">
       <div class="general-card">
-        <h3><i class="fa-solid fa-circle-info"></i> Quem Somos</h3>
-        <p id="txtQuemSomos" style="font-size:0.8rem; color:var(--text-muted); margin:0;">Carregando informações...</p>
+        <h3><i class="fa-solid fa-landmark"></i> Quem Somos</h3>
+        <p id="txtQuemSomos" style="font-size:.8rem;color:var(--text-muted);margin:0 0 10px;">A Tenda de Zé Cigano é um espaço de fé, caridade, acolhimento e desenvolvimento espiritual, fundamentado nos princípios da Umbanda.</p>
+        <button type="button" class="btn-toolbar" onclick="abrirQuemSomosPublicoTZC_V103()"><i class="fa-solid fa-arrow-right"></i> Conheça nossa casa</button>
+      </div>
+      <div class="general-card">
+        <h3><i class="fa-solid fa-feather-pointed"></i> Mensagem do Dia</h3>
+        <p style="font-size:.8rem;color:var(--text-muted);margin:0 0 8px;">Bom dia, alma gentil. 🌹</p>
+        <p style="font-size:.76rem;color:#888;margin:0 0 10px;">Que a aurora encontre teu coração em paz e derrame sobre teus caminhos a doce luz de um novo dia.</p>
+        <button type="button" class="btn-toolbar" onclick="abrirMensagemDiaTZC_V103()"><i class="fa-solid fa-book-open"></i> Ler mensagem</button>
       </div>
       <div class="general-card">
         <h3><i class="fa-solid fa-address-book"></i> Contatos & Atendimento</h3>
@@ -3407,7 +3416,7 @@
             let mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
             enderecoHtml += `<br><br><a class="info-link" href="${mapsUrl}" target="_blank"><strong><i class="fa-solid fa-location-dot" style="color: var(--gold-primary);"></i> Endereço:</strong> ${endereco}</a>`;
           }
-          document.getElementById('txtQuemSomos').innerHTML = enderecoHtml || 'Informações não encontradas.';
+          /* V103: o resumo público de Quem Somos é editorial e não é mais sobrescrito pela planilha Geral. */
 
           const telefone = info.Telefone_Whatsapp || info.Telefone || '';
           const grupoWhatsapp = info.Grupo_Zap || info.Grupo_Whatsapp || 'https://chat.whatsapp.com/KjLkk0tFu2wIuodvHEsG4e';
@@ -3417,6 +3426,10 @@
           const pix = info.PIX || info.Pix || '';
 
           let contatoHtml = '';
+          if (endereco) {
+            let mapsUrlContato = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
+            contatoHtml += `<li><a class="info-link" href="${mapsUrlContato}" target="_blank"><i class="fa-solid fa-location-dot"></i> <span>${endereco}</span></a></li>`;
+          }
           if (telefone) {
             let cleanPhone = telefone.replace(/\D/g, '');
             contatoHtml += `<li><a class="info-link" href="https://wa.me/${cleanPhone}" target="_blank"><i class="fa-brands fa-whatsapp"></i> <span>${telefone} (WhatsApp)</span></a></li>`;
@@ -6175,6 +6188,142 @@ function filtrarEstudosTZC_V55(valor){
   outline-offset:2px !important;
 }
 </style>
+
+
+<style id="tzc-v103-institucional-publico">
+.tzc-publico-v103{max-width:1040px;margin:0 auto;}
+.tzc-publico-head-v103{text-align:center;margin:4px auto 20px;max-width:760px;}
+.tzc-publico-head-v103 i{font-size:1.6rem;color:var(--gold-primary);margin-bottom:8px;}
+.tzc-publico-head-v103 h2{margin:0 0 7px;color:#fff;font-size:1.12rem;}
+.tzc-publico-head-v103 p{margin:0;color:var(--text-muted);font-size:.82rem;line-height:1.55;}
+.tzc-publico-sec-v103{background:linear-gradient(145deg,#171717,#0d0d0d);border:1px solid var(--border-color);border-radius:9px;padding:18px;margin-bottom:12px;}
+.tzc-publico-sec-v103 h3{margin:0 0 10px;color:var(--gold-primary);font-size:.95rem;}
+.tzc-publico-sec-v103 p{margin:0 0 10px;color:#c9c9c9;font-size:.82rem;line-height:1.7;}
+.tzc-publico-sec-v103 p:last-child{margin-bottom:0;}
+.tzc-objetivos-v103{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 18px;margin:0;padding:0;list-style:none;}
+.tzc-objetivos-v103 li{color:#c9c9c9;font-size:.8rem;line-height:1.45;padding-left:17px;position:relative;}
+.tzc-objetivos-v103 li:before{content:"✦";position:absolute;left:0;color:var(--gold-primary);}
+.tzc-valores-v103{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:9px;}
+.tzc-valor-v103{border:1px solid #292929;border-radius:7px;padding:11px;background:#111;}
+.tzc-valor-v103 strong{display:block;color:var(--gold-light);font-size:.8rem;margin-bottom:4px;}
+.tzc-valor-v103 span{color:#aaa;font-size:.76rem;line-height:1.45;}
+.tzc-fecho-v103{text-align:center;color:var(--gold-light)!important;font-weight:700;letter-spacing:.02em;}
+.tzc-mensagem-v103{max-width:760px;margin:0 auto;background:linear-gradient(145deg,#171717,#0d0d0d);border:1px solid var(--gold-primary);border-radius:10px;padding:24px 26px;}
+.tzc-mensagem-v103 p{color:#d0d0d0;font-size:.86rem;line-height:1.85;margin:0 0 14px;}
+.tzc-mensagem-v103 p:last-child{margin-bottom:0;}
+.tzc-mensagem-data-v103{text-align:center;color:#888!important;font-size:.73rem!important;margin-top:18px!important;}
+.tzc-voltar-publico-v103{margin-bottom:12px;}
+@media(max-width:680px){.tzc-objetivos-v103{grid-template-columns:1fr}.tzc-mensagem-v103{padding:18px}.tzc-publico-sec-v103{padding:15px}}
+</style>
+
+<script id="tzc-v103-institucional-publico-js">
+(function(){
+  function prepararPaginaPublicaV103(){
+    const g=document.getElementById('generalInfoSection'); if(g) g.style.display='none';
+    const s=document.getElementById('searchContainerWrapper'); if(s) s.style.display='none';
+    const l=document.getElementById('loading'); if(l) l.style.display='none';
+    const sub=document.getElementById('pageSubtitleContainer'); if(sub) sub.innerHTML='';
+    if(typeof toggleSidebar==='function' && document.getElementById('sidebar')?.classList.contains('open')) toggleSidebar();
+  }
+  function ativarMenuV103(el){
+    document.querySelectorAll('#navList .nav-item').forEach(x=>x.classList.remove('active'));
+    if(el) el.classList.add('active');
+  }
+  function botaoVoltarV103(){
+    return `<button type="button" class="btn-toolbar tzc-voltar-publico-v103" onclick="switchTab('Home',document.querySelector('#navList .nav-item'))"><i class="fa-solid fa-arrow-left"></i> Início</button>`;
+  }
+
+  window.abrirQuemSomosPublicoTZC_V103=function(el){
+    prepararPaginaPublicaV103(); ativarMenuV103(el);
+    const t=document.getElementById('pageTitle'); if(t) t.innerHTML='<i class="fa-solid fa-landmark"></i> Quem Somos';
+    const c=document.getElementById('contentContainer'); if(!c)return;
+    c.innerHTML=`<div class="tzc-publico-v103">
+      ${botaoVoltarV103()}
+      <div class="tzc-publico-head-v103">
+        <i class="fa-solid fa-hands-praying"></i>
+        <h2>Tenda de Zé Cigano</h2>
+        <p>Fé, caridade, acolhimento e desenvolvimento espiritual.</p>
+      </div>
+
+      <section class="tzc-publico-sec-v103">
+        <h3>Quem Somos</h3>
+        <p>A Tenda de Zé Cigano é um espaço de fé, caridade, acolhimento e desenvolvimento espiritual, fundamentado nos princípios da Umbanda e no respeito às diferentes manifestações da espiritualidade.</p>
+        <p>Somos uma casa que busca preservar e transmitir os ensinamentos da nossa tradição, compreendendo a espiritualidade como um caminho de transformação interior, fraternidade, responsabilidade e evolução.</p>
+        <p>Em nossa caminhada, honramos as forças da natureza, os Orixás e as diferentes linhas de trabalho espiritual que se manifestam na Umbanda, sempre valorizando a caridade, a humildade, o respeito e o amor ao próximo.</p>
+        <p>Nossa inspiração em Zé Cigano representa a força dos caminhos, a liberdade, a alegria de viver, a coragem para superar obstáculos e a sabedoria adquirida nas estradas da existência. Sua simbologia nos ensina que nenhum caminho permanece fechado para sempre quando caminhamos com fé, determinação e merecimento.</p>
+      </section>
+
+      <section class="tzc-publico-sec-v103">
+        <h3>Nosso Objetivo Espiritual</h3>
+        <p>Nosso principal objetivo é acolher, orientar e auxiliar aqueles que procuram a espiritualidade, oferecendo um ambiente de respeito, oração, aprendizado e fortalecimento da fé.</p>
+        <ul class="tzc-objetivos-v103">
+          <li>fortalecer sua fé e sua conexão com o sagrado;</li>
+          <li>encontrar equilíbrio e amparo espiritual;</li>
+          <li>desenvolver autoconhecimento e responsabilidade;</li>
+          <li>aprender a lidar com as dificuldades da vida com mais serenidade;</li>
+          <li>compreender melhor sua caminhada espiritual;</li>
+          <li>praticar a caridade e o amor ao próximo;</li>
+          <li>respeitar os Orixás, as entidades e as diferentes tradições religiosas;</li>
+          <li>transformar a própria vida por meio de atitudes, consciência e fé.</li>
+        </ul>
+        <p style="margin-top:12px;">Entendemos que a espiritualidade não deve afastar o ser humano de suas responsabilidades, mas ajudá-lo a enfrentar a vida com mais consciência, coragem e esperança.</p>
+      </section>
+
+      <section class="tzc-publico-sec-v103">
+        <h3>Nossa Missão</h3>
+        <p>Nossa missão é manter a Tenda de Zé Cigano como uma casa de oração, caridade e aprendizado, onde todos possam ser recebidos com dignidade e respeito, independentemente de sua origem, condição social ou história de vida.</p>
+        <p>Não prometemos aquilo que a espiritualidade não pode garantir. Nosso propósito é oferecer acolhimento, orientação espiritual, conhecimento e fé, respeitando sempre o livre-arbítrio de cada pessoa.</p>
+        <p>Acreditamos que cada indivíduo possui sua própria caminhada e que nenhuma entidade ou dirigente deve substituir a responsabilidade de cada pessoa sobre suas escolhas.</p>
+      </section>
+
+      <section class="tzc-publico-sec-v103">
+        <h3>Nossos Valores</h3>
+        <div class="tzc-valores-v103">
+          <div class="tzc-valor-v103"><strong>Fé</strong><span>Porque acreditamos na força do sagrado e na capacidade de transformação do ser humano.</span></div>
+          <div class="tzc-valor-v103"><strong>Caridade</strong><span>Porque servir ao próximo é uma das maiores expressões da espiritualidade.</span></div>
+          <div class="tzc-valor-v103"><strong>Humildade</strong><span>Porque ninguém é maior diante do sagrado.</span></div>
+          <div class="tzc-valor-v103"><strong>Respeito</strong><span>Pela Umbanda, pelos Orixás, pelas entidades, pelas pessoas e por todas as manifestações religiosas que caminham em paz.</span></div>
+          <div class="tzc-valor-v103"><strong>Responsabilidade espiritual</strong><span>Porque todo conhecimento deve ser utilizado com consciência, ética e respeito.</span></div>
+          <div class="tzc-valor-v103"><strong>Amor ao próximo</strong><span>Porque a espiritualidade perde seu sentido quando não produz humanidade.</span></div>
+          <div class="tzc-valor-v103"><strong>Liberdade</strong><span>Porque cada pessoa possui seu próprio caminho e seu próprio tempo de evolução.</span></div>
+        </div>
+      </section>
+
+      <section class="tzc-publico-sec-v103">
+        <h3>Nossa Caminhada</h3>
+        <p>Na Tenda de Zé Cigano, entendemos que cada pessoa chega até nós trazendo uma história, uma dor, uma esperança e um caminho a percorrer.</p>
+        <p>Por isso, nossa porta busca estar aberta ao acolhimento, mas nosso ensinamento procura ir além do simples pedido.</p>
+        <p>Queremos ensinar que a fé também exige atitude; que oração deve caminhar ao lado da responsabilidade; que espiritualidade também significa aprender, servir, perdoar, amadurecer e transformar-se.</p>
+        <p>Sob a inspiração de Zé Cigano, seguimos pelas estradas da fé, levando conosco a certeza de que todo caminho pode ensinar, toda dificuldade pode trazer aprendizado e toda caminhada pode ser uma oportunidade de evolução.</p>
+        <p class="tzc-fecho-v103">Saravá! &nbsp; Optchá! &nbsp; Salve a Tenda de Zé Cigano!</p>
+      </section>
+    </div>`;
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  window.abrirMensagemDiaTZC_V103=function(el){
+    prepararPaginaPublicaV103(); ativarMenuV103(el);
+    const t=document.getElementById('pageTitle'); if(t) t.innerHTML='<i class="fa-solid fa-feather-pointed"></i> Mensagem do Dia';
+    const c=document.getElementById('contentContainer'); if(!c)return;
+    c.innerHTML=`<div class="tzc-publico-v103">
+      ${botaoVoltarV103()}
+      <div class="tzc-publico-head-v103">
+        <i class="fa-solid fa-sun"></i>
+        <h2>Bom dia, alma gentil. 🌹</h2>
+        <p>Uma mensagem de fé, serenidade e esperança para iniciar o dia.</p>
+      </div>
+      <article class="tzc-mensagem-v103">
+        <p>Que a aurora, ao abrir suas cortinas sobre o mundo, encontre teu coração em paz e derrame sobre teus caminhos a doce luz de um novo dia.</p>
+        <p>Que nenhuma sombra seja longa demais, nem vento algum perturbe a serenidade do teu espírito. E que, entre os pequenos acontecimentos desta manhã, encontres motivos para sorrir — pois até o mais simples instante pode esconder a beleza de um verso.</p>
+        <p>Segue teu dia com leveza, como quem caminha sob a bênção dos céus, e guarda contigo a certeza de que há beleza naqueles que tornam o mundo mais amável apenas por existirem.</p>
+        <p>Que teu dia seja doce, tranquilo e digno de ser lembrado. 🌷✨</p>
+        <p class="tzc-mensagem-data-v103">Mensagem do dia · 30/09/2026</p>
+      </article>
+    </div>`;
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+})();
+</script>
 
 </body>
 </html>

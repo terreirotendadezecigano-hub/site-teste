@@ -8085,7 +8085,7 @@ html body .gestao-interna-home .card.tzc-card-retorno-v121 {
   window.abrirEventosMembrosTZCV128=async function(el){
     marcarMenu128(el||document.getElementById('menuEventosV128'));fecharMenu128();
     document.getElementById('pageTitle').innerHTML='';document.getElementById('pageSubtitleContainer').innerHTML='';document.getElementById('generalInfoSection').style.display='none';document.getElementById('searchContainerWrapper').style.display='none';document.getElementById('loading').style.display='none';
-    const c=document.getElementById('contentContainer');c.innerHTML='<div class="tzc-eventos-membro-v128"><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-calendar-check"></i> Eventos e Giras</h2><p>Confira os próximos eventos da Tenda e confirme sua participação.</p></div><div id="eventosMembroV128" class="tzc-eventos-membro-list-v128"><div style="text-align:center;color:#aaa;padding:18px"><i class="fa-solid fa-spinner fa-spin"></i> Carregando eventos...</div></div></div>';
+    const c=document.getElementById('contentContainer');c.innerHTML='<div class="tzc-eventos-membro-v128"><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-calendar-check"></i> Eventos e Giras</h2><p>Confira os próximos eventos do nosso Terreiro e confirme sua participação.</p></div><div id="eventosMembroV128" class="tzc-eventos-membro-list-v128"><div style="text-align:center;color:#aaa;padding:18px"><i class="fa-solid fa-spinner fa-spin"></i> Carregando eventos...</div></div></div>';
     try{
       const lu=usuarioLogado128();
       const [evs,ps,u]=await Promise.all([sheet128('Eventos'),lu?sheet128('Presencas'):Promise.resolve([]),lu?usuarioAcesso128():Promise.resolve(null)]);
@@ -8202,6 +8202,85 @@ html body .gestao-interna-home .card.tzc-card-retorno-v121 {
      })
    }catch(e){}
  };
+})();
+</script>
+
+
+<!-- TZC V131 — acabamento Eventos: hover + confirmação visitante persistente -->
+<style id="tzc-v131-eventos-acabamento">
+/* Hover oficial: vinho da identidade + dourado; nunca preto */
+#eventosMembrosPageV128 button:hover,
+#eventosMembrosPageV128 .btn-toolbar:hover,
+.tzc-evento-overlay-v126 button:hover,
+.tzc-guest-v130-overlay button:hover{
+  background:#60000a !important;
+  border-color:#d4af37 !important;
+  color:#f3e5ab !important;
+}
+#eventosMembrosPageV128 button:hover i,
+.tzc-evento-overlay-v126 button:hover i,
+.tzc-guest-v130-overlay button:hover i{color:#f3e5ab !important}
+</style>
+<script id="tzc-v131-eventos-confirmacao">
+(function(){
+ const KEY='TZC_EVENTOS_VISITANTE_CONFIRMADOS_V131';
+ const ler=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return {}}};
+ const gravar=o=>localStorage.setItem(KEY,JSON.stringify(o||{}));
+ const aplicar=function(){
+   const mapa=ler();
+   document.querySelectorAll('button[onclick*="confirmarEventoMembroTZCV128"]').forEach(btn=>{
+     const m=(btn.getAttribute('onclick')||'').match(/'([^']+)'/);
+     if(!m||!mapa[m[1]])return;
+     const info=btn.closest('.tzc-evento-membro-card-v128')?.querySelector('.tzc-evento-membro-status-v128')
+       || btn.parentElement?.parentElement?.querySelector('[class*="status"]');
+     if(info){
+       const resp=mapa[m[1]].resposta||'Sim';
+       info.innerHTML=resp==='Sim'
+         ? '<i class="fa-solid fa-circle-check"></i> Presença confirmada'
+         : resp==='Talvez'
+           ? '<i class="fa-solid fa-circle-question"></i> Você respondeu: Talvez'
+           : '<i class="fa-solid fa-circle-xmark"></i> Você informou que não irá';
+     }
+     btn.innerHTML='<i class="fa-solid fa-pen"></i> Alterar resposta';
+   });
+ };
+ const salvarOriginal=window.salvarConfirmacaoVisitanteTZCV130;
+ if(typeof salvarOriginal==='function'){
+   window.salvarConfirmacaoVisitanteTZCV130=async function(idEvento){
+     const nome=document.getElementById('guestNomeV130')?.value.trim();
+     const zap=document.getElementById('guestZapV130')?.value.trim();
+     const email=document.getElementById('guestEmailV130')?.value.trim();
+     const resposta=document.getElementById('guestRespV130')?.value||'Sim';
+     if(!nome||!zap){alert('Informe seu nome e WhatsApp.');return}
+     const chave=(email||zap).toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,30);
+     const id='PRE_'+Date.now()+'_'+Math.random().toString(36).slice(2,6).toUpperCase();
+     const dados={
+       ID_Presenca:id,ID_Evento:idEvento,ID_Usuario:'VISITANTE_'+chave,
+       Data_Resposta:new Date().toISOString(),Resposta:resposta,Presenca:'Pendente',
+       Observacoes:document.getElementById('guestObsV130')?.value.trim()||'',
+       Nome_Visitante:nome,WhatsApp_Visitante:zap,Email_Visitante:email,
+       Tipo_Participante:'Visitante',
+       Aceita_Lembrete:resposta==='Sim'?'Sim':'Não',
+       Contato_Lembrete:resposta==='Sim'?(zap||email):'',
+       Criado_Em:new Date().toISOString(),Atualizado_Em:new Date().toISOString()
+     };
+     try{
+       const api=typeof WEB_APP_URL!=='undefined'?WEB_APP_URL:'';
+       const r=await fetch(api,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+         body:JSON.stringify({acao:'inserir',nomeAba:'Presencas',id,idColuna:'ID_Presenca',dados})});
+       const j=await r.json();if(j.status==='erro')throw new Error(j.mensagem||'Erro');
+       const mapa=ler();mapa[idEvento]={resposta,nome,zap,email,data:new Date().toISOString()};gravar(mapa);
+       document.getElementById('guestConfirmV130')?.remove();
+       showToast?.(resposta==='Sim'?'Presença confirmada! Você receberá os lembretes do evento.':'Resposta registrada com sucesso!');
+       setTimeout(aplicar,80);
+     }catch(e){alert('Não foi possível registrar sua confirmação.')}
+   };
+ }
+ const abrirAnt=window.abrirEventosMembrosTZCV128;
+ if(typeof abrirAnt==='function'){
+   window.abrirEventosMembrosTZCV128=async function(el){await abrirAnt(el);setTimeout(aplicar,80)}
+ }
+ document.addEventListener('DOMContentLoaded',()=>setTimeout(aplicar,250));
 })();
 </script>
 

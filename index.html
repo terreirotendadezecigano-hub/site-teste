@@ -6566,7 +6566,7 @@ function filtrarEstudosTZC_V55(valor){
   window.abrirMensagemDiaTZC_V103=function(){window.mostrarMensagemDiaTZC_V105()};
 
   /* Uma vez por carregamento real da página. */
-  window.addEventListener('load',()=>setTimeout(()=>window.mostrarMensagemDiaTZC_V105(),700));
+  /* V118: abertura automática antiga desativada; controle diário aplicado no final do arquivo. */
 })();
 </script>
 
@@ -8535,4 +8535,88 @@ html body [role="dialog"] textarea:focus {
   box-shadow:0 0 0 2px rgba(212,175,55,.14) !important;
 }
 </style>
+
+<!-- V118 — Mensagem do Dia automática apenas 1x por dia + contraste definitivo dos campos -->
+<style id="tzc-v118-form-fields-final">
+/* Estado normal: o campo JÁ aparece destacado antes de qualquer clique. */
+html body #pubModalV104 input:not([type="checkbox"]):not([type="radio"]),
+html body #pubModalV104 select,
+html body #pubModalV104 textarea,
+html body [id*="Modal"] input:not([type="checkbox"]):not([type="radio"]),
+html body [id*="Modal"] select,
+html body [id*="Modal"] textarea,
+html body [class*="modal"] input:not([type="checkbox"]):not([type="radio"]),
+html body [class*="modal"] select,
+html body [class*="modal"] textarea {
+  background-color:#484848 !important;
+  background-image:none !important;
+  border:1px solid rgba(243,229,171,.72) !important;
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;
+}
+html body #pubModalV104 input::placeholder,
+html body #pubModalV104 textarea::placeholder,
+html body [id*="Modal"] input::placeholder,
+html body [id*="Modal"] textarea::placeholder,
+html body [class*="modal"] input::placeholder,
+html body [class*="modal"] textarea::placeholder{
+  color:#ededed !important;
+  -webkit-text-fill-color:#ededed !important;
+  opacity:1 !important;
+}
+html body #pubModalV104 input:focus,
+html body #pubModalV104 select:focus,
+html body #pubModalV104 textarea:focus,
+html body [id*="Modal"] input:focus,
+html body [id*="Modal"] select:focus,
+html body [id*="Modal"] textarea:focus,
+html body [class*="modal"] input:focus,
+html body [class*="modal"] select:focus,
+html body [class*="modal"] textarea:focus{
+  background-color:#505050 !important;
+  border-color:#d4af37 !important;
+  outline:none !important;
+  box-shadow:0 0 0 2px rgba(212,175,55,.15) !important;
+}
+</style>
+<script id="tzc-v118-mensagem-dia-uma-vez">
+(function(){
+  const CHAVE='tzc_mensagem_dia_auto_v118';
+
+  function hojeLocal(){
+    const d=new Date();
+    const y=d.getFullYear();
+    const m=String(d.getMonth()+1).padStart(2,'0');
+    const dia=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${dia}`;
+  }
+  function jaMostrouHoje(){
+    try{return localStorage.getItem(CHAVE)===hojeLocal();}catch(e){return false;}
+  }
+  function marcarHoje(){
+    try{localStorage.setItem(CHAVE,hojeLocal());}catch(e){}
+  }
+  async function abrirAutomaticamente(){
+    if(jaMostrouHoje()) return;
+    if(typeof window.mostrarMensagemDiaTZC_V105!=='function') return;
+    /* Marca no momento da tentativa automática para não reaparecer ao navegar/recarregar no mesmo dia. */
+    marcarHoje();
+    try{ await window.mostrarMensagemDiaTZC_V105(); }catch(e){}
+  }
+
+  /* O V105 possuía um listener próprio de load. Este listener roda por último
+     e controla a abertura diária; o guard abaixo também impede repetição tardia. */
+  const original=window.mostrarMensagemDiaTZC_V105;
+  if(typeof original==='function'){
+    window.mostrarMensagemDiaTZC_V105=function(){
+      /* chamadas manuais continuam sempre permitidas */
+      return original.apply(this,arguments);
+    };
+  }
+
+  window.addEventListener('load',function(){
+    setTimeout(abrirAutomaticamente,900);
+  });
+})();
+</script>
 

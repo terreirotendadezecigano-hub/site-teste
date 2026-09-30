@@ -9947,3 +9947,119 @@ html body #artesOverlayV85 #aDescricaoV85::placeholder {
   font-weight:400 !important;
 }
 </style>
+
+<!-- TZC V132 — correção confirmação visitante + edição preenchida + hover padrão -->
+<style id="tzc-v132-eventos-fix-final">
+/* Padrão definitivo de hover dos botões de Eventos: página e modais */
+.tzc-eventos-membro-v128 button:hover,
+.tzc-eventos-membro-v128 .btn-toolbar:hover,
+.tzc-eventos-table-v126 button:hover,
+.tzc-page-head-v44 button:hover,
+.tzc-evento-overlay-v126 button:hover,
+.tzc-confirm-v128-overlay button:hover,
+.tzc-guest-v130-overlay button:hover{
+  background:#60000a !important;
+  border-color:#d4af37 !important;
+  color:#f3e5ab !important;
+  filter:none !important;
+}
+.tzc-eventos-membro-v128 button:hover i,
+.tzc-eventos-table-v126 button:hover i,
+.tzc-page-head-v44 button:hover i,
+.tzc-evento-overlay-v126 button:hover i,
+.tzc-confirm-v128-overlay button:hover i,
+.tzc-guest-v130-overlay button:hover i{color:#f3e5ab !important}
+</style>
+<script id="tzc-v132-eventos-fix-final-script">
+(function(){
+  const KEY='TZC_EVENTOS_VISITANTE_CONFIRMADOS_V131';
+  const api=typeof WEB_APP_URL!=='undefined'?WEB_APP_URL:'';
+  const ler=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return {}}};
+  const gravar=o=>{try{localStorage.setItem(KEY,JSON.stringify(o||{}))}catch(e){}};
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  async function sheet(nome){const r=await fetch(`${api}?sheet=${encodeURIComponent(nome)}&t=${Date.now()}`,{cache:'no-store'});const j=await r.json();return Array.isArray(j)?j:[]}
+
+  function aplicarEstadoVisitanteV132(){
+    const mapa=ler();
+    document.querySelectorAll('.tzc-evento-membro-card-v128').forEach(card=>{
+      const btn=card.querySelector('button[onclick*="confirmarEventoMembroTZCV128"]');
+      if(!btn)return;
+      const m=(btn.getAttribute('onclick')||'').match(/'([^']+)'/);
+      if(!m||!mapa[m[1]])return;
+      const dado=mapa[m[1]]||{};
+      const resp=dado.resposta||'Sim';
+      const info=card.querySelector('.tzc-evento-resposta-v128');
+      if(info){
+        if(resp==='Sim') info.innerHTML='<i class="fa-solid fa-circle-check"></i> <strong>Presença confirmada</strong>';
+        else if(resp==='Talvez') info.innerHTML='<i class="fa-solid fa-circle-question"></i> Sua resposta: <strong>Talvez</strong>';
+        else info.innerHTML='<i class="fa-solid fa-circle-xmark"></i> Sua resposta: <strong>Não vou participar</strong>';
+      }
+      btn.innerHTML='<i class="fa-solid fa-pen"></i> Alterar resposta';
+    });
+  }
+
+  /* Ao abrir novamente, funciona como EDITAR: recupera os dados já informados. */
+  window.abrirConfirmacaoVisitanteTZCV130=async function(idEvento){
+    let ev=null;
+    try{ev=(await sheet('Eventos')).find(x=>String(x.ID_Evento)===String(idEvento))}catch(e){}
+    if(!ev||String(ev.Acesso_Publico||'Sim').trim().toLowerCase()!=='sim'){showToast?.('Este evento é exclusivo para membros.');return}
+
+    const mapa=ler();
+    const salvo=mapa[idEvento]||{};
+    let registro=null;
+    try{
+      if(salvo.email||salvo.zap){
+        const chave=String(salvo.email||salvo.zap).toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,30);
+        registro=(await sheet('Presencas')).find(p=>String(p.ID_Evento)===String(idEvento)&&String(p.ID_Usuario)===('VISITANTE_'+chave))||null;
+      }
+    }catch(e){}
+    const atual=registro||salvo;
+
+    document.getElementById('guestConfirmV130')?.remove();
+    const d=document.createElement('div');d.id='guestConfirmV130';d.className='tzc-guest-v130-overlay';
+    d.dataset.presencaId=registro?.ID_Presenca||salvo.idPresenca||'';
+    d.innerHTML=`<div class="tzc-guest-v130-box"><div class="tzc-guest-v130-head"><h3><i class="fa-solid fa-user-check"></i> ${Object.keys(atual).length?'Alterar resposta':'Confirmar presença'}</h3><button class="tzc-evento-x-v126" onclick="document.getElementById('guestConfirmV130')?.remove()"><i class="fa-solid fa-xmark"></i></button></div>
+      <div style="color:#ddd;font-size:.8rem;margin-bottom:11px"><strong style="color:#fff">${esc(ev.Titulo||'Evento')}</strong><br>Evento aberto ao público.</div>
+      <div class="tzc-guest-v130-grid">
+        <div class="tzc-guest-v130-field full"><label>Nome *</label><input id="guestNomeV130" placeholder="Digite seu nome..." value="${esc(atual.Nome_Visitante||atual.nome||'')}"></div>
+        <div class="tzc-guest-v130-field"><label>WhatsApp *</label><input id="guestZapV130" placeholder="(31) 99999-9999" value="${esc(atual.WhatsApp_Visitante||atual.zap||'')}"></div>
+        <div class="tzc-guest-v130-field"><label>E-mail</label><input id="guestEmailV130" type="email" placeholder="seuemail@exemplo.com" value="${esc(atual.Email_Visitante||atual.email||'')}"></div>
+        <div class="tzc-guest-v130-field full"><label>Resposta *</label><select id="guestRespV130"><option value="Sim">Vou participar</option><option value="Talvez">Talvez</option><option value="Não">Não vou participar</option></select></div>
+        <div class="tzc-guest-v130-field full"><label>Observação</label><textarea id="guestObsV130" rows="2" placeholder="Se desejar, deixe uma observação...">${esc(atual.Observacoes||atual.observacao||'')}</textarea></div>
+      </div><div class="tzc-guest-v130-actions"><button class="btn-toolbar" onclick="document.getElementById('guestConfirmV130')?.remove()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="salvarConfirmacaoVisitanteTZCV132('${esc(idEvento)}')"><i class="fa-solid fa-floppy-disk"></i> ${Object.keys(atual).length?'Salvar alterações':'Confirmar'}</button></div></div>`;
+    document.body.appendChild(d);
+    document.getElementById('guestRespV130').value=atual.Resposta||atual.resposta||'Sim';
+  };
+
+  window.salvarConfirmacaoVisitanteTZCV132=async function(idEvento){
+    const modal=document.getElementById('guestConfirmV130');
+    const nome=document.getElementById('guestNomeV130')?.value.trim();
+    const zap=document.getElementById('guestZapV130')?.value.trim();
+    const email=document.getElementById('guestEmailV130')?.value.trim();
+    const resposta=document.getElementById('guestRespV130')?.value||'Sim';
+    const obs=document.getElementById('guestObsV130')?.value.trim()||'';
+    if(!nome||!zap){alert('Informe seu nome e WhatsApp.');return}
+    const chave=(email||zap).toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,30);
+    let id=modal?.dataset.presencaId||'';
+    let acao=id?'atualizar':'inserir';
+    if(!id) id='PRE_'+Date.now()+'_'+Math.random().toString(36).slice(2,6).toUpperCase();
+    const agora=new Date().toISOString();
+    const dados={ID_Presenca:id,ID_Evento:idEvento,ID_Usuario:'VISITANTE_'+chave,Data_Resposta:agora,Resposta:resposta,Presenca:'Pendente',Observacoes:obs,Nome_Visitante:nome,WhatsApp_Visitante:zap,Email_Visitante:email,Tipo_Participante:'Visitante',Aceita_Lembrete:resposta==='Sim'?'Sim':'Não',Contato_Lembrete:resposta==='Sim'?(zap||email):'',Atualizado_Em:agora};
+    if(acao==='inserir')dados.Criado_Em=agora;
+    try{
+      const r=await fetch(api,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao,nomeAba:'Presencas',id,idColuna:'ID_Presenca',dados})});
+      const j=await r.json();if(j.status==='erro')throw new Error(j.mensagem||'Erro');
+      const mapa=ler();mapa[idEvento]={idPresenca:id,resposta,nome,zap,email,observacao:obs,data:agora};gravar(mapa);
+      modal?.remove();
+      showToast?.(resposta==='Sim'?'Presença confirmada! Você receberá os lembretes do evento.':'Resposta atualizada com sucesso!');
+      aplicarEstadoVisitanteV132();
+    }catch(e){alert('Não foi possível salvar sua resposta. Tente novamente.')}
+  };
+
+  /* Corrige imediatamente cartões já desenhados pela V131. */
+  setTimeout(aplicarEstadoVisitanteV132,100);
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(aplicarEstadoVisitanteV132,250));
+  const abrirAnterior=window.abrirEventosMembrosTZCV128;
+  if(typeof abrirAnterior==='function')window.abrirEventosMembrosTZCV128=async function(el){await abrirAnterior(el);setTimeout(aplicarEstadoVisitanteV132,120)};
+})();
+</script>

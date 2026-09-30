@@ -3493,8 +3493,7 @@
       isLoggedIn = false;
       loggedUser = null;
       updateAuthUI();
-      if (currentTab === 'Membros' || currentTab === 'Gestao_Interna') switchTab('Home');
-      else loadTabData(currentTab);
+      switchTab('Home');
     }
 
     function podeAcessarGestaoInternaTZC_V1() {

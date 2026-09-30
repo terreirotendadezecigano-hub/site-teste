@@ -9170,6 +9170,56 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
 })();
 </script>
 
+
+<!-- ============================================================
+     TZC V147 — ACESSO DIRETO AO CONTROLE DE PRESENÇAS
+     PELA TABELA DE EVENTOS
+     Alteração única desta versão.
+     ============================================================ -->
+<script id="tzc-v147-atalho-presencas-eventos">
+(function(){
+  const renderAnteriorV147=window.renderEventosTZC_V126;
+  if(typeof renderAnteriorV147!=='function') return;
+
+  window.renderEventosTZC_V126=function(){
+    renderAnteriorV147.apply(this,arguments);
+
+    document.querySelectorAll('#eventoBodyV126 tr').forEach(function(tr){
+      if(tr.querySelector('.tzc-pres-direto-v147')) return;
+
+      const botoes=[...tr.querySelectorAll('button')];
+      const editar=botoes.find(b=>{
+        const t=(b.getAttribute('title')||'').toLowerCase();
+        const oc=b.getAttribute('onclick')||'';
+        return t==='editar' || /editarEventoTZC_V126/i.test(oc);
+      });
+      if(!editar) return;
+
+      const oc=editar.getAttribute('onclick')||'';
+      const m=oc.match(/['"]([^'"]+)['"]/);
+      if(!m || !m[1]) return;
+
+      const id=String(m[1]).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      editar.insertAdjacentHTML(
+        'beforebegin',
+        `<button type="button"
+          class="btn-icon-only tzc-pres-direto-v147"
+          title="Controle de Presenças"
+          aria-label="Controle de Presenças"
+          onclick="abrirPresencasTZCV127('${id}')">
+          <i class="fa-solid fa-user-check"></i>
+        </button>`
+      );
+    });
+  };
+
+  /* Atualiza imediatamente caso a tabela de Eventos já esteja aberta. */
+  if(document.getElementById('eventoBodyV126')){
+    try{ window.renderEventosTZC_V126(); }catch(e){}
+  }
+})();
+</script>
+
 </body>
 </html>
 

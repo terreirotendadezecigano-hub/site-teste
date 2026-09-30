@@ -4614,7 +4614,7 @@
           <div class="modal-details-box">${info || '<p>Nenhum detalhe disponível.</p>'}</div>
         </div>
         <div class="modal-actions">
-          <button class="btn-submit" style="background:#222; color:var(--gold-primary); border:1px solid var(--gold-primary);" onclick="shareCurrentItem('${titulo.replace(/'/g, "\\'")}')"><i class="fa-solid fa-share-nodes"></i> Compartilhar</button>
+          <button class="btn-submit" style="background:#222; color:var(--gold-primary); border:1px solid var(--gold-primary);" onclick="shareCurrentItem('${titulo.replace(/'/g, "\\'")}')"><i class="fas fa-share-alt" aria-hidden="true"></i> Compartilhar</button>
           <button class="btn-submit" onclick="closeGenericDetail()">Fechar</button>
         </div>
       `;
@@ -5058,7 +5058,7 @@
         ${campo('Observações',x.Observacoes,true)}
         <div class="erva-view-actions-v66">
           <button class="ervas-secondary-v37" onclick="fecharModalErvaV37()">Fechar</button>
-          <button class="ervas-primary-v37" onclick="fecharModalErvaV37(); editarErvaTZC_V37('${escErvaV37(String(x.ID_Erva||''))}')"><i class="fa-solid fa-pen"></i> Editar</button>
+          <button class="ervas-primary-v37" onclick="fecharModalErvaV37(); editarErvaTZC_V37('${escErvaV37(String(x.ID_Erva||''))}')"><i class="fas fa-pen" aria-hidden="true"></i> Editar</button>
         </div>
       </div>
     </div>`);
@@ -5523,7 +5523,7 @@ function visualizarCategoriaTZC_V48(id){
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:13px;border-top:1px solid var(--border-color);">
         <button type="button" class="btn-toolbar" onclick="this.closest('.tzc-view-overlay-v48').remove()">Fechar</button>
-        <button type="button" class="btn-toolbar btn-primary" onclick="this.closest('.tzc-view-overlay-v48').remove(); editarCategoriaTZC_V1('${escTZC_V1(id)}')"><i class="fa-solid fa-pen"></i> Editar</button>
+        <button type="button" class="btn-toolbar btn-primary" onclick="this.closest('.tzc-view-overlay-v48').remove(); editarCategoriaTZC_V1('${escTZC_V1(id)}')"><i class="fas fa-pen" aria-hidden="true"></i> Editar</button>
       </div>
     </div>`;
   overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
@@ -5699,7 +5699,7 @@ function filtrarEstudosTZC_V55(valor){
    c.innerHTML=`<div class="midias-admin-v82">
      <div class="tzc-page-head-v44">
        <button type="button" class="btn-toolbar tzc-page-back-v44" onclick="voltarGestaoInternaTZC_V1()"><i class="fa-solid fa-arrow-left"></i> Gestão Interna</button>
-       <div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-share-nodes"></i> Mídias Sociais <span id="midiasCountV82" class="tzc-count-v47"></span></h2><p>Gerencie os canais e links oficiais das mídias da Tenda.</p></div>
+       <div class="tzc-page-copy-v44"><h2><i class="fas fa-share-alt" aria-hidden="true"></i> Mídias Sociais <span id="midiasCountV82" class="tzc-count-v47"></span></h2><p>Gerencie os canais e links oficiais das mídias da Tenda.</p></div>
        <button type="button" class="btn-toolbar btn-add-membro tzc-page-new-v44" onclick="editarMidiaTZC()"><i class="fa-solid fa-plus"></i> Nova Mídia</button>
      </div>
      <div class="tzc-busca-modulo-v55"><i class="fa-solid fa-magnifying-glass"></i><input id="midiasBuscaV82" type="search" placeholder="Pesquisar mídias sociais..." oninput="renderMidiasTZC()"></div>
@@ -5725,13 +5725,13 @@ function filtrarEstudosTZC_V55(valor){
    alvo.innerHTML=`<div class="midias-table-wrap-v82"><table class="midias-table-v82"><thead><tr><th>Rede</th><th>Nome de Exibição</th><th>URL</th><th>Ativo</th><th style="text-align:right">Ações</th></tr></thead><tbody>${arr.map(x=>`<tr><td>${htmlRedeV84(x.Rede)}</td><td>${esc(x.Nome_Exibicao)}</td><td>${x.URL?`<a class="midias-link-v82" href="${esc(x.URL)}" target="_blank" rel="noopener">Abrir link</a>`:'—'}</td><td>${esc(x.Ativo||'Sim')}</td><td><div class="midias-actions-v82"><button class="btn-icon-only" onclick="verMidiaTZC('${esc(x.ID_Midia)}')" title="Visualizar" aria-label="Visualizar"><i class="fa-solid fa-eye"></i></button><button class="btn-icon-only" onclick="editarMidiaTZC('${esc(x.ID_Midia)}')" title="Editar" aria-label="Editar"><i class="fa-solid fa-pen"></i></button><button class="btn-icon-only btn-delete-icon" onclick="excluirMidiaTZC('${esc(x.ID_Midia)}')" title="Excluir" aria-label="Excluir"><i class="fa-solid fa-trash"></i></button></div></td></tr>`).join('')}</tbody></table></div>`;
  };
 
- window.verMidiaTZC=function(id){const x=(window.tzcMidiasAdminV82||[]).find(a=>String(a.ID_Midia)===String(id));if(!x)return;abrirModalMidiasV82(`<div class="midias-modal-head-v82"><h3><i class="${iconeRedeV84(x.Rede)}" style="color:var(--gold-primary);margin-right:6px"></i> ${esc(x.Nome_Exibicao||x.Rede)}</h3><button class="midias-x-v82" onclick="fecharModalMidiasTZC()">×</button></div><div class="midias-view-v82"><p><strong>Rede:</strong> ${htmlRedeV84(x.Rede)}</p><p><strong>Nome de Exibição:</strong> ${esc(x.Nome_Exibicao)}</p><p><strong>URL:</strong> ${x.URL?`<a class="midias-link-v82" href="${esc(x.URL)}" target="_blank">${esc(x.URL)}</a>`:'Não informada'}</p><p><strong>Ativo:</strong> ${esc(x.Ativo)}</p><p><strong>Observações:</strong> ${esc(x.Observacoes||'—')}</p></div><div class="midias-modal-foot-v82"><button class="btn-toolbar" onclick="fecharModalMidiasTZC()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="fecharModalMidiasTZC();editarMidiaTZC('${esc(id)}')"><i class="fa-solid fa-pen"></i> Editar</button></div>`)};
+ window.verMidiaTZC=function(id){const x=(window.tzcMidiasAdminV82||[]).find(a=>String(a.ID_Midia)===String(id));if(!x)return;abrirModalMidiasV82(`<div class="midias-modal-head-v82"><h3><i class="${iconeRedeV84(x.Rede)}" style="color:var(--gold-primary);margin-right:6px"></i> ${esc(x.Nome_Exibicao||x.Rede)}</h3><button class="midias-x-v82" onclick="fecharModalMidiasTZC()">×</button></div><div class="midias-view-v82"><p><strong>Rede:</strong> ${htmlRedeV84(x.Rede)}</p><p><strong>Nome de Exibição:</strong> ${esc(x.Nome_Exibicao)}</p><p><strong>URL:</strong> ${x.URL?`<a class="midias-link-v82" href="${esc(x.URL)}" target="_blank">${esc(x.URL)}</a>`:'Não informada'}</p><p><strong>Ativo:</strong> ${esc(x.Ativo)}</p><p><strong>Observações:</strong> ${esc(x.Observacoes||'—')}</p></div><div class="midias-modal-foot-v82"><button class="btn-toolbar" onclick="fecharModalMidiasTZC()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="fecharModalMidiasTZC();editarMidiaTZC('${esc(id)}')"><i class="fas fa-pen" aria-hidden="true"></i> Editar</button></div>`)};
  function abrirModalMidiasV82(html){fecharModalMidiasTZC();document.body.insertAdjacentHTML('beforeend',`<div id="midiasModalOverlayV82" class="midias-modal-overlay-v82"><div class="midias-modal-v82">${html}</div></div>`)}
 
  window.editarMidiaTZC=function(id){
    const x=(window.tzcMidiasAdminV82||[]).find(a=>String(a.ID_Midia)===String(id))||{ID_Midia:novoId(),Rede:'',Nome_Exibicao:'',URL:'',Ativo:'Sim',Ordem:(window.tzcMidiasAdminV82||[]).length+1,Observacoes:''};
    const edit=!!id;
-   abrirModalMidiasV82(`<div class="midias-modal-head-v82"><h3>${edit?'<i class="fa-solid fa-pen"></i> Editar Mídia':'<i class="fa-solid fa-plus"></i> Nova Mídia'}</h3><button class="midias-x-v82" onclick="fecharModalMidiasTZC()">×</button></div>
+   abrirModalMidiasV82(`<div class="midias-modal-head-v82"><h3>${edit?'<i class="fas fa-pen" aria-hidden="true"></i> Editar Mídia':'<i class="fa-solid fa-plus"></i> Nova Mídia'}</h3><button class="midias-x-v82" onclick="fecharModalMidiasTZC()">×</button></div>
    <div class="midias-grid-v82">
      <div class="midias-field-v82">
        <label>Rede *</label>
@@ -5840,7 +5840,7 @@ function filtrarEstudosTZC_V55(valor){
         : (ehPdf && arquivo
            ? `<iframe class="artes-pdf-preview-v89" src="${esc(arquivo)}#page=1&view=FitH" title="Prévia de ${esc(x.Titulo)}"></iframe>`
            : `<div class="artes-view-placeholder-v88"><span>Prévia não informada</span></div>`));
-   modal(`<div class="artes-modal-head-v85"><h3>${esc(x.Titulo)}</h3><div class="artes-modal-head-actions-v93"><button class="artes-share-v93" title="Compartilhar" onclick="compartilharArtePdfTZC('${esc(id)}')"><i class="fa-solid fa-share-nodes"></i></button><button class="artes-x-v85" onclick="fecharModalArtesTZC()">×</button></div></div>
+   modal(`<div class="artes-modal-head-v85"><h3>${esc(x.Titulo)}</h3><div class="artes-modal-head-actions-v93"><button class="artes-share-v93" title="Compartilhar" onclick="compartilharArtePdfTZC('${esc(id)}')"><i class="fas fa-share-alt" aria-hidden="true"></i></button><button class="artes-x-v85" onclick="fecharModalArtesTZC()">×</button></div></div>
    <div class="artes-view-layout-v88">
      <div class="artes-view-preview-v88">${preview}</div>
      <div class="artes-view-v85 artes-view-info-v88">
@@ -5848,10 +5848,10 @@ function filtrarEstudosTZC_V55(valor){
        <p><span>Categoria:</span> ${esc(x.Categoria||'—')}</p>
        <p><span>Descrição:</span> ${esc(x.Descricao||'—')}</p>
        <p><span>Acesso Público:</span> <span class="tzc-status-cinza-v90">${esc(x.Acesso_Publico||"—")}</span></p>
-       <p><span>Arquivo / Link:</span> ${x.Arquivo_URL?`<span class="artes-file-actions-v93"><a class="btn-toolbar" href="${esc(x.Arquivo_URL)}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir</a><button class="btn-toolbar" onclick="compartilharArtePdfTZC('${esc(id)}')"><i class="fa-solid fa-share-nodes"></i> Compartilhar</button></span>`:'Não informado'}</p>
+       <p><span>Arquivo / Link:</span> ${x.Arquivo_URL?`<span class="artes-file-actions-v93"><a class="btn-toolbar" href="${esc(x.Arquivo_URL)}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt" aria-hidden="true"></i> Abrir</a><button class="btn-toolbar" onclick="compartilharArtePdfTZC('${esc(id)}')"><i class="fas fa-share-alt" aria-hidden="true"></i> Compartilhar</button></span>`:'Não informado'}</p>
      </div>
    </div>
-   <div class="artes-modal-foot-v85"><button class="btn-toolbar" onclick="fecharModalArtesTZC()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="fecharModalArtesTZC();editarArtePdfTZC('${esc(id)}')"><i class="fa-solid fa-pen"></i> Editar</button></div>`,'artes-modal-view-v88')
+   <div class="artes-modal-foot-v85"><button class="btn-toolbar" onclick="fecharModalArtesTZC()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="fecharModalArtesTZC();editarArtePdfTZC('${esc(id)}')"><i class="fas fa-pen" aria-hidden="true"></i> Editar</button></div>`,'artes-modal-view-v88')
  };
 
  window.compartilharArtePdfTZC=async function(id){
@@ -5864,7 +5864,7 @@ function filtrarEstudosTZC_V55(valor){
      alert('Link copiado para compartilhar.');
    }catch(e){ if(e && e.name!=='AbortError') window.open(url,'_blank'); }
  };
- window.editarArtePdfTZC=function(id){const x=window.tzcArtesV85.find(a=>String(a.ID_Material)===String(id))||{ID_Material:idNovo(),Tipo:'Arte',Titulo:'',Categoria:'',Descricao:'',Arquivo_URL:'',Capa_URL:'',Acesso_Publico:'Sim',Status:'Ativo'};const edit=!!id;modal(`<div class="artes-modal-head-v85"><h3>${edit?'<i class="fa-solid fa-pen"></i> Editar Material':'<i class="fa-solid fa-plus"></i> Novo Material'}</h3><button class="artes-x-v85" onclick="fecharModalArtesTZC()">×</button></div><div class="artes-grid-v85"><div class="artes-field-v85"><label>Tipo *</label><select id="aTipoV85"><option ${x.Tipo==='Arte'?'selected':''}>Arte</option><option ${x.Tipo==='PDF'?'selected':''}>PDF</option><option ${x.Tipo==='Documento'?'selected':''}>Documento</option><option ${x.Tipo==='Imagem'?'selected':''}>Imagem</option></select></div><div class="artes-field-v85"><label>Título *</label><input id="aTituloV85" value="${esc(x.Titulo)}"></div><div class="artes-field-v85"><label>Categoria</label><input id="aCategoriaV85" value="${esc(x.Categoria)}" placeholder="Ex.: Giras, Estudos, Comunicados"></div><div class="artes-field-v85"><label>Acesso Público</label><select id="aAcessoV85"><option ${x.Acesso_Publico!=='Não'?'selected':''}>Sim</option><option ${x.Acesso_Publico==='Não'?'selected':''}>Não</option></select></div><div class="artes-field-v85 full"><label>Arquivo / Link</label><input id="aArquivoV85" value="${esc(x.Arquivo_URL)}" placeholder="https://..."></div><div class="artes-field-v85 full"><label>Imagem / Capa (opcional)</label><input id="aCapaV85" value="${esc(x.Capa_URL)}" placeholder="https://..."><small style="color:#777;margin-top:4px">Para PDF, pode deixar vazio: o sistema tenta usar o próprio arquivo como prévia.</small></div><div class="artes-field-v85 full"><label>Descrição</label><textarea id="aDescricaoV85" rows="4">${esc(x.Descricao)}</textarea></div></div><div class="artes-modal-foot-v85"><button class="btn-toolbar" onclick="fecharModalArtesTZC()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="salvarArtePdfTZC('${esc(x.ID_Material)}',${edit})"><i class="fa-solid fa-floppy-disk"></i> Salvar</button></div>`)};
+ window.editarArtePdfTZC=function(id){const x=window.tzcArtesV85.find(a=>String(a.ID_Material)===String(id))||{ID_Material:idNovo(),Tipo:'Arte',Titulo:'',Categoria:'',Descricao:'',Arquivo_URL:'',Capa_URL:'',Acesso_Publico:'Sim',Status:'Ativo'};const edit=!!id;modal(`<div class="artes-modal-head-v85"><h3>${edit?'<i class="fas fa-pen" aria-hidden="true"></i> Editar Material':'<i class="fa-solid fa-plus"></i> Novo Material'}</h3><button class="artes-x-v85" onclick="fecharModalArtesTZC()">×</button></div><div class="artes-grid-v85"><div class="artes-field-v85"><label>Tipo *</label><select id="aTipoV85"><option ${x.Tipo==='Arte'?'selected':''}>Arte</option><option ${x.Tipo==='PDF'?'selected':''}>PDF</option><option ${x.Tipo==='Documento'?'selected':''}>Documento</option><option ${x.Tipo==='Imagem'?'selected':''}>Imagem</option></select></div><div class="artes-field-v85"><label>Título *</label><input id="aTituloV85" value="${esc(x.Titulo)}"></div><div class="artes-field-v85"><label>Categoria</label><input id="aCategoriaV85" value="${esc(x.Categoria)}" placeholder="Ex.: Giras, Estudos, Comunicados"></div><div class="artes-field-v85"><label>Acesso Público</label><select id="aAcessoV85"><option ${x.Acesso_Publico!=='Não'?'selected':''}>Sim</option><option ${x.Acesso_Publico==='Não'?'selected':''}>Não</option></select></div><div class="artes-field-v85 full"><label>Arquivo / Link</label><input id="aArquivoV85" value="${esc(x.Arquivo_URL)}" placeholder="https://..."></div><div class="artes-field-v85 full"><label>Imagem / Capa (opcional)</label><input id="aCapaV85" value="${esc(x.Capa_URL)}" placeholder="https://..."><small style="color:#777;margin-top:4px">Para PDF, pode deixar vazio: o sistema tenta usar o próprio arquivo como prévia.</small></div><div class="artes-field-v85 full"><label>Descrição</label><textarea id="aDescricaoV85" rows="4">${esc(x.Descricao)}</textarea></div></div><div class="artes-modal-foot-v85"><button class="btn-toolbar" onclick="fecharModalArtesTZC()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="salvarArtePdfTZC('${esc(x.ID_Material)}',${edit})"><i class="fa-solid fa-floppy-disk"></i> Salvar</button></div>`)};
  window.salvarArtePdfTZC=function(id,edit){const dados={ID_Material:id,Tipo:document.getElementById('aTipoV85').value,Titulo:document.getElementById('aTituloV85').value.trim(),Categoria:document.getElementById('aCategoriaV85').value.trim(),Descricao:document.getElementById('aDescricaoV85').value.trim(),Arquivo_URL:document.getElementById('aArquivoV85').value.trim(),Capa_URL:document.getElementById('aCapaV85').value.trim(),Acesso_Publico:document.getElementById('aAcessoV85').value,Status:'Ativo',Data_Atualizacao:new Date().toISOString()};if(!dados.Titulo){if(typeof showToast==='function')showToast('Informe o título.');return;}const old=window.tzcArtesV85.find(a=>String(a.ID_Material)===String(id));if(old?.Data_Criacao)dados.Data_Criacao=old.Data_Criacao;else dados.Data_Criacao=new Date().toISOString();fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:edit?'atualizar':'inserir',nomeAba:'Artes_PDFs',id,idColuna:'ID_Material',dados})});const i=window.tzcArtesV85.findIndex(a=>String(a.ID_Material)===String(id));if(i>=0)window.tzcArtesV85[i]=dados;else window.tzcArtesV85.push(dados);fecharModalArtesTZC();renderArtesPdfTZC();if(typeof showToast==='function')showToast(edit?'Material atualizado!':'Material cadastrado!');setTimeout(carregarArtesPdfTZC,1700)};
  window.excluirArtePdfTZC=function(id){const x=window.tzcArtesV85.find(a=>String(a.ID_Material)===String(id));if(!x)return;fecharModalArtesTZC();document.body.insertAdjacentHTML('beforeend',`<div id="artesOverlayV85" class="artes-overlay-v85" style="background:rgba(0,0,0,.68)"><div style="width:min(420px,94vw);background:#111;border:1px solid var(--gold-primary);border-radius:14px;padding:20px;box-shadow:0 20px 60px #000"><div style="display:flex;gap:13px;align-items:flex-start"><div style="width:36px;height:36px;min-width:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#351014;color:#ff6b72;font-size:.95rem"><i class="fa-solid fa-trash"></i></div><div style="flex:1"><h3 style="color:#fff;font-size:18px;margin:2px 0 7px">Excluir material?</h3><p style="color:#bbb;margin:0;line-height:1.45">Deseja realmente excluir “${esc(x.Titulo)}”?</p></div></div><div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #303030;margin-top:16px;padding-top:12px"><button class="btn-toolbar" onclick="fecharModalArtesTZC()">Cancelar</button><button class="btn-toolbar" style="background:#8f1f28;border-color:#b52b35;color:#fff" onclick="confirmarExcluirArtePdfTZC('${esc(id)}')"><i class="fa-solid fa-trash"></i> Excluir</button></div></div></div>`)};
  window.confirmarExcluirArtePdfTZC=function(id){fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'excluir',nomeAba:'Artes_PDFs',id,idColuna:'ID_Material'})});window.tzcArtesV85=window.tzcArtesV85.filter(a=>String(a.ID_Material)!==String(id));fecharModalArtesTZC();renderArtesPdfTZC();if(typeof showToast==='function')showToast('Material excluído!')};
@@ -6803,5 +6803,16 @@ function filtrarEstudosTZC_V55(valor){
 .artes-view-info-v88 p,
 .artes-view-info-v88 a{
   font-weight:400 !important;
+}
+</style>
+
+<style id="tzc-v96-icones-artes">
+.artes-modal-v85 .fas,
+.artes-share-v93 .fas{
+  font-family:"Font Awesome 5 Free" !important;
+  font-weight:900 !important;
+  font-style:normal !important;
+  display:inline-block !important;
+  width:auto !important;
 }
 </style>

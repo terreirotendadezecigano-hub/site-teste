@@ -8492,6 +8492,191 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
 })();
 </script>
 
+
+<!-- TZC V134 — FLUXO DE SALVAR + PRESENÇAS + PERFIS -->
+<style id="tzc-v134-presencas">
+.tzc-saving-v134{
+  position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.72);
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)
+}
+.tzc-saving-box-v134{
+  min-width:230px;background:#171717;border:1px solid var(--gold-primary);
+  border-radius:10px;padding:20px;text-align:center;color:#fff;
+  box-shadow:0 14px 38px rgba(0,0,0,.85)
+}
+.tzc-saving-box-v134 i{color:var(--gold-primary);font-size:1.35rem;margin-bottom:9px}
+.tzc-saving-box-v134 strong{display:block;font-size:.88rem}
+.tzc-saving-box-v134 small{display:block;color:var(--text-muted);margin-top:5px;font-size:.72rem}
+</style>
+
+<script id="tzc-v134-script">
+(function(){
+  const API134=(typeof WEB_APP_URL!=='undefined'&&WEB_APP_URL)?WEB_APP_URL:'';
+  const esc134=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+  function perfil134(){
+    try{
+      const u=(typeof loggedUser!=='undefined'&&loggedUser)?loggedUser:window.loggedUser;
+      return String(u?.perfil||u?.Perfil||'').trim().toLowerCase();
+    }catch(e){return ''}
+  }
+  function podeControlar134(){
+    const p=perfil134();
+    return ['dirigente','administrador','colaborador','editor/colaborador','editor'].includes(p);
+  }
+
+  window.mostrarSalvandoTZCV134=function(txt='Salvando...'){
+    document.getElementById('tzcSavingV134')?.remove();
+    const d=document.createElement('div');d.id='tzcSavingV134';d.className='tzc-saving-v134';
+    d.innerHTML=`<div class="tzc-saving-box-v134"><i class="fa-solid fa-spinner fa-spin"></i><strong>${esc134(txt)}</strong><small>Aguarde só um instante.</small></div>`;
+    document.body.appendChild(d);
+  };
+  window.fecharSalvandoTZCV134=function(){document.getElementById('tzcSavingV134')?.remove()};
+
+  /* PADRÃO OFICIAL: todo botão de gravação em modal mostra apenas "Salvar".
+     A confirmação de participação é a exceção aprovada: "Salvar resposta". */
+  function padronizarSalvar134(root=document){
+    root.querySelectorAll('button').forEach(b=>{
+      const oc=String(b.getAttribute('onclick')||'').toLowerCase();
+      const tx=String(b.textContent||'').trim().toLowerCase();
+      if(oc.includes('salvarconfirmevento') || oc.includes('salvarconfirmacaovisitante')){
+        b.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Salvar resposta';
+        return;
+      }
+      if((oc.includes('salvar') || /^salvar\b/.test(tx)) && !oc.includes('resposta')){
+        b.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Salvar';
+      }
+    });
+  }
+  new MutationObserver(m=>m.forEach(x=>x.addedNodes.forEach(n=>{
+    if(n.nodeType===1)padronizarSalvar134(n.matches?.('button')?n.parentElement:n);
+  }))).observe(document.documentElement,{childList:true,subtree:true});
+  document.addEventListener('DOMContentLoaded',()=>padronizarSalvar134());
+
+  /* Salvar EVENTO: fecha o formulário imediatamente e mostra um aviso próprio.
+     Assim ninguém fica olhando para o modal parado enquanto a rede grava. */
+  const salvarEventoAnterior=window.salvarEventoTZC_V126;
+  if(typeof salvarEventoAnterior==='function'){
+    window.salvarEventoTZC_V126=async function(){
+      const modal=document.getElementById('eventoModalV126');
+      const obrigatorios=[...modal?.querySelectorAll('[required]')||[]];
+      const faltou=obrigatorios.some(x=>!String(x.value||'').trim());
+      if(faltou){return salvarEventoAnterior.apply(this,arguments)}
+      modal?.remove();
+      mostrarSalvandoTZCV134('Salvando evento...');
+      try{
+        await salvarEventoAnterior.apply(this,arguments);
+      }finally{
+        fecharSalvandoTZCV134();
+      }
+    };
+  }
+
+  /* Resposta do membro: fecha antes da gravação; mostra processamento separado. */
+  const salvarRespostaAnterior=window.salvarConfirmEventoTZCV128;
+  if(typeof salvarRespostaAnterior==='function'){
+    window.salvarConfirmEventoTZCV128=async function(idEvento){
+      const modal=document.getElementById('confirmEventoV128');
+      if(!modal)return;
+      const atual=JSON.parse(modal.dataset.presenca||'{}');
+      const u=JSON.parse(modal.dataset.usuario||'{}');
+      const resposta=document.getElementById('confirmRespostaV128')?.value||'Sim';
+      const obs=document.getElementById('confirmObsV128')?.value?.trim()||'';
+      modal.remove();
+      mostrarSalvandoTZCV134('Salvando resposta...');
+      try{
+        const id=atual.ID_Presenca||`PRE_${Date.now()}_${Math.random().toString(36).slice(2,7).toUpperCase()}`;
+        const agora=new Date().toISOString();
+        const dados={ID_Presenca:id,ID_Evento:idEvento,ID_Usuario:u.ID_Usuario||'',Data_Resposta:agora,Resposta:resposta,Presenca:atual.Presenca||'Pendente',Observacoes:obs,Atualizado_Em:agora};
+        if(!atual.ID_Presenca)dados.Criado_Em=agora;
+        const r=await fetch(API134,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:atual.ID_Presenca?'atualizar':'inserir',nomeAba:'Presencas',id,idColuna:'ID_Presenca',dados})});
+        const j=await r.json().catch(()=>({status:'sucesso'}));
+        if(String(j.status||'').toLowerCase()==='erro')throw new Error(j.mensagem||'Erro ao salvar');
+        showToast?.('Resposta salva com sucesso!');
+        await window.abrirEventosMembrosTZCV128?.(document.getElementById('menuEventosV128'));
+      }catch(e){showToast?.('Não foi possível salvar: '+(e.message||e))}
+      finally{fecharSalvandoTZCV134()}
+    };
+  }
+
+  /* Na página Eventos cada pessoa altera SOMENTE a própria resposta.
+     O ícone oficial é o "usuário com check", tanto para confirmar quanto alterar. */
+  function iconeResposta134(){
+    document.querySelectorAll('.tzc-evento-membro-card-v128 button[onclick*="confirmarEventoMembroTZCV128"]').forEach(b=>{
+      const texto=(b.textContent||'').includes('Alterar')?'Alterar resposta':'Confirmar presença';
+      b.innerHTML=`<i class="fa-solid fa-user-check"></i> ${texto}`;
+    });
+  }
+
+  /* Painel de controle: texto objetivo, sem chamar o terreiro de "Tenda". */
+  function corrigirPainel134(){
+    document.querySelectorAll('.tzc-pres-admin-note-v128').forEach(n=>{
+      n.innerHTML='<i class="fa-solid fa-circle-info" style="color:var(--gold-primary);margin-right:5px"></i> <strong style="color:#fff">Painel de controle de presença:</strong> acompanhe as confirmações dos participantes e registre a presença real no dia do evento.';
+    });
+  }
+
+  /* Dirigente/Administrador/Colaborador: atalho próprio para o controle.
+     Ele abre Eventos e Giras, onde o ícone de usuário+check de cada evento
+     leva às confirmações daquele evento. */
+  function instalarMenuPresencas134(){
+    const nav=document.getElementById('navList');
+    if(!nav)return;
+    let item=document.getElementById('menuPresencasV134');
+    if(!podeControlar134()){item?.remove();return}
+    if(item)return;
+    item=document.createElement('li');
+    item.id='menuPresencasV134';item.className='nav-item';
+    item.innerHTML='<i class="fa-solid fa-users-viewfinder"></i> Controle de Presenças';
+    item.onclick=async function(){
+      if(typeof abrirEventosTZC_V126==='function'){
+        await abrirEventosTZC_V126();
+        showToast?.('Use o ícone de usuário com check no evento para abrir o controle de presenças.');
+      }
+    };
+    const eventos=document.getElementById('menuEventosV128');
+    if(eventos)eventos.insertAdjacentElement('afterend',item);else nav.appendChild(item);
+  }
+
+  /* O ícone administrativo de confirmações NÃO abre a confirmação pessoal.
+     Ele continua sendo exclusivo do painel de gestão. */
+  const abrirPresAnterior=window.abrirPresencasTZCV127;
+  if(typeof abrirPresAnterior==='function'){
+    window.abrirPresencasTZCV127=async function(id){
+      if(!podeControlar134()){
+        showToast?.('Este painel é destinado a dirigentes e colaboradores.');
+        return;
+      }
+      await abrirPresAnterior(id);
+      corrigirPainel134();
+      padronizarSalvar134();
+    };
+  }
+
+  const abrirEventosMembroAnterior=window.abrirEventosMembrosTZCV128;
+  if(typeof abrirEventosMembroAnterior==='function'){
+    window.abrirEventosMembrosTZCV128=async function(){
+      const r=await abrirEventosMembroAnterior.apply(this,arguments);
+      iconeResposta134();instalarMenuPresencas134();padronizarSalvar134();
+      return r;
+    };
+  }
+
+  /* Ao atualizar login/perfil, atualiza também a visibilidade do menu. */
+  const atualizarUIAnterior=window.updateUserInterface;
+  if(typeof atualizarUIAnterior==='function'){
+    window.updateUserInterface=function(){
+      const r=atualizarUIAnterior.apply(this,arguments);
+      setTimeout(instalarMenuPresencas134,0);
+      return r;
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{
+    instalarMenuPresencas134();iconeResposta134();corrigirPainel134();padronizarSalvar134();
+  },300));
+})();
+</script>
+
 </body>
 </html>
 

@@ -8284,6 +8284,214 @@ html body .gestao-interna-home .card.tzc-card-retorno-v121 {
 })();
 </script>
 
+
+<!-- TZC V133 — EVENTOS + PADRÃO GLOBAL DE BOTÕES PELA PALETA -->
+<style id="tzc-v133-padrao-global-paleta">
+/* REGRA GLOBAL:
+   botões normais usam SEMPRE as variáveis da paleta configurável do terreiro.
+   Excluir/destrutivos continuam vermelhos.
+   Ícones de ação das tabelas continuam sem caixas. */
+:root{
+  --tzc-btn-bg:var(--gold-primary);
+  --tzc-btn-text:#0a0a0a;
+  --tzc-btn-hover-bg:var(--red-logo);
+  --tzc-btn-hover-text:var(--gold-light);
+  --tzc-btn-hover-border:var(--gold-primary);
+}
+button:not(.btn-icon-only):not(.btn-danger):not(.btn-delete):not([class*="excluir"]):hover,
+.btn-toolbar:not(.btn-icon-only):not(.btn-danger):hover,
+.modal button:not(.btn-icon-only):not(.btn-danger):hover,
+[class*="modal"] button:not(.btn-icon-only):not(.btn-danger):hover,
+[class*="overlay"] button:not(.btn-icon-only):not(.btn-danger):hover{
+  background:var(--tzc-btn-hover-bg)!important;
+  color:var(--tzc-btn-hover-text)!important;
+  border-color:var(--tzc-btn-hover-border)!important;
+  filter:none!important;
+  box-shadow:none!important;
+}
+button:not(.btn-icon-only):not(.btn-danger):hover i,
+.btn-toolbar:not(.btn-icon-only):not(.btn-danger):hover i{
+  color:var(--tzc-btn-hover-text)!important;
+}
+.btn-icon-only:hover{
+  background:color-mix(in srgb,var(--gold-primary) 12%,transparent)!important;
+  border:0!important;
+  color:var(--gold-primary)!important;
+}
+
+/* Eventos público/membros: barra igual ao padrão de Estudos */
+.tzc-eventos-toolbar-v133{
+  display:grid;grid-template-columns:auto minmax(280px,620px) auto;
+  align-items:center;gap:12px;margin:12px 0 14px;
+}
+.tzc-eventos-search-v133{position:relative;width:100%}
+.tzc-eventos-search-v133 i{
+  position:absolute;left:13px;top:50%;transform:translateY(-50%);
+  color:var(--gold-primary);pointer-events:none
+}
+.tzc-eventos-search-v133 input{
+  width:100%;box-sizing:border-box;background:#0d0d0d;color:#fff;
+  border:1px solid var(--border-color);border-radius:var(--tzc-radius);
+  padding:9px 12px 9px 38px;font-size:var(--tzc-font-sm)
+}
+.tzc-eventos-search-v133 input::placeholder{color:var(--text-muted);font-style:italic}
+
+/* Abertura/fechamento dos modais de evento sem animação pesada */
+.tzc-evento-overlay-v126,.tzc-confirm-v128-overlay,.tzc-guest-v130-overlay,
+.tzc-evento-box-v126,.tzc-confirm-v128-box,.tzc-guest-v130-box{
+  animation:none!important;transition:none!important;
+}
+@media(max-width:720px){
+  .tzc-eventos-toolbar-v133{grid-template-columns:1fr}
+  .tzc-eventos-toolbar-v133 .tzc-v133-spacer{display:none}
+}
+</style>
+
+<script id="tzc-v133-eventos-final">
+(function(){
+  const API = typeof WEB_APP_URL!=='undefined' ? WEB_APP_URL : '';
+  const KEY = 'TZC_EVENTOS_VISITANTE_CONFIRMADOS_V131';
+  let cacheEventos=null, cacheGeral=null;
+
+  const ler=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return {}}};
+  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+  async function carregar(nome){
+    if(nome==='Eventos' && cacheEventos) return cacheEventos;
+    if(nome==='Geral' && cacheGeral) return cacheGeral;
+    const r=await fetch(`${API}?sheet=${encodeURIComponent(nome)}&t=${Date.now()}`,{cache:'no-store'});
+    const j=await r.json(), a=Array.isArray(j)?j:[];
+    if(nome==='Eventos')cacheEventos=a;
+    if(nome==='Geral')cacheGeral=a;
+    return a;
+  }
+
+  function enderecoTerreiro(rows){
+    if(!Array.isArray(rows))return '';
+    let r=rows.find(x=>String(x.Endereco||x['Endereço']||'').trim());
+    if(r)return String(r.Endereco||r['Endereço']).trim();
+    r=rows.find(x=>{
+      const k=String(x.Chave||x.Campo||x.Configuracao||x.Configuração||x.Nome||'')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+      return k==='endereco';
+    });
+    return String(r?.Valor||r?.Conteudo||r?.Conteúdo||r?.Texto||'').trim();
+  }
+
+  /* Pré-carrega em segundo plano: clicar depois não fica esperando a rede. */
+  setTimeout(()=>{carregar('Eventos').catch(()=>{});carregar('Geral').catch(()=>{})},250);
+
+  /* Novo Evento: Local recebe o endereço cadastrado, mas permanece totalmente editável. */
+  const novoOriginal=window.novoEventoTZC_V126;
+  if(typeof novoOriginal==='function'){
+    window.novoEventoTZC_V126=function(){
+      novoOriginal.apply(this,arguments);
+      const preencher=()=>{
+        const modal=document.getElementById('eventoModalV126');
+        if(!modal)return;
+        const campos=[...modal.querySelectorAll('input')];
+        const local=campos.find(i=>{
+          const bloco=i.closest('.tzc-evento-field-v126')||i.parentElement;
+          return String(bloco?.querySelector('label')?.textContent||'').trim().toLowerCase()==='local';
+        });
+        if(!local||local.value.trim())return;
+        const end=enderecoTerreiro(cacheGeral||[]);
+        if(end)local.value=end;
+        else carregar('Geral').then(a=>{const e=enderecoTerreiro(a);if(e&&!local.value.trim())local.value=e}).catch(()=>{});
+      };
+      setTimeout(preencher,0);
+    };
+  }
+
+  /* Voltar ao Início sem inventar nova navegação: usa o item Início já existente. */
+  window.voltarInicioEventosV133=function(){
+    const inicio=[...document.querySelectorAll('#navList .nav-item')].find(x=>/início|inicio/i.test(x.textContent||''));
+    if(inicio){inicio.click();return}
+    if(typeof switchTab==='function')switchTab('Home',null);
+  };
+
+  function instalarToolbar(){
+    const raiz=document.querySelector('.tzc-eventos-membro-v128');
+    if(!raiz||document.getElementById('eventosBuscaV133'))return;
+    const titulo=raiz.querySelector('.tzc-page-copy-v44')||raiz.querySelector('h2')?.parentElement;
+    if(!titulo)return;
+    titulo.insertAdjacentHTML('afterend',`
+      <div class="tzc-eventos-toolbar-v133">
+        <button type="button" class="btn-toolbar" onclick="voltarInicioEventosV133()">
+          <i class="fa-solid fa-arrow-left"></i> Início
+        </button>
+        <div class="tzc-eventos-search-v133">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input id="eventosBuscaV133" type="search" placeholder="Pesquisar eventos..." oninput="filtrarEventosV133(this.value)">
+        </div>
+        <span class="tzc-v133-spacer"></span>
+      </div>`);
+  }
+
+  window.filtrarEventosV133=function(valor){
+    const q=String(valor||'').trim().toLowerCase();
+    document.querySelectorAll('.tzc-evento-membro-card-v128').forEach(card=>{
+      card.style.display=(!q||card.textContent.toLowerCase().includes(q))?'':'none';
+    });
+  };
+
+  /* Modal do visitante: abre imediatamente com os dados locais já salvos.
+     Remove as duas consultas de rede que estavam deixando Abrir/Fechar com sensação de atraso. */
+  window.fecharConfirmacaoVisitanteTZCV133=function(){
+    document.getElementById('guestConfirmV130')?.remove();
+  };
+
+  window.abrirConfirmacaoVisitanteTZCV130=function(idEvento){
+    const salvo=ler()[idEvento]||{};
+    let ev=(cacheEventos||[]).find(x=>String(x.ID_Evento)===String(idEvento));
+
+    if(!ev){
+      const card=[...document.querySelectorAll('.tzc-evento-membro-card-v128')].find(c=>{
+        const b=c.querySelector('button[onclick*="confirmarEventoMembroTZCV128"]');
+        return b&&(b.getAttribute('onclick')||'').includes(`'${idEvento}'`);
+      });
+      ev={ID_Evento:idEvento,Titulo:card?.querySelector('h3')?.textContent?.trim()||'Evento',Acesso_Publico:'Sim'};
+    }
+
+    document.getElementById('guestConfirmV130')?.remove();
+    const d=document.createElement('div');
+    d.id='guestConfirmV130'; d.className='tzc-guest-v130-overlay';
+    d.dataset.presencaId=salvo.idPresenca||'';
+    d.innerHTML=`<div class="tzc-guest-v130-box">
+      <div class="tzc-guest-v130-head">
+        <h3><i class="fa-solid fa-user-check"></i> ${Object.keys(salvo).length?'Alterar resposta':'Confirmar presença'}</h3>
+        <button class="tzc-evento-x-v126" onclick="fecharConfirmacaoVisitanteTZCV133()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div style="color:#ddd;font-size:.8rem;margin-bottom:11px"><strong style="color:#fff">${esc(ev.Titulo||'Evento')}</strong><br>Evento aberto ao público.</div>
+      <div class="tzc-guest-v130-grid">
+        <div class="tzc-guest-v130-field full"><label>Nome *</label><input id="guestNomeV130" placeholder="Digite seu nome..." value="${esc(salvo.nome||'')}"></div>
+        <div class="tzc-guest-v130-field"><label>WhatsApp *</label><input id="guestZapV130" placeholder="(31) 99999-9999" value="${esc(salvo.zap||'')}"></div>
+        <div class="tzc-guest-v130-field"><label>E-mail</label><input id="guestEmailV130" type="email" placeholder="seuemail@exemplo.com" value="${esc(salvo.email||'')}"></div>
+        <div class="tzc-guest-v130-field full"><label>Resposta *</label><select id="guestRespV130"><option value="Sim">Vou participar</option><option value="Talvez">Talvez</option><option value="Não">Não vou participar</option></select></div>
+        <div class="tzc-guest-v130-field full"><label>Observação</label><textarea id="guestObsV130" rows="2" placeholder="Se desejar, deixe uma observação...">${esc(salvo.observacao||'')}</textarea></div>
+      </div>
+      <div class="tzc-guest-v130-actions">
+        <button class="btn-toolbar" onclick="fecharConfirmacaoVisitanteTZCV133()">Fechar</button>
+        <button class="btn-toolbar btn-add-membro" onclick="salvarConfirmacaoVisitanteTZCV132('${esc(idEvento)}')"><i class="fa-solid fa-floppy-disk"></i> ${Object.keys(salvo).length?'Salvar alterações':'Confirmar'}</button>
+      </div>
+    </div>`;
+    document.body.appendChild(d);
+    document.getElementById('guestRespV130').value=salvo.resposta||'Sim';
+  };
+
+  /* Acrescenta toolbar sempre que a tela de eventos terminar de abrir. */
+  const abrirOriginal=window.abrirEventosMembrosTZCV128;
+  if(typeof abrirOriginal==='function'){
+    window.abrirEventosMembrosTZCV128=async function(){
+      const r=await abrirOriginal.apply(this,arguments);
+      instalarToolbar();
+      return r;
+    };
+  }
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(instalarToolbar,300));
+})();
+</script>
+
 </body>
 </html>
 

@@ -9388,6 +9388,7 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
   }
 
   function dataHoraEventoV162(nomeEvento){
+    if(window.__tzcDataHoraEventoV163) return window.__tzcDataHoraEventoV163;
     const alvo=txtV154(nomeEvento).toLowerCase();
     const linhas=Array.from(document.querySelectorAll('#eventoBodyV126 tr'));
     for(const tr of linhas){
@@ -9620,6 +9621,20 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
   if(typeof abrirAntV154!=='function') return;
 
   window.abrirPresencasTZCV127=async function(){
+    /* V163: captura data/hora enquanto a tabela Eventos ainda está na tela. */
+    window.__tzcDataHoraEventoV163='';
+    const idEventoV163=String(arguments[0]||'');
+    const linhasV163=Array.from(document.querySelectorAll('#eventoBodyV126 tr'));
+    for(const tr of linhasV163){
+      const edit=tr.querySelector('button[title="Editar"]');
+      const onclick=edit?.getAttribute('onclick') || '';
+      if(idEventoV163 && onclick.includes(idEventoV163)){
+        const td=tr.querySelectorAll('td');
+        if(td.length>=3) window.__tzcDataHoraEventoV163=txtV154(td[2].textContent);
+        break;
+      }
+    }
+
     await abrirAntV154.apply(this,arguments);
 
     const bloco=document.querySelector('#contentContainer .tzc-pres-evento-v148');

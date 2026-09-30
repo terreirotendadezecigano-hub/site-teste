@@ -9709,6 +9709,67 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
 })();
 </script>
 
+
+
+<!-- ============================================================
+     TZC V170 — CORREÇÃO ÚNICA: NOME REAL DO EVENTO
+     Confirmações/Presenças + PDF passam a usar o título da linha
+     selecionada, sem nova consulta à API.
+     ============================================================ -->
+<script id="tzc-v170-nome-real-evento-confirmacoes">
+(function(){
+  const abrirAnteriorV170 = window.abrirPresencasTZCV127;
+  if(typeof abrirAnteriorV170 !== 'function') return;
+
+  window.abrirPresencasTZCV127 = async function(idEvento){
+    const id = String(idEvento || '').trim();
+    let tituloEvento = '';
+
+    /* Captura o título ANTES da troca de página.
+       Funciona tanto em Eventos e Giras quanto em Controle de Presenças
+       e evita mais uma chamada ao servidor. */
+    const botoes = Array.from(document.querySelectorAll(
+      'button[onclick*="abrirPresencasTZCV127"]'
+    ));
+
+    for(const botao of botoes){
+      const onclick = String(botao.getAttribute('onclick') || '');
+      if(!id || !onclick.includes(id)) continue;
+
+      const linha = botao.closest('tr');
+      if(linha){
+        const primeiraCelula = linha.querySelector('td');
+        tituloEvento = String(primeiraCelula?.textContent || '').trim();
+      }
+      if(tituloEvento) break;
+    }
+
+    /* Fallback local: aproveita Eventos já carregados em memória.
+       Não faz fetch adicional. */
+    if(!tituloEvento && Array.isArray(window.eventos)){
+      const ev = window.eventos.find(
+        x => String(x.ID_Evento || '').trim() === id
+      );
+      tituloEvento = String(ev?.Titulo || '').trim();
+    }
+
+    await abrirAnteriorV170.apply(this, arguments);
+
+    if(!tituloEvento) return;
+
+    /* Cabeçalho/destaque usado também pelo gerador de PDF. */
+    const bloco = document.querySelector(
+      '#contentContainer .tzc-pres-evento-v148'
+    );
+    const h3 = bloco?.querySelector('h3');
+    if(h3) h3.textContent = tituloEvento;
+
+    /* Guarda a fonte correta para rotinas posteriores/PDF. */
+    window.__tzcNomeEventoV170 = tituloEvento;
+  };
+})();
+</script>
+
 </body>
 </html>
 

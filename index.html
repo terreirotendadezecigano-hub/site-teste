@@ -9272,8 +9272,11 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
 
     /* Introdução geral da página */
     intro.innerHTML =
-      '<strong style="color:#fff">Painel de controle de presença:</strong> ' +
-      'acompanhe as confirmações dos participantes e registre a presença real no dia do evento.';
+      'Acompanhe as confirmações dos participantes e registre a presença real no dia do evento.';
+    intro.style.fontSize = '.82rem';
+    intro.style.fontWeight = '400';
+    intro.style.color = 'var(--text-muted)';
+    intro.style.lineHeight = '1.35';
 
     /* Remove a antiga caixa informativa duplicada, se existir. */
     pagina.querySelectorAll('.tzc-pres-admin-note-v128').forEach(function(n){

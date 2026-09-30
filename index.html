@@ -9387,6 +9387,19 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
     return txtV154(document.querySelector('.tzc-pres-evento-v148 h3')?.textContent || 'Evento');
   }
 
+  function dataHoraEventoV162(nomeEvento){
+    const alvo=txtV154(nomeEvento).toLowerCase();
+    const linhas=Array.from(document.querySelectorAll('#eventoBodyV126 tr'));
+    for(const tr of linhas){
+      const td=tr.querySelectorAll('td');
+      if(td.length < 3) continue;
+      if(txtV154(td[0].textContent).toLowerCase()===alvo){
+        return txtV154(td[2].textContent);
+      }
+    }
+    return '';
+  }
+
   window.exportarPresencasExcelV154=function(){
     const dados=dadosTabelaV154();
     if(!dados.length){ showToast?.('Nenhum registro para exportar.'); return; }
@@ -9493,6 +9506,7 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
     if(typeof html2pdf==='undefined'){ alert('Não foi possível carregar o recurso de PDF.'); return; }
 
     const nome=nomeEventoV154();
+    const dataHoraEvento=dataHoraEventoV162(nome);
     const logo='https://lh3.googleusercontent.com/d/1tTQCxsP8Z8H5mNnEFEfVq8dEg9VF0U1-';
 
     /* V159 — resumo das respostas, calculado a partir da própria lista. */
@@ -9538,6 +9552,7 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
         <div style="border-left:4px solid #d4af37;background:#f7f5ef;padding:8px 11px;margin-bottom:8px">
           <div style="font-size:10.5px;color:#777;text-transform:uppercase;letter-spacing:.6px">Evento</div>
           <div style="font-size:17px;font-weight:700;color:#60000a;margin-top:2px">${nome}</div>
+          ${dataHoraEvento ? `<div style="font-size:11px;color:#555;margin-top:4px"><strong>Data e horário:</strong> ${dataHoraEvento}</div>` : ''}
         </div>
 
         <div style="display:flex;gap:7px;margin:0 0 12px">

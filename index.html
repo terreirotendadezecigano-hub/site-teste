@@ -9631,23 +9631,33 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
     const idEventoV163=String(arguments[0]||'');
 
     try{
-      if(idEventoV163 && typeof getSheet==='function'){
-        const listaEventosV165=await getSheet('Eventos');
-        const eventoV165=(Array.isArray(listaEventosV165)?listaEventosV165:[])
-          .find(x=>String(x.ID_Evento||'')===idEventoV163);
+      /* V166: getSheet() pertence ao escopo fechado do módulo V127.
+         Por isso V165 nunca entrava naquele if.
+         Aqui usamos diretamente a mesma API pública já configurada no site. */
+      const apiV166=(typeof WEB_APP_URL!=='undefined' ? WEB_APP_URL : '');
+      if(idEventoV163 && apiV166){
+        const rV166=await fetch(
+          `${apiV166}?sheet=${encodeURIComponent('Eventos')}&t=${Date.now()}`,
+          {cache:'no-store'}
+        );
+        const jV166=await rV166.json();
+        const listaEventosV166=Array.isArray(jV166)?jV166:[];
+        const eventoV166=listaEventosV166.find(
+          x=>String(x.ID_Evento||'').trim()===idEventoV163.trim()
+        );
 
-        const inicioV165=String(eventoV165?.Data_Inicio||'').trim();
-        const mV165=inicioV165.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/);
+        const inicioV166=String(eventoV166?.Data_Inicio||'').trim();
+        const mV166=inicioV166.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/);
 
-        if(mV165){
+        if(mV166){
           window.__tzcDataHoraEventoV163=
-            `${mV165[3]}/${mV165[2]}/${mV165[1]} às ${mV165[4]}:${mV165[5]}`;
-        }else if(inicioV165){
-          window.__tzcDataHoraEventoV163=inicioV165;
+            `${mV166[3]}/${mV166[2]}/${mV166[1]} às ${mV166[4]}:${mV166[5]}`;
+        }else if(inicioV166){
+          window.__tzcDataHoraEventoV163=inicioV166;
         }
       }
     }catch(e){
-      console.warn('V165: não foi possível carregar Data_Inicio do evento.',e);
+      console.warn('V166: não foi possível carregar Data_Inicio do evento.',e);
     }
 
     await abrirAntV154.apply(this,arguments);

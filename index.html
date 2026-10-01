@@ -11806,3 +11806,160 @@ html body #artesOverlayV85 #aDescricaoV85::placeholder {
   setTimeout(()=>{fixarRotas175();padraoConfirmacoes175(document);ordenarSelects175(document)},250);
 })();
 </script>
+
+<!-- ============================================================
+     TZC V176 — ESTABILIZAÇÃO APÓS VARREDURA DE REGRESSÕES
+     Corrige em conjunto os problemas confirmados no teste da V175:
+     - botão Início do Controle de Presenças apontava para o primeiro .nav-item,
+       que não é garantia de ser Home; agora usa a rota de Início já aprovada;
+     - exclusão de confirmação/evento não usa confirm() nativo do navegador;
+     - deduplica consultas GET simultâneas/repetidas ao Apps Script e usa cache curto,
+       invalidado em qualquer gravação, reduzindo a lentidão sem esconder dados salvos;
+     - mantém a regra global de SELECTs em ordem alfabética;
+     - mantém botões de confirmação somente como "Salvar";
+     - foco automático no primeiro campo utilizável de modais novos;
+     - protege cliques de navegação contra propagação acidental.
+     ============================================================ -->
+<style id="tzc-v176-estabilizacao-style">
+.tzc-modal-v176-overlay{position:fixed;inset:0;z-index:10080;background:rgba(0,0,0,.76);display:flex;align-items:center;justify-content:center;padding:18px}
+.tzc-modal-v176{width:min(430px,94vw);background:#141414;border:1px solid var(--gold-primary);border-radius:10px;box-shadow:0 18px 48px rgba(0,0,0,.58);padding:16px}
+.tzc-modal-v176-head{display:flex;align-items:center;gap:10px;padding-bottom:11px;border-bottom:1px solid #2a2a2a}
+.tzc-modal-v176-icon{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#35080b;color:#ff626d;flex:0 0 auto}
+.tzc-modal-v176-head h3{margin:0;color:#fff;font-size:.95rem;flex:1}
+.tzc-modal-v176-x{border:0;background:transparent;color:var(--gold-primary);font-size:1rem;cursor:pointer;padding:5px}
+.tzc-modal-v176 p{color:#ddd;font-size:.82rem;line-height:1.45;margin:15px 2px}
+.tzc-modal-v176-actions{display:flex;justify-content:flex-end;gap:8px;padding-top:11px;border-top:1px solid #2a2a2a}
+.tzc-btn-excluir-v176{min-height:32px;padding:6px 11px;border:1px solid #b9232f;border-radius:6px;background:#7b1019;color:#fff;font-size:.75rem;font-weight:700;cursor:pointer}
+</style>
+<script id="tzc-v176-estabilizacao-js">
+(function(){
+  'use strict';
+  const API176=(typeof WEB_APP_URL!=='undefined'&&WEB_APP_URL)?WEB_APP_URL:'';
+  const esc176=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+  /* 1. DESEMPENHO — uma mesma leitura não deve atravessar a rede várias vezes.
+     Cache curto: 12 s. POST/PUT/DELETE limpam imediatamente o cache. */
+  if(!window.__tzcFetchBaseV176){
+    window.__tzcFetchBaseV176=window.fetch.bind(window);
+    const base=window.__tzcFetchBaseV176;
+    const cache=new Map();
+    const emCurso=new Map();
+    window.__tzcLimparCacheV176=()=>{cache.clear();emCurso.clear()};
+    window.fetch=async function(input,init){
+      const metodo=String(init?.method||'GET').toUpperCase();
+      const url=typeof input==='string'?input:String(input?.url||'');
+      const leitura=metodo==='GET' && API176 && url.startsWith(API176) && /[?&]sheet=/.test(url);
+      if(!leitura){
+        if(metodo!=='GET')window.__tzcLimparCacheV176();
+        return base(input,init);
+      }
+      /* ignora parâmetros usados apenas para furar cache, para deduplicar de verdade */
+      let chave=url.replace(/([?&])t=\d+(&?)/,'$1').replace(/[?&]$/,'');
+      const agora=Date.now();
+      const salvo=cache.get(chave);
+      if(salvo && agora-salvo.ts<12000)return new Response(salvo.body,{status:salvo.status,statusText:salvo.statusText,headers:salvo.headers});
+      if(emCurso.has(chave)){
+        const d=await emCurso.get(chave);
+        return new Response(d.body,{status:d.status,statusText:d.statusText,headers:d.headers});
+      }
+      const p=(async()=>{
+        const resp=await base(input,init);
+        const body=await resp.clone().text();
+        const d={body,status:resp.status,statusText:resp.statusText,headers:Array.from(resp.headers.entries()),ts:Date.now()};
+        if(resp.ok)cache.set(chave,d);
+        return d;
+      })();
+      emCurso.set(chave,p);
+      try{const d=await p;return new Response(d.body,{status:d.status,statusText:d.statusText,headers:d.headers})}
+      finally{emCurso.delete(chave)}
+    };
+  }
+
+  /* 2. NAVEGAÇÃO — rota inequívoca para Início. */
+  window.voltarInicioSeguroV176=function(){
+    try{document.getElementById('sidebar')?.classList.remove('open')}catch(e){}
+    if(typeof window.voltarInicioEventosV133==='function')return window.voltarInicioEventosV133();
+    const inicio=Array.from(document.querySelectorAll('#navList .nav-item')).find(x=>/^\s*in[ií]cio\s*$/i.test((x.textContent||'').trim()));
+    if(inicio)return inicio.click();
+    if(typeof window.switchTab==='function')return window.switchTab('Home',null);
+  };
+
+  function corrigirBotoesVoltar176(root=document){
+    root.querySelectorAll?.('.tzc-controle-pres-v145 .tzc-page-back-v44').forEach(b=>{
+      b.setAttribute('onclick','voltarInicioSeguroV176(); return false;');
+      b.onclick=function(ev){ev?.preventDefault?.();ev?.stopPropagation?.();window.voltarInicioSeguroV176();return false};
+    });
+    /* Confirmações deve voltar especificamente para Eventos e Giras. */
+    root.querySelectorAll?.('.tzc-pres-v127-table').forEach(t=>{
+      const pagina=t.closest('#contentContainer')||document.getElementById('contentContainer');
+      const b=pagina?.querySelector('.tzc-page-back-v44');
+      if(b && /eventos e giras/i.test(b.textContent||'')){
+        b.onclick=function(ev){ev?.preventDefault?.();ev?.stopPropagation?.();window.abrirEventosTZC_V126?.();return false};
+      }
+    });
+  }
+
+  /* 3. MODAL DE EXCLUSÃO — substitui balão branco confirm() do navegador. */
+  function modalExcluir176(titulo,nome,aoExcluir){
+    document.getElementById('tzcExcluirV176')?.remove();
+    const o=document.createElement('div');o.id='tzcExcluirV176';o.className='tzc-modal-v176-overlay';
+    o.innerHTML=`<div class="tzc-modal-v176" role="dialog" aria-modal="true"><div class="tzc-modal-v176-head"><span class="tzc-modal-v176-icon"><i class="fa-solid fa-trash"></i></span><h3>${esc176(titulo)}</h3><button type="button" class="tzc-modal-v176-x" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button></div><p>Deseja realmente excluir <strong style="color:#fff">"${esc176(nome)}"</strong>?</p><div class="tzc-modal-v176-actions"><button type="button" class="btn-toolbar tzc-cancelar-v176">Cancelar</button><button type="button" class="tzc-btn-excluir-v176"><i class="fa-solid fa-trash"></i> Excluir</button></div></div>`;
+    document.body.appendChild(o);
+    const fechar=()=>o.remove();
+    o.querySelector('.tzc-modal-v176-x').onclick=fechar;o.querySelector('.tzc-cancelar-v176').onclick=fechar;
+    o.onclick=e=>{if(e.target===o)fechar()};
+    o.querySelector('.tzc-btn-excluir-v176').onclick=async function(){
+      const b=this;b.disabled=true;b.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Excluindo...';
+      try{await aoExcluir();fechar()}catch(e){b.disabled=false;b.innerHTML='<i class="fa-solid fa-trash"></i> Excluir';showToast?.('Não foi possível excluir.')}
+    };
+  }
+
+  window.excluirPresencaTZCV127=function(id){
+    const botao=document.querySelector(`button[onclick*="excluirPresencaTZCV127('${CSS.escape(String(id))}')"]`) || Array.from(document.querySelectorAll('button[onclick*="excluirPresencaTZCV127"]')).find(b=>(b.getAttribute('onclick')||'').includes(String(id)));
+    const tr=botao?.closest('tr');
+    const nome=(tr?.querySelector('td')?.textContent||'esta confirmação').trim();
+    modalExcluir176('Excluir confirmação?',nome,async()=>{
+      const r=await fetch(API176,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'excluir',nomeAba:'Presencas',id,idColuna:'ID_Presenca'})});
+      const j=await r.json().catch(()=>({status:'sucesso'}));if(String(j.status||'').toLowerCase()==='erro')throw new Error(j.mensagem||'Erro');
+      tr?.remove();
+      const tbody=document.getElementById('presBodyV127');
+      const qtd=tbody?Array.from(tbody.querySelectorAll('tr')).filter(x=>x.querySelectorAll('td').length>1&&!x.querySelector('td[colspan]')).length:0;
+      const c=document.getElementById('presCountV127');if(c)c.textContent=`· ${qtd} registros`;
+      if(tbody && qtd===0)tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#aaa">Nenhuma confirmação registrada para este evento.</td></tr>';
+      showToast?.('Confirmação excluída!');
+    });
+  };
+
+  window.excluirEventoTZC_V126=function(id){
+    const botao=Array.from(document.querySelectorAll('button[onclick*="excluirEventoTZC_V126"]')).find(b=>(b.getAttribute('onclick')||'').includes(String(id)));
+    const tr=botao?.closest('tr');const nome=(tr?.querySelector('td')?.textContent||'este evento').trim();
+    modalExcluir176('Excluir evento?',nome,async()=>{
+      const r=await fetch(API176,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'excluir',nomeAba:'Eventos',id,idColuna:'ID_Evento'})});
+      const j=await r.json().catch(()=>({status:'sucesso'}));if(String(j.status||'').toLowerCase()==='erro')throw new Error(j.mensagem||'Erro');
+      tr?.remove();
+      const body=document.getElementById('eventoBodyV126');const qtd=body?body.querySelectorAll('tr').length:0;const c=document.getElementById('eventoCountV126');if(c)c.textContent=`· ${qtd} registros`;
+      showToast?.('Evento excluído!');
+    });
+  };
+
+  /* 4. PADRÃO DOS MODAIS — Salvar + primeiro campo utilizável em foco. */
+  function padronizarModal176(root=document){
+    root.querySelectorAll?.('#btnSalvarConfirmV128,#guestConfirmV130 button[onclick*="salvarConfirmacaoVisitante"],#presModalV127 button[onclick*="salvarPresencaTZCV127"]').forEach(b=>b.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Salvar');
+    /* regra geral já definida na V175: SELECTs ficam alfabéticos. Aqui apenas foco. */
+    const modais=root.matches?.('[class*="modal"], [id*="Modal"], [id*="modal"], .tzc-confirm-v128-overlay, .tzc-guest-v130-overlay')?[root]:Array.from(root.querySelectorAll?.('[class*="modal"], [id*="Modal"], [id*="modal"], .tzc-confirm-v128-overlay, .tzc-guest-v130-overlay')||[]);
+    modais.forEach(m=>{
+      if(m.dataset.tzcFoco176==='1')return;m.dataset.tzcFoco176='1';
+      setTimeout(()=>{const campo=m.querySelector('input:not([type="hidden"]):not([disabled]),select:not([disabled]),textarea:not([disabled])');try{campo?.focus({preventScroll:true})}catch(e){campo?.focus()}},30);
+    });
+    corrigirBotoesVoltar176(root);
+  }
+
+  const obs=new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes)if(n.nodeType===1)padronizarModal176(n)});
+  obs.observe(document.documentElement,{childList:true,subtree:true});
+  document.addEventListener('click',e=>{
+    const b=e.target?.closest?.('.tzc-page-back-v44');
+    if(b && b.closest('.tzc-controle-pres-v145')){e.preventDefault();e.stopImmediatePropagation();window.voltarInicioSeguroV176()}
+  },true);
+  padronizarModal176(document);
+})();
+</script>

@@ -13013,7 +13013,7 @@ html body #contentContainer :is(.tzc-gestao-title-v51,#pageTitle){font-size:1.1r
  const actions=(r,index)=>`${allowed()?icon('pen','Editar')+icon('trash','Excluir'):''}${canShare204(r)?icon('share-nodes','Compartilhar'):''}`;
  function wireActions(root,list){root.querySelectorAll('[data-row201]').forEach(tr=>{const r=list[Number(tr.dataset.row201)];if(tr.tagName==='TR'){tr.tabIndex=0;tr.setAttribute('aria-label','Abrir '+title(r));tr.onclick=e=>{if(!e.target.closest('button,a,input,select'))view(r)};tr.onkeydown=e=>{if(e.target===tr&&(e.key==='Enter'||e.key===' ')){e.preventDefault();view(r)}}}tr.querySelectorAll('button').forEach(b=>{const label=b.getAttribute('aria-label');b.onclick=e=>{e?.stopPropagation();return label==='Editar'?edit(r):label==='Excluir'?remove(r):share(r)}})})}
  function render(){const all=filtered(),list=all.slice(0,limit206),host=$('body201');if(!host)return;if(module==='Agenda'){renderCalendar(all);return}host.innerHTML=list.length?`<div class="table-scroll201"><table class="table201"><thead><tr><th>Conteúdo</th><th>Categoria</th><th>Ações</th></tr></thead><tbody>${list.map((r,i)=>`<tr data-row201="${i}"><td><div class="herb-content203">${TZC204.preview(r,title(r))}<div><strong>${esc(title(r))}</strong><p>${esc(String(r[defs[module].text]||'').slice(0,140))}</p></div></div></td><td>${esc(r.Linha_Entidade||r.Categoria||r.Classificacao||'—')}</td><td>${actions(r,i)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="empty201">Nenhum conteúdo encontrado.</p>';wireActions(host,list);if(all.length>list.length){const button=document.createElement('button');button.className='btn-toolbar';button.textContent='Mostrar mais · '+list.length+' de '+all.length;button.onclick=()=>{limit206+=60;render()};host.appendChild(button)}}
- function detail(r){if(module==='Agenda')return TZC203.agenda(r);if(module==='Pontos_Cantados')return `<div class="media201">${tzcMedia201(r)}</div><p class="badge203">${esc(r.Linha_Entidade||'Geral')}</p><div class="point-lyrics203">${esc(r.Letra_Ponto||'Letra não cadastrada.')}</div>${r.Observacoes?`<details><summary>Observações</summary><p>${esc(r.Observacoes)}</p></details>`:''}`;const seen=new Set();return `<div class="media201">${tzcMedia201(r)}</div><div class="record201">${fields.filter(k=>{if(!r[k]||k===defs[module].titleField||k==='ID_Publicacao_Origem'||/^(ID_|Acesso_Publico$|Anexo$|Categoria$)|URL|Arquivo_|Link_Externo|Tipo_Anexo/.test(k))return false;const value=String(r[k]).trim();if(seen.has(value))return false;seen.add(value);return true}).map(k=>`<p><strong>${esc(k.replaceAll('_',' '))}</strong><br>${esc(r[k]).replace(/\n/g,'<br>')}</p>`).join('')}</div>`}
+ function detail(r){if(module==='Agenda')return TZC203.agenda(r);if(module==='Pontos_Cantados')return `<div class="media201">${tzcMedia201(r)}</div><p class="badge203">${esc(r.Linha_Entidade||'Geral')}</p><div class="point-lyrics203">${esc(r.Letra_Ponto||'Letra não cadastrada.')}</div>${r.Observacoes?`<details><summary>Observações</summary><p>${esc(r.Observacoes)}</p></details>`:''}`;const seen=new Set();return `<div class="media201">${tzcMedia201(r)}</div><div class="record201">${fields.filter(k=>{if(!r[k]||k===defs[module].titleField||k==='ID_Publicacao_Origem'||/^(ID_|Acesso_Publico$|Anexo$|Categoria$)|URL|Arquivo_|Link_Externo|Tipo_Anexo|Tipos?_?(?:de_)?M[ií]dia/i.test(k))return false;const value=String(r[k]).trim();if(seen.has(value))return false;seen.add(value);return true}).map(k=>`<p><strong>${esc(k.replaceAll('_',' '))}</strong><br>${esc(r[k]).replace(/\n/g,'<br>')}</p>`).join('')}</div>`}
  function view(r){const o=document.createElement('div');o.id='view201';o.className='modal-overlay';o.style.display='flex';o.innerHTML=`<div class="modal-box"><div class="modal-header"><h3>${esc(title(r))}</h3>${icon('xmark','Fechar','closeView201')}</div><div class="modal-body">${detail(r)}</div><div class="modal-actions">${canShare204(r)?icon('share-nodes','Compartilhar','shareView203'):''}<button id="closeFooter203" type="button">Fechar</button></div></div>`;$('view201')?.remove();document.body.appendChild(o);$('closeView201').onclick=()=>{o.querySelectorAll('video,audio').forEach(m=>m.pause());o.remove()};$('closeFooter203').onclick=$('closeView201').onclick;if($('shareView203'))$('shareView203').onclick=()=>share(r)}
  async function remove(r){if(!allowed()||!confirm('Excluir este registro?'))return;try{await api('m201_delete',{modulo:module,id:r[idCol]});await open(module)}catch(e){showToast(e.message)}}
  async function share(r){if(!canShare204(r))return;const text=[title(r),...fields.filter(k=>r[k]&&!/Arquivo_|Foto_|Imagem_|ID_/.test(k)).map(k=>k.replaceAll('_',' ')+': '+r[k])].join('\n');try{if(navigator.share)await navigator.share({title:title(r),text});else if(navigator.clipboard){await navigator.clipboard.writeText(text);showToast('Dados copiados.')}else showToast('Compartilhamento não disponível neste navegador.')}catch(e){if(e.name!=='AbortError')showToast('Não foi possível compartilhar.')}}
@@ -13121,7 +13121,7 @@ function fixTitle(){const node=document.getElementById('pageTitle');if(!node)ret
 const nav=TZC185.navegar.bind(TZC185);TZC185.navegar=function(){const r=nav(...arguments);queueMicrotask(fixTitle);return r};
 let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;fixTitle()})}).observe(document.getElementById('contentContainer'),{childList:true,subtree:true});fixTitle();
 // Zoom is a separate dialog; players remain in their original viewer.
-document.addEventListener('click',e=>{const img=e.target.closest('#view201 .media201 img,#homeView203 .media201 img,#msgArt202');if(!img||!T.url(img.src))return;const o=document.createElement('div');o.id='zoom204';o.className='modal-overlay';o.style.display='flex';o.innerHTML='<div class="zoom-box204" role="dialog" aria-modal="true" aria-label="Imagem ampliada"><button type="button" aria-label="Fechar imagem">×</button><img src="'+T.esc(img.src)+'" alt="'+T.esc(img.alt)+'"></div>';const close=()=>{o.remove();document.removeEventListener('keydown',key);img.focus?.()},key=e=>{if(e.key==='Escape')close()};o.querySelector('button').onclick=close;o.onclick=e=>{if(e.target===o)close()};document.getElementById('zoom204')?.remove();document.body.appendChild(o);document.addEventListener('keydown',key);o.querySelector('button').focus()});
+document.addEventListener('click',e=>{const img=e.target.closest('#view201 .media201 img,#homeView203 .media201 img,#msgArt202');if(!img||!T.url(img.src))return;const o=document.createElement('div');o.id='zoom204';o.className='modal-overlay';o.style.display='flex';o.innerHTML='<div class="zoom-box204" role="dialog" aria-modal="true" aria-label="Imagem ampliada"><button type="button" aria-label="Fechar imagem">×</button><img src="'+T.esc(img.src)+'" alt="'+T.esc(img.alt)+'"></div>';const close=()=>{o.remove();document.removeEventListener('keydown',key);img.focus?.()},key=e=>{if(e.key==='Escape')close()};o.querySelector('button').onclick=close;o.querySelector('img').onclick=close;o.onclick=e=>{if(e.target===o)close()};document.getElementById('zoom204')?.remove();document.body.appendChild(o);document.addEventListener('keydown',key);o.querySelector('button').focus()});
 })();
 (function(){
 const T=TZC204;
@@ -13399,5 +13399,28 @@ html body :is(#contentContainer,#loginModal,#modalMembro,#edit201,#pubModalV104,
 html body :is(input,textarea)::placeholder{color:#aaa!important;-webkit-text-fill-color:#aaa!important;opacity:1!important}
 html body select option{background:#555!important;color:#fff!important}
 </style>
+
+<style id="tzc-v206-5-modal-buttons">
+html body :is(.modal-overlay,.modal,.modal-box,[role="dialog"]) :is(.modal-close-icon,.modal-close,.close-modal,.tzc-modal-close,button[data-close2065]){border:1px solid var(--gold-primary,#d4af37)!important;border-radius:7px!important}
+#zoom204 img,#imageZoomOverlay img{cursor:zoom-out}
+</style>
+<script id="tzc-v206-5-modal-labels">
+(()=>{'use strict';
+const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[_:]/g,' ').replace(/\s+/g,' ').trim().toLowerCase();
+function polish(){
+ document.querySelectorAll('.modal-overlay,.modal-box,[role="dialog"]').forEach(root=>{
+  root.querySelectorAll('.record201 p,.modal-body p,.modal-body tr').forEach(el=>{const label=el.querySelector('strong,th');if(label&&/^tipos? (de )?midia$/.test(norm(label.textContent)))el.hidden=true});
+  root.querySelectorAll('button').forEach(b=>{
+   const label=b.getAttribute('aria-label')||b.title||'',text=b.textContent.trim(),code=b.getAttribute('onclick')||'';
+   if(/fechar|close|cancelar/i.test(label+' '+text+' '+code)||b.matches('.modal-close-icon,.modal-close,.close-modal,.tzc-modal-close'))b.dataset.close2065='1';
+   if(b.closest('.modal-header')||b.matches('.modal-close-icon,.modal-close,.close-modal,.tzc-modal-close')||b.dataset.label2065)return;
+   if((!text||/^[×✕+]$/.test(text))&&label){b.dataset.icon201='1';b.dataset.label2065='1';b.appendChild(document.createTextNode(' '+label))}
+  });
+ });
+}
+let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;polish()})}).observe(document.body,{childList:true,subtree:true});polish();
+})();
+</script>
+
 </body>
 </html>

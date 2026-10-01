@@ -8006,7 +8006,7 @@ html body .gestao-interna-home .card.tzc-card-retorno-v121 {
  const esc=s=>String(s??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]));
  const idP=()=>`PRE_${Date.now()}_${Math.random().toString(36).slice(2,7).toUpperCase()}`;
  async function getSheet(nome){const r=await fetch(`${API}?sheet=${encodeURIComponent(nome)}&t=${Date.now()}`,{cache:'no-store'});const j=await r.json();return Array.isArray(j)?j:[]}
- function nomeUsuario(id){const p=presencasV127.find(x=>String(x.ID_Usuario)===String(id));if(String(id||'').startsWith('VISITANTE_')&&String(p?.Nome_Visitante||'').trim())return String(p.Nome_Visitante).trim();const u=usuariosV127.find(x=>String(x.ID_Usuario)===String(id));return u?.Nome||u?.Email||id||'—'}
+ function nomeUsuario(id){const p=presencasV127.find(x=>String(x.ID_Usuario)===String(id));if(String(id||'').startsWith('VISITANTE_')&&String(p?.Nome_Visitante||'').trim()){const nome=String(p.Nome_Visitante).trim(),zap=String(p.WhatsApp_Visitante||'').trim();return zap?`${nome} · ${zap}`:nome}const u=usuariosV127.find(x=>String(x.ID_Usuario)===String(id));return u?.Nome||u?.Email||id||'—'}
  /* acrescenta ação Confirmações/Presenças sem mexer no CRUD já aprovado */
  const renderAnt=window.renderEventosTZC_V126;
  window.renderEventosTZC_V126=function(){renderAnt();document.querySelectorAll('#eventoBodyV126 tr').forEach(tr=>{const edit=tr.querySelector('button[title="Editar"]');if(!edit||tr.querySelector('.tzc-pres-btn-v127'))return;const m=edit.getAttribute('onclick')?.match(/'([^']+)'/);if(!m)return;edit.insertAdjacentHTML('beforebegin',`<button class="btn-icon-only tzc-pres-btn-v127" title="Confirmações e Presenças" onclick="abrirPresencasTZCV127('${esc(m[1])}')"><i class="fa-solid fa-user-check"></i></button>`)})};
@@ -9769,6 +9769,10 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
   };
 })();
 </script>
+
+
+
+
 
 </body>
 </html>
@@ -11596,5 +11600,209 @@ html body #artesOverlayV85 #aDescricaoV85::placeholder {
      A única integração é a chamada segura a formatarDataRespostaV172
      dentro do renderer original, evitando ReferenceError e preservando
      inclusive a correção do Nome_Visitante da V171. */
+})();
+</script>
+
+<!-- ============================================================
+     TZC V175 — VARREDURA CONSOLIDADA: EVENTOS + CONFIRMAÇÕES
+     Revisão dos erros relatados e das correções aprovadas.
+     Objetivos desta camada final:
+     1) toda caixa SELECT exibe opções em ordem alfabética;
+     2) menu Eventos abre a página correta conforme o perfil;
+     3) menu Controle de Presenças abre SEMPRE sua página própria;
+     4) botões de gravação dos modais de confirmação usam somente "Salvar";
+     5) confirmação do membro salva, fecha o modal e NÃO recarrega/abre outra página;
+     6) confirmação do visitante valida dentro do modal, sem alert nativo;
+     7) visitante salva, fecha o modal e permanece na página atual;
+     8) evita a dupla consulta de Eventos no Controle de Presenças (V145+V146);
+     9) preserva nome do visitante, data local, título/data do evento e PDF aprovados.
+     ============================================================ -->
+<script id="tzc-v175-varredura-consolidada">
+(function(){
+  'use strict';
+
+  const API175=(typeof WEB_APP_URL!=='undefined' && WEB_APP_URL)?WEB_APP_URL:'';
+  const perfisGestao175=['dirigente','administrador','colaborador','editor/colaborador','editor'];
+  const esc175=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+  function perfil175(){
+    try{
+      const u=(typeof loggedUser!=='undefined' && loggedUser)?loggedUser:window.loggedUser;
+      return String(u?.perfil||u?.Perfil||'').trim().toLowerCase();
+    }catch(e){return ''}
+  }
+  function gestao175(){return perfisGestao175.includes(perfil175())}
+
+  /* REGRA GLOBAL APROVADA: todas as caixas de escolha em ordem alfabética.
+     Placeholder vazio permanece no topo e a seleção atual é preservada. */
+  function ordenarSelect175(sel){
+    if(!sel || sel.tagName!=='SELECT' || sel.dataset.tzcOrdem175==='1')return;
+    const valor=sel.value;
+    const opts=Array.from(sel.options);
+    if(opts.length<2){sel.dataset.tzcOrdem175='1';return}
+    const fixas=opts.filter(o=>o.disabled || o.value==='');
+    const normais=opts.filter(o=>!o.disabled && o.value!=='');
+    normais.sort((a,b)=>String(a.textContent||'').trim().localeCompare(String(b.textContent||'').trim(),'pt-BR',{sensitivity:'base',numeric:true}));
+    [...fixas,...normais].forEach(o=>sel.appendChild(o));
+    sel.value=valor;
+    sel.dataset.tzcOrdem175='1';
+  }
+  function ordenarSelects175(root=document){
+    if(root?.matches?.('select'))ordenarSelect175(root);
+    root?.querySelectorAll?.('select').forEach(ordenarSelect175);
+  }
+  ordenarSelects175(document);
+  document.addEventListener('focusin',e=>{if(e.target?.tagName==='SELECT'){delete e.target.dataset.tzcOrdem175;ordenarSelect175(e.target)}},true);
+  new MutationObserver(ms=>{
+    for(const m of ms) for(const n of m.addedNodes) if(n.nodeType===1) ordenarSelects175(n);
+  }).observe(document.documentElement,{childList:true,subtree:true});
+
+  /* Rotas finais: elimina disputa entre wrappers antigos. */
+  function fixarRotas175(){
+    const eventos=document.getElementById('menuEventosV128');
+    if(eventos){
+      eventos.onclick=function(ev){
+        ev?.preventDefault?.(); ev?.stopPropagation?.();
+        document.getElementById('sidebar')?.classList.remove('open');
+        return gestao175()
+          ? window.abrirEventosTZC_V126?.()
+          : window.abrirEventosMembrosTZCV128?.(eventos);
+      };
+    }
+    const pres=document.getElementById('menuPresencasV134');
+    if(pres){
+      if(!gestao175()){pres.remove();return}
+      pres.onclick=function(ev){
+        ev?.preventDefault?.(); ev?.stopPropagation?.();
+        document.getElementById('sidebar')?.classList.remove('open');
+        return window.abrirControlePresencasV175?.();
+      };
+    }
+  }
+
+  /* Controle de Presenças sem a dupla carga V145 -> V146.
+     Faz uma única consulta de Eventos e só renderiza se esta página ainda estiver ativa. */
+  window.abrirControlePresencasV175=async function(){
+    if(!gestao175()){showToast?.('Acesso restrito à equipe de gestão.');return}
+    try{document.getElementById('sidebar')?.classList.remove('open')}catch(e){}
+    const info=document.getElementById('generalInfoSection'); if(info)info.style.display='none';
+    const busca=document.getElementById('searchContainerWrapper'); if(busca)busca.style.display='none';
+    const titulo=document.getElementById('pageTitle'); if(titulo)titulo.style.display='none';
+    const subt=document.getElementById('pageSubtitleContainer'); if(subt)subt.innerHTML='';
+    const c=document.getElementById('contentContainer'); if(!c)return;
+    const token='PRES_'+Date.now(); window.__tzcPaginaToken175=token;
+    c.innerHTML=`<div class="tzc-controle-pres-v145" data-tzc-token175="${token}"><div class="tzc-page-head-v44"><button type="button" class="btn-toolbar tzc-page-back-v44" onclick="switchTab('Home',document.querySelector('#navList .nav-item'))"><i class="fa-solid fa-arrow-left"></i> Início</button><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-users-viewfinder"></i> Controle de Presenças <span id="controlePresCountV145" class="tzc-count-v47"></span></h2><p>Painel de controle de presença: escolha um evento para visualizar as confirmações dos participantes e registrar a presença no dia.</p></div><div></div></div><div style="overflow:auto"><table class="tzc-pres-v127-table"><thead><tr><th>Evento</th><th>Tipo</th><th>Data</th><th>Local</th><th style="text-align:right">Ação</th></tr></thead><tbody id="controlePresBodyV145"><tr><td colspan="5"><i class="fa-solid fa-spinner fa-spin"></i> Carregando eventos...</td></tr></tbody></table></div></div>`;
+    try{
+      let lista=[];
+      if(Array.isArray(window.eventos) && window.eventos.length) lista=window.eventos.slice();
+      else{
+        const r=await fetch(`${API175}?sheet=Eventos&t=${Date.now()}`,{cache:'no-store'});
+        if(!r.ok)throw new Error('HTTP '+r.status);
+        const j=await r.json(); lista=Array.isArray(j)?j:[];
+      }
+      if(window.__tzcPaginaToken175!==token || !document.querySelector(`[data-tzc-token175="${token}"]`))return;
+      lista=lista.filter(x=>!['excluido','cancelado'].includes(String(x.Status||'Ativo').trim().toLowerCase())).sort((a,b)=>(new Date(a.Data_Inicio||0).getTime()||0)-(new Date(b.Data_Inicio||0).getTime()||0));
+      const count=document.getElementById('controlePresCountV145'); if(count)count.textContent='· '+lista.length+' registros';
+      const body=document.getElementById('controlePresBodyV145'); if(!body)return;
+      const fmt=v=>{if(!v)return '—';const d=new Date(v);if(Number.isNaN(d.getTime()))return esc175(v);return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).format(d).replace(',',' às')};
+      body.innerHTML=lista.length?lista.map(x=>`<tr><td><strong>${esc175(x.Titulo||'Evento')}</strong></td><td>${esc175(x.Tipo||'—')}</td><td>${fmt(x.Data_Inicio)}</td><td>${esc175(x.Local||'—')}</td><td style="text-align:right"><button type="button" class="btn-toolbar" onclick="abrirPresencasTZCV127('${esc175(x.ID_Evento||'')}')"><i class="fa-solid fa-user-check"></i> Abrir controle</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#aaa">Nenhum evento disponível.</td></tr>';
+    }catch(e){
+      if(window.__tzcPaginaToken175!==token)return;
+      const body=document.getElementById('controlePresBodyV145'); if(body)body.innerHTML='<tr><td colspan="5" style="text-align:center;color:#aaa">Não foi possível carregar os eventos.</td></tr>';
+    }
+  };
+  window.abrirControlePresencasV145=window.abrirControlePresencasV175;
+
+  /* Padrão final dos botões dos três modais de confirmação. */
+  function padraoConfirmacoes175(root=document){
+    const ids=['#btnSalvarConfirmV128','#guestConfirmV130 button[onclick*="salvarConfirmacaoVisitante"]','#presModalV127 button[onclick*="salvarPresencaTZCV127"]'];
+    ids.forEach(q=>root.querySelectorAll?.(q).forEach(b=>b.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Salvar'));
+    ordenarSelects175(root);
+  }
+  new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes)if(n.nodeType===1)padraoConfirmacoes175(n)}).observe(document.documentElement,{childList:true,subtree:true});
+
+  /* MEMBRO: grava sem reabrir/recarregar Eventos. Fecha o modal após sucesso
+     e atualiza somente o cartão correspondente. */
+  window.salvarConfirmEventoTZCV128=async function(idEvento){
+    const modal=document.getElementById('confirmEventoV128'); if(!modal)return;
+    const atual=JSON.parse(modal.dataset.presenca||'{}');
+    const u=JSON.parse(modal.dataset.usuario||'{}');
+    const resposta=document.getElementById('confirmRespostaV128')?.value||'Sim';
+    const obs=document.getElementById('confirmObsV128')?.value?.trim()||'';
+    const btn=document.getElementById('btnSalvarConfirmV128');
+    if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Salvando...'}
+    try{
+      const id=atual.ID_Presenca||`PRE_${Date.now()}_${Math.random().toString(36).slice(2,7).toUpperCase()}`;
+      const agora=new Date().toISOString();
+      const dados={ID_Presenca:id,ID_Evento:idEvento,ID_Usuario:u.ID_Usuario||'',Data_Resposta:agora,Resposta:resposta,Presenca:atual.Presenca||'Pendente',Observacoes:obs,Atualizado_Em:agora};
+      if(!atual.ID_Presenca)dados.Criado_Em=agora;
+      const r=await fetch(API175,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:atual.ID_Presenca?'atualizar':'inserir',nomeAba:'Presencas',id,idColuna:'ID_Presenca',dados})});
+      const j=await r.json().catch(()=>({status:'sucesso'})); if(String(j.status||'').toLowerCase()==='erro')throw new Error(j.mensagem||'Erro ao salvar');
+      modal.remove();
+      document.querySelectorAll('.tzc-evento-membro-card-v128').forEach(card=>{
+        const b=card.querySelector(`button[onclick*="confirmarEventoMembroTZCV128('${CSS.escape(String(idEvento))}')"]`) || card.querySelector('button[onclick*="confirmarEventoMembroTZCV128"]');
+        if(!b || !String(b.getAttribute('onclick')||'').includes(String(idEvento)))return;
+        const info=card.querySelector('.tzc-evento-resposta-v128'); if(info)info.innerHTML=`<i class="fa-solid fa-circle-check"></i> Sua resposta: <strong>${esc175(resposta)}</strong>`;
+        b.innerHTML='<i class="fa-solid fa-user-check"></i> Alterar resposta';
+      });
+      showToast?.('Resposta salva com sucesso!');
+    }catch(e){
+      if(btn){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Salvar'}
+      showToast?.('Não foi possível salvar: '+(e.message||e));
+    }
+  };
+
+  /* VISITANTE: sem balão nativo; valida no próprio modal e salva/fecha sem navegar. */
+  window.salvarConfirmacaoVisitanteTZCV132=async function(idEvento){
+    const modal=document.getElementById('guestConfirmV130'); if(!modal)return;
+    const nome=document.getElementById('guestNomeV130')?.value.trim()||'';
+    const zap=document.getElementById('guestZapV130')?.value.trim()||'';
+    const email=document.getElementById('guestEmailV130')?.value.trim()||'';
+    const resposta=document.getElementById('guestRespV130')?.value||'Sim';
+    const obs=document.getElementById('guestObsV130')?.value.trim()||'';
+    let aviso=modal.querySelector('.tzc-validacao-v175');
+    if(!aviso){aviso=document.createElement('div');aviso.className='tzc-validacao-v175';aviso.style.cssText='color:#f3e5ab;font-size:.78rem;margin:0 0 9px;padding:7px 9px;border:1px solid rgba(212,175,55,.45);border-radius:6px;background:#211b0b;display:none';modal.querySelector('.tzc-guest-v130-grid')?.before(aviso)}
+    if(!nome||!zap){aviso.textContent='Preencha Nome e WhatsApp para salvar.';aviso.style.display='block';(!nome?document.getElementById('guestNomeV130'):document.getElementById('guestZapV130'))?.focus();return}
+    aviso.style.display='none';
+    const btn=modal.querySelector('button[onclick*="salvarConfirmacaoVisitante"]'); if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Salvando...'}
+    const chave=(email||zap).toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,30);
+    let id=modal.dataset.presencaId||''; const acao=id?'atualizar':'inserir'; if(!id)id='PRE_'+Date.now()+'_'+Math.random().toString(36).slice(2,6).toUpperCase();
+    const agora=new Date().toISOString();
+    const dados={ID_Presenca:id,ID_Evento:idEvento,ID_Usuario:'VISITANTE_'+chave,Data_Resposta:agora,Resposta:resposta,Presenca:'Pendente',Observacoes:obs,Nome_Visitante:nome,WhatsApp_Visitante:zap,Email_Visitante:email,Tipo_Participante:'Visitante',Aceita_Lembrete:resposta==='Sim'?'Sim':'Não',Contato_Lembrete:resposta==='Sim'?(zap||email):'',Atualizado_Em:agora}; if(acao==='inserir')dados.Criado_Em=agora;
+    try{
+      const r=await fetch(API175,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao,nomeAba:'Presencas',id,idColuna:'ID_Presenca',dados})});
+      const j=await r.json().catch(()=>({status:'sucesso'})); if(String(j.status||'').toLowerCase()==='erro')throw new Error(j.mensagem||'Erro ao salvar');
+      try{const KEY='TZC_EVENTOS_VISITANTE_CONFIRMADOS_V131';const mapa=JSON.parse(localStorage.getItem(KEY)||'{}');mapa[idEvento]={idPresenca:id,resposta,nome,zap,email,observacao:obs,data:agora};localStorage.setItem(KEY,JSON.stringify(mapa))}catch(e){}
+      modal.remove();
+      document.querySelectorAll('.tzc-evento-membro-card-v128').forEach(card=>{
+        const b=card.querySelector('button[onclick*="confirmarEventoMembroTZCV128"]'); if(!b||!String(b.getAttribute('onclick')||'').includes(String(idEvento)))return;
+        const info=card.querySelector('.tzc-evento-resposta-v128'); if(info)info.innerHTML=`<i class="fa-solid fa-circle-check"></i> Sua resposta: <strong>${esc175(resposta)}</strong>`;
+        b.innerHTML='<i class="fa-solid fa-pen"></i> Alterar resposta';
+      });
+      showToast?.('Resposta salva com sucesso!');
+    }catch(e){
+      if(btn){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Salvar'}
+      showToast?.('Não foi possível salvar sua resposta.');
+    }
+  };
+
+  /* Depois que qualquer modal de confirmação for aberto, aplica padrão e ordem. */
+  const abrirMembro175=window.confirmarEventoMembroTZCV128;
+  if(typeof abrirMembro175==='function')window.confirmarEventoMembroTZCV128=async function(){const r=await abrirMembro175.apply(this,arguments);padraoConfirmacoes175(document);return r};
+  const abrirVisit175=window.abrirConfirmacaoVisitanteTZCV130;
+  if(typeof abrirVisit175==='function')window.abrirConfirmacaoVisitanteTZCV130=async function(){const r=await abrirVisit175.apply(this,arguments);padraoConfirmacoes175(document);return r};
+  const novaAdmin175=window.novaPresencaTZCV127;
+  if(typeof novaAdmin175==='function')window.novaPresencaTZCV127=function(){const r=novaAdmin175.apply(this,arguments);padraoConfirmacoes175(document);return r};
+  const editarAdmin175=window.editarPresencaTZCV127;
+  if(typeof editarAdmin175==='function')window.editarPresencaTZCV127=function(){const r=editarAdmin175.apply(this,arguments);padraoConfirmacoes175(document);return r};
+
+  /* Login/logout recriam itens do menu em versões antigas; reaplica as rotas finais. */
+  const auth175=window.updateAuthUI;
+  if(typeof auth175==='function')window.updateAuthUI=function(){const r=auth175.apply(this,arguments);setTimeout(fixarRotas175,0);setTimeout(fixarRotas175,80);return r};
+  const ui175=window.updateUserInterface;
+  if(typeof ui175==='function')window.updateUserInterface=function(){const r=ui175.apply(this,arguments);setTimeout(fixarRotas175,0);return r};
+
+  document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>{fixarRotas175();padraoConfirmacoes175(document);ordenarSelects175(document)},120)});
+  setTimeout(()=>{fixarRotas175();padraoConfirmacoes175(document);ordenarSelects175(document)},250);
 })();
 </script>

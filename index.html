@@ -9774,6 +9774,123 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
 
 
 
+
+<!-- ============================================================
+     TZC V178 — CONSOLIDAÇÃO DE MÓDULOS INTERLIGADOS
+     Revisão conjunta: Membros + Publicações + Eventos/Presenças + Menu + Modais.
+     ============================================================ -->
+<style id="tzc-v178-consolidacao-style">
+/* Regra global: calendários e relógios sempre brancos em campos escuros. */
+input[type="date"],input[type="time"],input[type="datetime-local"]{color-scheme:dark!important}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator{filter:invert(1) brightness(2)!important;opacity:1!important;cursor:pointer!important}
+
+/* Membros — mesma régua visual aprovada em Estudos. */
+.tzc-membros-v178 .tzc-page-head-v44{margin-bottom:12px!important}
+.tzc-membros-toolbar-v178{display:flex;align-items:center;gap:9px;margin:2px 0 14px;flex-wrap:wrap}
+.tzc-membros-search-v178{position:relative;width:min(620px,72%);min-width:320px;height:36px;display:flex;align-items:center;gap:9px;margin:0 auto;background:#151515;border:1px solid #303030;border-radius:9px;padding:0 12px;box-sizing:border-box}
+.tzc-membros-search-v178 i{color:var(--gold-primary);font-size:.82rem}
+.tzc-membros-search-v178 input{flex:1;min-width:0;height:100%;border:0!important;outline:0!important;background:transparent!important;color:#fff!important;box-shadow:none!important;font-size:.86rem;padding:0!important}
+.tzc-membros-filter-v178{height:34px;background:#151515;border:1px solid #303030;border-radius:7px;color:#fff;padding:0 9px;font-size:.78rem}
+.tzc-membros-actions-v178{display:flex;gap:7px;align-items:center}
+
+/* Publicações — pesquisa + CRUD na própria página. */
+.tzc-publicacoes-tools-v178{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;margin:2px 0 14px}
+.tzc-publicacoes-tools-v178 .tzc-publicacoes-search-v107{margin:0 auto!important}
+.tzc-publicacao-card-wrap-v178{position:relative}
+.tzc-publicacao-actions-v178{position:absolute;right:10px;top:10px;display:flex;gap:2px;z-index:2}
+.tzc-publicacao-card-wrap-v178 .tzc-publicacao-card-v107{width:100%;padding-right:78px!important}
+@media(max-width:760px){.tzc-membros-search-v178{width:100%;min-width:0}.tzc-publicacoes-tools-v178{grid-template-columns:1fr}.tzc-publicacoes-tools-v178>.btn-toolbar{justify-self:end}}
+</style>
+<script id="tzc-v178-consolidacao-js">
+(function(){
+'use strict';
+const API178=(typeof WEB_APP_URL!=='undefined'&&WEB_APP_URL)?WEB_APP_URL:'';
+const esc178=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const perfil178=()=>{const u=(typeof loggedUser!=='undefined'?loggedUser:null);return String(u?.perfil||u?.Perfil||'').trim().toLowerCase()};
+const podeGerir178=()=>!!(typeof isLoggedIn!=='undefined'&&isLoggedIn)&&['dirigente','administrador','colaborador','editor'].includes(perfil178());
+const statusMembro178=m=>String(m.Status_Ativo??m.Status??m.Ativo??'Ativo').trim()||'Ativo';
+const dataBR178=v=>{if(!v)return'—';try{if(/^\d{4}-\d{2}-\d{2}$/.test(String(v).slice(0,10))){const [y,m,d]=String(v).slice(0,10).split('-');return `${d}/${m}/${y}`}const d=new Date(v);if(Number.isNaN(d.getTime()))return String(v);return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo'}).format(d)}catch(e){return String(v)}};
+
+/* ---------- MENU: acesso explícito a Confirmações e Presenças ---------- */
+function instalarMenu178(){
+  const nav=document.getElementById('navList');if(!nav)return;
+  let item=document.getElementById('menuPresencasV134');
+  if(!podeGerir178()){item?.remove();return}
+  if(!item){item=document.createElement('li');item.id='menuPresencasV134';item.className='nav-item';const ev=document.getElementById('menuEventosV128');if(ev)ev.insertAdjacentElement('afterend',item);else nav.appendChild(item)}
+  item.innerHTML='<i class="fa-solid fa-user-check"></i> Confirmações e Presenças';
+  item.style.display='flex';
+  item.onclick=function(e){e?.preventDefault?.();e?.stopPropagation?.();document.getElementById('sidebar')?.classList.remove('open');window.abrirControlePresencasV175?.()};
+}
+const authBase178=window.updateAuthUI;
+if(typeof authBase178==='function')window.updateAuthUI=function(){const r=authBase178.apply(this,arguments);setTimeout(instalarMenu178,0);return r};
+
+/* ---------- MEMBROS: uma leitura via Web App + cabeçalho/pesquisa/status ---------- */
+window.__tzcMembros178=[];
+window.__tzcFiltroStatusMembro178='Todos';
+window.__tzcBuscaMembro178='';
+window.carregarEExibirMembros=async function(){
+  const g=document.getElementById('generalInfoSection');if(g)g.style.display='none';
+  const s=document.getElementById('searchContainerWrapper');if(s)s.style.display='none';
+  const l=document.getElementById('loading');if(l)l.style.display='none';
+  const pt=document.getElementById('pageTitle');if(pt)pt.innerHTML='';
+  const c=document.getElementById('contentContainer');if(!c)return;
+  c.innerHTML='<div class="tzc-membros-v178"><div class="tzc-page-head-v44"><span></span><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-users"></i> Membros <span id="membrosCount178" class="tzc-count-v47"></span></h2><p>Cadastre, consulte e mantenha atualizados os dados dos membros da Tenda.</p></div><button class="btn-toolbar tzc-page-new-v44 tzc-btn-gold-v105" onclick="abrirModalNovoMembro()"><i class="fa-solid fa-plus"></i> Novo Membro</button></div><div class="tzc-membros-toolbar-v178"><select id="membrosStatus178" class="tzc-membros-filter-v178" onchange="window.__tzcFiltroStatusMembro178=this.value;renderMembros178()"><option value="Todos">Todos os status</option></select><div class="tzc-membros-search-v178"><i class="fa-solid fa-magnifying-glass"></i><input id="membrosBusca178" placeholder="Pesquisar membros..." oninput="window.__tzcBuscaMembro178=this.value;renderMembros178()"></div><div class="tzc-membros-actions-v178"><button class="btn-toolbar" onclick="exportarExcel()"><i class="fa-solid fa-file-excel"></i> Exportar Excel</button><button class="btn-toolbar" onclick="exportarPDF()"><i class="fa-solid fa-file-pdf"></i> Gerar PDF</button></div></div><div id="membrosTabela178"><div style="padding:18px;text-align:center;color:#aaa"><i class="fa-solid fa-spinner fa-spin"></i> Carregando membros...</div></div></div>';
+  try{
+    const r=await fetch(`${API178}?sheet=Cadastro_Filhos&t=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();window.__tzcMembros178=Array.isArray(j)?j:[];try{listaMembros=window.__tzcMembros178}catch(e){}
+    const sts=[...new Set(window.__tzcMembros178.map(statusMembro178).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
+    const sel=document.getElementById('membrosStatus178');if(sel)sel.innerHTML='<option value="Todos">Todos os status</option>'+sts.map(x=>`<option value="${esc178(x)}">${esc178(x)}</option>`).join('');
+    window.renderMembros178();
+  }catch(e){const b=document.getElementById('membrosTabela178');if(b)b.innerHTML='<div style="padding:18px;text-align:center;color:#aaa">Não foi possível carregar os membros.</div>'}
+};
+window.renderMembros178=function(){
+  const q=String(window.__tzcBuscaMembro178||'').trim().toLowerCase();const st=window.__tzcFiltroStatusMembro178||'Todos';
+  const arr=(window.__tzcMembros178||[]).filter(m=>st==='Todos'||statusMembro178(m)===st).filter(m=>!q||[m.Nome_Completo,m.Nome,m.Email,m['E-mail'],m.Telefone,m.Perfil,statusMembro178(m)].join(' ').toLowerCase().includes(q)).sort((a,b)=>String(a.Nome_Completo||a.Nome||'').localeCompare(String(b.Nome_Completo||b.Nome||''),'pt-BR',{sensitivity:'base'}));
+  try{listaMembros=arr}catch(e){}const ct=document.getElementById('membrosCount178');if(ct)ct.textContent=`· ${arr.length} ${arr.length===1?'registro':'registros'}`;
+  const box=document.getElementById('membrosTabela178');if(!box)return;
+  box.innerHTML='<div class="table-responsive"><table class="membros-table"><thead><tr><th>Ações</th><th>Nome Completo</th><th>E-mail</th><th>Perfil</th><th>Status</th><th>Data de Início</th><th>Telefone / Contato</th></tr></thead><tbody>'+ (arr.length?arr.map(m=>{const id=m.ID_Filho||m.id||'';const nome=m.Nome_Completo||m.Nome||'';const email=m.Email||m['E-mail']||'—';const tel=m.Telefone||'—';const clean=String(tel).replace(/\D/g,'');const dt=m.Data_Entrada||m.Data_Inicio||m.Data_Início||'';return `<tr><td><div style="display:flex;gap:5px"><button class="btn-icon-only" onclick="editarMembro('${esc178(id)}')" title="Editar"><i class="fa-solid fa-pen"></i></button><button class="btn-icon-only btn-delete-icon" onclick="excluirMembro('${esc178(id)}')" title="Excluir"><i class="fa-solid fa-trash"></i></button></div></td><td><strong>${esc178(nome)}</strong></td><td>${email!=='—'?`<a href="mailto:${esc178(email)}" style="color:var(--gold-light);text-decoration:underline">${esc178(email)}</a>`:'—'}</td><td>${esc178(m.Perfil||'Membro')}</td><td>${esc178(statusMembro178(m))}</td><td>${dataBR178(dt)}</td><td>${esc178(tel)}${clean?` <a href="tel:${clean}" class="btn-action-icon" title="Ligar"><i class="fa-solid fa-phone-volume"></i></a> <a href="https://wa.me/${clean}" target="_blank" class="btn-action-icon" title="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>`:''}</td></tr>`}).join(''):'<tr><td colspan="7" style="text-align:center;color:#aaa">Nenhum membro localizado.</td></tr>')+'</tbody></table></div>';
+};
+
+/* PDF de Membros passa a usar a identidade visual do PDF de Presenças e respeita o filtro atual. */
+window.exportarPDF=function(){
+  const dados=(typeof listaMembros!=='undefined'&&Array.isArray(listaMembros))?listaMembros:[];if(!dados.length){showToast?.('Nenhum membro para gerar PDF.');return}
+  const nomeStatus=(window.__tzcFiltroStatusMembro178&&window.__tzcFiltroStatusMembro178!=='Todos')?window.__tzcFiltroStatusMembro178:'Todos os status';
+  const logo=(typeof INSTITUTIONAL_LOGO_URL!=='undefined'&&INSTITUTIONAL_LOGO_URL)?INSTITUTIONAL_LOGO_URL:'https://lh3.googleusercontent.com/d/1tTQCxsP8Z8H5mNnEFEfVq8dEg9VF0U1-';
+  const linhas=dados.map(m=>`<tr><td>${esc178(m.Nome_Completo||m.Nome||'—')}</td><td>${esc178(m.Email||m['E-mail']||'—')}</td><td>${esc178(m.Perfil||'Membro')}</td><td>${esc178(statusMembro178(m))}</td><td>${dataBR178(m.Data_Entrada||m.Data_Inicio||'')}</td><td>${esc178(m.Telefone||'—')}</td></tr>`).join('');
+  const el=document.createElement('div');el.style.cssText='position:relative;background:#fff;color:#333;font-family:Arial,sans-serif;padding:22px 26px;';
+  el.innerHTML=`<img src="${logo}" crossorigin="anonymous" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:300px;height:300px;object-fit:contain;filter:grayscale(1);opacity:.055"><div style="position:relative;z-index:1"><div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #76000d;padding-bottom:10px"><div style="display:flex;align-items:center;gap:12px"><img src="${logo}" crossorigin="anonymous" style="width:58px;height:58px;border-radius:50%;object-fit:cover"><div><div style="font-size:22px;font-weight:700;color:#76000d">Tenda de Zé Cigano</div><div style="font-size:13px;color:#666;margin-top:2px">Terreiro de Umbanda</div><div style="font-size:12px;color:#777;margin-top:4px">Relatório de Membros</div></div></div><div style="text-align:right;font-size:10.5px;color:#777;line-height:1.45">Documento de controle interno<br>Sistema Tenda de Zé Cigano</div></div><div style="margin:12px 0 8px;border-left:4px solid #d4af37;background:#f7f5ef;padding:8px 11px"><div style="font-size:10.5px;color:#777;text-transform:uppercase">FILTRO</div><div style="font-size:17px;font-weight:700;color:#76000d">${esc178(nomeStatus)}</div></div><div style="display:flex;gap:8px;margin:8px 0 12px"><div style="border:1px solid #ddd;border-top:3px solid #d4af37;border-radius:4px;padding:6px 9px;min-width:150px"><div style="font-size:9px;color:#777;text-transform:uppercase">Total de membros</div><strong style="font-size:15px;color:#76000d">${dados.length}</strong></div></div><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#76000d;color:#fff"><th style="padding:8px;text-align:left">Nome Completo</th><th style="padding:8px;text-align:left">E-mail</th><th style="padding:8px;text-align:left">Perfil</th><th style="padding:8px;text-align:left">Status</th><th style="padding:8px;text-align:left">Data de Início</th><th style="padding:8px;text-align:left">Telefone</th></tr></thead><tbody style="color:#444">${linhas.replaceAll('<td>','<td style="padding:8px;border-bottom:1px solid #ddd">')}</tbody></table><div style="display:flex;justify-content:space-between;margin-top:12px;padding-top:7px;border-top:1px solid #ddd;font-size:9.5px;color:#777"><span>Tenda de Zé Cigano · Terreiro de Umbanda</span><span>Total de registros: ${dados.length}</span></div></div>`;
+  const opt={margin:7,filename:'Relatorio_Membros_Tenda_de_Ze_Cigano.pdf',image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'landscape'}};
+  const imgs=[...el.querySelectorAll('img')];Promise.all(imgs.map(i=>i.complete?Promise.resolve():new Promise(r=>{i.onload=i.onerror=r}))).then(()=>html2pdf().from(el).set(opt).save());
+};
+
+/* ---------- MENSAGEM DO DIA / BANHO: página completa, busca e CRUD ---------- */
+window.__tzcPub178=[];window.__tzcTipoPub178='';
+async function carregarPub178(){const r=await fetch(`${API178}?sheet=Publicacoes&t=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();window.__tzcPub178=Array.isArray(j)?j:[];return window.__tzcPub178}
+function abrirPaginaPub178(tipo,icone,intro,el){
+  window.__tzcTipoPub178=tipo;document.querySelectorAll('#navList .nav-item').forEach(x=>x.classList.remove('active'));if(el)el.classList.add('active');document.getElementById('sidebar')?.classList.remove('open');
+  const g=document.getElementById('generalInfoSection');if(g)g.style.display='none';const s=document.getElementById('searchContainerWrapper');if(s)s.style.display='none';const l=document.getElementById('loading');if(l)l.style.display='none';const pt=document.getElementById('pageTitle');if(pt)pt.innerHTML='';
+  const c=document.getElementById('contentContainer');if(!c)return;c.innerHTML=`<div class="tzc-publicacoes-publicas-v107"><div class="tzc-page-head-v44"><button class="btn-toolbar tzc-page-back-v44" onclick="switchTab('Home',document.querySelector('#navList .nav-item'))"><i class="fa-solid fa-arrow-left"></i> Início</button><div class="tzc-page-copy-v44"><h2><i class="fa-solid ${icone}"></i> ${tipo} <span id="pubCount178" class="tzc-count-v47"></span></h2><p>${intro}</p></div>${podeGerir178()?`<button class="btn-toolbar tzc-page-new-v44 tzc-btn-gold-v105" onclick="novaPubTipo178('${tipo.replace(/'/g,"\\'")}')"><i class="fa-solid fa-plus"></i> Cadastrar</button>`:'<span></span>'}</div><div class="tzc-publicacoes-tools-v178"><div class="tzc-publicacoes-search-v107"><i class="fa-solid fa-magnifying-glass"></i><input id="pubBusca178" placeholder="Pesquisar..." oninput="renderPub178()"></div></div><div id="pubLista178" class="tzc-publicacoes-list-v107"><div class="tzc-publicacao-vazio-v107"><i class="fa-solid fa-spinner fa-spin"></i> Carregando...</div></div></div>`;
+  carregarPub178().then(window.renderPub178).catch(()=>{const b=document.getElementById('pubLista178');if(b)b.innerHTML='<div class="tzc-publicacao-vazio-v107">Não foi possível carregar os dados.</div>'});
+}
+window.renderPub178=function(){const tipo=window.__tzcTipoPub178;const q=String(document.getElementById('pubBusca178')?.value||'').toLowerCase();const arr=(window.__tzcPub178||[]).filter(r=>r.Tipo===tipo&&String(r.Status||'Ativo').toLowerCase()!=='excluido').filter(r=>[r.Titulo,r.Resumo,r.Conteudo,r.Ingredientes,r.Modo_Preparo].join(' ').toLowerCase().includes(q)).sort((a,b)=>String(b.Data_Publicacao||'').localeCompare(String(a.Data_Publicacao||'')));const ct=document.getElementById('pubCount178');if(ct)ct.textContent=`· ${arr.length} ${arr.length===1?'registro':'registros'}`;const b=document.getElementById('pubLista178');if(!b)return;b.innerHTML=arr.length?arr.map(r=>`<div class="tzc-publicacao-card-wrap-v178">${podeGerir178()?`<div class="tzc-publicacao-actions-v178"><button class="btn-icon-only" title="Editar" onclick="event.stopPropagation();editarPubDireta178('${esc178(r.ID_Publicacao)}')"><i class="fa-solid fa-pen"></i></button><button class="btn-icon-only" title="Excluir" onclick="event.stopPropagation();excluirPubDireta178('${esc178(r.ID_Publicacao)}')"><i class="fa-solid fa-trash"></i></button></div>`:''}<button class="tzc-publicacao-card-v107" onclick="abrirPubLeitura178('${esc178(r.ID_Publicacao)}')"><div class="meta">${dataBR178(r.Data_Publicacao)}</div><h3>${esc178(r.Titulo||tipo)}</h3><p>${esc178(r.Resumo||String(r.Conteudo||'').slice(0,180))}</p></button></div>`).join(''):'<div class="tzc-publicacao-vazio-v107">Ainda não há registros cadastrados.</div>'};
+window.abrirMensagemDiaTZC_V103=function(el){abrirPaginaPub178('Mensagem do Dia','fa-envelope-open-text','Mensagens para começar o dia com fé, serenidade e esperança.',el)};
+window.abrirBanhoSemanaTZC_V104=function(el){abrirPaginaPub178('Banho da Semana','fa-spa','Consulte os banhos semanais e suas orientações.',el)};
+window.abrirPubLeitura178=function(id){const r=(window.__tzcPub178||[]).find(x=>String(x.ID_Publicacao)===String(id));if(!r)return;const c=document.getElementById('contentContainer');let extras='';if(r.Ingredientes)extras+=`<div class="bloco"><strong>Ingredientes</strong><div class="texto">${esc178(r.Ingredientes)}</div></div>`;if(r.Modo_Preparo)extras+=`<div class="bloco"><strong>Modo de preparo</strong><div class="texto">${esc178(r.Modo_Preparo)}</div></div>`;if(r.Orientacoes)extras+=`<div class="bloco"><strong>Orientações</strong><div class="texto">${esc178(r.Orientacoes)}</div></div>`;c.innerHTML=`<div class="tzc-publicacoes-publicas-v107"><button class="btn-toolbar" onclick="${r.Tipo==='Mensagem do Dia'?'abrirMensagemDiaTZC_V103()':'abrirBanhoSemanaTZC_V104()'}"><i class="fa-solid fa-arrow-left"></i> Voltar</button><article class="tzc-pub-leitura-v104" style="margin-top:12px"><div class="tipo">${esc178(r.Tipo)} · ${dataBR178(r.Data_Publicacao)}</div><h2>${esc178(r.Titulo||r.Tipo)}</h2>${r.Resumo?`<p style="color:#aaa;font-size:.82rem;line-height:1.6">${esc178(r.Resumo)}</p>`:''}<div class="texto">${esc178(r.Conteudo||'')}</div>${extras}</article></div>`};
+window.novaPubTipo178=async function(tipo){window.__tzcRetornoPub178=tipo;await window.abrirPublicacoesTZC_V104?.();window.novaPublicacaoTZC_V104?.();setTimeout(()=>{const s=document.getElementById('pTipo');if(s){s.value=tipo;s.dispatchEvent(new Event('change'))}},0);abrirPaginaPub178(tipo,tipo==='Mensagem do Dia'?'fa-envelope-open-text':'fa-spa',tipo==='Mensagem do Dia'?'Mensagens para começar o dia com fé, serenidade e esperança.':'Consulte os banhos semanais e suas orientações.')};
+window.editarPubDireta178=async function(id){const tipo=window.__tzcTipoPub178;window.__tzcRetornoPub178=tipo;await window.abrirPublicacoesTZC_V104?.();window.editarPublicacaoTZC_V104?.(id);abrirPaginaPub178(tipo,tipo==='Mensagem do Dia'?'fa-envelope-open-text':'fa-spa',tipo==='Mensagem do Dia'?'Mensagens para começar o dia com fé, serenidade e esperança.':'Consulte os banhos semanais e suas orientações.')};
+const salvarPubBase178=window.salvarPublicacaoTZC_V104;if(typeof salvarPubBase178==='function')window.salvarPublicacaoTZC_V104=async function(){const ret=window.__tzcRetornoPub178;const r=await salvarPubBase178.apply(this,arguments);if(ret){window.__tzcRetornoPub178='';ret==='Mensagem do Dia'?window.abrirMensagemDiaTZC_V103():window.abrirBanhoSemanaTZC_V104()}return r};
+window.excluirPubDireta178=function(id){const r=(window.__tzcPub178||[]).find(x=>String(x.ID_Publicacao)===String(id));if(!r)return;const executar=async()=>{document.getElementById('tzcExcluirV176')?.remove();try{window.mostrarSalvandoTZCV134?.('Excluindo...');const res=await fetch(API178,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'excluir',nomeAba:'Publicacoes',id,idColuna:'ID_Publicacao'})});const j=await res.json().catch(()=>({status:'sucesso'}));if(String(j.status||'').toLowerCase()==='erro')throw new Error(j.mensagem||'Erro');await carregarPub178();window.renderPub178();showToast?.('Registro excluído!')}catch(e){showToast?.('Não foi possível excluir o registro.')}finally{window.fecharSalvandoTZCV134?.()}};if(typeof window.modalExcluir176==='function')window.modalExcluir176('Excluir publicação?',r.Titulo||r.Tipo,executar);else executar()};
+
+/* Regra final: nenhum botão Gestão Interna dentro das páginas; somente menu. */
+function limparGestao178(root=document){root.querySelectorAll?.('button').forEach(b=>{const oc=String(b.getAttribute('onclick')||'');const tx=String(b.textContent||'').trim();if(oc.includes('voltarGestaoInternaTZC_V1')||/^gestão interna$/i.test(tx))b.remove()})}
+const obs178=new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes)if(n.nodeType===1){limparGestao178(n);try{window.ordenarSelects175?.(n)}catch(e){}}});obs178.observe(document.documentElement,{childList:true,subtree:true});
+function iniciar178(){instalarMenu178();limparGestao178(document);try{window.ordenarSelects175?.(document)}catch(e){}}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(iniciar178,120));else setTimeout(iniciar178,120);
+})();
+</script>
+
 </body>
 </html>
 

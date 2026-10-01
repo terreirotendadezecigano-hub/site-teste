@@ -12894,5 +12894,30 @@ html body input:is([type="date"],[type="time"],[type="datetime-local"])::-webkit
 html body :is(.modal-box,.tzc-pub-box-v104,.tzc-evento-box-v126,.artBox188) input::file-selector-button{background:#242018!important;color:#f3e5ab!important;border:1px solid #d4af37!important;border-radius:5px!important;padding:6px 9px!important}
 @media(max-width:600px){.artOverlay188{padding:8px!important}.artBox188{max-height:calc(100dvh - 16px)!important;padding:12px!important}#artOptions188{grid-template-columns:1fr!important}}
 </style>
+<script id="tzc-home-v190">(function(){
+ const sources=['Eventos','Agenda_Festividades','Publicacoes','Mural_Imagens','Guias_Instrucoes'];let round=0,refresh=()=>{};setInterval(()=>refresh(),60000);window.addEventListener('focus',()=>refresh());
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const today=()=>{const p=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());return ['year','month','day'].map(k=>p.find(x=>x.type===k).value).join('-')};
+ function day(v){if(!v)return '';const t=String(v);let m=t.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return m[1]+'-'+m[2]+'-'+m[3];m=t.match(/^(\d{2})\/(\d{2})\/(\d{4})/);return m?m[3]+'-'+m[2]+'-'+m[1]:''}
+ const add=(d,n)=>{const x=new Date(d+'T12:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10)};
+ window.selecionarDestaques190=function(data,now=today()){
+ const result=[],active=x=>!['excluido','excluído','cancelado','inativo'].includes(String(x.Status||'Ativo').toLowerCase())&&isPublicAccess(x),stamp=x=>String(x.Data_Atualizacao||x.Atualizado_Em||x.Data_Criacao||x.Data_Publicacao||'');
+ const latest=arr=>arr.sort((a,b)=>stamp(b).localeCompare(stamp(a)))[0];
+ const push=(type,row,date,open)=>{if(row)result.push({tipo:type,titulo:row.Titulo||row.Nome_Evento||row.Categoria||type,texto:row.Resumo||row.Descricao||row.Conteudo||row.Texo_Aviso||row.Texto_Aviso||row.Conteudo_Texto||'',data:date||'',abrir:open})};
+ for(const [sheet,type] of [['Eventos','Eventos'],['Agenda_Festividades','Agenda']]){const arr=(data[sheet]||[]).filter(active).filter(x=>{const start=day(x.Data_Inicio||x.Data_Evento),end=day(x.Data_Fim)||start;return start&&end>=now}).sort((a,b)=>day(a.Data_Inicio||a.Data_Evento).localeCompare(day(b.Data_Inicio||b.Data_Evento)));const row=arr[0];push(type,row,row&&day(row.Data_Inicio||row.Data_Evento),()=>type==='Agenda'?switchTab('Agenda'):window.abrirEventosMembrosTZCV128(document.getElementById('menuEventosV128')))}
+ const pubs=(data.Publicacoes||[]).filter(active).filter(x=>['publicado','ativo'].includes(String(x.Status||'').toLowerCase()));
+ for(const type of ['Mensagem do Dia','Banho da Semana','Reflexão/Ensinamento']){const row=latest(pubs.filter(x=>x.Tipo===type).filter(x=>{const start=day(x.Data_Inicio_Destaque||x.Data_Publicacao);const end=day(x.Data_Fim_Destaque)||(type==='Banho da Semana'&&start?add(start,6):start);return start&&start<=now&&end>=now}));push(type,row,row&&day(row.Data_Publicacao),()=>{if(type==='Banho da Semana')return window.abrirBanhoSemanaTZC_V104();if(type==='Mensagem do Dia')return window.abrirMensagemDiaTZC_V103();window.__tzcPub178=[row];window.abrirPubLeitura178(row.ID_Publicacao)})}
+ const mural=latest((data.Mural_Imagens||[]).filter(active).filter(x=>{const start=day(x.Data_Inicio_Destaque||x.Data_Criacao),end=day(x.Data_Fim_Destaque)||start;return start&&start<=now&&end>=now}));push('Mural de Avisos',mural,mural&&day(mural.Data_Criacao),()=>switchTab('Mural_Imagens'));
+ const guia=latest((data.Guias_Instrucoes||[]).filter(active).filter(x=>{const start=day(x.Data_Inicio_Destaque||x.Data_Atualizacao),end=day(x.Data_Fim_Destaque)||start;return start&&start<=now&&end>=now}));push('Orientações',guia,guia&&day(guia.Data_Atualizacao),()=>switchTab('Guias_Instrucoes'));return result;
+ };
+ window.buildHomeAgenda=async function(){
+ const token=TZC185.token(),id=++round;if(TZC185.rota()!=='Home')return;const c=document.getElementById('contentContainer');if(!c)return;const data={};let pending=sources.length,failed=0;
+ const valid=()=>id===round&&TZC185.ativa(token)&&TZC185.rota()==='Home';
+ const render=()=>{if(!valid())return;const items=window.selecionarDestaques190(data);c.innerHTML='';const grid=document.createElement('div');grid.className='cards-grid';for(const item of items){const b=document.createElement('button');b.type='button';b.className='card';b.style.textAlign='left';b.innerHTML=`<div class="card-body"><span class="card-badge">${esc(item.tipo)}</span><h3 class="card-title">${esc(item.titulo)}</h3><div class="card-datetime">${esc(item.data.split('-').reverse().join('/'))}</div><p class="card-text">${esc(String(item.texto).slice(0,180))}</p></div>`;b.onclick=item.abrir;grid.appendChild(b)}if(items.length)c.appendChild(grid);const status=document.createElement('p');status.style.color='var(--text-muted)';status.textContent=pending?'Carregando outras áreas…':failed?'Algumas áreas não puderam ser carregadas.':items.length?'':'Nenhum destaque válido hoje.';if(status.textContent)c.appendChild(status);document.getElementById('loading').style.display='none'};
+ refresh=render;render();await Promise.allSettled(sources.map(async sheet=>{try{const res=await fetch(WEB_APP_URL+'?sheet='+encodeURIComponent(sheet));const rows=await res.json();if(!Array.isArray(rows))throw Error('Resposta inválida');data[sheet]=rows}catch(e){failed++}finally{pending--;render()}}));
+ };
+ const previous=window.loadTabData;window.loadTabData=function(tab){if(tab==='Home')return window.buildHomeAgenda();return previous.apply(this,arguments)};
+})();
+</script>
 </body>
 </html>

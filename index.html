@@ -1780,9 +1780,12 @@
             <select id="membroPerfil" class="form-control">
               <option value="Membro">Membro</option>
               <option value="Colaborador">Colaborador</option>
+              <option value="Administrador">Administrador</option>
               <option value="Dirigente">Dirigente</option>
             </select>
           </div>
+          <div class="form-group"><label>Pode cadastrar Mensagem do Dia?</label><select id="membroMensagemDia186" class="form-control"><option value="Não">Não</option><option value="Sim">Sim</option></select></div>
+          <div class="form-group"><label>Pode aprovar Mensagem do Dia?</label><select id="membroAprovarMensagem186" class="form-control"><option value="Não">Não</option><option value="Sim">Sim</option></select></div>
           <div class="form-group membros-form-full">
             <label>Observações</label>
             <textarea id="membroObservacoes" class="form-control" placeholder="Observações..." style="height:50px;"></textarea>
@@ -1798,7 +1801,25 @@
 
   <div id="custom-toast">Mensagem de aviso</div>
 
-  <script id="tzc-v185-core">
+  <script id="tzc-v186-perfis">/* TZC V186 — regras visuais de acesso. A autenticação no servidor será integrada na etapa de login. */
+window.TZC186={
+ perfil(){return String(typeof loggedUser!=='undefined'?(loggedUser?.perfil||loggedUser?.Perfil||'Visitante'):'Visitante').trim().toLowerCase()},
+ aprovarMensagem(){return this.perfil()==='dirigente'||(typeof isLoggedIn!=='undefined'&&isLoggedIn&&String(loggedUser?.podeAprovarMensagemDia||'Não').toLowerCase()==='sim')},
+ pode(modulo,acao='ler'){
+  const p=this.perfil(),logado=typeof isLoggedIn!=='undefined'&&isLoggedIn;
+  if(!logado||p==='visitante')return acao==='ler'&&!['Financeiro','Membros','Gestao_Interna','Presencas','Usuarios_Acesso','Configuracoes'].includes(modulo);
+  if(p==='dirigente')return true;
+  if(modulo==='Membros'||modulo==='Usuarios_Acesso'||modulo==='Configuracoes')return false;
+  if(modulo==='Financeiro')return p==='administrador';
+  if(modulo==='Mensagem_Dia'&&String(loggedUser?.podeMensagemDia||'Não').toLowerCase()==='sim')return true;
+  if(modulo==='Gestao_Interna')return ['colaborador','editor','editor/colaborador','administrador'].includes(p);
+  if(modulo==='Presencas')return false;
+  if(acao==='ler')return true;
+  return ['colaborador','editor','editor/colaborador'].includes(p);
+ }
+};
+</script>
+<script id="tzc-v185-core">
 /* TZC V185: estado de navegação e transporte único da API. */
 (function(){
   'use strict';
@@ -2109,6 +2130,7 @@
           configCampoTZC_V1('Nome_Terreiro','Nome do Terreiro',d.Nome_Terreiro||'Tenda de Zé Cigano')+
           configCampoTZC_V1('Subtitulo','Subtítulo',d.Subtitulo||'Terreiro de Umbanda')+
           configCampoTZC_V1('Logo_URL','Logo',d.Logo_URL?'Logo cadastrada':'Não cadastrada'),'tzc-v33-largo tzc-v33-3')}
+        ${sec('Mensagem do Dia',configCampoTZC_V1('Mensagem_Horario_Limite','Horário limite',d.Mensagem_Horario_Limite||'10:00')+configCampoTZC_V1('Mensagem_Exige_Aprovacao','Exige aprovação (Sim/Não)',d.Mensagem_Exige_Aprovacao||'Sim')+configCampoTZC_V1('Mensagem_Email_Responsavel','E-mail do responsável',d.Mensagem_Email_Responsavel||'')+configCampoTZC_V1('Mensagem_Fontes','Fontes de referência (links)',d.Mensagem_Fontes||''))}
         ${sec('Institucional',
           configCampoTZC_V1('Quem_Somos','Quem Somos',d.Quem_Somos)+
           configCampoTZC_V1('Endereco','Endereço',d.Endereco)+
@@ -3481,7 +3503,7 @@
         const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Geral`);
         const data = await res.json();
         if (data && data.length > 0) {
-          dadosGeraisInstituicao = data[0];
+          dadosGeraisInstituicao = data[0];window.tzcGeralV1=data[0];
           const info = dadosGeraisInstituicao;
           const quemSomos = info.Quem_Somos || info.QuemSomos || '';
           const endereco = info.Endereco || info.Endereço || '';
@@ -3554,7 +3576,9 @@
             googleSub: filho.Google_Sub || filho.GoogleSub || '',
             nome: filho.Nome_Completo || filho.Nome || emailInput,
             email: emailInput,
-            perfil: filho.Perfil || 'Membro'
+            perfil: filho.Perfil || 'Membro',
+            podeMensagemDia: filho.Pode_Cadastrar_Mensagem_Dia || 'Não',
+            podeAprovarMensagemDia: filho.Pode_Aprovar_Mensagem_Dia || 'Não'
           };
           sincronizarUsuarioAcessoTZC_V98(loggedUser);
           updateAuthUI();
@@ -3576,7 +3600,7 @@
     }
 
     function podeAcessarGestaoInternaTZC_V1() {
-      return !!(isLoggedIn && loggedUser && String(loggedUser.perfil || '').trim().toLowerCase() === 'dirigente');
+      return TZC186.pode('Gestao_Interna','ler');
     }
 
     function updateAuthUI() {
@@ -3586,7 +3610,7 @@
       if (isLoggedIn && loggedUser) {
         container.innerHTML = `<div class="user-logged"><i class="fa-solid fa-circle-check" style="color: #2ecc71;"></i><span>${loggedUser.nome.split(' ')[0]}</span><i class="fa-solid fa-right-from-bracket" style="cursor:pointer; margin-left:4px;" onclick="logout()" title="Sair"></i></div>`;
         const podeGerir = podeAcessarGestaoInternaTZC_V1();
-        menuMembros.style.display = podeGerir ? 'flex' : 'none';
+        menuMembros.style.display = TZC186.pode('Membros','criar') ? 'flex' : 'none';
         if (menuGestaoInterna) menuGestaoInterna.style.display = podeGerir ? 'flex' : 'none';
       } else {
         container.innerHTML = `<button class="btn-login" onclick="openLoginModal()"><i class="fa-solid fa-lock"></i> Membros</button>`;
@@ -4408,7 +4432,7 @@
       document.getElementById('membroCargo').value = '';
       document.getElementById('membroOrixa').value = '';
       document.getElementById('membroStatus').value = 'Ativo';
-      document.getElementById('membroPerfil').value = 'Membro';
+      document.getElementById('membroPerfil').value = 'Membro';document.getElementById('membroMensagemDia186').value='Não';document.getElementById('membroAprovarMensagem186').value='Não';
       document.getElementById('membroObservacoes').value = '';
       document.getElementById('modalMembro').style.display = 'flex';
     }
@@ -4448,7 +4472,7 @@
       document.getElementById('membroCargo').value = m.Cargo_Funcao || m.Cargo || '';
       document.getElementById('membroOrixa').value = m.Orixa_Frente || '';
       document.getElementById('membroStatus').value = m.Status_Ativo || 'Ativo';
-      document.getElementById('membroPerfil').value = m.Perfil || 'Membro';
+      document.getElementById('membroPerfil').value = m.Perfil || 'Membro';document.getElementById('membroMensagemDia186').value=m.Pode_Cadastrar_Mensagem_Dia||'Não';document.getElementById('membroAprovarMensagem186').value=m.Pode_Aprovar_Mensagem_Dia||'Não';
       document.getElementById('membroObservacoes').value = m.Observacoes || '';
       document.getElementById('modalMembro').style.display = 'flex';
     }
@@ -6552,9 +6576,18 @@ preparar();if(el){document.querySelectorAll('#navList .nav-item').forEach(x=>x.c
  window.novaPublicacaoTZC_V104=function(){editando=null;modalForm({Tipo:'Mensagem do Dia',Acesso_Publico:'Sim',Status:'Ativo'})};
  window.editarPublicacaoTZC_V104=function(id){editando=lista.find(x=>x.ID_Publicacao===id);if(editando)modalForm(editando)};
  window.visualizarPublicacaoTZC_V104=function(id){const r=lista.find(x=>x.ID_Publicacao===id);if(!r)return;const save=document.getElementById('contentContainer').innerHTML;leitura(r,r.Tipo);window._pubVoltarV104=save;document.querySelector('.tzc-publico-v103 button').setAttribute('onclick',"abrirPublicacoesTZC_V104()")};
+ window.abrirFormularioPublicacaoTZC_V186=function(registro,tipo){
+   if(!TZC186.pode(tipo==='Banho da Semana'?'Banho_Semana':'Mensagem_Dia','criar'))return showToast('Você não tem permissão para cadastrar este conteúdo.');
+   editando=registro?.ID_Publicacao?registro:null;
+   const r=Object.assign({Tipo:tipo,Acesso_Publico:'Sim',Status:'Rascunho'},registro||{});
+   modalForm(r);
+   const t=document.getElementById('pTipo');if(t){t.value=tipo;t.disabled=true}
+   window.ajustarCamposPublicacaoTZC_V106?.();
+ };
  function modalForm(r){
+   document.getElementById('pubModalV104')?.remove();
    const d=document.createElement('div');d.className='tzc-pub-modal-v104';d.id='pubModalV104';
-   d.innerHTML=`<div class="tzc-pub-box-v104"><div class="tzc-pub-head-v104"><h3><i class="fa-solid ${editando?'fa-pen':'fa-newspaper'}" style="color:var(--gold-primary);margin-right:7px;"></i>${editando?'Editar':'Nova'} Publicação</h3><button class="tzc-pub-x-v104" onclick="document.getElementById('pubModalV104').remove()"><i class="fa-solid fa-xmark"></i></button></div><div class="tzc-pub-form-v104">
+   d.innerHTML=`<div class="tzc-pub-box-v104"><div class="tzc-pub-head-v104"><h3><i class="fa-solid ${editando?'fa-pen':'fa-newspaper'}" style="color:var(--gold-primary);margin-right:7px;"></i>${editando?'Editar':'Cadastrar'} ${esc(r.Tipo||'Publicação')}</h3><button class="tzc-pub-x-v104" onclick="document.getElementById('pubModalV104').remove()"><i class="fa-solid fa-xmark"></i></button></div><div class="tzc-pub-form-v104">
    <div class="tzc-pub-field-v104"><label>Tipo *</label><select id="pTipo" onchange="ajustarCamposPublicacaoTZC_V106()"><option>Mensagem do Dia</option><option>Banho da Semana</option><option>Reflexão/Ensinamento</option></select></div>
    <div class="tzc-pub-field-v104"><label>Data da publicação</label><input id="pData" type="date"></div>
    <div class="tzc-pub-field-v104 full"><label>Título *</label><input id="pTitulo" placeholder="Digite o título da publicação..."></div>
@@ -6565,21 +6598,26 @@ preparar();if(el){document.querySelectorAll('#navList .nav-item').forEach(x=>x.c
    <div class="tzc-pub-field-v104 full pub-opcional-v106 pub-orientacoes-v106"><label>Orientações</label><textarea id="pOrientacoes" placeholder="Digite as orientações de uso..."></textarea></div>
    <div class="tzc-pub-field-v104"><label>Acesso público</label><select id="pAcesso"><option>Sim</option><option>Não</option></select></div>
    <div class="tzc-pub-field-v104"><label>Autor</label><input id="pAutor" placeholder="Digite o nome do autor..."></div>
+   <div class="tzc-pub-field-v104"><label>Situação</label><select id="pStatus186"><option value="Rascunho">Rascunho</option><option value="Aguardando_Aprovacao">Aguardando aprovação</option><option value="Publicado">Publicado</option></select></div>
+   <div class="tzc-pub-field-v104"><label>Arte / imagem</label><input id="pImagem186" type="url" placeholder="Link da arte com a logo do terreiro"></div>
    <div class="tzc-pub-actions-v104"><button class="btn-toolbar" onclick="document.getElementById('pubModalV104').remove()">Fechar</button><button class="btn-toolbar" onclick="salvarPublicacaoTZC_V104()"><i class="fa-solid fa-floppy-disk"></i> Salvar</button></div></div></div>`;
    document.body.appendChild(d);
    document.getElementById('pTipo').value=r.Tipo||'Mensagem do Dia';document.getElementById('pTitulo').value=r.Titulo||'';document.getElementById('pResumo').value=r.Resumo||'';document.getElementById('pConteudo').value=r.Conteudo||'';document.getElementById('pIngredientes').value=r.Ingredientes||'';document.getElementById('pPreparo').value=r.Modo_Preparo||'';document.getElementById('pOrientacoes').value=r.Orientacoes||'';document.getElementById('pAcesso').value=r.Acesso_Publico||'Sim';document.getElementById('pAutor').value=r.Autor||'';
    if(r.Data_Publicacao){try{document.getElementById('pData').value=TZC185.data(r.Data_Publicacao).toISOString().slice(0,10)}catch(e){}} else document.getElementById('pData').value=new Date().toISOString().slice(0,10);
-   setTimeout(()=>window.ajustarCamposPublicacaoTZC_V106?.(),0);
+   document.getElementById('pStatus186').value=r.Status==='Ativo'?'Publicado':r.Status||'Rascunho';
+   document.getElementById('pImagem186').value=r.Imagem_URL||'';
+   window.ajustarCamposPublicacaoTZC_V106?.();
  }
  window.salvarPublicacaoTZC_V104=async function(){
  const tzcToken185=TZC185.token();try {
 
+   if(document.getElementById('pTipo')?.value==='Mensagem do Dia'&&document.getElementById('pStatus186')?.value==='Publicado'&&String((window.tzcGeralV1||{}).Mensagem_Exige_Aprovacao||'Sim').toLowerCase()!=='não'&&!TZC186.aprovarMensagem())return showToast('Encaminhe a mensagem para aprovação antes de publicar.');
    if(!document.getElementById('pTitulo').value.trim()||!document.getElementById('pConteudo').value.trim()){alert('Informe o título e o conteúdo.');return}
    const id=editando?.ID_Publicacao||idNovo();
-   const dados={ID_Publicacao:id,Tipo:document.getElementById('pTipo').value,Titulo:document.getElementById('pTitulo').value.trim(),Resumo:document.getElementById('pResumo').value.trim(),Conteudo:document.getElementById('pConteudo').value.trim(),Ingredientes:document.getElementById('pIngredientes').value.trim(),Modo_Preparo:document.getElementById('pPreparo').value.trim(),Orientacoes:document.getElementById('pOrientacoes').value.trim(),Data_Publicacao:document.getElementById('pData').value,Destaque:'Sim',Acesso_Publico:document.getElementById('pAcesso').value,Autor:document.getElementById('pAutor').value.trim(),Status:'Ativo'};
+   const dados={ID_Publicacao:id,Tipo:document.getElementById('pTipo').value,Titulo:document.getElementById('pTitulo').value.trim(),Resumo:document.getElementById('pResumo').value.trim(),Conteudo:document.getElementById('pConteudo').value.trim(),Ingredientes:document.getElementById('pIngredientes').value.trim(),Modo_Preparo:document.getElementById('pPreparo').value.trim(),Orientacoes:document.getElementById('pOrientacoes').value.trim(),Data_Publicacao:document.getElementById('pData').value,Destaque:'Sim',Acesso_Publico:document.getElementById('pAcesso').value,Autor:document.getElementById('pAutor').value.trim(),Status:document.getElementById('pStatus186').value,Imagem_URL:document.getElementById('pImagem186').value.trim()};
    const payload={acao:editando?'editar':'inserir',nomeAba:SHEET,id,idColuna:'ID_Publicacao',dados};
    const r=await TZC185.aguardar(fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}),tzcToken185); const j=await TZC185.aguardar(r.json().catch(()=>({status:'sucesso'})),tzcToken185); if(j.status==='erro'){alert(j.mensagem||'Erro ao salvar.');return}
-   document.getElementById('pubModalV104')?.remove();editando=null;await TZC185.aguardar(carregar(),tzcToken185);renderPublicacoesTZC_V104();return true;
+   document.getElementById('pubModalV104')?.remove();editando=null;await TZC185.aguardar(carregar(),tzcToken185);window.__tzcPub178=lista.slice();if(document.getElementById('pubLista178'))window.renderPub178();else renderPublicacoesTZC_V104();return true;
  
  }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
 };
@@ -8173,7 +8211,7 @@ try{sessionStorage.setItem('TZC_GESTAO_CARD_RETORNO_V121','abrirEventosTZC_V126(
  window.renderEventosTZC_V126=function(){renderAnt();document.querySelectorAll('#eventoBodyV126 tr').forEach(tr=>{const edit=tr.querySelector('button[title="Editar"]');if(!edit||tr.querySelector('.tzc-pres-btn-v127'))return;const m=edit.getAttribute('onclick')?.match(/'([^']+)'/);if(!m)return;edit.insertAdjacentHTML('beforebegin',`<button class="btn-icon-only tzc-pres-btn-v127" title="Confirmações e Presenças" onclick="abrirPresencasTZCV127('${esc(m[1])}')"><i class="fa-solid fa-user-check"></i></button>`)})};
  window.abrirPresencasTZCV127=async function(idEvento){
  const tzcToken185=TZC185.token();try {
-eventoAtualV127=(window.eventos||[]).find?.(x=>String(x.ID_Evento)===String(idEvento))||null;if(!eventoAtualV127){try{const es=await TZC185.aguardar(getSheet('Eventos'),tzcToken185);eventoAtualV127=es.find(x=>String(x.ID_Evento)===String(idEvento))}catch(e){if(!TZC185.ativa(tzcToken185))return;}};const c=document.getElementById('contentContainer');c.innerHTML=`<div><div class="tzc-page-head-v44"><button class="btn-toolbar tzc-page-back-v44" onclick="abrirEventosTZC_V126()"><i class="fa-solid fa-arrow-left"></i> Eventos e Giras</button><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-user-check"></i> Confirmações e Presenças <span id="presCountV127" class="tzc-count-v47"></span></h2><p>${esc(eventoAtualV127?.Titulo||'Evento')} · acompanhe respostas e presença dos participantes.</p></div><button class="btn-toolbar tzc-page-new-v44 btn-add-membro" onclick="novaPresencaTZCV127()"><i class="fa-solid fa-plus"></i> Nova Confirmação</button></div><div class="tzc-pres-v127-search"><i class="fa-solid fa-magnifying-glass"></i><input id="presBuscaV127" placeholder="Pesquisar participante, resposta ou presença..." oninput="renderPresencasTZCV127()"></div><div style="overflow:auto"><table class="tzc-pres-v127-table"><thead><tr><th>Participante</th><th>Resposta</th><th>Presença</th><th>Data da resposta</th><th>Observações</th><th>Ações</th></tr></thead><tbody id="presBodyV127"><tr><td colspan="6">Carregando...</td></tr></tbody></table></div></div>`;try{[presencasV127,usuariosV127]=await TZC185.aguardar(Promise.all([getSheet('Presencas'),getSheet('Usuarios_Acesso')]),tzcToken185);presencasV127=presencasV127.filter(x=>String(x.ID_Evento)===String(idEvento));renderPresencasTZCV127()}catch(e){if(!TZC185.ativa(tzcToken185))return;document.getElementById('presBodyV127').innerHTML='<tr><td colspan="6">Não foi possível carregar confirmações e presenças.</td></tr>'}
+eventoAtualV127=(window.eventos||[]).find?.(x=>String(x.ID_Evento)===String(idEvento))||null;if(!eventoAtualV127){try{const es=await TZC185.aguardar(getSheet('Eventos'),tzcToken185);eventoAtualV127=es.find(x=>String(x.ID_Evento)===String(idEvento))}catch(e){if(!TZC185.ativa(tzcToken185))return;}};const c=document.getElementById('contentContainer');c.innerHTML=`<div><div class="tzc-page-head-v44"><button class="btn-toolbar tzc-page-back-v44" onclick="abrirEventosTZC_V126()"><i class="fa-solid fa-arrow-left"></i> Eventos e Giras</button><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-user-check"></i> Confirmações e Presenças <span id="presCountV127" class="tzc-count-v47"></span></h2><p>${esc(eventoAtualV127?.Titulo||'Evento')} · acompanhe respostas e presença dos participantes.</p></div><button class="btn-toolbar tzc-page-new-v44 btn-add-membro" onclick="novaPresencaTZCV127()"><i class="fa-solid fa-plus"></i> Nova Confirmação</button></div><div class="tzc-pres-v127-search"><i class="fa-solid fa-magnifying-glass"></i><input id="presBuscaV127" placeholder="Pesquisar participante, resposta ou presença..." oninput="renderPresencasTZCV127()"></div><div style="overflow:auto"><table class="tzc-pres-v127-table"><thead><tr><th>Participante</th><th>Intenção de participação</th><th>Presença verificada</th><th>Data da resposta</th><th>Observações</th><th>Ações</th></tr></thead><tbody id="presBodyV127"><tr><td colspan="6">Carregando...</td></tr></tbody></table></div></div>`;try{[presencasV127,usuariosV127]=await TZC185.aguardar(Promise.all([getSheet('Presencas'),getSheet('Usuarios_Acesso')]),tzcToken185);presencasV127=presencasV127.filter(x=>String(x.ID_Evento)===String(idEvento));renderPresencasTZCV127()}catch(e){if(!TZC185.ativa(tzcToken185))return;document.getElementById('presBodyV127').innerHTML='<tr><td colspan="6">Não foi possível carregar confirmações e presenças.</td></tr>'}
  }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
 };
  window.renderPresencasTZCV127=function(){const q=(document.getElementById('presBuscaV127')?.value||'').toLowerCase();const a=presencasV127.filter(x=>(`${nomeUsuario(x.ID_Usuario)} ${x.Resposta||''} ${x.Presenca||''} ${x.Observacoes||''}`).toLowerCase().includes(q));document.getElementById('presCountV127').textContent=`· ${a.length} registros`;document.getElementById('presBodyV127').innerHTML=a.map(x=>`<tr><td><strong style="color:#fff">${esc(nomeUsuario(x.ID_Usuario))}</strong></td><td><span class="tzc-pres-v127-badge">${esc(x.Resposta||'Pendente')}</span></td><td><span class="tzc-pres-v127-badge">${esc(x.Presenca||'Pendente')}</span></td><td>${esc(typeof window.formatarDataRespostaV172==='function'?window.formatarDataRespostaV172(x.Data_Resposta):((x.Data_Resposta||'').toString().replace('T',' ').slice(0,16)||'—'))}</td><td>${esc(x.Observacoes||'—')}</td><td><button class="btn-icon-only" title="Editar" onclick="editarPresencaTZCV127('${esc(x.ID_Presenca)}')"><i class="fa-solid fa-pen"></i></button><button class="btn-icon-only" title="Excluir" onclick="excluirPresencaTZCV127('${esc(x.ID_Presenca)}')"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:#aaa">Nenhuma confirmação registrada para este evento.</td></tr>'};
@@ -10046,7 +10084,7 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator{filter:invert(1)
 const API178=(typeof WEB_APP_URL!=='undefined'&&WEB_APP_URL)?WEB_APP_URL:'';
 const esc178=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const perfil178=()=>{const u=(typeof loggedUser!=='undefined'?loggedUser:null);return String(u?.perfil||u?.Perfil||'').trim().toLowerCase()};
-const podeGerir178=()=>!!(typeof isLoggedIn!=='undefined'&&isLoggedIn)&&['dirigente','administrador','colaborador','editor'].includes(perfil178());
+const podeGerir178=()=>TZC186.pode(window.__tzcTipoPub178==='Banho da Semana'?'Banho_Semana':'Mensagem_Dia','criar');
 const statusMembro178=m=>String(m.Status_Ativo??m.Status??m.Ativo??'Ativo').trim()||'Ativo';
 const dataBR178=v=>{if(!v)return'—';try{if(/^\d{4}-\d{2}-\d{2}$/.test(String(v).slice(0,10))){const [y,m,d]=String(v).slice(0,10).split('-');return `${d}/${m}/${y}`}const d=TZC185.data(v);if(Number.isNaN(d.getTime()))return String(v);return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo'}).format(d)}catch(e){return String(v)}};
 
@@ -10115,12 +10153,12 @@ function abrirPaginaPub178(tipo,icone,intro,el){
   const c=document.getElementById('contentContainer');if(!c)return;c.innerHTML=`<div class="tzc-publicacoes-publicas-v107"><div class="tzc-page-head-v44"><button class="btn-toolbar tzc-page-back-v44" onclick="switchTab('Home',document.querySelector('#navList .nav-item'))"><i class="fa-solid fa-arrow-left"></i> Início</button><div class="tzc-page-copy-v44"><h2><i class="fa-solid ${icone}"></i> ${tipo} <span id="pubCount178" class="tzc-count-v47"></span></h2><p>${intro}</p></div>${podeGerir178()?`<button class="btn-toolbar tzc-page-new-v44 tzc-btn-gold-v105" onclick="novaPubTipo178('${tipo.replace(/'/g,"\\'")}')"><i class="fa-solid fa-plus"></i> Cadastrar</button>`:'<span></span>'}</div><div class="tzc-publicacoes-tools-v178"><div class="tzc-publicacoes-search-v107"><i class="fa-solid fa-magnifying-glass"></i><input id="pubBusca178" placeholder="Pesquisar..." oninput="renderPub178()"></div></div><div id="pubLista178" class="tzc-publicacoes-list-v107"><div class="tzc-publicacao-vazio-v107"><i class="fa-solid fa-spinner fa-spin"></i> Carregando...</div></div></div>`;
   carregarPub178().then(()=>{if(TZC185.ativa(tokenPub185))window.renderPub178()}).catch(()=>{if(!TZC185.ativa(tokenPub185))return;const b=document.getElementById('pubLista178');if(b)b.innerHTML='<div class="tzc-publicacao-vazio-v107">Não foi possível carregar os dados.</div>'});
 }
-window.renderPub178=function(){const tipo=window.__tzcTipoPub178;const q=String(document.getElementById('pubBusca178')?.value||'').toLowerCase();const arr=(window.__tzcPub178||[]).filter(r=>r.Tipo===tipo&&!['excluido','excluído','inativo'].includes(String(r.Status||'Ativo').toLowerCase())&&(podeGerir178()||isPublicAccess(r))).filter(r=>[r.Titulo,r.Resumo,r.Conteudo,r.Ingredientes,r.Modo_Preparo].join(' ').toLowerCase().includes(q)).sort((a,b)=>String(b.Data_Publicacao||'').localeCompare(String(a.Data_Publicacao||'')));const ct=document.getElementById('pubCount178');if(ct)ct.textContent=`· ${arr.length} ${arr.length===1?'registro':'registros'}`;const b=document.getElementById('pubLista178');if(!b)return;b.innerHTML=arr.length?arr.map(r=>`<div class="tzc-publicacao-card-wrap-v178">${podeGerir178()?`<div class="tzc-publicacao-actions-v178"><button class="btn-icon-only" title="Editar" onclick="event.stopPropagation();editarPubDireta178('${esc178(r.ID_Publicacao)}')"><i class="fa-solid fa-pen"></i></button><button class="btn-icon-only" title="Excluir" onclick="event.stopPropagation();excluirPubDireta178('${esc178(r.ID_Publicacao)}')"><i class="fa-solid fa-trash"></i></button></div>`:''}<button class="tzc-publicacao-card-v107" onclick="abrirPubLeitura178('${esc178(r.ID_Publicacao)}')"><div class="meta">${dataBR178(r.Data_Publicacao)}</div><h3>${esc178(r.Titulo||tipo)}</h3><p>${esc178(r.Resumo||String(r.Conteudo||'').slice(0,180))}</p></button></div>`).join(''):'<div class="tzc-publicacao-vazio-v107">Ainda não há registros cadastrados.</div>'};
+window.renderPub178=function(){const tipo=window.__tzcTipoPub178;const q=String(document.getElementById('pubBusca178')?.value||'').toLowerCase();const arr=(window.__tzcPub178||[]).filter(r=>r.Tipo===tipo&&!['excluido','excluído','inativo'].includes(String(r.Status||'Ativo').toLowerCase())&&(podeGerir178()||(isPublicAccess(r)&&['ativo','publicado'].includes(String(r.Status||'Ativo').toLowerCase())))).filter(r=>[r.Titulo,r.Resumo,r.Conteudo,r.Ingredientes,r.Modo_Preparo].join(' ').toLowerCase().includes(q)).sort((a,b)=>String(b.Data_Publicacao||'').localeCompare(String(a.Data_Publicacao||'')));const ct=document.getElementById('pubCount178');if(ct)ct.textContent=`· ${arr.length} ${arr.length===1?'registro':'registros'}`;const b=document.getElementById('pubLista178');if(!b)return;b.innerHTML=arr.length?arr.map(r=>`<div class="tzc-publicacao-card-wrap-v178">${podeGerir178()?`<div class="tzc-publicacao-actions-v178"><button class="btn-icon-only" title="Editar" onclick="event.stopPropagation();editarPubDireta178('${esc178(r.ID_Publicacao)}')"><i class="fa-solid fa-pen"></i></button><button class="btn-icon-only" title="Excluir" onclick="event.stopPropagation();excluirPubDireta178('${esc178(r.ID_Publicacao)}')"><i class="fa-solid fa-trash"></i></button></div>`:''}<button class="tzc-publicacao-card-v107" onclick="abrirPubLeitura178('${esc178(r.ID_Publicacao)}')"><div class="meta">${dataBR178(r.Data_Publicacao)}</div><h3>${esc178(r.Titulo||tipo)}</h3><p>${esc178(r.Resumo||String(r.Conteudo||'').slice(0,180))}</p></button></div>`).join(''):'<div class="tzc-publicacao-vazio-v107">Ainda não há registros cadastrados.</div>'};
 window.abrirMensagemDiaTZC_V103=function(el){abrirPaginaPub178('Mensagem do Dia','fa-envelope-open-text','Mensagens para começar o dia com fé, serenidade e esperança.',el)};
 window.abrirBanhoSemanaTZC_V104=function(el){abrirPaginaPub178('Banho da Semana','fa-spa','Consulte os banhos semanais e suas orientações.',el)};
-window.abrirPubLeitura178=function(id){const r=(window.__tzcPub178||[]).find(x=>String(x.ID_Publicacao)===String(id));if(!r)return;const c=document.getElementById('contentContainer');let extras='';if(r.Ingredientes)extras+=`<div class="bloco"><strong>Ingredientes</strong><div class="texto">${esc178(r.Ingredientes)}</div></div>`;if(r.Modo_Preparo)extras+=`<div class="bloco"><strong>Modo de preparo</strong><div class="texto">${esc178(r.Modo_Preparo)}</div></div>`;if(r.Orientacoes)extras+=`<div class="bloco"><strong>Orientações</strong><div class="texto">${esc178(r.Orientacoes)}</div></div>`;c.innerHTML=`<div class="tzc-publicacoes-publicas-v107"><button class="btn-toolbar" onclick="${r.Tipo==='Mensagem do Dia'?'abrirMensagemDiaTZC_V103()':'abrirBanhoSemanaTZC_V104()'}"><i class="fa-solid fa-arrow-left"></i> Voltar</button><article class="tzc-pub-leitura-v104" style="margin-top:12px"><div class="tipo">${esc178(r.Tipo)} · ${dataBR178(r.Data_Publicacao)}</div><h2>${esc178(r.Titulo||r.Tipo)}</h2>${r.Resumo?`<p style="color:#aaa;font-size:.82rem;line-height:1.6">${esc178(r.Resumo)}</p>`:''}<div class="texto">${esc178(r.Conteudo||'')}</div>${extras}</article></div>`};
-window.novaPubTipo178=async function(tipo){window.__tzcRetornoPub178=tipo;await window.abrirPublicacoesTZC_V104?.();window.novaPublicacaoTZC_V104?.();setTimeout(()=>{const s=document.getElementById('pTipo');if(s){s.value=tipo;s.dispatchEvent(new Event('change'))}},0);abrirPaginaPub178(tipo,tipo==='Mensagem do Dia'?'fa-envelope-open-text':'fa-spa',tipo==='Mensagem do Dia'?'Mensagens para começar o dia com fé, serenidade e esperança.':'Consulte os banhos semanais e suas orientações.')};
-window.editarPubDireta178=async function(id){const tipo=window.__tzcTipoPub178;window.__tzcRetornoPub178=tipo;await window.abrirPublicacoesTZC_V104?.();window.editarPublicacaoTZC_V104?.(id);abrirPaginaPub178(tipo,tipo==='Mensagem do Dia'?'fa-envelope-open-text':'fa-spa',tipo==='Mensagem do Dia'?'Mensagens para começar o dia com fé, serenidade e esperança.':'Consulte os banhos semanais e suas orientações.')};
+window.abrirPubLeitura178=function(id){const r=(window.__tzcPub178||[]).find(x=>String(x.ID_Publicacao)===String(id));if(!r)return;const c=document.getElementById('contentContainer');let extras='';if(r.Ingredientes)extras+=`<div class="bloco"><strong>Ingredientes</strong><div class="texto">${esc178(r.Ingredientes)}</div></div>`;if(r.Modo_Preparo)extras+=`<div class="bloco"><strong>Modo de preparo</strong><div class="texto">${esc178(r.Modo_Preparo)}</div></div>`;if(r.Orientacoes)extras+=`<div class="bloco"><strong>Orientações</strong><div class="texto">${esc178(r.Orientacoes)}</div></div>`;c.innerHTML=`<div class="tzc-publicacoes-publicas-v107"><button class="btn-toolbar" onclick="${r.Tipo==='Mensagem do Dia'?'abrirMensagemDiaTZC_V103()':'abrirBanhoSemanaTZC_V104()'}"><i class="fa-solid fa-arrow-left"></i> Voltar</button><article class="tzc-pub-leitura-v104" style="margin-top:12px"><div class="tipo">${esc178(r.Tipo)} · ${dataBR178(r.Data_Publicacao)}</div><h2>${esc178(r.Titulo||r.Tipo)}</h2>${r.Resumo?`<p style="color:#aaa;font-size:.82rem;line-height:1.6">${esc178(r.Resumo)}</p>`:''}${r.Imagem_URL?`<img src="${esc178(r.Imagem_URL)}" alt="Arte da publicação" style="max-width:100%;border-radius:8px;margin-bottom:16px">`:''}<div class="texto">${esc178(r.Conteudo||'')}</div>${extras}</article></div>`};
+window.novaPubTipo178=function(tipo){window.__tzcRetornoPub178='';window.abrirFormularioPublicacaoTZC_V186(null,tipo)};
+window.editarPubDireta178=function(id){const r=(window.__tzcPub178||[]).find(x=>String(x.ID_Publicacao)===String(id));if(!r)return showToast('Registro não encontrado.');window.__tzcRetornoPub178='';window.abrirFormularioPublicacaoTZC_V186(r,r.Tipo)};
 const salvarPubBase178=window.salvarPublicacaoTZC_V104;if(typeof salvarPubBase178==='function')window.salvarPublicacaoTZC_V104=async function(){
  const tzcToken185=TZC185.token();try {
 const tokenSalvarPub185=TZC185.token();const ret=window.__tzcRetornoPub178;const r=await TZC185.aguardar(salvarPubBase178.apply(this,arguments),tzcToken185);if(ret&&r===true&&TZC185.ativa(tokenSalvarPub185)){window.__tzcRetornoPub178='';ret==='Mensagem do Dia'?window.abrirMensagemDiaTZC_V103():window.abrirBanhoSemanaTZC_V104()}return r
@@ -12677,8 +12715,8 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
 (function(){
   'use strict';
   const perfis=['dirigente','administrador','colaborador','editor/colaborador','editor'];
-  const gestor=()=>isLoggedIn&&perfis.includes(String(loggedUser?.perfil||loggedUser?.Perfil||'').trim().toLowerCase());
-  const gestaoInterna=()=>podeAcessarGestaoInternaTZC_V1();
+  const gestor=()=>TZC186.pode('Eventos','criar');
+  const gestaoInterna=()=>TZC186.pode('Gestao_Interna','ler');
   const el=id=>document.getElementById(id);
   let profundidade=0;
   const titulos={Home:'Destaques',Agenda:'Calendário da Agenda',Mural_Imagens:'Mural de Avisos',Pontos_Cantados:'Coletânea de Pontos Cantados',Ervas_Banhos:'Guia Sagrado de Ervas & Banhos',Guias_Instrucoes:'Orientações'};
@@ -12709,7 +12747,7 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
   const switchBase=window.switchTab;
   window.switchTab=function(tab,element){
     if(!['Home','Agenda','Mural_Imagens','Pontos_Cantados','Ervas_Banhos','Guias_Instrucoes','Membros','Gestao_Interna'].includes(tab)){showToast('Página não encontrada.');return}
-    if(['Membros','Gestao_Interna'].includes(tab)&&!gestaoInterna()){showToast('Acesso restrito à equipe de gestão.');return}
+    if(['Membros','Gestao_Interna'].includes(tab)&&!TZC186.pode(tab==='Membros'?'Membros':'Gestao_Interna',tab==='Membros'?'criar':'ler')){showToast('Acesso restrito à equipe de gestão.');return}
     if(!profundidade)preparar(tab);
     profundidade++;
     try{return switchBase.call(this,tab,element)}finally{profundidade--}
@@ -12742,11 +12780,11 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
   };
   // Permanece possível salvar os mesmos campos existentes, agora por cabeçalho.
   window.salvarMembro=async function(){
-    if(!gestaoInterna())return showToast('Acesso restrito à equipe de gestão.');
+    if(!TZC186.pode('Membros','criar'))return showToast('Acesso restrito à gestão de membros.');
     if(window.__tzcSalvandoMembro185)return;
     const valor=id=>String(el(id)?.value||'').trim();
     const existente=valor('membroId'),id=existente||('FILHO_'+Date.now()+'_'+Math.random().toString(36).slice(2,8));
-    const dados={ID_Filho:id,Nome_Completo:valor('membroNome'),Data_Nascimento:valor('membroDataNasc'),Telefone:valor('membroTelefone'),Email:valor('membroEmail'),Endereco:valor('membroEndereco'),Data_Entrada:valor('membroDataEntrada'),Cargo_Funcao:valor('membroCargo'),Orixa_Frente:valor('membroOrixa'),Status_Ativo:valor('membroStatus'),Perfil:valor('membroPerfil'),Observacoes:valor('membroObservacoes')};
+    const dados={ID_Filho:id,Nome_Completo:valor('membroNome'),Data_Nascimento:valor('membroDataNasc'),Telefone:valor('membroTelefone'),Email:valor('membroEmail'),Endereco:valor('membroEndereco'),Data_Entrada:valor('membroDataEntrada'),Cargo_Funcao:valor('membroCargo'),Orixa_Frente:valor('membroOrixa'),Status_Ativo:valor('membroStatus'),Perfil:valor('membroPerfil'),Observacoes:valor('membroObservacoes'),Pode_Cadastrar_Mensagem_Dia:valor('membroMensagemDia186')||'Não',Pode_Aprovar_Mensagem_Dia:valor('membroAprovarMensagem186')||'Não'};
     if(!dados.Nome_Completo||!dados.Email)return showToast('Preencha ao menos o Nome Completo e o E-mail.');
     const token=TZC185.token();window.__tzcSalvandoMembro185=true;
     try{
@@ -12756,7 +12794,7 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
     }catch(e){showToast('Não foi possível salvar o membro: '+e.message)}finally{window.__tzcSalvandoMembro185=false}
   };
   window.excluirMembro=function(id){
-    if(!gestaoInterna())return showToast('Acesso restrito à equipe de gestão.');
+    if(!TZC186.pode('Membros','criar'))return showToast('Acesso restrito à gestão de membros.');
     const item=(window.__tzcMembros178||[]).find(m=>String(m.ID_Filho||m.id)===String(id));if(!item)return;
     const token=TZC185.token();
     const excluir=async()=>{
@@ -12773,6 +12811,69 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
   }
 })();
 
+</script>
+<script id="tzc-v186-controles">(function(){
+ 'use strict';
+ const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+ const rotas={abrirPublicacoesTZC_V104:'Publicacoes',novaPublicacaoTZC_V104:'Publicacoes',editarPublicacaoTZC_V104:'Publicacoes',excluirPublicacaoTZC_V104:'Publicacoes',abrirEstudosTZC_V1:'Estudos',abrirCategoriasTZC_V1:'Categorias',abrirConfiguracoesTerreiroTZC_V1:'Configuracoes',abrirGestaoErvasTZC_V1:'Ervas',abrirMidiasSociaisTZC:'Midias',abrirArtesPdfTZC:'Artes',abrirUsuariosPermissoesTZC:'Usuarios_Acesso',carregarEExibirMembros:'Membros',abrirPresencasTZCV127:'Presencas',abrirControlePresencasV175:'Presencas'};
+ for(const [nome,modulo] of Object.entries(rotas)){
+  const base=window[nome];if(typeof base!=='function')continue;
+  window[nome]=function(){if(!TZC186.pode(modulo,modulo==='Presencas'?'ler':'criar'))return showToast('Seu perfil não tem acesso a esta função.');return base.apply(this,arguments)};
+ }
+ const salvarPublicacao=window.salvarPublicacaoTZC_V104;
+ window.salvarPublicacaoTZC_V104=function(){const tipo=document.getElementById('pTipo')?.value||'Mensagem do Dia';if(!TZC186.pode(tipo==='Banho da Semana'?'Banho_Semana':'Mensagem_Dia','criar'))return showToast('Você não tem permissão para salvar este conteúdo.');return salvarPublicacao.apply(this,arguments)};
+ const excluirPublicacao=window.excluirPubDireta178;
+ window.excluirPubDireta178=function(id){const r=(window.__tzcPub178||[]).find(x=>String(x.ID_Publicacao)===String(id));if(!r||!TZC186.pode(r.Tipo==='Banho da Semana'?'Banho_Semana':'Mensagem_Dia','excluir'))return showToast('Você não tem permissão para excluir este conteúdo.');return excluirPublicacao.apply(this,arguments)};
+ window.isPublicAccess=function(item){
+  const val=String(item?.Acesso_Publico??item?.Acesso??item?.Visibilidade??'Sim').trim().toLowerCase();
+  const restrita=['não','nao','false','0','fechada','fechado'].includes(val)||/restrit|fechad|somente.*membro/.test(val);
+  return !restrita||(isLoggedIn&&TZC186.perfil()!=='visitante');
+ };
+ function ajustar(root=document){
+  root.querySelectorAll?.('button[onclick]').forEach(btn=>{
+   const oc=btn.getAttribute('onclick')||'';
+   const par=Object.entries(rotas).find(([nome])=>oc.includes(nome+'('));
+   if(par&&!TZC186.pode(par[1],par[1]==='Presencas'?'ler':'criar'))btn.remove();
+  });
+  const p=document.getElementById('menuPresencasV134');if(p&&!TZC186.pode('Presencas','ler'))p.remove();
+  const a=document.getElementById('authContainer');
+  if(a&&isLoggedIn&&!document.getElementById('tzcMeusAcessos186')){
+   const b=document.createElement('button');b.id='tzcMeusAcessos186';b.className='btn-toolbar';b.textContent='Meus acessos';b.onclick=window.mostrarAcessosTZC186;a.appendChild(b);
+  }
+ }
+ window.mostrarAcessosTZC186=function(){
+  document.getElementById('tzcAcessos186')?.remove();
+  const linhas=[['Dirigente','Todas as áreas e administração.'],['Administrador','Informações do terreiro e gestão financeira.'],['Colaborador','Criar, editar e excluir conteúdo; sem financeiro e cadastro de filhos.'],['Membro','Conteúdo público e fechado; cadastro da Mensagem do Dia quando autorizado.'],['Visitante','Conteúdo público.']];
+  const d=document.createElement('div');d.id='tzcAcessos186';d.className='tzc-pub-modal-v104';
+  d.innerHTML=`<div class="tzc-pub-box-v104"><div class="tzc-pub-head-v104"><h3>Perfis e acessos</h3><button class="tzc-pub-x-v104" onclick="document.getElementById('tzcAcessos186').remove()">×</button></div><p>Seu perfil: ${esc(typeof loggedUser!=='undefined'?loggedUser?.perfil||'Visitante':'Visitante')}</p><table class="tzc-pub-table-v104"><thead><tr><th>Perfil</th><th>Acesso previsto</th></tr></thead><tbody>${linhas.map(x=>`<tr><td>${esc(x[0])}</td><td>${esc(x[1])}</td></tr>`).join('')}</tbody></table><p style="font-size:.8rem">Portal financeiro, notificações e login seguro serão disponibilizados nas próximas etapas.</p><button class="btn-toolbar" onclick="document.getElementById('tzcAcessos186').remove()">Fechar</button></div>`;
+  document.body.appendChild(d);
+ };
+ new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes)if(n.nodeType===1)ajustar(n)}).observe(document.documentElement,{childList:true,subtree:true});
+ const auth=window.updateAuthUI;window.updateAuthUI=function(){const r=auth.apply(this,arguments);ajustar(document);return r};
+ // Published updates on Home. Event cards expire after their ending date.
+ window.buildHomeAgenda=async function(agendaLegada){
+  const token=TZC185.token();if(TZC185.rota()!=='Home')return;
+  const c=document.getElementById('contentContainer');if(!c)return;
+  c.innerHTML='<p style="color:var(--text-muted)">Carregando destaques...</p>';
+  const ler=async nome=>{const r=await fetch(WEB_APP_URL+'?sheet='+encodeURIComponent(nome));return r.json()};
+  const resultados=await Promise.allSettled([ler('Eventos'),ler('Publicacoes'),ler('Mural_Imagens'),ler('Guias_Instrucoes')]);
+  if(!TZC185.ativa(token)||TZC185.rota()!=='Home')return;
+  const agora=new Date(),items=[];
+  const listas=resultados.map(x=>x.status==='fulfilled'?x.value:[]);
+  const ativo=x=>!['excluido','excluído','cancelado','inativo'].includes(String(x.Status||'Ativo').toLowerCase())&&isPublicAccess(x);
+  const expirou=v=>{const d=TZC185.data(v);if(isNaN(d.getTime()))return false;if(!/\d{2}:\d{2}/.test(String(v)))d.setHours(23,59,59,999);return d<agora};
+  const dataOrdem=v=>{const d=TZC185.data(v);return isNaN(d.getTime())?0:d.getTime()};
+  const evs=listas[0].length?listas[0]:(agendaLegada||[]);
+  evs.filter(ativo).filter(e=>!expirou(e.Data_Fim||e.Data_Inicio||e.Data_Evento)).forEach(e=>items.push({titulo:e.Titulo||e.Nome_Evento||'Evento',texto:e.Descricao||'',tipo:'Evento',ordem:dataOrdem(e.Atualizado_Em||e.Data_Inicio||e.Data_Evento),abrir:()=>window.abrirEventosMembrosTZCV128(document.getElementById('menuEventosV128'))}));
+  listas[1].filter(ativo).filter(p=>['publicado','ativo'].includes(String(p.Status||'Ativo').toLowerCase())).filter(p=>!p.Data_Publicacao||dataOrdem(p.Data_Publicacao)<=agora.getTime()).forEach(p=>items.push({titulo:p.Titulo||p.Tipo,texto:p.Resumo||p.Conteudo||'',tipo:p.Tipo,ordem:dataOrdem(p.Data_Atualizacao||p.Data_Publicacao||p.Data_Criacao),abrir:()=>p.Tipo==='Banho da Semana'?window.abrirBanhoSemanaTZC_V104():window.abrirMensagemDiaTZC_V103()}));
+  listas[2].filter(ativo).filter(p=>!expirou(p.Data_Fim_Destaque)).filter(p=>!p.Data_Inicio_Destaque||dataOrdem(p.Data_Inicio_Destaque)<=agora.getTime()).forEach(p=>items.push({titulo:p.Categoria||'Mural de Avisos',texto:p.Texo_Aviso||p.Texto_Aviso||'',tipo:'Aviso',ordem:dataOrdem(p.Data_Criacao),abrir:()=>window.switchTab('Mural_Imagens')}));
+  listas[3].filter(ativo).forEach(p=>items.push({titulo:p.Titulo||'Orientação',texto:p.Conteudo_Texto||'',tipo:'Orientações',ordem:dataOrdem(p.Data_Atualizacao),abrir:()=>window.switchTab('Guias_Instrucoes')}));
+  items.sort((a,b)=>b.ordem-a.ordem);
+  c.innerHTML='';const grid=document.createElement('div');grid.className='cards-grid';
+  for(const item of items){const card=document.createElement('button');card.type='button';card.className='card';card.style.textAlign='left';card.innerHTML=`<div class="card-body"><span class="card-badge">${esc(item.tipo)}</span><h3 class="card-title">${esc(item.titulo)}</h3><p class="card-text">${esc(String(item.texto).slice(0,180))}</p></div>`;card.onclick=item.abrir;grid.appendChild(card)}
+  if(items.length)c.appendChild(grid);else c.innerHTML='<p style="color:var(--text-muted)">Nenhuma atualização em destaque.</p>';
+ };
+})();
 </script>
 </body>
 </html>

@@ -12455,3 +12455,30 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
 })();
 </script>
 \n\n<!-- ============================================================\n     TZC V183 — CORREÇÃO ÚNICA: BLOQUEIA RETORNO TARDIO DA HOME\n     - ao abrir Eventos ou Confirmações, marca imediatamente a rota atual;\n     - uma consulta antiga da Home/Destaques não pode mais sobrescrever\n       a página nova quando terminar depois;\n     - não altera desempenho, CRUD, PDF, modais ou demais módulos.\n     ============================================================ -->\n<script id="tzc-v183-bloqueia-retorno-tardio-home">\n(function(){\n  'use strict';\n\n  const abrirEventosBaseV183=window.abrirEventosTZC_V126;\n  if(typeof abrirEventosBaseV183==='function'){\n    window.abrirEventosTZC_V126=function(){\n      try{ currentTab='Eventos_TZC'; }catch(e){}\n      return abrirEventosBaseV183.apply(this,arguments);\n    };\n  }\n\n  const abrirPresBaseV183=window.abrirPresencasTZCV127;\n  if(typeof abrirPresBaseV183==='function'){\n    window.abrirPresencasTZCV127=async function(){\n      try{ currentTab='Confirmacoes_Presencas_TZC'; }catch(e){}\n      return await abrirPresBaseV183.apply(this,arguments);\n    };\n  }\n})();\n</script>\n
+<!-- ============================================================
+     TZC V184 — CORREÇÃO ÚNICA: HOME NÃO SOBRESCREVE PÁGINA INTERNA
+     - se Eventos/Confirmações já ocupam o contentContainer, um retorno
+       atrasado da Home não pode renderizar os cards de Destaques por cima;
+     - não altera carregamento, CRUD, PDF, modais ou demais módulos.
+     ============================================================ -->
+<script id="tzc-v184-trava-destaques-fora-home">
+(function(){
+  'use strict';
+  const buildHomeBaseV184=window.buildHomeAgenda;
+  if(typeof buildHomeBaseV184!=='function')return;
+
+  window.buildHomeAgenda=function(data){
+    const c=document.getElementById('contentContainer');
+    if(c){
+      const paginaInterna = !!(
+        c.querySelector('.tzc-eventos-table-v126') ||
+        c.querySelector('.tzc-pres-evento-v148') ||
+        c.querySelector('#presBodyV127') ||
+        c.querySelector('#tzcCargaPresV179')
+      );
+      if(paginaInterna)return;
+    }
+    return buildHomeBaseV184.apply(this,arguments);
+  };
+})();
+</script>

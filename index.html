@@ -1798,6 +1798,72 @@
 
   <div id="custom-toast">Mensagem de aviso</div>
 
+  <script id="tzc-v185-core">
+/* TZC V185: estado de navegação e transporte único da API. */
+(function(){
+  'use strict';
+  const nativeFetch=window.fetch.bind(window);
+  let epoca=0, rota='Home', versaoCache=0;
+  const cache=new Map(), pendentes=new Map();
+  function limpar(){versaoCache++;cache.clear();pendentes.clear()}
+  function data(valor){
+    if(valor instanceof Date)return new Date(valor.getTime());
+    if(typeof valor==='number')return new Date(valor);
+    if(valor===null||valor===undefined||valor==='')return new Date(NaN);
+    const s=String(valor).trim();
+    let m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:(?:\s+às\s+|\s+|T)(\d{2}):(\d{2})(?::(\d{2}))?)?$/i);
+    if(m){const d=new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0),+(m[6]||0));return d.getFullYear()===+m[3]&&d.getMonth()===+m[2]-1&&d.getDate()===+m[1]?d:new Date(NaN)}
+    m=s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+    if(m){const d=new Date(+m[1],+m[2]-1,+m[3],+(m[4]||0),+(m[5]||0),+(m[6]||0));return d.getFullYear()===+m[1]&&d.getMonth()===+m[2]-1&&d.getDate()===+m[3]?d:new Date(NaN)}
+    return new Date(s);
+  }
+  window.TZC185={
+    token:()=>epoca, ativa:t=>t===epoca, rota:()=>rota, data, limparCache:limpar,
+    navegar(nome){epoca++;rota=nome;try{currentTab=nome}catch(e){};return epoca},
+    async aguardar(promessa,token){
+      const resultado=await promessa;
+      if(token!==epoca){const e=new Error('Navegação substituída');e.tzcCancelado=true;throw e}
+      return resultado;
+    },
+    depois(fn,ms){if(rota!=='Estudos')return;const token=epoca;return setTimeout(()=>{if(token===epoca)fn()},ms)}
+  };
+  window.__tzcLimparCacheV176=limpar;
+  window.__tzcLimparCacheV177=limpar;
+  function resposta(d){return new Response(d.body,{status:d.status,statusText:d.statusText,headers:d.headers})}
+  window.fetch=async function(input,init){
+    let url=typeof input==='string'?input:String(input?.url||input);
+    const api=typeof WEB_APP_URL!=='undefined'?WEB_APP_URL:'';
+    const metodo=String(init?.method||input?.method||'GET').toUpperCase();
+    const antiga=url.match(/^https:\/\/opensheet\.elk\.sh\/[^/]+\/(.+)$/);
+    if(antiga&&api){url=api+'?sheet='+encodeURIComponent(decodeURIComponent(antiga[1].split('?')[0]));input=url}
+    if(!api||!url.startsWith(api))return nativeFetch(input,init);
+    if(metodo!=='GET'){
+      limpar();
+      const r=await nativeFetch(input,{...(init||{}),mode:'cors'});
+      if(!r.ok||r.type==='opaque')throw new Error('A API não confirmou a gravação.');
+      let j;try{j=await r.clone().json()}catch(e){throw new Error('A API retornou uma resposta inválida.')}
+      if(j.status!=='sucesso')throw new Error(j.mensagem||'A gravação não foi confirmada.');
+      limpar();return r;
+    }
+    const u=new URL(url);if(!u.searchParams.has('sheet'))return nativeFetch(input,init);
+    u.searchParams.delete('t');u.searchParams.delete('_');u.searchParams.delete('ts');u.searchParams.sort();
+    const chave=u.toString(), v=versaoCache;
+    const c=cache.get(chave);if(c&&Date.now()-c.ts<12000)return resposta(c);
+    if(pendentes.has(chave))return resposta(await pendentes.get(chave));
+    const p=(async()=>{
+      const r=await nativeFetch(input,{...(init||{}),cache:'no-store'});
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const body=await r.text();let j;try{j=JSON.parse(body)}catch(e){throw new Error('A API retornou dados inválidos.')}
+      if(!Array.isArray(j))throw new Error(j?.mensagem||'Era esperada uma lista de registros.');
+      const d={body,status:r.status,statusText:r.statusText,headers:Array.from(r.headers.entries()),ts:Date.now()};
+      if(v===versaoCache)cache.set(chave,d);return d;
+    })();
+    pendentes.set(chave,p);
+    try{return resposta(await p)}finally{if(pendentes.get(chave)===p)pendentes.delete(chave)}
+  };
+})();
+
+</script>
   <script>
     const SHEET_ID = '1BL978swtEmpF208tfvPOZJuv2YS1ecpujQnw4ZoA3Jk';
     const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyFje_ocF7a0S7Tq4EYQmM5W3hv9SmHZqxJmWLhPKdkVfudzW-Q3EEbM66U9BiwdBZOJw/exec';
@@ -1842,11 +1908,12 @@
     }
 
     window.onload = async function() {
+      const tokenInicial185=TZC185.token();
       updateAuthUI();
       await carregarConfiguracoesFlexiveisTZC_V1();
       await carregarCategoriasEstudosTZC_V1();
       loadGeneralData();
-      loadTabData('Home');
+      if(TZC185.ativa(tokenInicial185)) loadTabData('Home');
     };
 
     window.onscroll = function() {
@@ -1974,6 +2041,8 @@
     }
 
     async function abrirConfiguracoesTerreiroTZC_V1() {
+ const tzcToken185=TZC185.token();try {
+
       const container = document.getElementById('contentContainer');
       const search = document.getElementById('searchContainerWrapper');
       if (search) search.style.display = 'none';
@@ -2000,18 +2069,20 @@
       }
 
       try {
-        const res = await fetch(`${WEB_APP_URL}?sheet=${encodeURIComponent(TZC_GERAL_SHEET)}&t=${Date.now()}`, {cache:'no-store'});
+        const res = await TZC185.aguardar(fetch(`${WEB_APP_URL}?sheet=${encodeURIComponent(TZC_GERAL_SHEET)}&t=${Date.now()}`, {cache:'no-store'}),tzcToken185);
         if (!res.ok) throw new Error('HTTP ' + res.status);
-        const rows = await res.json();
+        const rows = await TZC185.aguardar(res.json(),tzcToken185);
         window.tzcGeralV1 = Array.isArray(rows) && rows.length ? rows[0] : {};
         salvarCacheGeralTZC_V1(window.tzcGeralV1);
         renderConfiguracoesTerreiroTZC_V1();
-      } catch (e) {
+      } catch (e) {if(!TZC185.ativa(tzcToken185))return;
         if (!cache || !Object.keys(cache).length) {
           document.getElementById('tzcGeralPainelV1').innerHTML = '<div class="card" style="padding:18px;color:var(--text-muted);">Não foi possível carregar os dados da aba Geral.</div>';
         }
       }
-    }
+    
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+}
 
     function configCampoTZC_V1(nome,label,valor,opcional=false) {
       const vazio=!String(valor||'').trim();
@@ -2110,9 +2181,9 @@
       try{localStorage.setItem('TZC_GERAL_CACHE_V1',JSON.stringify(dados));}catch(e){}
       try{
         await fetch(WEB_APP_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'salvar_config',nomeAba:'Geral',dados})});
-        if(typeof mostrarToastTZC_V1==='function') mostrarToastTZC_V1('Campo salvo.');
+        if(typeof showToast==='function') showToast('Campo salvo.');
       }catch(e){
-        if(typeof mostrarToastTZC_V1==='function') mostrarToastTZC_V1('Não foi possível salvar.');
+        if(typeof showToast==='function') showToast('Não foi possível salvar.');
       }
     }
 
@@ -2330,6 +2401,8 @@
     }
 
     async function abrirEstudosTZC_V1() {
+ const tzcToken185=TZC185.token();try {
+
       const container = document.getElementById('contentContainer');
       const search = document.getElementById('searchContainerWrapper');
       if (search) search.style.display = 'none';
@@ -2359,9 +2432,9 @@
       `;
 
       try {
-        const response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Estudo`, { cache: 'no-store' });
+        const response = await TZC185.aguardar(fetch(`https://opensheet.elk.sh/${SHEET_ID}/Estudo`, { cache: 'no-store' }),tzcToken185);
         if (!response.ok) throw new Error('HTTP ' + response.status);
-        const dados = await response.json();
+        const dados = await TZC185.aguardar(response.json(),tzcToken185);
         const recebidos = Array.isArray(dados) ? dados : [];
 
         // Mantém somente a ocorrência mais recente de cada ID.
@@ -2374,7 +2447,7 @@
 
         window.tzcEstudosV1 = Array.from(mapaPorId.values());
         renderEstudosTZC_V1(window.tzcEstudosV1);
-      } catch (e) {
+      } catch (e) {if(!TZC185.ativa(tzcToken185))return;
         // Uma falha temporária de sincronização não deve apagar o Acervo da tela.
         const existentes = Array.isArray(window.tzcEstudosV1) ? window.tzcEstudosV1 : [];
         if (existentes.length) {
@@ -2385,7 +2458,9 @@
             `<p style="color:#d9a9a9;">Não foi possível carregar a aba Estudo agora. ${e.message}</p>`;
         }
       }
-    }
+    
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+}
 
     function renderEstudosTZC_V1(dados) {
       const lista = document.getElementById('estudosTZCLista');
@@ -2788,7 +2863,7 @@
         body: JSON.stringify(payload)
       }).then(() => {
         showToast('Estudo excluído com sucesso!');
-        setTimeout(() => abrirEstudosTZC_V1(), 1800);
+        TZC185.depois(() => abrirEstudosTZC_V1(), 1800);
       }).catch((e) => {
         estudo.Status = 'Ativo';
         renderEstudosTZC_V1(estudos);
@@ -2977,7 +3052,7 @@
       if (parts.length === 3) {
         return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
       }
-      const d = new Date(dateStr);
+      const d = TZC185.data(dateStr);
       return isNaN(d.getTime()) ? null : new Date(d.getFullYear(), d.getMonth(), d.getDate());
     }
 
@@ -3097,6 +3172,8 @@
     }
 
     async function abrirCategoriasTZC_V1() {
+ const tzcToken185=TZC185.token();try {
+
       const container = document.getElementById('contentContainer');
       const search = document.getElementById('searchContainerWrapper');
       if (search) search.style.display = 'none';
@@ -3133,20 +3210,22 @@
 
       // Sincroniza silenciosamente com a planilha em segundo plano.
       try {
-        const res = await fetch(`${WEB_APP_URL}?sheet=${encodeURIComponent(TZC_CATEGORIAS_SHEET)}&t=${Date.now()}`, {cache:'no-store'});
+        const res = await TZC185.aguardar(fetch(`${WEB_APP_URL}?sheet=${encodeURIComponent(TZC_CATEGORIAS_SHEET)}&t=${Date.now()}`, {cache:'no-store'}),tzcToken185);
         if (!res.ok) throw new Error('HTTP ' + res.status);
-        const rows = await res.json();
+        const rows = await TZC185.aguardar(res.json(),tzcToken185);
         window.tzcCategoriasGestaoV1 = Array.isArray(rows) ? rows : [];
         salvarCacheCategoriasTZC_V1(window.tzcCategoriasGestaoV1);
         renderCategoriasTZC_V1();
-      } catch (e) {
+      } catch (e) {if(!TZC185.ativa(tzcToken185))return;
         if (!cacheLocal.length) {
           window.tzcCategoriasGestaoV1 = [];
           renderCategoriasTZC_V1();
           showToast('Não foi possível carregar as categorias.');
         }
       }
-    }
+    
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+}
 
     function categoriaAtivaTZC_V1(item) {
       const status = String(item.Status || '').trim().toLowerCase();
@@ -3413,7 +3492,7 @@
           }
           /* V103: o resumo público de Quem Somos é editorial e não é mais sobrescrito pela planilha Geral. */
 
-          const telefone = info.Telefone_Whatsapp || info.Telefone || '';
+          const telefone = String(info.Telefone_Whatsapp || info.Telefone || '');
           const grupoWhatsapp = info.Grupo_Zap || info.Grupo_Whatsapp || 'https://chat.whatsapp.com/KjLkk0tFu2wIuodvHEsG4e';
           const instagram = info.Instagram || '';
           const horario = info.Horario_Giras || info.Horario || '';
@@ -3466,7 +3545,7 @@
       try {
         const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Cadastro_Filhos`);
         const membros = await res.json();
-        const filho = membros.find(m => (m.Email || m['E-mail'] || '').toLowerCase().trim() === emailInput);
+        const filho = membros.find(m => !['inativo','excluido','excluído','não','nao'].includes(String(m.Status_Ativo||m.Status||'Ativo').toLowerCase()) && (m.Email || m['E-mail'] || '').toLowerCase().trim() === emailInput);
 
         if (filho) {
           isLoggedIn = true;
@@ -3517,6 +3596,8 @@
     }
 
     async function loadTabData(tabName) {
+ const tzcToken185=TZC185.token();try {
+
       if (tabName === 'Membros') { carregarEExibirMembros(); return; }
       const loading = document.getElementById('loading');
       const container = document.getElementById('contentContainer');
@@ -3526,8 +3607,8 @@
       const targetSheet = (tabName === 'Home' || tabName === 'Agenda') ? 'Agenda_Festividades' : tabName;
 
       try {
-        const response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${targetSheet}`);
-        let data = await response.json();
+        const response = await TZC185.aguardar(fetch(`https://opensheet.elk.sh/${SHEET_ID}/${targetSheet}`),tzcToken185);
+        let data = await TZC185.aguardar(response.json(),tzcToken185);
 
         /* V183 — se o usuário saiu desta aba enquanto a consulta estava
            aguardando resposta, o retorno antigo não pode sobrescrever a
@@ -3546,10 +3627,12 @@
         else if (tabName === 'Pontos_Cantados' && !isPontosSubpage) buildPontosHome(currentData);
         else if (tabName === 'Mural_Imagens') buildMuralDirectView(currentData);
         else renderContent(currentData, tabName);
-      } catch (err) {
+      } catch (err) {if(!TZC185.ativa(tzcToken185))return;
         loading.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Erro ao carregar dados.';
       }
-    }
+    
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+}
 
     function buildHomeAgenda(data) {
       const container = document.getElementById('contentContainer');
@@ -4036,6 +4119,8 @@
 
     /* ================= GESTÃO DE MEMBROS ================= */
     async function carregarEExibirMembros() {
+ const tzcToken185=TZC185.token();try {
+
       document.getElementById('searchContainerWrapper').style.display = 'flex';
       const loading = document.getElementById('loading');
       const container = document.getElementById('contentContainer');
@@ -4043,8 +4128,8 @@
       container.innerHTML = '';
 
       try {
-        const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Cadastro_Filhos`);
-        listaMembros = await res.json();
+        const res = await TZC185.aguardar(fetch(`https://opensheet.elk.sh/${SHEET_ID}/Cadastro_Filhos`),tzcToken185);
+        listaMembros = await TZC185.aguardar(res.json(),tzcToken185);
         
         listaMembros.sort((a, b) => {
           const nomeA = (a.Nome_Completo || a.Nome || '').toString().toLowerCase();
@@ -4055,10 +4140,12 @@
         currentData = listaMembros;
         loading.style.display = 'none';
         renderTabelaMembros(listaMembros);
-      } catch (e) {
+      } catch (e) {if(!TZC185.ativa(tzcToken185))return;
         loading.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Erro ao carregar membros.';
       }
-    }
+    
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+}
 
     function renderTabelaMembros(membros) {
       const container = document.getElementById('contentContainer');
@@ -4929,6 +5016,8 @@
   const API = (typeof WEB_APP_URL !== 'undefined' ? WEB_APP_URL : '');
 
   window.abrirGestaoErvasTZC_V1 = async function(){
+ const tzcToken185=TZC185.token();try {
+
     const buscaGlobal=document.getElementById('searchContainerWrapper');
     if(buscaGlobal) buscaGlobal.style.display='none';
     const tituloGlobal=document.getElementById('pageTitle');
@@ -4957,8 +5046,10 @@
 
         <div id="ervasTabelaV37"><div class="ervas-empty-v37">Carregando ervas...</div></div>
       </div>`;
-    await carregarErvasAdminTZC_V37();
-  };
+    await TZC185.aguardar(carregarErvasAdminTZC_V37(),tzcToken185);
+  
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 
   window.normalizarErvaAdminV41=function(x){
     x=x||{};
@@ -4985,6 +5076,8 @@
   };
 
   window.carregarErvasAdminTZC_V37 = async function(){
+ const tzcToken185=TZC185.token();try {
+
     const cacheKey='TZC_ERVAS_ADMIN_CACHE_V42';
     const aplicar=(d,mesclarLocal=false)=>{
       let remoto=(Array.isArray(d)?d:[]).map(normalizarErvaAdminV41);
@@ -5010,32 +5103,34 @@
     try{
       const cache=JSON.parse(localStorage.getItem(cacheKey)||'[]');
       if(Array.isArray(cache) && cache.length) aplicar(cache,false);
-    }catch(e){}
+    }catch(e){if(!TZC185.ativa(tzcToken185))return;}
 
     try{
       // Mesma fonte pública já usada pelo restante do site, sem query extra.
-      const r=await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Ervas_Banhos`,{cache:'no-store'});
+      const r=await TZC185.aguardar(fetch(`https://opensheet.elk.sh/${SHEET_ID}/Ervas_Banhos`,{cache:'no-store'}),tzcToken185);
       if(!r.ok) throw new Error('OpenSheet indisponível');
-      const d=await r.json();
+      const d=await TZC185.aguardar(r.json(),tzcToken185);
       if(!Array.isArray(d)) throw new Error('Resposta inválida');
       aplicar(d,true);
       localStorage.setItem(cacheKey,JSON.stringify(window.tzcErvasAdminV37||[]));
       return;
-    }catch(e){}
+    }catch(e){if(!TZC185.ativa(tzcToken185))return;}
 
     try{
       // Fallback para o Web App, caso OpenSheet oscile.
-      const r=await fetch(API+'?sheet=Ervas_Banhos');
-      const d=await r.json();
+      const r=await TZC185.aguardar(fetch(API+'?sheet=Ervas_Banhos'),tzcToken185);
+      const d=await TZC185.aguardar(r.json(),tzcToken185);
       if(!Array.isArray(d)) throw new Error('Resposta inválida');
       aplicar(d,true);
       localStorage.setItem(cacheKey,JSON.stringify(window.tzcErvasAdminV37||[]));
-    }catch(e){
+    }catch(e){if(!TZC185.ativa(tzcToken185))return;
       if(!(window.tzcErvasAdminV37||[]).length){
         document.getElementById('ervasTabelaV37').innerHTML='<div class="ervas-empty-v37">Não foi possível atualizar os dados agora. Tente novamente em alguns segundos.</div>';
       }
     }
-  };
+  
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 
   window.renderTabelaErvasTZC_V37 = function(){
     const alvo=document.getElementById('ervasTabelaV37'); if(!alvo)return;
@@ -5356,16 +5451,16 @@
       Foto_URL:d.Foto_URL
     });
     const payload={acao:edit?'atualizar':'inserir',nomeAba:'Ervas_Banhos',id:d.ID_Erva,idColuna:'ID_Erva',dados:dadosPlanilha};
+    try{
+      await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
     fecharModalErvaV37();
     if(edit){Object.assign(edit,d);}else{window.tzcErvasAdminV37.unshift(d);}
     atualizarFiltrosErvasV41();
     renderTabelaErvasTZC_V37();
     try{localStorage.setItem('TZC_ERVAS_ADMIN_CACHE_V42',JSON.stringify(window.tzcErvasAdminV37||[]));}catch(e){}
-    try{
-      await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
       showToast(edit?'Erva atualizada com sucesso.':'Erva cadastrada com sucesso.');
       setTimeout(()=>{carregarErvasAdminTZC_V37();},1800);
-    }catch(e){showToast('Registro atualizado na tela. A sincronização será conferida novamente.');}
+    }catch(e){showToast('Não foi possível salvar a erva: '+e.message);}
     setTimeout(carregarErvasAdminTZC_V37,2200);
   };
 
@@ -5406,12 +5501,12 @@
     });
   };
   window.confirmarExcluirErvaTZC_V37=async function(id){
-    fecharModalErvaV37();
+    const payload={acao:'excluir',nomeAba:'Ervas_Banhos',id:id,idColuna:'ID_Erva'};
+    try{await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});    fecharModalErvaV37();
     const x=(window.tzcErvasAdminV37||[]).find(e=>String(e.ID_Erva||'')===String(id)); if(x)x.Status='Excluido';
     atualizarFiltrosErvasV41();
     renderTabelaErvasTZC_V37();
-    const payload={acao:'excluir',nomeAba:'Ervas_Banhos',id:id,idColuna:'ID_Erva'};
-    try{await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});showToast('Erva excluída com sucesso.');}catch(e){showToast('Exclusão aplicada na tela. A sincronização será conferida novamente.');}
+showToast('Erva excluída com sucesso.');}catch(e){showToast('Não foi possível excluir a erva: '+e.message);}
   };
 
   window.abrirModalErvaV37=function(html){fecharModalErvaV37();const d=document.createElement('div');d.id='modalErvaV37';d.className='ervas-modal-v37';d.innerHTML=`<div class="ervas-modal-box-v37">${html}</div>`;d.addEventListener('click',e=>{if(e.target===d)fecharModalErvaV37();});document.body.appendChild(d);};
@@ -5755,6 +5850,8 @@ function filtrarEstudosTZC_V55(valor){
  window.fecharModalMidiasTZC=()=>document.getElementById('midiasModalOverlayV82')?.remove();
 
  window.abrirMidiasSociaisTZC=async function(){
+ const tzcToken185=TZC185.token();try {
+
    const buscaGlobal=document.getElementById('searchContainerWrapper'); if(buscaGlobal)buscaGlobal.style.display='none';
    const tituloGlobal=document.getElementById('pageTitle'); if(tituloGlobal)tituloGlobal.style.display='none';
    const c=document.getElementById('contentContainer');
@@ -5767,16 +5864,22 @@ function filtrarEstudosTZC_V55(valor){
      <div class="tzc-busca-modulo-v55"><i class="fa-solid fa-magnifying-glass"></i><input id="midiasBuscaV82" type="search" placeholder="Pesquisar mídias sociais..." oninput="renderMidiasTZC()"></div>
      <div id="midiasTabelaV82"><div class="midias-empty-v82">Carregando mídias sociais...</div></div>
    </div>`;
-   await carregarMidiasTZC();
- };
+   await TZC185.aguardar(carregarMidiasTZC(),tzcToken185);
+ 
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 
  window.carregarMidiasTZC=async function(){
+ const tzcToken185=TZC185.token();try {
+
    let d=[];
-   try{const r=await fetch(`https://opensheet.elk.sh/${SHEET}/Midias_Sociais`,{cache:'no-store'});if(!r.ok)throw 0;d=await r.json();}
-   catch(e){try{const r=await fetch(API+'?sheet=Midias_Sociais&_='+Date.now());d=await r.json();}catch(_){d=[];}}
-   window.tzcMidiasAdminV82=(Array.isArray(d)?d:[]).map(norm).filter(x=>String(x.Ativo||'Sim').toLowerCase()!=='excluido');
+   try{const r=await TZC185.aguardar(fetch(`https://opensheet.elk.sh/${SHEET}/Midias_Sociais`,{cache:'no-store'}),tzcToken185);if(!r.ok)throw 0;d=await TZC185.aguardar(r.json(),tzcToken185);}
+   catch(e){if(!TZC185.ativa(tzcToken185))return;try{const r=await TZC185.aguardar(fetch(API+'?sheet=Midias_Sociais&_='+Date.now()),tzcToken185);d=await TZC185.aguardar(r.json(),tzcToken185);}catch(_){if(!TZC185.ativa(tzcToken185))return;d=[];}}
+   window.tzcMidiasAdminV82=(Array.isArray(d)?d:[]).map(norm).filter(x=>!['excluido','excluído','inativo'].includes(String(x.Status||'Ativo').toLowerCase())&&!['não','nao','excluido'].includes(String(x.Ativo||'Sim').toLowerCase()));
    renderMidiasTZC();
- };
+ 
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 
  window.renderMidiasTZC=function(){
    const alvo=document.getElementById('midiasTabelaV82');if(!alvo)return;
@@ -5813,7 +5916,7 @@ function filtrarEstudosTZC_V55(valor){
  };
 
  window.xOrdemMidiaTZCV83=function(id){const x=(window.tzcMidiasAdminV82||[]).find(a=>String(a.ID_Midia)===String(id));return x&&x.Ordem?x.Ordem:(window.tzcMidiasAdminV82||[]).reduce((m,a)=>Math.max(m,+a.Ordem||0),0)+1};
- window.salvarMidiaTZC=async function(id,edit){const dados={ID_Midia:id,Rede:document.getElementById('mRedeV82').value.trim(),Nome_Exibicao:document.getElementById('mNomeV82').value.trim(),URL:document.getElementById('mURLV82').value.trim(),Ativo:document.getElementById('mAtivoV82').value,Ordem:xOrdemMidiaTZCV83(id),Observacoes:document.getElementById('mObsV82').value.trim(),Status:'Ativo',Atualizado_Em:new Date().toISOString()};if(!dados.Rede||!dados.Nome_Exibicao){showToast?.('Informe Rede e Nome de Exibição.');return;}const payload={acao:edit?'atualizar':'inserir',nomeAba:'Midias_Sociais',id,idColuna:'ID_Midia',dados};fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});const i=window.tzcMidiasAdminV82.findIndex(a=>String(a.ID_Midia)===String(id));if(i>=0)window.tzcMidiasAdminV82[i]=dados;else window.tzcMidiasAdminV82.push(dados);fecharModalMidiasTZC();renderMidiasTZC();if(typeof showToast==='function')showToast(edit?'Mídia atualizada!':'Mídia cadastrada!');setTimeout(carregarMidiasTZC,1700)};
+ window.salvarMidiaTZC=async function(id,edit){const dados={ID_Midia:id,Rede:document.getElementById('mRedeV82').value.trim(),Nome_Exibicao:document.getElementById('mNomeV82').value.trim(),URL:document.getElementById('mURLV82').value.trim(),Ativo:document.getElementById('mAtivoV82').value,Ordem:xOrdemMidiaTZCV83(id),Observacoes:document.getElementById('mObsV82').value.trim(),Status:'Ativo',Atualizado_Em:new Date().toISOString()};if(!dados.Rede||!dados.Nome_Exibicao){showToast?.('Informe Rede e Nome de Exibição.');return;}const payload={acao:edit?'atualizar':'inserir',nomeAba:'Midias_Sociais',id,idColuna:'ID_Midia',dados};await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});const i=window.tzcMidiasAdminV82.findIndex(a=>String(a.ID_Midia)===String(id));if(i>=0)window.tzcMidiasAdminV82[i]=dados;else window.tzcMidiasAdminV82.push(dados);fecharModalMidiasTZC();renderMidiasTZC();if(typeof showToast==='function')showToast(edit?'Mídia atualizada!':'Mídia cadastrada!');setTimeout(carregarMidiasTZC,1700)};
 
  window.excluirMidiaTZC=async function(id){
    const x=(window.tzcMidiasAdminV82||[]).find(a=>String(a.ID_Midia)===String(id));if(!x)return;
@@ -5832,7 +5935,7 @@ function filtrarEstudosTZC_V55(valor){
      document.body.appendChild(overlay);let fim=false;const finalizar=v=>{if(fim)return;fim=true;document.removeEventListener('keydown',onKey);overlay.remove();resolve(v)};const onKey=e=>{if(e.key==='Escape')finalizar(false)};overlay.querySelector('[data-acao="cancelar"]').onclick=()=>finalizar(false);overlay.querySelector('[data-acao="excluir"]').onclick=()=>finalizar(true);overlay.onclick=e=>{if(e.target===overlay)finalizar(false)};document.addEventListener('keydown',onKey);
    });
  };
- window.confirmarExcluirMidiaTZC=async function(id){fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'excluir',nomeAba:'Midias_Sociais',id,idColuna:'ID_Midia'})});window.tzcMidiasAdminV82=window.tzcMidiasAdminV82.filter(a=>String(a.ID_Midia)!==String(id));fecharModalMidiasTZC();renderMidiasTZC();if(typeof showToast==='function')showToast('Mídia excluída!')};
+ window.confirmarExcluirMidiaTZC=async function(id){await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'excluir',nomeAba:'Midias_Sociais',id,idColuna:'ID_Midia'})});window.tzcMidiasAdminV82=window.tzcMidiasAdminV82.filter(a=>String(a.ID_Midia)!==String(id));fecharModalMidiasTZC();renderMidiasTZC();if(typeof showToast==='function')showToast('Mídia excluída!')};
 })();
 </script>
 
@@ -5872,16 +5975,24 @@ function filtrarEstudosTZC_V55(valor){
  window.fecharModalArtesTZC=()=>document.getElementById('artesOverlayV85')?.remove();
  function modal(html,extra=''){fecharModalArtesTZC();document.body.insertAdjacentHTML('beforeend',`<div id="artesOverlayV85" class="artes-overlay-v85"><div class="artes-modal-v85 ${extra}">${html}</div></div>`)}
  window.abrirArtesPdfTZC=async function(){
+ const tzcToken185=TZC185.token();try {
+
    const b=document.getElementById('searchContainerWrapper');if(b)b.style.display='none';const t=document.getElementById('pageTitle');if(t)t.style.display='none';
    const c=document.getElementById('contentContainer');
    c.innerHTML=`<div><div class="tzc-page-head-v44"><button type="button" class="btn-toolbar tzc-page-back-v44" onclick="voltarGestaoInternaTZC_V1()"><i class="fa-solid fa-arrow-left"></i> Gestão Interna</button><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-palette"></i> Artes e PDFs <span id="artesCountV85" class="tzc-count-v47"></span></h2><p>Organize artes, PDFs, documentos e imagens.</p></div><button type="button" class="btn-toolbar btn-add-membro tzc-page-new-v44" onclick="editarArtePdfTZC()"><i class="fa-solid fa-plus"></i> Novo Material</button></div>
    <div class="tzc-busca-modulo-v55"><i class="fa-solid fa-magnifying-glass"></i><input id="artesBuscaV85" type="search" placeholder="Pesquisar materiais..." oninput="renderArtesPdfTZC()"></div><div id="artesTabelaV85"><div class="artes-empty-v85">Carregando materiais...</div></div></div>`;
-   await carregarArtesPdfTZC();
- };
+   await TZC185.aguardar(carregarArtesPdfTZC(),tzcToken185);
+ 
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
  window.carregarArtesPdfTZC=async function(){
-   let d=[];try{const r=await fetch(`https://opensheet.elk.sh/${SHEET}/Artes_PDFs`,{cache:'no-store'});if(!r.ok)throw 0;d=await r.json();}catch(e){try{const r=await fetch(API+'?sheet=Artes_PDFs&_='+Date.now());d=await r.json();}catch(_){d=[];}}
+ const tzcToken185=TZC185.token();try {
+
+   let d=[];try{const r=await TZC185.aguardar(fetch(`https://opensheet.elk.sh/${SHEET}/Artes_PDFs`,{cache:'no-store'}),tzcToken185);if(!r.ok)throw 0;d=await TZC185.aguardar(r.json(),tzcToken185);}catch(e){if(!TZC185.ativa(tzcToken185))return;try{const r=await TZC185.aguardar(fetch(API+'?sheet=Artes_PDFs&_='+Date.now()),tzcToken185);d=await TZC185.aguardar(r.json(),tzcToken185);}catch(_){if(!TZC185.ativa(tzcToken185))return;d=[];}}
    window.tzcArtesV85=(Array.isArray(d)?d:[]).map(norm).filter(x=>String(x.Status||'Ativo').toLowerCase()!=='excluido');renderArtesPdfTZC();
- };
+ 
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
  window.renderArtesPdfTZC=function(){
    const alvo=document.getElementById('artesTabelaV85');if(!alvo)return;const q=(document.getElementById('artesBuscaV85')?.value||'').toLocaleLowerCase('pt-BR').trim();
    const arr=window.tzcArtesV85.filter(x=>(x.Tipo+' '+x.Titulo+' '+x.Categoria+' '+x.Descricao).toLocaleLowerCase('pt-BR').includes(q));
@@ -5934,9 +6045,9 @@ function filtrarEstudosTZC_V55(valor){
   if(categoriaAtual && !categoriasBase.some(c=>c.toLowerCase()===categoriaAtual.toLowerCase())) categoriasBase.push(categoriaAtual);
   const opCategorias=['<option value="">Selecione uma categoria...</option>'].concat(categoriasBase.map(c=>`<option value="${esc(c)}" ${categoriaAtual===c?'selected':''}>${esc(c)}</option>`)).join('');
   modal(`<div class="artes-modal-head-v85"><h3>${edit?'<i class="fas fa-pen" aria-hidden="true"></i> Editar Material':'<i class="fas fa-folder-open" aria-hidden="true"></i> Novo Material'}</h3><button class="artes-x-v85" onclick="fecharModalArtesTZC()">×</button></div><div class="artes-grid-v85"><div class="artes-field-v85"><label>Tipo *</label><select id="aTipoV85"><option ${x.Tipo==='Arte'?'selected':''}>Arte</option><option ${x.Tipo==='PDF'?'selected':''}>PDF</option><option ${x.Tipo==='Documento'?'selected':''}>Documento</option><option ${x.Tipo==='Imagem'?'selected':''}>Imagem</option></select></div><div class="artes-field-v85"><label>Título *</label><input id="aTituloV85" value="${esc(x.Titulo)}" placeholder="Digite o título do material..."></div><div class="artes-field-v85"><label>Categoria</label><select id="aCategoriaV85">${opCategorias}</select></div><div class="artes-field-v85"><label>Acesso Público</label><select id="aAcessoV85"><option ${x.Acesso_Publico!=='Não'?'selected':''}>Sim</option><option ${x.Acesso_Publico==='Não'?'selected':''}>Não</option></select></div><div class="artes-field-v85 full"><label>Arquivo / Link</label><input id="aArquivoV85" value="${esc(x.Arquivo_URL)}" placeholder="Cole aqui o link do arquivo..."></div><div class="artes-field-v85 full"><label>Imagem / Capa (opcional)</label><input id="aCapaV85" value="${esc(x.Capa_URL)}" placeholder="Cole aqui o link da imagem ou capa..."><small style="color:#aaa;margin-top:4px">Para PDF, pode deixar vazio: o sistema tenta usar o próprio arquivo como prévia.</small></div><div class="artes-field-v85 full"><label>Descrição</label><textarea id="aDescricaoV85" rows="4" placeholder="Digite uma breve descrição do material...">${esc(x.Descricao)}</textarea></div></div><div class="artes-modal-foot-v85"><button class="btn-toolbar" onclick="fecharModalArtesTZC()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="salvarArtePdfTZC('${esc(x.ID_Material)}',${edit})"><i class="fa-solid fa-floppy-disk"></i> Salvar</button></div>`)};
- window.salvarArtePdfTZC=function(id,edit){const dados={ID_Material:id,Tipo:document.getElementById('aTipoV85').value,Titulo:document.getElementById('aTituloV85').value.trim(),Categoria:document.getElementById('aCategoriaV85').value.trim(),Descricao:document.getElementById('aDescricaoV85').value.trim(),Arquivo_URL:document.getElementById('aArquivoV85').value.trim(),Capa_URL:document.getElementById('aCapaV85').value.trim(),Acesso_Publico:document.getElementById('aAcessoV85').value,Status:'Ativo',Data_Atualizacao:new Date().toISOString()};if(!dados.Titulo){if(typeof showToast==='function')showToast('Informe o título.');return;}const old=window.tzcArtesV85.find(a=>String(a.ID_Material)===String(id));if(old?.Data_Criacao)dados.Data_Criacao=old.Data_Criacao;else dados.Data_Criacao=new Date().toISOString();fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:edit?'atualizar':'inserir',nomeAba:'Artes_PDFs',id,idColuna:'ID_Material',dados})});const i=window.tzcArtesV85.findIndex(a=>String(a.ID_Material)===String(id));if(i>=0)window.tzcArtesV85[i]=dados;else window.tzcArtesV85.push(dados);fecharModalArtesTZC();renderArtesPdfTZC();if(typeof showToast==='function')showToast(edit?'Material atualizado!':'Material cadastrado!');setTimeout(carregarArtesPdfTZC,1700)};
+ window.salvarArtePdfTZC=async function(id,edit){const dados={ID_Material:id,Tipo:document.getElementById('aTipoV85').value,Titulo:document.getElementById('aTituloV85').value.trim(),Categoria:document.getElementById('aCategoriaV85').value.trim(),Descricao:document.getElementById('aDescricaoV85').value.trim(),Arquivo_URL:document.getElementById('aArquivoV85').value.trim(),Capa_URL:document.getElementById('aCapaV85').value.trim(),Acesso_Publico:document.getElementById('aAcessoV85').value,Status:'Ativo',Data_Atualizacao:new Date().toISOString()};if(!dados.Titulo){if(typeof showToast==='function')showToast('Informe o título.');return;}const old=window.tzcArtesV85.find(a=>String(a.ID_Material)===String(id));if(old?.Data_Criacao)dados.Data_Criacao=old.Data_Criacao;else dados.Data_Criacao=new Date().toISOString();await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:edit?'atualizar':'inserir',nomeAba:'Artes_PDFs',id,idColuna:'ID_Material',dados})});const i=window.tzcArtesV85.findIndex(a=>String(a.ID_Material)===String(id));if(i>=0)window.tzcArtesV85[i]=dados;else window.tzcArtesV85.push(dados);fecharModalArtesTZC();renderArtesPdfTZC();if(typeof showToast==='function')showToast(edit?'Material atualizado!':'Material cadastrado!');setTimeout(carregarArtesPdfTZC,1700)};
  window.excluirArtePdfTZC=function(id){const x=window.tzcArtesV85.find(a=>String(a.ID_Material)===String(id));if(!x)return;fecharModalArtesTZC();document.body.insertAdjacentHTML('beforeend',`<div id="artesOverlayV85" class="artes-overlay-v85" style="background:rgba(0,0,0,.68)"><div style="width:min(420px,94vw);background:#111;border:1px solid var(--gold-primary);border-radius:14px;padding:20px;box-shadow:0 20px 60px #000"><div style="display:flex;gap:13px;align-items:flex-start"><div style="width:36px;height:36px;min-width:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#351014;color:#ff6b72;font-size:.95rem"><i class="fa-solid fa-trash"></i></div><div style="flex:1"><h3 style="color:#fff;font-size:18px;margin:2px 0 7px">Excluir material?</h3><p style="color:#bbb;margin:0;line-height:1.45">Deseja realmente excluir “${esc(x.Titulo)}”?</p></div></div><div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #303030;margin-top:16px;padding-top:12px"><button class="btn-toolbar" onclick="fecharModalArtesTZC()">Cancelar</button><button class="btn-toolbar" style="background:#8f1f28;border-color:#b52b35;color:#fff" onclick="confirmarExcluirArtePdfTZC('${esc(id)}')"><i class="fa-solid fa-trash"></i> Excluir</button></div></div></div>`)};
- window.confirmarExcluirArtePdfTZC=function(id){fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'excluir',nomeAba:'Artes_PDFs',id,idColuna:'ID_Material'})});window.tzcArtesV85=window.tzcArtesV85.filter(a=>String(a.ID_Material)!==String(id));fecharModalArtesTZC();renderArtesPdfTZC();if(typeof showToast==='function')showToast('Material excluído!')};
+ window.confirmarExcluirArtePdfTZC=async function(id){await fetch(API,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'excluir',nomeAba:'Artes_PDFs',id,idColuna:'ID_Material'})});window.tzcArtesV85=window.tzcArtesV85.filter(a=>String(a.ID_Material)!==String(id));fecharModalArtesTZC();renderArtesPdfTZC();if(typeof showToast==='function')showToast('Material excluído!')};
 })();
 </script>
 
@@ -6010,7 +6121,7 @@ function filtrarEstudosTZC_V55(valor){
   function escU(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
   function formatarDataHoraTZCV100(v){
     if(!v) return '—';
-    const d = new Date(v);
+    const d = TZC185.data(v);
     if(Number.isNaN(d.getTime())) return escU(v);
     return new Intl.DateTimeFormat('pt-BR',{
       day:'2-digit',month:'2-digit',year:'numeric',
@@ -6028,6 +6139,8 @@ function filtrarEstudosTZC_V55(valor){
   window.fecharModalUsuarioTZC=fecharModalU;
 
   window.abrirUsuariosPermissoesTZC = async function(){
+ const tzcToken185=TZC185.token();try {
+
     if(!podeGerenciarU()){
       if(typeof showToast==='function') showToast('Acesso restrito a Dirigente ou Administrador.');
       return;
@@ -6052,19 +6165,25 @@ function filtrarEstudosTZC_V55(valor){
         </table>
       </div>
     </div>`;
-    await carregarUsuariosPermissoesTZC();
-  };
+    await TZC185.aguardar(carregarUsuariosPermissoesTZC(),tzcToken185);
+  
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 
   window.carregarUsuariosPermissoesTZC = async function(){
+ const tzcToken185=TZC185.token();try {
+
     try{
-      const r=await fetch(APIU+'?sheet=Usuarios_Acesso&_='+Date.now());
-      const d=await r.json();
+      const r=await TZC185.aguardar(fetch(APIU+'?sheet=Usuarios_Acesso&_='+Date.now()),tzcToken185);
+      const d=await TZC185.aguardar(r.json(),tzcToken185);
       window.tzcUsuariosV99=Array.isArray(d)?d:[];
       renderUsuariosPermissoesTZC();
-    }catch(e){
+    }catch(e){if(!TZC185.ativa(tzcToken185))return;
       if(typeof showToast==='function')showToast('Não foi possível carregar os usuários.');
     }
-  };
+  
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 
   window.renderUsuariosPermissoesTZC = function(){
     const body=document.getElementById('usuariosBodyV99'); if(!body)return;
@@ -6373,10 +6492,10 @@ function filtrarEstudosTZC_V55(valor){
 
  function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
  function idNovo(){return 'PUB_'+Date.now();}
- function dataBR(v){if(!v)return''; try{return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo'}).format(new Date(v));}catch(e){return String(v)}}
+ function dataBR(v){if(!v)return''; try{return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo'}).format(TZC185.data(v));}catch(e){return String(v)}}
  function ativo(r){return String(r.Status||'Ativo').toLowerCase()!=='excluido' && String(r.Acesso_Publico||'Sim').toLowerCase()!=='não';}
  async function carregar(){const r=await fetch(`${API}?sheet=${encodeURIComponent(SHEET)}&t=${Date.now()}`,{cache:'no-store'}); const j=await r.json(); lista=Array.isArray(j)?j:[]; return lista;}
- function atual(tipo){return lista.filter(r=>ativo(r)&&r.Tipo===tipo).sort((a,b)=>new Date(b.Data_Publicacao||b.Data_Criacao||0)-new Date(a.Data_Publicacao||a.Data_Criacao||0))[0];}
+ function atual(tipo){return lista.filter(r=>ativo(r)&&r.Tipo===tipo).sort((a,b)=>TZC185.data(b.Data_Publicacao||b.Data_Criacao||0)-TZC185.data(a.Data_Publicacao||a.Data_Criacao||0))[0];}
  function preparar(){
    const g=document.getElementById('generalInfoSection');if(g)g.style.display='none';
    const s=document.getElementById('searchContainerWrapper');if(s)s.style.display='none';
@@ -6393,8 +6512,16 @@ function filtrarEstudosTZC_V55(valor){
    const aviso=r.Tipo==='Banho da Semana'?`<div class="aviso">Conteúdo de tradição e orientação espiritual da Tenda de Zé Cigano. Práticas espirituais não substituem cuidados médicos ou psicológicos quando necessários.</div>`:'';
    c.innerHTML=`<div class="tzc-publico-v103"><button class="btn-toolbar" onclick="switchTab('Home',document.querySelector('#navList .nav-item'))"><i class="fa-solid fa-arrow-left"></i> Início</button><article class="tzc-pub-leitura-v104" style="margin-top:12px"><div class="tipo">${esc(r.Tipo)}${r.Data_Publicacao?' · '+dataBR(r.Data_Publicacao):''}</div><h2>${esc(r.Titulo||tituloPadrao)}</h2>${r.Resumo?`<p style="color:#aaa;font-size:.82rem;line-height:1.6">${esc(r.Resumo)}</p>`:''}<div class="texto">${esc(r.Conteudo)}</div>${extras}${aviso}</article></div>`;
  }
- window.abrirMensagemDiaTZC_V103=async function(el){preparar();if(el){document.querySelectorAll('#navList .nav-item').forEach(x=>x.classList.remove('active'));el.classList.add('active')}document.getElementById('pageTitle').innerHTML='<i class="fa-solid fa-feather-pointed"></i> Mensagem do Dia';try{await carregar();leitura(atual('Mensagem do Dia'),'Mensagem do Dia')}catch(e){leitura(null,'Mensagem do Dia')}};
- window.abrirBanhoSemanaTZC_V104=async function(el){preparar();if(el){document.querySelectorAll('#navList .nav-item').forEach(x=>x.classList.remove('active'));el.classList.add('active')}document.getElementById('pageTitle').innerHTML='<i class="fa-solid fa-leaf"></i> Banho da Semana';try{await carregar();leitura(atual('Banho da Semana'),'Banho da Semana')}catch(e){leitura(null,'Banho da Semana')}};
+ window.abrirMensagemDiaTZC_V103=async function(el){
+ const tzcToken185=TZC185.token();try {
+preparar();if(el){document.querySelectorAll('#navList .nav-item').forEach(x=>x.classList.remove('active'));el.classList.add('active')}document.getElementById('pageTitle').innerHTML='<i class="fa-solid fa-feather-pointed"></i> Mensagem do Dia';try{await TZC185.aguardar(carregar(),tzcToken185);leitura(atual('Mensagem do Dia'),'Mensagem do Dia')}catch(e){if(!TZC185.ativa(tzcToken185))return;leitura(null,'Mensagem do Dia')}
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
+ window.abrirBanhoSemanaTZC_V104=async function(el){
+ const tzcToken185=TZC185.token();try {
+preparar();if(el){document.querySelectorAll('#navList .nav-item').forEach(x=>x.classList.remove('active'));el.classList.add('active')}document.getElementById('pageTitle').innerHTML='<i class="fa-solid fa-leaf"></i> Banho da Semana';try{await TZC185.aguardar(carregar(),tzcToken185);leitura(atual('Banho da Semana'),'Banho da Semana')}catch(e){if(!TZC185.ativa(tzcToken185))return;leitura(null,'Banho da Semana')}
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 
  const antiga=window.carregarGestaoInternaTZC_V1;
  window.carregarGestaoInternaTZC_V1=function(){
@@ -6406,11 +6533,15 @@ function filtrarEstudosTZC_V55(valor){
  };
 
  window.abrirPublicacoesTZC_V104=async function(){
+ const tzcToken185=TZC185.token();try {
+
    preparar(); document.getElementById('pageTitle').innerHTML='';
    const c=document.getElementById('contentContainer');
    c.innerHTML=`<div><div class="tzc-page-head-v44"><button class="btn-toolbar tzc-page-back-v44" onclick="voltarGestaoInternaTZC_V1()"><i class="fa-solid fa-arrow-left"></i> Gestão Interna</button><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-newspaper"></i> Publicações <span id="pubCountV104" class="tzc-count-v47"></span></h2><p>Gerencie conteúdos periódicos da Tenda.</p></div><button class="btn-toolbar tzc-page-new-v44 tzc-btn-gold-v105" onclick="novaPublicacaoTZC_V104()"><i class="fa-solid fa-plus"></i> Nova Publicação</button></div><div class="tzc-pub-toolbar-v104"><div class="tzc-search-wrap-v104"><i class="fa-solid fa-magnifying-glass"></i><input id="pubBuscaV104" placeholder="Pesquisar publicações..." oninput="renderPublicacoesTZC_V104()"></div></div><div style="overflow:auto"><table class="tzc-pub-table-v104"><thead><tr><th>Tipo</th><th>Título</th><th>Data</th><th>Acesso</th><th>Ações</th></tr></thead><tbody id="pubBodyV104"></tbody></table></div></div>`;
-   try{await carregar();renderPublicacoesTZC_V104()}catch(e){document.getElementById('pubBodyV104').innerHTML='<tr><td colspan="5">Não foi possível carregar as publicações.</td></tr>'}
- };
+   try{await TZC185.aguardar(carregar(),tzcToken185);renderPublicacoesTZC_V104()}catch(e){if(!TZC185.ativa(tzcToken185))return;document.getElementById('pubBodyV104').innerHTML='<tr><td colspan="5">Não foi possível carregar as publicações.</td></tr>'}
+ 
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
  window.renderPublicacoesTZC_V104=function(){
    const q=(document.getElementById('pubBuscaV104')?.value||'').toLowerCase();
    const arr=lista.filter(r=>String(r.Status||'Ativo').toLowerCase()!=='excluido').filter(r=>(r.Tipo+' '+r.Titulo+' '+r.Resumo).toLowerCase().includes(q));
@@ -6436,18 +6567,22 @@ function filtrarEstudosTZC_V55(valor){
    <div class="tzc-pub-field-v104"><label>Autor</label><input id="pAutor" placeholder="Digite o nome do autor..."></div>
    <div class="tzc-pub-actions-v104"><button class="btn-toolbar" onclick="document.getElementById('pubModalV104').remove()">Fechar</button><button class="btn-toolbar" onclick="salvarPublicacaoTZC_V104()"><i class="fa-solid fa-floppy-disk"></i> Salvar</button></div></div></div>`;
    document.body.appendChild(d);
-   pTipo.value=r.Tipo||'Mensagem do Dia';pTitulo.value=r.Titulo||'';pResumo.value=r.Resumo||'';pConteudo.value=r.Conteudo||'';pIngredientes.value=r.Ingredientes||'';pPreparo.value=r.Modo_Preparo||'';pOrientacoes.value=r.Orientacoes||'';pAcesso.value=r.Acesso_Publico||'Sim';pAutor.value=r.Autor||'';
-   if(r.Data_Publicacao){try{pData.value=new Date(r.Data_Publicacao).toISOString().slice(0,10)}catch(e){}} else pData.value=new Date().toISOString().slice(0,10);
+   document.getElementById('pTipo').value=r.Tipo||'Mensagem do Dia';document.getElementById('pTitulo').value=r.Titulo||'';document.getElementById('pResumo').value=r.Resumo||'';document.getElementById('pConteudo').value=r.Conteudo||'';document.getElementById('pIngredientes').value=r.Ingredientes||'';document.getElementById('pPreparo').value=r.Modo_Preparo||'';document.getElementById('pOrientacoes').value=r.Orientacoes||'';document.getElementById('pAcesso').value=r.Acesso_Publico||'Sim';document.getElementById('pAutor').value=r.Autor||'';
+   if(r.Data_Publicacao){try{document.getElementById('pData').value=TZC185.data(r.Data_Publicacao).toISOString().slice(0,10)}catch(e){}} else document.getElementById('pData').value=new Date().toISOString().slice(0,10);
    setTimeout(()=>window.ajustarCamposPublicacaoTZC_V106?.(),0);
  }
  window.salvarPublicacaoTZC_V104=async function(){
-   if(!pTitulo.value.trim()||!pConteudo.value.trim()){alert('Informe o título e o conteúdo.');return}
+ const tzcToken185=TZC185.token();try {
+
+   if(!document.getElementById('pTitulo').value.trim()||!document.getElementById('pConteudo').value.trim()){alert('Informe o título e o conteúdo.');return}
    const id=editando?.ID_Publicacao||idNovo();
-   const dados={ID_Publicacao:id,Tipo:pTipo.value,Titulo:pTitulo.value.trim(),Resumo:pResumo.value.trim(),Conteudo:pConteudo.value.trim(),Ingredientes:pIngredientes.value.trim(),Modo_Preparo:pPreparo.value.trim(),Orientacoes:pOrientacoes.value.trim(),Data_Publicacao:pData.value,Destaque:'Sim',Acesso_Publico:pAcesso.value,Autor:pAutor.value.trim(),Status:'Ativo'};
+   const dados={ID_Publicacao:id,Tipo:document.getElementById('pTipo').value,Titulo:document.getElementById('pTitulo').value.trim(),Resumo:document.getElementById('pResumo').value.trim(),Conteudo:document.getElementById('pConteudo').value.trim(),Ingredientes:document.getElementById('pIngredientes').value.trim(),Modo_Preparo:document.getElementById('pPreparo').value.trim(),Orientacoes:document.getElementById('pOrientacoes').value.trim(),Data_Publicacao:document.getElementById('pData').value,Destaque:'Sim',Acesso_Publico:document.getElementById('pAcesso').value,Autor:document.getElementById('pAutor').value.trim(),Status:'Ativo'};
    const payload={acao:editando?'editar':'inserir',nomeAba:SHEET,id,idColuna:'ID_Publicacao',dados};
-   const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}); const j=await r.json().catch(()=>({status:'sucesso'})); if(j.status==='erro'){alert(j.mensagem||'Erro ao salvar.');return}
-   document.getElementById('pubModalV104')?.remove();editando=null;await carregar();renderPublicacoesTZC_V104();
- };
+   const r=await TZC185.aguardar(fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}),tzcToken185); const j=await TZC185.aguardar(r.json().catch(()=>({status:'sucesso'})),tzcToken185); if(j.status==='erro'){alert(j.mensagem||'Erro ao salvar.');return}
+   document.getElementById('pubModalV104')?.remove();editando=null;await TZC185.aguardar(carregar(),tzcToken185);renderPublicacoesTZC_V104();return true;
+ 
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
  window.excluirPublicacaoTZC_V104=async function(id){
    const r=lista.find(x=>x.ID_Publicacao===id);if(!r)return;
    if(!confirm(`Deseja realmente excluir "${r.Titulo}"?`))return;
@@ -6538,7 +6673,7 @@ function filtrarEstudosTZC_V55(valor){
 <script id="tzc-v105-mensagem-dia-modal">
 (function(){
   function escV105(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-  function dataV105(v){if(!v)return'';try{return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo'}).format(new Date(v))}catch(e){return String(v)}}
+  function dataV105(v){if(!v)return'';try{return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo'}).format(TZC185.data(v))}catch(e){return String(v)}}
   function fecharV105(){document.getElementById('tzcMsgDiaV105')?.remove()}
   window.fecharMensagemDiaTZC_V105=fecharV105;
 
@@ -6551,13 +6686,15 @@ function filtrarEstudosTZC_V55(valor){
       return j.filter(x=>x.Tipo==='Mensagem do Dia' &&
         String(x.Status||'Ativo').toLowerCase()!=='excluido' &&
         String(x.Acesso_Publico||'Sim').toLowerCase()!=='não')
-        .sort((a,b)=>new Date(b.Data_Publicacao||b.Data_Criacao||0)-new Date(a.Data_Publicacao||a.Data_Criacao||0))[0]||null;
+        .sort((a,b)=>TZC185.data(b.Data_Publicacao||b.Data_Criacao||0)-TZC185.data(a.Data_Publicacao||a.Data_Criacao||0))[0]||null;
     }catch(e){return null}
   }
 
   window.mostrarMensagemDiaTZC_V105=async function(){
+ const tzcToken185=TZC185.token();try {
+
     fecharV105();
-    let m=await buscarMensagemV105();
+    let m=await TZC185.aguardar(buscarMensagemV105(),tzcToken185);
     if(!m){
       m={
         Titulo:'Bom dia, alma gentil. 🌹',
@@ -6575,7 +6712,9 @@ function filtrarEstudosTZC_V55(valor){
     </div>`;
     d.addEventListener('click',e=>{if(e.target===d)fecharV105()});
     document.body.appendChild(d);
-  };
+  
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 
   /* Menu Mensagem do Dia também abre o mesmo modal, sem trocar de página. */
   window.abrirMensagemDiaTZC_V103=function(){window.mostrarMensagemDiaTZC_V105()};
@@ -6699,7 +6838,7 @@ function filtrarEstudosTZC_V55(valor){
   let pub107=[];
 
   function esc107(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-  function data107(v){if(!v)return'';try{return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo'}).format(new Date(v))}catch(e){return String(v)}}
+  function data107(v){if(!v)return'';try{return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo'}).format(TZC185.data(v))}catch(e){return String(v)}}
   function fecharMenu107(){
     const sb=document.getElementById('sidebar');
     if(sb && sb.classList.contains('open') && typeof toggleSidebar==='function') toggleSidebar();
@@ -6722,7 +6861,7 @@ function filtrarEstudosTZC_V55(valor){
     return pub107.filter(r=>r.Tipo===tipo &&
       String(r.Status||'Ativo').toLowerCase()!=='excluido' &&
       String(r.Acesso_Publico||'Sim').toLowerCase()!=='não')
-      .sort((a,b)=>new Date(b.Data_Publicacao||b.Data_Criacao||0)-new Date(a.Data_Publicacao||a.Data_Criacao||0));
+      .sort((a,b)=>TZC185.data(b.Data_Publicacao||b.Data_Criacao||0)-TZC185.data(a.Data_Publicacao||a.Data_Criacao||0));
   }
   function pagina107(tipo,icone,intro,el){
     preparar107(el);
@@ -6738,7 +6877,7 @@ function filtrarEstudosTZC_V55(valor){
       
       <div id="pubPublicLista107" class="tzc-publicacoes-list-v107"><div class="tzc-publicacao-vazio-v107">Carregando...</div></div>
     </div>`;
-    carregar107().then(()=>window.renderPublicacoesPublicasTZC_V107(tipo)).catch(()=>{
+    const token107185=TZC185.token();carregar107().then(()=>{if(TZC185.ativa(token107185))window.renderPublicacoesPublicasTZC_V107(tipo)}).catch(()=>{if(!TZC185.ativa(token107185))return;
       document.getElementById('pubPublicLista107').innerHTML='<div class="tzc-publicacao-vazio-v107">Não foi possível carregar as publicações.</div>';
     });
   }
@@ -7149,6 +7288,7 @@ button.tzc-salvar-padrao-v109:hover{
 <script id="tzc-v110-home-destaque-e-cabecalhos">
 (function(){
   function aplicarDestaqueHomeV110(){
+    if(TZC185.rota()!=='Home')return;
     const t=document.getElementById('pageTitle');
     if(!t)return;
     t.style.display='flex';
@@ -7925,13 +8065,21 @@ html body .gestao-interna-home .card.tzc-card-retorno-v121 {
    if(p)return `${p.y}-${p.mo}-${p.d}T${p.h}:${p.mi}`;
    return '';
  };
- async function carregarE(){const r=await fetch(`${APIE}?sheet=${SHE}&t=${Date.now()}`,{cache:'no-store'});const j=await r.json();eventos=Array.isArray(j)?j:[];return eventos}
+ async function carregarE(){
+ const tzcToken185=TZC185.token();try {
+const r=await TZC185.aguardar(fetch(`${APIE}?sheet=${SHE}&t=${Date.now()}`,{cache:'no-store'}),tzcToken185);const j=await TZC185.aguardar(r.json(),tzcToken185);eventos=Array.isArray(j)?j:[];window.eventos=eventos;return eventos
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+}
  function fecharE(){document.getElementById('eventoModalV126')?.remove()}
  window.fecharEventoTZC_V126=fecharE;
  const antiga=window.carregarGestaoInternaTZC_V1;
  window.carregarGestaoInternaTZC_V1=function(){antiga();const grid=document.querySelector('.gestao-interna-home > div[style*="display:grid"]');if(grid&&!document.getElementById('cardEventosV126'))grid.insertAdjacentHTML('beforeend',`<button id="cardEventosV126" type="button" class="card" onclick="abrirEventosTZC_V126()" style="text-align:left;border:1px solid var(--border-color);cursor:pointer;background:linear-gradient(145deg,#171717,#0d0d0d);"><div style="padding:20px;"><i class="fa-solid fa-calendar-days" style="font-size:1.7rem;color:var(--gold-primary);margin-bottom:12px;"></i><h3 style="margin:0 0 6px;color:#fff!important;font-size:1rem;">Eventos e Giras</h3><p style="margin:0;color:var(--text-muted);font-size:.82rem;font-weight:400;">Cadastre giras, reuniões, festas e acompanhe confirmações.</p></div></button>`)};
- window.abrirEventosTZC_V126=async function(){try{sessionStorage.setItem('TZC_GESTAO_CARD_RETORNO_V121','abrirEventosTZC_V126()')}catch(e){};document.getElementById('pageTitle').innerHTML='';const c=document.getElementById('contentContainer');c.innerHTML=`<div><div class="tzc-page-head-v44"><div class="tzc-page-back-v44" style="display:flex;align-items:center;gap:6px;justify-self:start;"><button type="button" onclick="voltarInicioEventosV133()" style="background:transparent;border:1px solid var(--gold-primary);color:var(--gold-primary);border-radius:6px;padding:5px 9px;font-size:.72rem;font-weight:600;line-height:1.2;cursor:pointer;white-space:nowrap;"><i class="fa-solid fa-arrow-left" style="font-size:.68rem;"></i> Início</button><button type="button" class="btn-toolbar" onclick="voltarGestaoInternaTZC_V1()"><i class="fa-solid fa-arrow-left"></i> Gestão Interna</button></div><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-calendar-days"></i> Eventos e Giras <span id="eventoCountV126" class="tzc-count-v47"></span></h2><p>Organize eventos, giras, reuniões e confirmações de participação.</p></div><button class="btn-toolbar tzc-page-new-v44 btn-add-membro" onclick="novoEventoTZC_V126()"><i class="fa-solid fa-plus"></i> Novo Evento</button></div><div class="tzc-eventos-search-v126"><i class="fa-solid fa-magnifying-glass"></i><input id="eventoBuscaV126" placeholder="Pesquisar eventos..." oninput="renderEventosTZC_V126()"></div><div style="overflow:auto"><table class="tzc-eventos-table-v126"><thead><tr><th>Evento</th><th>Tipo</th><th>Data</th><th>Local</th><th>Acesso</th><th>Status</th><th>Ações</th></tr></thead><tbody id="eventoBodyV126"></tbody></table></div></div>`;try{await carregarE();renderEventosTZC_V126()}catch(e){document.getElementById('eventoBodyV126').innerHTML='<tr><td colspan="7">Não foi possível carregar os eventos.</td></tr>'}};
- window.renderEventosTZC_V126=function(){const q=(document.getElementById('eventoBuscaV126')?.value||'').toLowerCase();const agora=Date.now();const arr=eventos.filter(x=>String(x.Status||'Ativo').toLowerCase()!=='excluido').filter(x=>(`${x.Titulo||''} ${x.Tipo||''} ${x.Local||''} ${x.Status||''}`).toLowerCase().includes(q)).sort((a,b)=>{const da=new Date(a.Data_Inicio||0).getTime()||0,db=new Date(b.Data_Inicio||0).getTime()||0,af=da>=agora,bf=db>=agora;if(af&&bf)return da-db;if(af!==bf)return af?-1:1;return db-da});document.getElementById('eventoCountV126').textContent=`· ${arr.length} registros`;const b=document.getElementById('eventoBodyV126');b.innerHTML=arr.map(x=>`<tr><td><strong style="color:#fff">${escE(x.Titulo)}</strong></td><td>${escE(x.Tipo||'—')}</td><td>${dataE(x.Data_Inicio)}</td><td>${escE(x.Local||'—')}</td><td><span class="tzc-status-cinza-v90">${escE(x.Acesso_Publico||'Sim')}</span></td><td><span class="tzc-status-evento-v126">${escE(x.Status||'Ativo')}</span></td><td><button class="btn-icon-only" title="Visualizar" onclick="visualizarEventoTZC_V126('${escE(x.ID_Evento)}')"><i class="fa-solid fa-eye"></i></button><button class="btn-icon-only" title="Editar" onclick="editarEventoTZC_V126('${escE(x.ID_Evento)}')"><i class="fa-solid fa-pen"></i></button><button class="btn-icon-only" title="Excluir" onclick="excluirEventoTZC_V126('${escE(x.ID_Evento)}')"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:#aaa">Nenhum evento encontrado.</td></tr>'};
+ window.abrirEventosTZC_V126=async function(){
+ const tzcToken185=TZC185.token();try {
+try{sessionStorage.setItem('TZC_GESTAO_CARD_RETORNO_V121','abrirEventosTZC_V126()')}catch(e){if(!TZC185.ativa(tzcToken185))return;};document.getElementById('pageTitle').innerHTML='';const c=document.getElementById('contentContainer');c.innerHTML=`<div><div class="tzc-page-head-v44"><div class="tzc-page-back-v44" style="display:flex;align-items:center;gap:6px;justify-self:start;"><button type="button" onclick="voltarInicioEventosV133()" style="background:transparent;border:1px solid var(--gold-primary);color:var(--gold-primary);border-radius:6px;padding:5px 9px;font-size:.72rem;font-weight:600;line-height:1.2;cursor:pointer;white-space:nowrap;"><i class="fa-solid fa-arrow-left" style="font-size:.68rem;"></i> Início</button><button type="button" class="btn-toolbar" onclick="voltarGestaoInternaTZC_V1()"><i class="fa-solid fa-arrow-left"></i> Gestão Interna</button></div><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-calendar-days"></i> Eventos e Giras <span id="eventoCountV126" class="tzc-count-v47"></span></h2><p>Organize eventos, giras, reuniões e confirmações de participação.</p></div><button class="btn-toolbar tzc-page-new-v44 btn-add-membro" onclick="novoEventoTZC_V126()"><i class="fa-solid fa-plus"></i> Novo Evento</button></div><div class="tzc-eventos-search-v126"><i class="fa-solid fa-magnifying-glass"></i><input id="eventoBuscaV126" placeholder="Pesquisar eventos..." oninput="renderEventosTZC_V126()"></div><div style="overflow:auto"><table class="tzc-eventos-table-v126"><thead><tr><th>Evento</th><th>Tipo</th><th>Data</th><th>Local</th><th>Acesso</th><th>Status</th><th>Ações</th></tr></thead><tbody id="eventoBodyV126"></tbody></table></div></div>`;try{await TZC185.aguardar(carregarE(),tzcToken185);renderEventosTZC_V126()}catch(e){if(!TZC185.ativa(tzcToken185))return;document.getElementById('eventoBodyV126').innerHTML='<tr><td colspan="7">Não foi possível carregar os eventos.</td></tr>'}
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
+ window.renderEventosTZC_V126=function(){const q=(document.getElementById('eventoBuscaV126')?.value||'').toLowerCase();const agora=Date.now();const arr=eventos.filter(x=>String(x.Status||'Ativo').toLowerCase()!=='excluido').filter(x=>(`${x.Titulo||''} ${x.Tipo||''} ${x.Local||''} ${x.Status||''}`).toLowerCase().includes(q)).sort((a,b)=>{const da=TZC185.data(a.Data_Inicio||0).getTime()||0,db=TZC185.data(b.Data_Inicio||0).getTime()||0,af=da>=agora,bf=db>=agora;if(af&&bf)return da-db;if(af!==bf)return af?-1:1;return db-da});document.getElementById('eventoCountV126').textContent=`· ${arr.length} registros`;const b=document.getElementById('eventoBodyV126');b.innerHTML=arr.map(x=>`<tr><td><strong style="color:#fff">${escE(x.Titulo)}</strong></td><td>${escE(x.Tipo||'—')}</td><td>${dataE(x.Data_Inicio)}</td><td>${escE(x.Local||'—')}</td><td><span class="tzc-status-cinza-v90">${escE(x.Acesso_Publico||'Sim')}</span></td><td><span class="tzc-status-evento-v126">${escE(x.Status||'Ativo')}</span></td><td><button class="btn-icon-only" title="Visualizar" onclick="visualizarEventoTZC_V126('${escE(x.ID_Evento)}')"><i class="fa-solid fa-eye"></i></button><button class="btn-icon-only" title="Editar" onclick="editarEventoTZC_V126('${escE(x.ID_Evento)}')"><i class="fa-solid fa-pen"></i></button><button class="btn-icon-only" title="Excluir" onclick="excluirEventoTZC_V126('${escE(x.ID_Evento)}')"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:#aaa">Nenhum evento encontrado.</td></tr>'};
  window.novoEventoTZC_V126=function(){editando=null;formE({Tipo:'Gira',Confirmacao_Obrigatoria:'Sim',Status:'Ativo'})};window.editarEventoTZC_V126=function(id){editando=eventos.find(x=>String(x.ID_Evento)===String(id));if(editando)formE(editando)};
  function formE(x){
    const d=document.createElement('div');d.className='tzc-evento-overlay-v126';d.id='eventoModalV126';
@@ -7957,30 +8105,34 @@ html body .gestao-interna-home .card.tzc-card-retorno-v121 {
    document.body.appendChild(d);
    const inicio=inputDataE(x.Data_Inicio||'');
    const limite=inputDataE(x.Data_Limite_Confirmacao||'');
-   evTitulo.value=x.Titulo||'';evTipo.value=x.Tipo||'Gira';evStatus.value=x.Status||'Ativo';
-   evDataV130.value=inicio?inicio.slice(0,10):'';evHoraV130.value=inicio?inicio.slice(11,16):'';
-   evLocal.value=x.Local||'';evDescricao.value=x.Descricao||'';evLimite.value=x.Limite_Participantes||'';
-   evConf.value=x.Confirmacao_Obrigatoria||'Sim';evPublico.value=x.Acesso_Publico||'Sim';
-   evLimiteDataV130.value=limite?limite.slice(0,10):'';evLimiteHoraV130.value=limite?limite.slice(11,16):'';
-   evMotivo.value=x.Motivo_Cancelamento||'';evObs.value=x.Observacoes||'';
-   const atualizaMotivo=()=>{document.getElementById('evMotivoWrapV130').style.display=evStatus.value==='Cancelado'?'flex':'none'};
-   evStatus.addEventListener('change',atualizaMotivo);atualizaMotivo();
+   document.getElementById('evTitulo').value=x.Titulo||'';document.getElementById('evTipo').value=x.Tipo||'Gira';document.getElementById('evStatus').value=x.Status||'Ativo';
+   document.getElementById('evDataV130').value=inicio?inicio.slice(0,10):'';document.getElementById('evHoraV130').value=inicio?inicio.slice(11,16):'';
+   document.getElementById('evLocal').value=x.Local||'';document.getElementById('evDescricao').value=x.Descricao||'';document.getElementById('evLimite').value=x.Limite_Participantes||'';
+   document.getElementById('evConf').value=x.Confirmacao_Obrigatoria||'Sim';document.getElementById('evPublico').value=x.Acesso_Publico||'Sim';
+   document.getElementById('evLimiteDataV130').value=limite?limite.slice(0,10):'';document.getElementById('evLimiteHoraV130').value=limite?limite.slice(11,16):'';
+   document.getElementById('evMotivo').value=x.Motivo_Cancelamento||'';document.getElementById('evObs').value=x.Observacoes||'';
+   const atualizaMotivo=()=>{document.getElementById('evMotivoWrapV130').style.display=document.getElementById('evStatus').value==='Cancelado'?'flex':'none'};
+   document.getElementById('evStatus').addEventListener('change',atualizaMotivo);atualizaMotivo();
  }
  window.salvarEventoTZC_V126=async function(){
-   if(!evTitulo.value.trim()||!evDataV130.value||!evHoraV130.value){alert('Informe o título, a data e a hora do evento.');return}
+ const tzcToken185=TZC185.token();try {
+
+   if(!document.getElementById('evTitulo').value.trim()||!document.getElementById('evDataV130').value||!document.getElementById('evHoraV130').value){alert('Informe o título, a data e a hora do evento.');return}
    const id=editando?.ID_Evento||idE();const usuario=(window.loggedUser||{});
-   const inicio=`${evDataV130.value}T${evHoraV130.value}`;
-   const limite=(evLimiteDataV130.value?(evLimiteDataV130.value+'T'+(evLimiteHoraV130.value||'23:59')):'');
-   const dados={ID_Evento:id,Titulo:evTitulo.value.trim(),Tipo:evTipo.value,Data_Inicio:inicio,Data_Fim:'',Local:evLocal.value.trim(),Descricao:evDescricao.value.trim(),Limite_Participantes:evLimite.value,Confirmacao_Obrigatoria:evConf.value,Acesso_Publico:evPublico.value,Data_Limite_Confirmacao:limite,Status:evStatus.value,Motivo_Cancelamento:evStatus.value==='Cancelado'?evMotivo.value.trim():'',Observacoes:evObs.value.trim(),Atualizado_Por:usuario.email||usuario.nome||'',Atualizado_Em:new Date().toISOString()};
+   const inicio=`${document.getElementById('evDataV130').value}T${document.getElementById('evHoraV130').value}`;
+   const limite=(document.getElementById('evLimiteDataV130').value?(document.getElementById('evLimiteDataV130').value+'T'+(document.getElementById('evLimiteHoraV130').value||'23:59')):'');
+   const dados={ID_Evento:id,Titulo:document.getElementById('evTitulo').value.trim(),Tipo:document.getElementById('evTipo').value,Data_Inicio:inicio,Data_Fim:'',Local:document.getElementById('evLocal').value.trim(),Descricao:document.getElementById('evDescricao').value.trim(),Limite_Participantes:document.getElementById('evLimite').value,Confirmacao_Obrigatoria:document.getElementById('evConf').value,Acesso_Publico:document.getElementById('evPublico').value,Data_Limite_Confirmacao:limite,Status:document.getElementById('evStatus').value,Motivo_Cancelamento:document.getElementById('evStatus').value==='Cancelado'?document.getElementById('evMotivo').value.trim():'',Observacoes:document.getElementById('evObs').value.trim(),Atualizado_Por:usuario.email||usuario.nome||'',Atualizado_Em:new Date().toISOString()};
    if(!editando){dados.Criado_Por=usuario.email||usuario.nome||'';dados.Criado_Em=new Date().toISOString()}
    const payload={acao:editando?'atualizar':'inserir',nomeAba:SHE,id,idColuna:'ID_Evento',dados};
-   const r=await fetch(APIE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
-   const j=await r.json().catch(()=>({status:'sucesso'}));if(j.status==='erro'){alert(j.mensagem||'Erro ao salvar evento.');return}
+   const r=await TZC185.aguardar(fetch(APIE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}),tzcToken185);
+   const j=await TZC185.aguardar(r.json().catch(()=>({status:'sucesso'})),tzcToken185);if(j.status==='erro'){alert(j.mensagem||'Erro ao salvar evento.');return}
    /* V169: o banco já confirmou o salvamento. Fecha o aviso AGORA;
       a atualização da lista pode continuar depois sem prender o usuário. */
    if(typeof fecharSalvandoTZCV134==='function') fecharSalvandoTZCV134();
-   fecharE();await carregarE();renderEventosTZC_V126();showToast?.(editando?'Evento atualizado!':'Evento cadastrado!');
- };
+   fecharE();await TZC185.aguardar(carregarE(),tzcToken185);renderEventosTZC_V126();showToast?.(editando?'Evento atualizado!':'Evento cadastrado!');
+ 
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
  window.visualizarEventoTZC_V126=function(id){const x=eventos.find(a=>String(a.ID_Evento)===String(id));if(!x)return;const d=document.createElement('div');d.className='tzc-evento-overlay-v126';d.id='eventoModalV126';d.innerHTML=`<div class="tzc-evento-box-v126"><div class="tzc-evento-head-v126"><h3><i class="fa-solid fa-calendar-days"></i> ${escE(x.Titulo)}</h3><button class="tzc-evento-x-v126" onclick="fecharEventoTZC_V126()"><i class="fa-solid fa-xmark"></i></button></div><div class="tzc-evento-view-v126"><div><strong>Tipo</strong><span>${escE(x.Tipo||'—')}</span></div><div><strong>Status</strong><span>${escE(x.Status||'Ativo')}</span></div><div><strong>Data / hora</strong><span>${dataE(x.Data_Inicio)}</span></div><div><strong>Acesso Público</strong><span>${escE(x.Acesso_Publico||'Sim')}</span></div><div class="full"><strong>Local</strong><span>${escE(x.Local||'—')}</span></div><div class="full"><strong>Descrição</strong><span>${escE(x.Descricao||'—')}</span></div><div><strong>Confirmação obrigatória</strong><span>${escE(x.Confirmacao_Obrigatoria||'—')}</span></div><div><strong>Limite de participantes</strong><span>${escE(x.Limite_Participantes||'—')}</span></div><div class="full"><strong>Observações</strong><span>${escE(x.Observacoes||'—')}</span></div></div><div style="display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #333;padding-top:12px;margin-top:12px"><button class="btn-toolbar" onclick="fecharEventoTZC_V126()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="fecharEventoTZC_V126();editarEventoTZC_V126('${escE(x.ID_Evento)}')"><i class="fa-solid fa-pen"></i> Editar</button></div></div>`;document.body.appendChild(d)};
  window.excluirEventoTZC_V126=function(id){const x=eventos.find(a=>String(a.ID_Evento)===String(id));if(!x)return;if(!confirm(`Deseja realmente excluir "${x.Titulo}"?`))return;fetch(APIE,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'excluir',nomeAba:SHE,id,idColuna:'ID_Evento'})}).then(()=>{eventos=eventos.filter(a=>String(a.ID_Evento)!==String(id));renderEventosTZC_V126();showToast?.('Evento excluído!')})};
 })();
@@ -8019,11 +8171,15 @@ html body .gestao-interna-home .card.tzc-card-retorno-v121 {
  /* acrescenta ação Confirmações/Presenças sem mexer no CRUD já aprovado */
  const renderAnt=window.renderEventosTZC_V126;
  window.renderEventosTZC_V126=function(){renderAnt();document.querySelectorAll('#eventoBodyV126 tr').forEach(tr=>{const edit=tr.querySelector('button[title="Editar"]');if(!edit||tr.querySelector('.tzc-pres-btn-v127'))return;const m=edit.getAttribute('onclick')?.match(/'([^']+)'/);if(!m)return;edit.insertAdjacentHTML('beforebegin',`<button class="btn-icon-only tzc-pres-btn-v127" title="Confirmações e Presenças" onclick="abrirPresencasTZCV127('${esc(m[1])}')"><i class="fa-solid fa-user-check"></i></button>`)})};
- window.abrirPresencasTZCV127=async function(idEvento){eventoAtualV127=(window.eventos||[]).find?.(x=>String(x.ID_Evento)===String(idEvento))||null;if(!eventoAtualV127){try{const es=await getSheet('Eventos');eventoAtualV127=es.find(x=>String(x.ID_Evento)===String(idEvento))}catch(e){}};const c=document.getElementById('contentContainer');c.innerHTML=`<div><div class="tzc-page-head-v44"><button class="btn-toolbar tzc-page-back-v44" onclick="abrirEventosTZC_V126()"><i class="fa-solid fa-arrow-left"></i> Eventos e Giras</button><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-user-check"></i> Confirmações e Presenças <span id="presCountV127" class="tzc-count-v47"></span></h2><p>${esc(eventoAtualV127?.Titulo||'Evento')} · acompanhe respostas e presença dos participantes.</p></div><button class="btn-toolbar tzc-page-new-v44 btn-add-membro" onclick="novaPresencaTZCV127()"><i class="fa-solid fa-plus"></i> Nova Confirmação</button></div><div class="tzc-pres-v127-search"><i class="fa-solid fa-magnifying-glass"></i><input id="presBuscaV127" placeholder="Pesquisar participante, resposta ou presença..." oninput="renderPresencasTZCV127()"></div><div style="overflow:auto"><table class="tzc-pres-v127-table"><thead><tr><th>Participante</th><th>Resposta</th><th>Presença</th><th>Data da resposta</th><th>Observações</th><th>Ações</th></tr></thead><tbody id="presBodyV127"><tr><td colspan="6">Carregando...</td></tr></tbody></table></div></div>`;try{[presencasV127,usuariosV127]=await Promise.all([getSheet('Presencas'),getSheet('Usuarios_Acesso')]);presencasV127=presencasV127.filter(x=>String(x.ID_Evento)===String(idEvento));renderPresencasTZCV127()}catch(e){document.getElementById('presBodyV127').innerHTML='<tr><td colspan="6">Não foi possível carregar confirmações e presenças.</td></tr>'}};
+ window.abrirPresencasTZCV127=async function(idEvento){
+ const tzcToken185=TZC185.token();try {
+eventoAtualV127=(window.eventos||[]).find?.(x=>String(x.ID_Evento)===String(idEvento))||null;if(!eventoAtualV127){try{const es=await TZC185.aguardar(getSheet('Eventos'),tzcToken185);eventoAtualV127=es.find(x=>String(x.ID_Evento)===String(idEvento))}catch(e){if(!TZC185.ativa(tzcToken185))return;}};const c=document.getElementById('contentContainer');c.innerHTML=`<div><div class="tzc-page-head-v44"><button class="btn-toolbar tzc-page-back-v44" onclick="abrirEventosTZC_V126()"><i class="fa-solid fa-arrow-left"></i> Eventos e Giras</button><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-user-check"></i> Confirmações e Presenças <span id="presCountV127" class="tzc-count-v47"></span></h2><p>${esc(eventoAtualV127?.Titulo||'Evento')} · acompanhe respostas e presença dos participantes.</p></div><button class="btn-toolbar tzc-page-new-v44 btn-add-membro" onclick="novaPresencaTZCV127()"><i class="fa-solid fa-plus"></i> Nova Confirmação</button></div><div class="tzc-pres-v127-search"><i class="fa-solid fa-magnifying-glass"></i><input id="presBuscaV127" placeholder="Pesquisar participante, resposta ou presença..." oninput="renderPresencasTZCV127()"></div><div style="overflow:auto"><table class="tzc-pres-v127-table"><thead><tr><th>Participante</th><th>Resposta</th><th>Presença</th><th>Data da resposta</th><th>Observações</th><th>Ações</th></tr></thead><tbody id="presBodyV127"><tr><td colspan="6">Carregando...</td></tr></tbody></table></div></div>`;try{[presencasV127,usuariosV127]=await TZC185.aguardar(Promise.all([getSheet('Presencas'),getSheet('Usuarios_Acesso')]),tzcToken185);presencasV127=presencasV127.filter(x=>String(x.ID_Evento)===String(idEvento));renderPresencasTZCV127()}catch(e){if(!TZC185.ativa(tzcToken185))return;document.getElementById('presBodyV127').innerHTML='<tr><td colspan="6">Não foi possível carregar confirmações e presenças.</td></tr>'}
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
  window.renderPresencasTZCV127=function(){const q=(document.getElementById('presBuscaV127')?.value||'').toLowerCase();const a=presencasV127.filter(x=>(`${nomeUsuario(x.ID_Usuario)} ${x.Resposta||''} ${x.Presenca||''} ${x.Observacoes||''}`).toLowerCase().includes(q));document.getElementById('presCountV127').textContent=`· ${a.length} registros`;document.getElementById('presBodyV127').innerHTML=a.map(x=>`<tr><td><strong style="color:#fff">${esc(nomeUsuario(x.ID_Usuario))}</strong></td><td><span class="tzc-pres-v127-badge">${esc(x.Resposta||'Pendente')}</span></td><td><span class="tzc-pres-v127-badge">${esc(x.Presenca||'Pendente')}</span></td><td>${esc(typeof window.formatarDataRespostaV172==='function'?window.formatarDataRespostaV172(x.Data_Resposta):((x.Data_Resposta||'').toString().replace('T',' ').slice(0,16)||'—'))}</td><td>${esc(x.Observacoes||'—')}</td><td><button class="btn-icon-only" title="Editar" onclick="editarPresencaTZCV127('${esc(x.ID_Presenca)}')"><i class="fa-solid fa-pen"></i></button><button class="btn-icon-only" title="Excluir" onclick="excluirPresencaTZCV127('${esc(x.ID_Presenca)}')"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:#aaa">Nenhuma confirmação registrada para este evento.</td></tr>'};
- function modalP(x={}){document.getElementById('presModalV127')?.remove();const d=document.createElement('div');d.className='tzc-pres-v127-overlay';d.id='presModalV127';const opts=usuariosV127.filter(u=>String(u.Status||'Ativo').toLowerCase()!=='inativo').slice().sort((a,b)=>String(a.Nome||a.Email||'').localeCompare(String(b.Nome||b.Email||''),'pt-BR',{sensitivity:'base'})).map(u=>`<option value="${esc(u.ID_Usuario)}">${esc(u.Nome||u.Email)}</option>`).join('');d.innerHTML=`<div class="tzc-pres-v127-box"><div class="tzc-pres-v127-head"><h3><i class="fa-solid fa-user-check"></i> ${presEditV127?'Editar':'Nova'} Confirmação</h3><button class="tzc-pres-v127-x" onclick="fecharPresencaTZCV127()"><i class="fa-solid fa-xmark"></i></button></div><div class="tzc-pres-v127-grid"><div class="tzc-pres-v127-field full"><label>Participante *</label><select id="prUsuario"><option value="">Selecione o participante</option>${opts}</select></div><div class="tzc-pres-v127-field"><label>Resposta</label><select id="prResposta"><option>Não</option><option>Pendente</option><option>Sim</option><option>Talvez</option></select></div><div class="tzc-pres-v127-field"><label>Presença</label><select id="prPresenca"><option>Ausente</option><option>Justificada</option><option>Pendente</option><option>Presente</option></select></div><div class="tzc-pres-v127-field full"><label>Observações</label><textarea id="prObs" rows="3" placeholder="Registre informações complementares..."></textarea></div><div class="tzc-pres-v127-actions"><button class="btn-toolbar" onclick="fecharPresencaTZCV127()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="salvarPresencaTZCV127()"><i class="fa-solid fa-floppy-disk"></i> Salvar</button></div></div></div>`;document.body.appendChild(d);prUsuario.value=x.ID_Usuario||'';prResposta.value=x.Resposta||'Pendente';prPresenca.value=x.Presenca||'Pendente';prObs.value=x.Observacoes||''}
+ function modalP(x={}){document.getElementById('presModalV127')?.remove();const d=document.createElement('div');d.className='tzc-pres-v127-overlay';d.id='presModalV127';const opts=usuariosV127.filter(u=>String(u.Status||'Ativo').toLowerCase()!=='inativo').slice().sort((a,b)=>String(a.Nome||a.Email||'').localeCompare(String(b.Nome||b.Email||''),'pt-BR',{sensitivity:'base'})).map(u=>`<option value="${esc(u.ID_Usuario)}">${esc(u.Nome||u.Email)}</option>`).join('');d.innerHTML=`<div class="tzc-pres-v127-box"><div class="tzc-pres-v127-head"><h3><i class="fa-solid fa-user-check"></i> ${presEditV127?'Editar':'Nova'} Confirmação</h3><button class="tzc-pres-v127-x" onclick="fecharPresencaTZCV127()"><i class="fa-solid fa-xmark"></i></button></div><div class="tzc-pres-v127-grid"><div class="tzc-pres-v127-field full"><label>Participante *</label><select id="prUsuario"><option value="">Selecione o participante</option>${opts}</select></div><div class="tzc-pres-v127-field"><label>Resposta</label><select id="prResposta"><option>Não</option><option>Pendente</option><option>Sim</option><option>Talvez</option></select></div><div class="tzc-pres-v127-field"><label>Presença</label><select id="prPresenca"><option>Ausente</option><option>Justificada</option><option>Pendente</option><option>Presente</option></select></div><div class="tzc-pres-v127-field full"><label>Observações</label><textarea id="prObs" rows="3" placeholder="Registre informações complementares..."></textarea></div><div class="tzc-pres-v127-actions"><button class="btn-toolbar" onclick="fecharPresencaTZCV127()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="salvarPresencaTZCV127()"><i class="fa-solid fa-floppy-disk"></i> Salvar</button></div></div></div>`;document.body.appendChild(d);document.getElementById('prUsuario').value=x.ID_Usuario||'';document.getElementById('prResposta').value=x.Resposta||'Pendente';document.getElementById('prPresenca').value=x.Presenca||'Pendente';document.getElementById('prObs').value=x.Observacoes||''}
  window.novaPresencaTZCV127=function(){presEditV127=null;modalP()};window.editarPresencaTZCV127=function(id){presEditV127=presencasV127.find(x=>String(x.ID_Presenca)===String(id));if(presEditV127)modalP(presEditV127)};window.fecharPresencaTZCV127=function(){document.getElementById('presModalV127')?.remove()};
- window.salvarPresencaTZCV127=async function(){if(!prUsuario.value){alert('Selecione o participante.');return}const duplicada=presencasV127.find(x=>String(x.ID_Usuario)===String(prUsuario.value)&&String(x.ID_Presenca)!==String(presEditV127?.ID_Presenca||''));if(duplicada){alert('Este participante já possui confirmação neste evento. Edite o registro existente.');return}const id=presEditV127?.ID_Presenca||idP();const now=new Date().toISOString();const dados={ID_Presenca:id,ID_Evento:eventoAtualV127.ID_Evento,ID_Usuario:prUsuario.value,Data_Resposta:now,Resposta:prResposta.value,Presenca:prPresenca.value,Observacoes:prObs.value.trim(),Atualizado_Em:now};if(!presEditV127)dados.Criado_Em=now;const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:presEditV127?'atualizar':'inserir',nomeAba:'Presencas',id,idColuna:'ID_Presenca',dados})});const j=await r.json().catch(()=>({status:'sucesso'}));if(j.status==='erro'){alert(j.mensagem||'Erro ao salvar.');return}fecharPresencaTZCV127();presencasV127=(await getSheet('Presencas')).filter(x=>String(x.ID_Evento)===String(eventoAtualV127.ID_Evento));renderPresencasTZCV127();showToast?.(presEditV127?'Confirmação atualizada!':'Confirmação registrada!')};
+ window.salvarPresencaTZCV127=async function(){if(!document.getElementById('prUsuario').value){alert('Selecione o participante.');return}const duplicada=presencasV127.find(x=>String(x.ID_Usuario)===String(document.getElementById('prUsuario').value)&&String(x.ID_Presenca)!==String(presEditV127?.ID_Presenca||''));if(duplicada){alert('Este participante já possui confirmação neste evento. Edite o registro existente.');return}const id=presEditV127?.ID_Presenca||idP();const now=new Date().toISOString();const dados={ID_Presenca:id,ID_Evento:eventoAtualV127.ID_Evento,ID_Usuario:document.getElementById('prUsuario').value,Data_Resposta:now,Resposta:document.getElementById('prResposta').value,Presenca:document.getElementById('prPresenca').value,Observacoes:document.getElementById('prObs').value.trim(),Atualizado_Em:now};if(!presEditV127)dados.Criado_Em=now;const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:presEditV127?'atualizar':'inserir',nomeAba:'Presencas',id,idColuna:'ID_Presenca',dados})});const j=await r.json().catch(()=>({status:'sucesso'}));if(j.status==='erro'){alert(j.mensagem||'Erro ao salvar.');return}fecharPresencaTZCV127();presencasV127=(await getSheet('Presencas')).filter(x=>String(x.ID_Evento)===String(eventoAtualV127.ID_Evento));renderPresencasTZCV127();showToast?.(presEditV127?'Confirmação atualizada!':'Confirmação registrada!')};
  window.excluirPresencaTZCV127=async function(id){const x=presencasV127.find(a=>String(a.ID_Presenca)===String(id));if(!x||!confirm(`Deseja realmente excluir a confirmação de "${nomeUsuario(x.ID_Usuario)}"?`))return;await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'excluir',nomeAba:'Presencas',id,idColuna:'ID_Presenca'})});presencasV127=presencasV127.filter(a=>String(a.ID_Presenca)!==String(id));renderPresencasTZCV127();showToast?.('Confirmação excluída!')};
 })();
 </script>
@@ -8083,7 +8239,7 @@ html body .gestao-interna-home .card.tzc-card-retorno-v121 {
   const API128=(typeof WEB_APP_URL!=='undefined'&&WEB_APP_URL)?WEB_APP_URL:'https://script.google.com/macros/s/AKfycbyFje_ocF7a0S7Tq4EYQmM5W3hv9SmHZqxJmWLhPKdkVfudzW-Q3EEbM66U9BiwdBZOJw/exec';
   const esc128=s=>String(s??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[m]));
   const id128=()=>`PRE_${Date.now()}_${Math.random().toString(36).slice(2,7).toUpperCase()}`;
-  const fmt128=v=>{if(!v)return '—';try{const d=new Date(v);if(isNaN(d))return esc128(v);return new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'}).format(d).replace(',',' às')}catch(e){return esc128(v)}};
+  const fmt128=v=>{if(!v)return '—';try{const d=TZC185.data(v);if(isNaN(d))return esc128(v);return new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'}).format(d).replace(',',' às')}catch(e){return esc128(v)}};
   async function sheet128(nome){const r=await fetch(`${API128}?sheet=${encodeURIComponent(nome)}&t=${Date.now()}`,{cache:'no-store'});const j=await r.json();return Array.isArray(j)?j:[]}
   async function post128(payload){const r=await fetch(API128,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});const t=await r.text();let j={};try{j=JSON.parse(t)}catch(e){if(!r.ok)throw new Error(t||'Erro ao salvar')}if(j.status&&String(j.status).toLowerCase()==='erro')throw new Error(j.mensagem||'Erro ao salvar');return j}
 
@@ -8114,45 +8270,57 @@ html body .gestao-interna-home .card.tzc-card-retorno-v121 {
   }
 
   window.abrirEventosMembrosTZCV128=async function(el){
+ const tzcToken185=TZC185.token();try {
+
     marcarMenu128(el||document.getElementById('menuEventosV128'));fecharMenu128();
     document.getElementById('pageTitle').innerHTML='';document.getElementById('pageSubtitleContainer').innerHTML='';document.getElementById('generalInfoSection').style.display='none';document.getElementById('searchContainerWrapper').style.display='none';document.getElementById('loading').style.display='none';
     const c=document.getElementById('contentContainer');c.innerHTML='<div class="tzc-eventos-membro-v128"><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-calendar-check"></i> Eventos e Giras</h2><p>Confira os próximos eventos do nosso Terreiro e confirme sua participação.</p></div><div id="eventosMembroV128" class="tzc-eventos-membro-list-v128"><div style="text-align:center;color:#aaa;padding:18px"><i class="fa-solid fa-spinner fa-spin"></i> Carregando eventos...</div></div></div>';
     try{
       const lu=usuarioLogado128();
-      const [evs,ps,u]=await Promise.all([sheet128('Eventos'),lu?sheet128('Presencas'):Promise.resolve([]),lu?usuarioAcesso128():Promise.resolve(null)]);
+      const [evs,ps,u]=await TZC185.aguardar(Promise.all([sheet128('Eventos'),lu?sheet128('Presencas'):Promise.resolve([]),lu?usuarioAcesso128():Promise.resolve(null)]),tzcToken185);
       const agora=Date.now();
-      const ativos=evs.filter(x=>!['excluido','cancelado'].includes(String(x.Status||'Ativo').toLowerCase())).filter(x=>lu||String(x.Acesso_Publico||'Sim').trim().toLowerCase()==='sim').sort((a,b)=>{const da=new Date(a.Data_Inicio||0).getTime()||0,db=new Date(b.Data_Inicio||0).getTime()||0;const af=da>=agora,bf=db>=agora;if(af&&bf)return da-db;if(af!==bf)return af?-1:1;return db-da});
+      const ativos=evs.filter(x=>!['excluido','cancelado'].includes(String(x.Status||'Ativo').toLowerCase())).filter(x=>lu||String(x.Acesso_Publico||'Sim').trim().toLowerCase()==='sim').sort((a,b)=>{const da=TZC185.data(a.Data_Inicio||0).getTime()||0,db=TZC185.data(b.Data_Inicio||0).getTime()||0;const af=da>=agora,bf=db>=agora;if(af&&bf)return da-db;if(af!==bf)return af?-1:1;return db-da});
       const box=document.getElementById('eventosMembroV128');
       box.innerHTML=ativos.map(x=>{
         const minha=u?ps.find(p=>String(p.ID_Evento)===String(x.ID_Evento)&&String(p.ID_Usuario)===String(u.ID_Usuario)):null;
         const resp=minha?.Resposta||'';
         return `<article class="tzc-evento-membro-card-v128"><div class="tzc-evento-membro-top-v128"><div><h3>${esc128(x.Titulo||'Evento')}</h3><div class="tzc-evento-membro-meta-v128"><span><i class="fa-solid fa-calendar-day"></i>${fmt128(x.Data_Inicio)}</span><span><i class="fa-solid fa-location-dot"></i>${esc128(x.Local||'Local a confirmar')}</span><span><i class="fa-solid fa-tag"></i>${esc128(x.Tipo||'Evento')}</span></div></div></div>${x.Descricao?`<p class="tzc-evento-membro-desc-v128">${esc128(x.Descricao)}</p>`:''}<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">${resp?`<span class="tzc-evento-resposta-v128"><i class="fa-solid fa-circle-check"></i> Sua resposta: <strong>${esc128(resp)}</strong></span>`:`<span class="tzc-evento-resposta-v128"><i class="fa-solid fa-circle-info"></i> Você ainda não respondeu</span>`}<button class="btn-toolbar tzc-confirmar-btn-v128" onclick="confirmarEventoMembroTZCV128('${esc128(x.ID_Evento)}')"><i class="fa-solid fa-user-check"></i> ${resp?'Alterar resposta':'Confirmar presença'}</button></div></article>`
       }).join('')||'<div style="text-align:center;color:#aaa;padding:18px">Nenhum evento disponível no momento.</div>';
-    }catch(e){document.getElementById('eventosMembroV128').innerHTML='<div style="text-align:center;color:#aaa;padding:18px">Não foi possível carregar os eventos.</div>'}
-  };
+    }catch(e){if(!TZC185.ativa(tzcToken185))return;document.getElementById('eventosMembroV128').innerHTML='<div style="text-align:center;color:#aaa;padding:18px">Não foi possível carregar os eventos.</div>'}
+  
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 
   window.confirmarEventoMembroTZCV128=async function(idEvento){
+ const tzcToken185=TZC185.token();try {
+
     const lu=usuarioLogado128();if(!lu){return abrirConfirmacaoVisitanteTZCV130(idEvento)}
-    let ev=null,atual=null,u=null;try{const [es,us,ps]=await Promise.all([sheet128('Eventos'),usuarioAcesso128(),sheet128('Presencas')]);ev=es.find(x=>String(x.ID_Evento)===String(idEvento));u=us;atual=ps.find(x=>String(x.ID_Evento)===String(idEvento)&&String(x.ID_Usuario)===String(u.ID_Usuario))||null}catch(e){}
+    let ev=null,atual=null,u=null;try{const [es,us,ps]=await TZC185.aguardar(Promise.all([sheet128('Eventos'),usuarioAcesso128(),sheet128('Presencas')]),tzcToken185);ev=es.find(x=>String(x.ID_Evento)===String(idEvento));u=us;atual=ps.find(x=>String(x.ID_Evento)===String(idEvento)&&String(x.ID_Usuario)===String(u.ID_Usuario))||null}catch(e){if(!TZC185.ativa(tzcToken185))return;}
     if(!ev||!u){showToast('Não foi possível identificar o evento ou o usuário.');return}
-    document.getElementById('confirmEventoV128')?.remove();const d=document.createElement('div');d.id='confirmEventoV128';d.className='tzc-confirm-v128-overlay';d.innerHTML=`<div class="tzc-confirm-v128-box"><div class="tzc-confirm-v128-head"><h3><i class="fa-solid fa-user-check"></i> Confirmar participação</h3><button class="tzc-confirm-v128-x" onclick="fecharConfirmEventoTZCV128()"><i class="fa-solid fa-xmark"></i></button></div><div id="confirmFormV128"><div class="tzc-confirm-v128-info"><strong>${esc128(ev.Titulo||'Evento')}</strong><br><i class="fa-solid fa-calendar-day" style="color:var(--gold-primary)"></i> ${fmt128(ev.Data_Inicio)}<br><i class="fa-solid fa-user" style="color:var(--gold-primary)"></i> ${esc128(u.Nome||u.Email||lu.nome)}</div><div class="tzc-confirm-v128-field"><label>Sua resposta *</label><select id="confirmRespostaV128"><option value="Sim">Vou participar</option><option value="Talvez">Talvez</option><option value="Não">Não vou participar</option></select></div><div class="tzc-confirm-v128-field" style="margin-top:9px"><label>Observação (opcional)</label><textarea id="confirmObsV128" placeholder="Se desejar, deixe uma observação..."></textarea></div><div class="tzc-confirm-v128-actions"><button class="btn-toolbar" onclick="fecharConfirmEventoTZCV128()">Fechar</button><button id="btnSalvarConfirmV128" class="btn-toolbar tzc-confirmar-btn-v128" onclick="salvarConfirmEventoTZCV128('${esc128(idEvento)}')"><i class="fa-solid fa-floppy-disk"></i> Salvar resposta</button></div></div><div id="confirmOkV128" class="tzc-confirm-v128-ok"><i class="fa-solid fa-circle-check"></i><h4>Resposta salva com sucesso!</h4><p>Sua confirmação foi registrada para este evento.</p><button class="btn-toolbar" style="margin-top:12px" onclick="fecharConfirmEventoTZCV128();abrirEventosMembrosTZCV128(document.getElementById('menuEventosV128'))">Fechar</button></div></div>`;document.body.appendChild(d);confirmRespostaV128.value=atual?.Resposta||'Sim';confirmObsV128.value=atual?.Observacoes||'';d.dataset.presenca=JSON.stringify(atual||{});d.dataset.usuario=JSON.stringify(u);
-  };
+    document.getElementById('confirmEventoV128')?.remove();const d=document.createElement('div');d.id='confirmEventoV128';d.className='tzc-confirm-v128-overlay';d.innerHTML=`<div class="tzc-confirm-v128-box"><div class="tzc-confirm-v128-head"><h3><i class="fa-solid fa-user-check"></i> Confirmar participação</h3><button class="tzc-confirm-v128-x" onclick="fecharConfirmEventoTZCV128()"><i class="fa-solid fa-xmark"></i></button></div><div id="confirmFormV128"><div class="tzc-confirm-v128-info"><strong>${esc128(ev.Titulo||'Evento')}</strong><br><i class="fa-solid fa-calendar-day" style="color:var(--gold-primary)"></i> ${fmt128(ev.Data_Inicio)}<br><i class="fa-solid fa-user" style="color:var(--gold-primary)"></i> ${esc128(u.Nome||u.Email||lu.nome)}</div><div class="tzc-confirm-v128-field"><label>Sua resposta *</label><select id="confirmRespostaV128"><option value="Sim">Vou participar</option><option value="Talvez">Talvez</option><option value="Não">Não vou participar</option></select></div><div class="tzc-confirm-v128-field" style="margin-top:9px"><label>Observação (opcional)</label><textarea id="confirmObsV128" placeholder="Se desejar, deixe uma observação..."></textarea></div><div class="tzc-confirm-v128-actions"><button class="btn-toolbar" onclick="fecharConfirmEventoTZCV128()">Fechar</button><button id="btnSalvarConfirmV128" class="btn-toolbar tzc-confirmar-btn-v128" onclick="salvarConfirmEventoTZCV128('${esc128(idEvento)}')"><i class="fa-solid fa-floppy-disk"></i> Salvar resposta</button></div></div><div id="confirmOkV128" class="tzc-confirm-v128-ok"><i class="fa-solid fa-circle-check"></i><h4>Resposta salva com sucesso!</h4><p>Sua confirmação foi registrada para este evento.</p><button class="btn-toolbar" style="margin-top:12px" onclick="fecharConfirmEventoTZCV128();abrirEventosMembrosTZCV128(document.getElementById('menuEventosV128'))">Fechar</button></div></div>`;document.body.appendChild(d);document.getElementById('confirmRespostaV128').value=atual?.Resposta||'Sim';document.getElementById('confirmObsV128').value=atual?.Observacoes||'';d.dataset.presenca=JSON.stringify(atual||{});d.dataset.usuario=JSON.stringify(u);
+  
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
   window.fecharConfirmEventoTZCV128=function(){document.getElementById('confirmEventoV128')?.remove()};
   window.salvarConfirmEventoTZCV128=async function(idEvento){
     const modal=document.getElementById('confirmEventoV128');if(!modal)return;const atual=JSON.parse(modal.dataset.presenca||'{}');const u=JSON.parse(modal.dataset.usuario||'{}');const btn=document.getElementById('btnSalvarConfirmV128');btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
-    try{const id=atual.ID_Presenca||id128();const dados={ID_Presenca:id,ID_Evento:idEvento,ID_Usuario:u.ID_Usuario||(usuarioLogado128()?.id)||'',Data_Resposta:new Date().toISOString(),Resposta:confirmRespostaV128.value,Presenca:atual.Presenca||'Pendente',Observacoes:confirmObsV128.value.trim(),Atualizado_Em:new Date().toISOString()};if(!atual.ID_Presenca)dados.Criado_Em=new Date().toISOString();await post128({acao:atual.ID_Presenca?'atualizar':'inserir',nomeAba:'Presencas',id,idColuna:'ID_Presenca',dados});document.getElementById('confirmFormV128').style.display='none';document.getElementById('confirmOkV128').style.display='block'}catch(e){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Salvar resposta';showToast('Não foi possível salvar: '+(e.message||e))}
+    try{const id=atual.ID_Presenca||id128();const dados={ID_Presenca:id,ID_Evento:idEvento,ID_Usuario:u.ID_Usuario||(usuarioLogado128()?.id)||'',Data_Resposta:new Date().toISOString(),Resposta:document.getElementById('confirmRespostaV128').value,Presenca:atual.Presenca||'Pendente',Observacoes:document.getElementById('confirmObsV128').value.trim(),Atualizado_Em:new Date().toISOString()};if(!atual.ID_Presenca)dados.Criado_Em=new Date().toISOString();await post128({acao:atual.ID_Presenca?'atualizar':'inserir',nomeAba:'Presencas',id,idColuna:'ID_Presenca',dados});document.getElementById('confirmFormV128').style.display='none';document.getElementById('confirmOkV128').style.display='block'}catch(e){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Salvar resposta';showToast('Não foi possível salvar: '+(e.message||e))}
   };
 
   /* Painel administrativo: remove "Nova Confirmação" para não confundir o fluxo do membro. */
   const abrirAdminAnt=window.abrirPresencasTZCV127;
-  if(typeof abrirAdminAnt==='function')window.abrirPresencasTZCV127=async function(id){await abrirAdminAnt(id);const novo=document.querySelector('button[onclick="novaPresencaTZCV127()"]');if(novo)novo.remove();const head=document.querySelector('#contentContainer .tzc-page-head-v44');if(head)head.insertAdjacentHTML('afterend','<div class="tzc-pres-admin-note-v128"><i class="fa-solid fa-circle-info" style="color:var(--gold-primary);margin-right:5px"></i> Painel administrativo: as respostas são feitas pelo próprio membro na página <strong style="color:#fff">Eventos</strong>. Aqui a Tenda acompanha as confirmações e registra a presença real no dia do evento.</div>')};
+  if(typeof abrirAdminAnt==='function')window.abrirPresencasTZCV127=async function(id){
+ const tzcToken185=TZC185.token();try {
+await TZC185.aguardar(abrirAdminAnt(id),tzcToken185);const novo=document.querySelector('button[onclick="novaPresencaTZCV127()"]');if(novo)novo.remove();const head=document.querySelector('#contentContainer .tzc-page-head-v44');if(head)head.insertAdjacentHTML('afterend','<div class="tzc-pres-admin-note-v128"><i class="fa-solid fa-circle-info" style="color:var(--gold-primary);margin-right:5px"></i> Painel administrativo: as respostas são feitas pelo próprio membro na página <strong style="color:#fff">Eventos</strong>. Aqui a Tenda acompanha as confirmações e registra a presença real no dia do evento.</div>')
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 
   /* Reaplica os pequenos padrões depois de alterações de interface. */
 
   /* V129 — ordenação administrativa: evento mais próximo primeiro; passados ficam abaixo, do mais recente ao mais antigo. */
   const renderAdminV129=window.renderEventosTZC_V126;
   if(typeof renderAdminV129==='function')window.renderEventosTZC_V126=function(){
-    try{eventos.sort((a,b)=>{const agora=Date.now(),da=new Date(a.Data_Inicio||0).getTime()||0,db=new Date(b.Data_Inicio||0).getTime()||0,af=da>=agora,bf=db>=agora;if(af&&bf)return da-db;if(af!==bf)return af?-1:1;return db-da})}catch(e){}
+    try{eventos.sort((a,b)=>{const agora=Date.now(),da=TZC185.data(a.Data_Inicio||0).getTime()||0,db=TZC185.data(b.Data_Inicio||0).getTime()||0,af=da>=agora,bf=db>=agora;if(af&&bf)return da-db;if(af!==bf)return af?-1:1;return db-da})}catch(e){}
     return renderAdminV129.apply(this,arguments);
   };
 
@@ -8190,7 +8358,9 @@ html body .gestao-interna-home .card.tzc-card-retorno-v121 {
  const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
  async function sheet(nome){const r=await fetch(`${api}?sheet=${encodeURIComponent(nome)}&t=${Date.now()}`,{cache:'no-store'});return await r.json()}
  window.abrirConfirmacaoVisitanteTZCV130=async function(idEvento){
-   let ev=null;try{const es=await sheet('Eventos');ev=(Array.isArray(es)?es:[]).find(x=>String(x.ID_Evento)===String(idEvento))}catch(e){}
+ const tzcToken185=TZC185.token();try {
+
+   let ev=null;try{const es=await TZC185.aguardar(sheet('Eventos'),tzcToken185);ev=(Array.isArray(es)?es:[]).find(x=>String(x.ID_Evento)===String(idEvento))}catch(e){if(!TZC185.ativa(tzcToken185))return;}
    if(!ev||String(ev.Acesso_Publico||'Sim').toLowerCase()!=='sim'){showToast?.('Este evento é exclusivo para membros.');return}
    document.getElementById('guestConfirmV130')?.remove();
    const d=document.createElement('div');d.id='guestConfirmV130';d.className='tzc-guest-v130-overlay';
@@ -8204,7 +8374,9 @@ html body .gestao-interna-home .card.tzc-card-retorno-v121 {
     <div class="tzc-guest-v130-field full"><label>Observação</label><textarea id="guestObsV130" rows="2" placeholder="Se desejar, deixe uma observação..."></textarea></div>
    </div><div class="tzc-guest-v130-actions"><button class="btn-toolbar" onclick="document.getElementById('guestConfirmV130')?.remove()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="salvarConfirmacaoVisitanteTZCV130('${esc(idEvento)}')"><i class="fa-solid fa-floppy-disk"></i> Confirmar</button></div></div>`;
    document.body.appendChild(d)
- };
+ 
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
  window.salvarConfirmacaoVisitanteTZCV130=async function(idEvento){
    const nome=document.getElementById('guestNomeV130')?.value.trim(),zap=document.getElementById('guestZapV130')?.value.trim(),email=document.getElementById('guestEmailV130')?.value.trim();
    if(!nome||!zap){alert('Informe seu nome e WhatsApp.');return}
@@ -8220,19 +8392,23 @@ html body .gestao-interna-home .card.tzc-card-retorno-v121 {
  // Total de confirmados somente para usuário logado: acrescenta ao cartão sem expor ao visitante.
  const abrirAnt=window.abrirEventosMembrosTZCV128;
  if(typeof abrirAnt==='function')window.abrirEventosMembrosTZCV128=async function(el){
-   await abrirAnt(el);
+ const tzcToken185=TZC185.token();try {
+
+   await TZC185.aguardar(abrirAnt(el),tzcToken185);
    const lu=(()=>{try{return JSON.parse(localStorage.getItem('loggedUser')||sessionStorage.getItem('loggedUser')||'null')}catch(e){return null}})() || window.loggedUser;
    if(!lu)return;
    try{
-     const ps=await sheet('Presencas');
+     const ps=await TZC185.aguardar(sheet('Presencas'),tzcToken185);
      document.querySelectorAll('.tzc-evento-membro-card-v128').forEach(card=>{
        const btn=card.querySelector('button[onclick*="confirmarEventoMembroTZCV128"]');if(!btn)return;
        const m=(btn.getAttribute('onclick')||'').match(/'([^']+)'/);if(!m)return;
        const total=(Array.isArray(ps)?ps:[]).filter(p=>String(p.ID_Evento)===String(m[1])&&String(p.Resposta||'').toLowerCase()==='sim').length;
        const s=document.createElement('span');s.className='tzc-confirmados-interno-v130';s.innerHTML=`<i class="fa-solid fa-users"></i> ${total} confirmado${total===1?'':'s'}`;btn.parentElement.insertBefore(s,btn)
      })
-   }catch(e){}
- };
+   }catch(e){if(!TZC185.ativa(tzcToken185))return;}
+ 
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 })();
 </script>
 
@@ -8309,7 +8485,11 @@ html body .gestao-interna-home .card.tzc-card-retorno-v121 {
  }
  const abrirAnt=window.abrirEventosMembrosTZCV128;
  if(typeof abrirAnt==='function'){
-   window.abrirEventosMembrosTZCV128=async function(el){await abrirAnt(el);setTimeout(aplicar,80)}
+   window.abrirEventosMembrosTZCV128=async function(el){
+ const tzcToken185=TZC185.token();try {
+await TZC185.aguardar(abrirAnt(el),tzcToken185);setTimeout(aplicar,80)
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+}
  }
  document.addEventListener('DOMContentLoaded',()=>setTimeout(aplicar,250));
 })();
@@ -8514,10 +8694,14 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
   const abrirOriginal=window.abrirEventosMembrosTZCV128;
   if(typeof abrirOriginal==='function'){
     window.abrirEventosMembrosTZCV128=async function(){
-      const r=await abrirOriginal.apply(this,arguments);
+ const tzcToken185=TZC185.token();try {
+
+      const r=await TZC185.aguardar(abrirOriginal.apply(this,arguments),tzcToken185);
       instalarToolbar();
       return r;
-    };
+    
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
   }
   document.addEventListener('DOMContentLoaded',()=>setTimeout(instalarToolbar,300));
 })();
@@ -8592,13 +8776,17 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
   const salvarEventoAnterior=window.salvarEventoTZC_V126;
   if(typeof salvarEventoAnterior==='function'){
     window.salvarEventoTZC_V126=async function(){
+ const tzcToken185=TZC185.token();try {
+
       mostrarSalvandoTZCV134('Salvando evento...');
       try{
-        await salvarEventoAnterior.apply(this,arguments);
+        await TZC185.aguardar(salvarEventoAnterior.apply(this,arguments),tzcToken185);
       }finally{
         fecharSalvandoTZCV134();
       }
-    };
+    
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
   }
 
   /* Resposta do membro: fecha antes da gravação; mostra processamento separado. */
@@ -8671,23 +8859,31 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
   const abrirPresAnterior=window.abrirPresencasTZCV127;
   if(typeof abrirPresAnterior==='function'){
     window.abrirPresencasTZCV127=async function(id){
+ const tzcToken185=TZC185.token();try {
+
       if(!podeControlar134()){
         showToast?.('Este painel é destinado a dirigentes e colaboradores.');
         return;
       }
-      await abrirPresAnterior(id);
+      await TZC185.aguardar(abrirPresAnterior(id),tzcToken185);
       corrigirPainel134();
       padronizarSalvar134();
-    };
+    
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
   }
 
   const abrirEventosMembroAnterior=window.abrirEventosMembrosTZCV128;
   if(typeof abrirEventosMembroAnterior==='function'){
     window.abrirEventosMembrosTZCV128=async function(){
-      const r=await abrirEventosMembroAnterior.apply(this,arguments);
+ const tzcToken185=TZC185.token();try {
+
+      const r=await TZC185.aguardar(abrirEventosMembroAnterior.apply(this,arguments),tzcToken185);
       iconeResposta134();instalarMenuPresencas134();padronizarSalvar134();
       return r;
-    };
+    
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
   }
 
   /* Ao atualizar login/perfil, atualiza também a visibilidade do menu. */
@@ -8859,14 +9055,18 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
   const abrirEventosAnteriorV144 = window.abrirEventosTZC_V126;
   if(typeof abrirEventosAnteriorV144 === 'function'){
     window.abrirEventosTZC_V126 = async function(){
+ const tzcToken185=TZC185.token();try {
+
       marcarEventosV144();
       try{
-        return await abrirEventosAnteriorV144.apply(this, arguments);
-      }catch(e){
+        return await TZC185.aguardar(abrirEventosAnteriorV144.apply(this, arguments),tzcToken185);
+      }catch(e){if(!TZC185.ativa(tzcToken185))return;
         limparEventosV144();
         throw e;
       }
-    };
+    
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
   }
 
   /* Qualquer navegação real de volta ao Início restaura a Home. */
@@ -8952,7 +9152,7 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
 
   function fmtV145(v){
     if(!v)return '—';
-    const d=new Date(v);
+    const d=TZC185.data(v);
     if(isNaN(d.getTime()))return escV145(v);
     try{
       return new Intl.DateTimeFormat('pt-BR',{
@@ -8968,21 +9168,27 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
   const abrirEventosBaseV145=window.abrirEventosTZC_V126;
   if(typeof abrirEventosBaseV145==='function'){
     window.abrirEventosTZC_V126=async function(){
+ const tzcToken185=TZC185.token();try {
+
       prepararPaginaInternaV145();
-      return await abrirEventosBaseV145.apply(this,arguments);
-    };
+      return await TZC185.aguardar(abrirEventosBaseV145.apply(this,arguments),tzcToken185);
+    
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
   }
 
   /* CONTROLE DE PRESENÇAS:
      página própria de seleção de evento; não redireciona mais simplesmente para Eventos. */
   window.abrirControlePresencasV145=async function(){
+ const tzcToken185=TZC185.token();try {
+
     if(!podeGerenciarV145()){
       if(typeof showToast==='function')showToast('Acesso restrito à equipe de gestão.');
       return;
     }
 
     prepararPaginaInternaV145();
-    try{ document.getElementById('sidebar')?.classList.remove('open'); }catch(e){}
+    try{ document.getElementById('sidebar')?.classList.remove('open'); }catch(e){if(!TZC185.ativa(tzcToken185))return;}
 
     const c=document.getElementById('contentContainer');
     if(!c)return;
@@ -9025,14 +9231,14 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
     try{
       let lista=[];
       if(typeof getSheet==='function'){
-        lista=await getSheet('Eventos');
+        lista=await TZC185.aguardar(getSheet('Eventos'),tzcToken185);
       }else if(Array.isArray(window.eventos)){
         lista=window.eventos;
       }
 
       lista=(Array.isArray(lista)?lista:[])
         .filter(x=>!['excluido','cancelado'].includes(String(x.Status||'Ativo').trim().toLowerCase()))
-        .sort((a,b)=>(new Date(a.Data_Inicio||0).getTime()||0)-(new Date(b.Data_Inicio||0).getTime()||0));
+        .sort((a,b)=>(TZC185.data(a.Data_Inicio||0).getTime()||0)-(TZC185.data(b.Data_Inicio||0).getTime()||0));
 
       const count=document.getElementById('controlePresCountV145');
       if(count)count.textContent='· '+lista.length+' registros';
@@ -9058,11 +9264,13 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
             </button>
           </td>
         </tr>`).join('');
-    }catch(e){
+    }catch(e){if(!TZC185.ativa(tzcToken185))return;
       const body=document.getElementById('controlePresBodyV145');
       if(body)body.innerHTML='<tr><td colspan="5">Não foi possível carregar os eventos.</td></tr>';
     }
-  };
+  
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 
   /* Corrige o item já criado pelas versões anteriores. */
   function corrigirMenuV145(){
@@ -9127,7 +9335,7 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
   const fmt146=v=>{
     if(!v)return '—';
     try{
-      const d=new Date(v);
+      const d=TZC185.data(v);
       if(isNaN(d.getTime()))return esc146(v);
       return new Intl.DateTimeFormat('pt-BR',{
         day:'2-digit',month:'2-digit',year:'numeric',
@@ -9138,18 +9346,24 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
   };
 
   async function carregarEventos146(){
-    const r=await fetch(`${API146}?sheet=Eventos&t=${Date.now()}`,{cache:'no-store'});
+ const tzcToken185=TZC185.token();try {
+
+    const r=await TZC185.aguardar(fetch(`${API146}?sheet=Eventos&t=${Date.now()}`,{cache:'no-store'}),tzcToken185);
     if(!r.ok)throw new Error('HTTP '+r.status);
-    const j=await r.json();
+    const j=await TZC185.aguardar(r.json(),tzcToken185);
     return Array.isArray(j)?j:[];
-  }
+  
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+}
 
   const abrir145=window.abrirControlePresencasV145;
   if(typeof abrir145!=='function')return;
 
   window.abrirControlePresencasV145=async function(){
+ const tzcToken185=TZC185.token();try {
+
     /* deixa a V145 montar a tela e preservar toda a navegação aprovada */
-    await abrir145.apply(this,arguments);
+    await TZC185.aguardar(abrir145.apply(this,arguments),tzcToken185);
 
     const body=document.getElementById('controlePresBodyV145');
     const count=document.getElementById('controlePresCountV145');
@@ -9158,7 +9372,7 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
     body.innerHTML='<tr><td colspan="5"><i class="fa-solid fa-spinner fa-spin"></i> Carregando eventos...</td></tr>';
 
     try{
-      let lista=await carregarEventos146();
+      let lista=await TZC185.aguardar(carregarEventos146(),tzcToken185);
 
       lista=lista
         .filter(x=>{
@@ -9166,8 +9380,8 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
           return st!=='excluido' && st!=='cancelado';
         })
         .sort((a,b)=>{
-          const da=new Date(a.Data_Inicio||0).getTime()||0;
-          const db=new Date(b.Data_Inicio||0).getTime()||0;
+          const da=TZC185.data(a.Data_Inicio||0).getTime()||0;
+          const db=TZC185.data(b.Data_Inicio||0).getTime()||0;
           return da-db;
         });
 
@@ -9191,12 +9405,14 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
             </button>
           </td>
         </tr>`).join('');
-    }catch(e){
+    }catch(e){if(!TZC185.ativa(tzcToken185))return;
       console.error('TZC V146 - erro ao carregar Eventos:',e);
       if(count)count.textContent='· 0 registros';
       body.innerHTML='<tr><td colspan="5" style="text-align:center;color:#aaa">Não foi possível carregar os eventos.</td></tr>';
     }
-  };
+  
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 })();
 </script>
 
@@ -9284,7 +9500,9 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
   if(typeof abrirAnteriorV148 !== 'function') return;
 
   window.abrirPresencasTZCV127 = async function(idEvento){
-    await abrirAnteriorV148.apply(this, arguments);
+ const tzcToken185=TZC185.token();try {
+
+    await TZC185.aguardar(abrirAnteriorV148.apply(this, arguments),tzcToken185);
 
     const pagina = document.getElementById('contentContainer');
     if(!pagina) return;
@@ -9322,7 +9540,9 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
       '<p>Acompanhe respostas e presença dos participantes.</p>';
     bloco.querySelector('h3').textContent = nomeEvento;
     busca.insertAdjacentElement('afterend', bloco);
-  };
+  
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 })();
 </script>
 
@@ -9654,6 +9874,8 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
   if(typeof abrirAntV154!=='function') return;
 
   window.abrirPresencasTZCV127=async function(){
+ const tzcToken185=TZC185.token();try {
+
     /* V165: busca a data/hora diretamente no registro salvo em Eventos.
        O modal mostra Data e Hora separadas, mas ao salvar elas são reunidas
        no campo Data_Inicio (AAAA-MM-DDTHH:MM). */
@@ -9666,11 +9888,11 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
          Aqui usamos diretamente a mesma API pública já configurada no site. */
       const apiV166=(typeof WEB_APP_URL!=='undefined' ? WEB_APP_URL : '');
       if(idEventoV163 && apiV166){
-        const rV166=await fetch(
+        const rV166=await TZC185.aguardar(fetch(
           `${apiV166}?sheet=${encodeURIComponent('Eventos')}&t=${Date.now()}`,
           {cache:'no-store'}
-        );
-        const jV166=await rV166.json();
+        ),tzcToken185);
+        const jV166=await TZC185.aguardar(rV166.json(),tzcToken185);
         const listaEventosV166=Array.isArray(jV166)?jV166:[];
         const eventoV166=listaEventosV166.find(
           x=>String(x.ID_Evento||'').trim()===idEventoV163.trim()
@@ -9686,11 +9908,11 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
           window.__tzcDataHoraEventoV163=inicioV166;
         }
       }
-    }catch(e){
+    }catch(e){if(!TZC185.ativa(tzcToken185))return;
       console.warn('V166: não foi possível carregar Data_Inicio do evento.',e);
     }
 
-    await abrirAntV154.apply(this,arguments);
+    await TZC185.aguardar(abrirAntV154.apply(this,arguments),tzcToken185);
 
     const bloco=document.querySelector('#contentContainer .tzc-pres-evento-v148');
     if(!bloco || bloco.querySelector('.tzc-pres-export-v154')) return;
@@ -9714,7 +9936,9 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
         <i class="fa-solid fa-file-pdf"></i>
       </button>`;
     bloco.appendChild(acoes);
-  };
+  
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 })();
 </script>
 
@@ -9731,6 +9955,8 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
   if(typeof abrirAnteriorV170 !== 'function') return;
 
   window.abrirPresencasTZCV127 = async function(idEvento){
+ const tzcToken185=TZC185.token();try {
+
     const id = String(idEvento || '').trim();
     let tituloEvento = '';
 
@@ -9762,7 +9988,7 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
       tituloEvento = String(ev?.Titulo || '').trim();
     }
 
-    await abrirAnteriorV170.apply(this, arguments);
+    await TZC185.aguardar(abrirAnteriorV170.apply(this, arguments),tzcToken185);
 
     if(!tituloEvento) return;
 
@@ -9775,7 +10001,9 @@ button:not(.btn-icon-only):not(.btn-danger):hover i,
 
     /* Guarda a fonte correta para rotinas posteriores/PDF. */
     window.__tzcNomeEventoV170 = tituloEvento;
-  };
+  
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 })();
 </script>
 
@@ -9820,7 +10048,7 @@ const esc178=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>'
 const perfil178=()=>{const u=(typeof loggedUser!=='undefined'?loggedUser:null);return String(u?.perfil||u?.Perfil||'').trim().toLowerCase()};
 const podeGerir178=()=>!!(typeof isLoggedIn!=='undefined'&&isLoggedIn)&&['dirigente','administrador','colaborador','editor'].includes(perfil178());
 const statusMembro178=m=>String(m.Status_Ativo??m.Status??m.Ativo??'Ativo').trim()||'Ativo';
-const dataBR178=v=>{if(!v)return'—';try{if(/^\d{4}-\d{2}-\d{2}$/.test(String(v).slice(0,10))){const [y,m,d]=String(v).slice(0,10).split('-');return `${d}/${m}/${y}`}const d=new Date(v);if(Number.isNaN(d.getTime()))return String(v);return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo'}).format(d)}catch(e){return String(v)}};
+const dataBR178=v=>{if(!v)return'—';try{if(/^\d{4}-\d{2}-\d{2}$/.test(String(v).slice(0,10))){const [y,m,d]=String(v).slice(0,10).split('-');return `${d}/${m}/${y}`}const d=TZC185.data(v);if(Number.isNaN(d.getTime()))return String(v);return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo'}).format(d)}catch(e){return String(v)}};
 
 /* ---------- MENU: acesso explícito a Confirmações e Presenças ---------- */
 function instalarMenu178(){
@@ -9840,6 +10068,8 @@ window.__tzcMembros178=[];
 window.__tzcFiltroStatusMembro178='Todos';
 window.__tzcBuscaMembro178='';
 window.carregarEExibirMembros=async function(){
+ const tzcToken185=TZC185.token();try {
+
   const g=document.getElementById('generalInfoSection');if(g)g.style.display='none';
   const s=document.getElementById('searchContainerWrapper');if(s)s.style.display='none';
   const l=document.getElementById('loading');if(l)l.style.display='none';
@@ -9847,12 +10077,14 @@ window.carregarEExibirMembros=async function(){
   const c=document.getElementById('contentContainer');if(!c)return;
   c.innerHTML='<div class="tzc-membros-v178"><div class="tzc-page-head-v44"><span></span><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-users"></i> Membros <span id="membrosCount178" class="tzc-count-v47"></span></h2><p>Cadastre, consulte e mantenha atualizados os dados dos membros da Tenda.</p></div><button class="btn-toolbar tzc-page-new-v44 tzc-btn-gold-v105" onclick="abrirModalNovoMembro()"><i class="fa-solid fa-plus"></i> Novo Membro</button></div><div class="tzc-membros-toolbar-v178"><select id="membrosStatus178" class="tzc-membros-filter-v178" onchange="window.__tzcFiltroStatusMembro178=this.value;renderMembros178()"><option value="Todos">Todos os status</option></select><div class="tzc-membros-search-v178"><i class="fa-solid fa-magnifying-glass"></i><input id="membrosBusca178" placeholder="Pesquisar membros..." oninput="window.__tzcBuscaMembro178=this.value;renderMembros178()"></div><div class="tzc-membros-actions-v178"><button class="btn-toolbar" onclick="exportarExcel()"><i class="fa-solid fa-file-excel"></i> Exportar Excel</button><button class="btn-toolbar" onclick="exportarPDF()"><i class="fa-solid fa-file-pdf"></i> Gerar PDF</button></div></div><div id="membrosTabela178"><div style="padding:18px;text-align:center;color:#aaa"><i class="fa-solid fa-spinner fa-spin"></i> Carregando membros...</div></div></div>';
   try{
-    const r=await fetch(`${API178}?sheet=Cadastro_Filhos&t=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);
-    const j=await r.json();window.__tzcMembros178=Array.isArray(j)?j:[];try{listaMembros=window.__tzcMembros178}catch(e){}
+    const r=await TZC185.aguardar(fetch(`${API178}?sheet=Cadastro_Filhos&t=${Date.now()}`,{cache:'no-store'}),tzcToken185);if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await TZC185.aguardar(r.json(),tzcToken185);window.__tzcMembros178=Array.isArray(j)?j.filter(m=>!['excluido','excluído'].includes(String(m.Status||m.Status_Ativo||'').toLowerCase())):[];try{listaMembros=window.__tzcMembros178}catch(e){if(!TZC185.ativa(tzcToken185))return;}
     const sts=[...new Set(window.__tzcMembros178.map(statusMembro178).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
     const sel=document.getElementById('membrosStatus178');if(sel)sel.innerHTML='<option value="Todos">Todos os status</option>'+sts.map(x=>`<option value="${esc178(x)}">${esc178(x)}</option>`).join('');
     window.renderMembros178();
-  }catch(e){const b=document.getElementById('membrosTabela178');if(b)b.innerHTML='<div style="padding:18px;text-align:center;color:#aaa">Não foi possível carregar os membros.</div>'}
+  }catch(e){if(!TZC185.ativa(tzcToken185))return;const b=document.getElementById('membrosTabela178');if(b)b.innerHTML='<div style="padding:18px;text-align:center;color:#aaa">Não foi possível carregar os membros.</div>'}
+
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
 };
 window.renderMembros178=function(){
   const q=String(window.__tzcBuscaMembro178||'').trim().toLowerCase();const st=window.__tzcFiltroStatusMembro178||'Todos';
@@ -9878,18 +10110,22 @@ window.exportarPDF=function(){
 window.__tzcPub178=[];window.__tzcTipoPub178='';
 async function carregarPub178(){const r=await fetch(`${API178}?sheet=Publicacoes&t=${Date.now()}`,{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();window.__tzcPub178=Array.isArray(j)?j:[];return window.__tzcPub178}
 function abrirPaginaPub178(tipo,icone,intro,el){
-  window.__tzcTipoPub178=tipo;document.querySelectorAll('#navList .nav-item').forEach(x=>x.classList.remove('active'));if(el)el.classList.add('active');document.getElementById('sidebar')?.classList.remove('open');
+  const rotaPub185=tipo==='Mensagem do Dia'?'Mensagem_Dia':'Banho_Semana';if(TZC185.rota()!==rotaPub185)TZC185.navegar(rotaPub185);const tokenPub185=TZC185.token();window.__tzcTipoPub178=tipo;document.querySelectorAll('#navList .nav-item').forEach(x=>x.classList.remove('active'));if(el)el.classList.add('active');document.getElementById('sidebar')?.classList.remove('open');
   const g=document.getElementById('generalInfoSection');if(g)g.style.display='none';const s=document.getElementById('searchContainerWrapper');if(s)s.style.display='none';const l=document.getElementById('loading');if(l)l.style.display='none';const pt=document.getElementById('pageTitle');if(pt)pt.innerHTML='';
   const c=document.getElementById('contentContainer');if(!c)return;c.innerHTML=`<div class="tzc-publicacoes-publicas-v107"><div class="tzc-page-head-v44"><button class="btn-toolbar tzc-page-back-v44" onclick="switchTab('Home',document.querySelector('#navList .nav-item'))"><i class="fa-solid fa-arrow-left"></i> Início</button><div class="tzc-page-copy-v44"><h2><i class="fa-solid ${icone}"></i> ${tipo} <span id="pubCount178" class="tzc-count-v47"></span></h2><p>${intro}</p></div>${podeGerir178()?`<button class="btn-toolbar tzc-page-new-v44 tzc-btn-gold-v105" onclick="novaPubTipo178('${tipo.replace(/'/g,"\\'")}')"><i class="fa-solid fa-plus"></i> Cadastrar</button>`:'<span></span>'}</div><div class="tzc-publicacoes-tools-v178"><div class="tzc-publicacoes-search-v107"><i class="fa-solid fa-magnifying-glass"></i><input id="pubBusca178" placeholder="Pesquisar..." oninput="renderPub178()"></div></div><div id="pubLista178" class="tzc-publicacoes-list-v107"><div class="tzc-publicacao-vazio-v107"><i class="fa-solid fa-spinner fa-spin"></i> Carregando...</div></div></div>`;
-  carregarPub178().then(window.renderPub178).catch(()=>{const b=document.getElementById('pubLista178');if(b)b.innerHTML='<div class="tzc-publicacao-vazio-v107">Não foi possível carregar os dados.</div>'});
+  carregarPub178().then(()=>{if(TZC185.ativa(tokenPub185))window.renderPub178()}).catch(()=>{if(!TZC185.ativa(tokenPub185))return;const b=document.getElementById('pubLista178');if(b)b.innerHTML='<div class="tzc-publicacao-vazio-v107">Não foi possível carregar os dados.</div>'});
 }
-window.renderPub178=function(){const tipo=window.__tzcTipoPub178;const q=String(document.getElementById('pubBusca178')?.value||'').toLowerCase();const arr=(window.__tzcPub178||[]).filter(r=>r.Tipo===tipo&&String(r.Status||'Ativo').toLowerCase()!=='excluido').filter(r=>[r.Titulo,r.Resumo,r.Conteudo,r.Ingredientes,r.Modo_Preparo].join(' ').toLowerCase().includes(q)).sort((a,b)=>String(b.Data_Publicacao||'').localeCompare(String(a.Data_Publicacao||'')));const ct=document.getElementById('pubCount178');if(ct)ct.textContent=`· ${arr.length} ${arr.length===1?'registro':'registros'}`;const b=document.getElementById('pubLista178');if(!b)return;b.innerHTML=arr.length?arr.map(r=>`<div class="tzc-publicacao-card-wrap-v178">${podeGerir178()?`<div class="tzc-publicacao-actions-v178"><button class="btn-icon-only" title="Editar" onclick="event.stopPropagation();editarPubDireta178('${esc178(r.ID_Publicacao)}')"><i class="fa-solid fa-pen"></i></button><button class="btn-icon-only" title="Excluir" onclick="event.stopPropagation();excluirPubDireta178('${esc178(r.ID_Publicacao)}')"><i class="fa-solid fa-trash"></i></button></div>`:''}<button class="tzc-publicacao-card-v107" onclick="abrirPubLeitura178('${esc178(r.ID_Publicacao)}')"><div class="meta">${dataBR178(r.Data_Publicacao)}</div><h3>${esc178(r.Titulo||tipo)}</h3><p>${esc178(r.Resumo||String(r.Conteudo||'').slice(0,180))}</p></button></div>`).join(''):'<div class="tzc-publicacao-vazio-v107">Ainda não há registros cadastrados.</div>'};
+window.renderPub178=function(){const tipo=window.__tzcTipoPub178;const q=String(document.getElementById('pubBusca178')?.value||'').toLowerCase();const arr=(window.__tzcPub178||[]).filter(r=>r.Tipo===tipo&&!['excluido','excluído','inativo'].includes(String(r.Status||'Ativo').toLowerCase())&&(podeGerir178()||isPublicAccess(r))).filter(r=>[r.Titulo,r.Resumo,r.Conteudo,r.Ingredientes,r.Modo_Preparo].join(' ').toLowerCase().includes(q)).sort((a,b)=>String(b.Data_Publicacao||'').localeCompare(String(a.Data_Publicacao||'')));const ct=document.getElementById('pubCount178');if(ct)ct.textContent=`· ${arr.length} ${arr.length===1?'registro':'registros'}`;const b=document.getElementById('pubLista178');if(!b)return;b.innerHTML=arr.length?arr.map(r=>`<div class="tzc-publicacao-card-wrap-v178">${podeGerir178()?`<div class="tzc-publicacao-actions-v178"><button class="btn-icon-only" title="Editar" onclick="event.stopPropagation();editarPubDireta178('${esc178(r.ID_Publicacao)}')"><i class="fa-solid fa-pen"></i></button><button class="btn-icon-only" title="Excluir" onclick="event.stopPropagation();excluirPubDireta178('${esc178(r.ID_Publicacao)}')"><i class="fa-solid fa-trash"></i></button></div>`:''}<button class="tzc-publicacao-card-v107" onclick="abrirPubLeitura178('${esc178(r.ID_Publicacao)}')"><div class="meta">${dataBR178(r.Data_Publicacao)}</div><h3>${esc178(r.Titulo||tipo)}</h3><p>${esc178(r.Resumo||String(r.Conteudo||'').slice(0,180))}</p></button></div>`).join(''):'<div class="tzc-publicacao-vazio-v107">Ainda não há registros cadastrados.</div>'};
 window.abrirMensagemDiaTZC_V103=function(el){abrirPaginaPub178('Mensagem do Dia','fa-envelope-open-text','Mensagens para começar o dia com fé, serenidade e esperança.',el)};
 window.abrirBanhoSemanaTZC_V104=function(el){abrirPaginaPub178('Banho da Semana','fa-spa','Consulte os banhos semanais e suas orientações.',el)};
 window.abrirPubLeitura178=function(id){const r=(window.__tzcPub178||[]).find(x=>String(x.ID_Publicacao)===String(id));if(!r)return;const c=document.getElementById('contentContainer');let extras='';if(r.Ingredientes)extras+=`<div class="bloco"><strong>Ingredientes</strong><div class="texto">${esc178(r.Ingredientes)}</div></div>`;if(r.Modo_Preparo)extras+=`<div class="bloco"><strong>Modo de preparo</strong><div class="texto">${esc178(r.Modo_Preparo)}</div></div>`;if(r.Orientacoes)extras+=`<div class="bloco"><strong>Orientações</strong><div class="texto">${esc178(r.Orientacoes)}</div></div>`;c.innerHTML=`<div class="tzc-publicacoes-publicas-v107"><button class="btn-toolbar" onclick="${r.Tipo==='Mensagem do Dia'?'abrirMensagemDiaTZC_V103()':'abrirBanhoSemanaTZC_V104()'}"><i class="fa-solid fa-arrow-left"></i> Voltar</button><article class="tzc-pub-leitura-v104" style="margin-top:12px"><div class="tipo">${esc178(r.Tipo)} · ${dataBR178(r.Data_Publicacao)}</div><h2>${esc178(r.Titulo||r.Tipo)}</h2>${r.Resumo?`<p style="color:#aaa;font-size:.82rem;line-height:1.6">${esc178(r.Resumo)}</p>`:''}<div class="texto">${esc178(r.Conteudo||'')}</div>${extras}</article></div>`};
 window.novaPubTipo178=async function(tipo){window.__tzcRetornoPub178=tipo;await window.abrirPublicacoesTZC_V104?.();window.novaPublicacaoTZC_V104?.();setTimeout(()=>{const s=document.getElementById('pTipo');if(s){s.value=tipo;s.dispatchEvent(new Event('change'))}},0);abrirPaginaPub178(tipo,tipo==='Mensagem do Dia'?'fa-envelope-open-text':'fa-spa',tipo==='Mensagem do Dia'?'Mensagens para começar o dia com fé, serenidade e esperança.':'Consulte os banhos semanais e suas orientações.')};
 window.editarPubDireta178=async function(id){const tipo=window.__tzcTipoPub178;window.__tzcRetornoPub178=tipo;await window.abrirPublicacoesTZC_V104?.();window.editarPublicacaoTZC_V104?.(id);abrirPaginaPub178(tipo,tipo==='Mensagem do Dia'?'fa-envelope-open-text':'fa-spa',tipo==='Mensagem do Dia'?'Mensagens para começar o dia com fé, serenidade e esperança.':'Consulte os banhos semanais e suas orientações.')};
-const salvarPubBase178=window.salvarPublicacaoTZC_V104;if(typeof salvarPubBase178==='function')window.salvarPublicacaoTZC_V104=async function(){const ret=window.__tzcRetornoPub178;const r=await salvarPubBase178.apply(this,arguments);if(ret){window.__tzcRetornoPub178='';ret==='Mensagem do Dia'?window.abrirMensagemDiaTZC_V103():window.abrirBanhoSemanaTZC_V104()}return r};
+const salvarPubBase178=window.salvarPublicacaoTZC_V104;if(typeof salvarPubBase178==='function')window.salvarPublicacaoTZC_V104=async function(){
+ const tzcToken185=TZC185.token();try {
+const tokenSalvarPub185=TZC185.token();const ret=window.__tzcRetornoPub178;const r=await TZC185.aguardar(salvarPubBase178.apply(this,arguments),tzcToken185);if(ret&&r===true&&TZC185.ativa(tokenSalvarPub185)){window.__tzcRetornoPub178='';ret==='Mensagem do Dia'?window.abrirMensagemDiaTZC_V103():window.abrirBanhoSemanaTZC_V104()}return r
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 window.excluirPubDireta178=function(id){const r=(window.__tzcPub178||[]).find(x=>String(x.ID_Publicacao)===String(id));if(!r)return;const executar=async()=>{document.getElementById('tzcExcluirV176')?.remove();try{window.mostrarSalvandoTZCV134?.('Excluindo...');const res=await fetch(API178,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'excluir',nomeAba:'Publicacoes',id,idColuna:'ID_Publicacao'})});const j=await res.json().catch(()=>({status:'sucesso'}));if(String(j.status||'').toLowerCase()==='erro')throw new Error(j.mensagem||'Erro');await carregarPub178();window.renderPub178();showToast?.('Registro excluído!')}catch(e){showToast?.('Não foi possível excluir o registro.')}finally{window.fecharSalvandoTZCV134?.()}};if(typeof window.modalExcluir176==='function')window.modalExcluir176('Excluir publicação?',r.Titulo||r.Tipo,executar);else executar()};
 
 /* Regra final: nenhum botão Gestão Interna dentro das páginas; somente menu. */
@@ -9900,8 +10136,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 })();
 </script>
 
-</body>
-</html>
+
 
 <style id="tzc-v27-compactacao">
   header.banner{padding:6px 10px!important;min-height:78px!important;border-bottom-width:1px!important}
@@ -10961,7 +11196,7 @@ html body [class*="modal"] textarea:focus{
     try{localStorage.setItem(CHAVE,hojeLocal());}catch(e){}
   }
   async function abrirAutomaticamente(){
-    if(jaMostrouHoje()) return;
+    if(jaMostrouHoje() || TZC185.rota()!=='Home') return;
     if(typeof window.mostrarMensagemDiaTZC_V105!=='function') return;
     /* Marca no momento da tentativa automática para não reaparecer ao navegar/recarregar no mesmo dia. */
     marcarHoje();
@@ -11616,8 +11851,10 @@ html body #artesOverlayV85 #aDescricaoV85::placeholder {
 
   /* Ao abrir novamente, funciona como EDITAR: recupera os dados já informados. */
   window.abrirConfirmacaoVisitanteTZCV130=async function(idEvento){
+ const tzcToken185=TZC185.token();try {
+
     let ev=null;
-    try{ev=(await sheet('Eventos')).find(x=>String(x.ID_Evento)===String(idEvento))}catch(e){}
+    try{ev=(await TZC185.aguardar(sheet('Eventos'),tzcToken185)).find(x=>String(x.ID_Evento)===String(idEvento))}catch(e){if(!TZC185.ativa(tzcToken185))return;}
     if(!ev||String(ev.Acesso_Publico||'Sim').trim().toLowerCase()!=='sim'){showToast?.('Este evento é exclusivo para membros.');return}
 
     const mapa=ler();
@@ -11626,9 +11863,9 @@ html body #artesOverlayV85 #aDescricaoV85::placeholder {
     try{
       if(salvo.email||salvo.zap){
         const chave=String(salvo.email||salvo.zap).toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,30);
-        registro=(await sheet('Presencas')).find(p=>String(p.ID_Evento)===String(idEvento)&&String(p.ID_Usuario)===('VISITANTE_'+chave))||null;
+        registro=(await TZC185.aguardar(sheet('Presencas'),tzcToken185)).find(p=>String(p.ID_Evento)===String(idEvento)&&String(p.ID_Usuario)===('VISITANTE_'+chave))||null;
       }
-    }catch(e){}
+    }catch(e){if(!TZC185.ativa(tzcToken185))return;}
     const atual=registro||salvo;
 
     document.getElementById('guestConfirmV130')?.remove();
@@ -11645,7 +11882,9 @@ html body #artesOverlayV85 #aDescricaoV85::placeholder {
       </div><div class="tzc-guest-v130-actions"><button class="btn-toolbar" onclick="document.getElementById('guestConfirmV130')?.remove()">Fechar</button><button class="btn-toolbar btn-add-membro" onclick="salvarConfirmacaoVisitanteTZCV132('${esc(idEvento)}')"><i class="fa-solid fa-floppy-disk"></i> ${Object.keys(atual).length?'Salvar alterações':'Confirmar'}</button></div></div>`;
     document.body.appendChild(d);
     document.getElementById('guestRespV130').value=atual.Resposta||atual.resposta||'Sim';
-  };
+  
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 
   window.salvarConfirmacaoVisitanteTZCV132=async function(idEvento){
     const modal=document.getElementById('guestConfirmV130');
@@ -11676,7 +11915,11 @@ html body #artesOverlayV85 #aDescricaoV85::placeholder {
   setTimeout(aplicarEstadoVisitanteV132,100);
   document.addEventListener('DOMContentLoaded',()=>setTimeout(aplicarEstadoVisitanteV132,250));
   const abrirAnterior=window.abrirEventosMembrosTZCV128;
-  if(typeof abrirAnterior==='function')window.abrirEventosMembrosTZCV128=async function(el){await abrirAnterior(el);setTimeout(aplicarEstadoVisitanteV132,120)};
+  if(typeof abrirAnterior==='function')window.abrirEventosMembrosTZCV128=async function(el){
+ const tzcToken185=TZC185.token();try {
+await TZC185.aguardar(abrirAnterior(el),tzcToken185);setTimeout(aplicarEstadoVisitanteV132,120)
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 })();
 </script>
 
@@ -11698,7 +11941,7 @@ html body #artesOverlayV85 #aDescricaoV85::placeholder {
     // Timestamps ISO gerados pelo site com toISOString() representam UTC.
     if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(bruto)){
       const isoComFuso=/([zZ]|[+\-]\d{2}:?\d{2})$/.test(bruto) ? bruto : bruto+'Z';
-      data=new Date(isoComFuso);
+      data=TZC185.data(isoComFuso);
     }
 
     if(data && !Number.isNaN(data.getTime())){
@@ -11809,8 +12052,10 @@ html body #artesOverlayV85 #aDescricaoV85::placeholder {
   /* Controle de Presenças sem a dupla carga V145 -> V146.
      Faz uma única consulta de Eventos e só renderiza se esta página ainda estiver ativa. */
   window.abrirControlePresencasV175=async function(){
+ const tzcToken185=TZC185.token();try {
+
     if(!gestao175()){showToast?.('Acesso restrito à equipe de gestão.');return}
-    try{document.getElementById('sidebar')?.classList.remove('open')}catch(e){}
+    try{document.getElementById('sidebar')?.classList.remove('open')}catch(e){if(!TZC185.ativa(tzcToken185))return;}
     const info=document.getElementById('generalInfoSection'); if(info)info.style.display='none';
     const busca=document.getElementById('searchContainerWrapper'); if(busca)busca.style.display='none';
     const titulo=document.getElementById('pageTitle'); if(titulo)titulo.style.display='none';
@@ -11822,21 +12067,23 @@ html body #artesOverlayV85 #aDescricaoV85::placeholder {
       let lista=[];
       if(Array.isArray(window.eventos) && window.eventos.length) lista=window.eventos.slice();
       else{
-        const r=await fetch(`${API175}?sheet=Eventos&t=${Date.now()}`,{cache:'no-store'});
+        const r=await TZC185.aguardar(fetch(`${API175}?sheet=Eventos&t=${Date.now()}`,{cache:'no-store'}),tzcToken185);
         if(!r.ok)throw new Error('HTTP '+r.status);
-        const j=await r.json(); lista=Array.isArray(j)?j:[];
+        const j=await TZC185.aguardar(r.json(),tzcToken185); lista=Array.isArray(j)?j:[];
       }
       if(window.__tzcPaginaToken175!==token || !document.querySelector(`[data-tzc-token175="${token}"]`))return;
-      lista=lista.filter(x=>!['excluido','cancelado'].includes(String(x.Status||'Ativo').trim().toLowerCase())).sort((a,b)=>(new Date(a.Data_Inicio||0).getTime()||0)-(new Date(b.Data_Inicio||0).getTime()||0));
+      lista=lista.filter(x=>!['excluido','cancelado'].includes(String(x.Status||'Ativo').trim().toLowerCase())).sort((a,b)=>(TZC185.data(a.Data_Inicio||0).getTime()||0)-(TZC185.data(b.Data_Inicio||0).getTime()||0));
       const count=document.getElementById('controlePresCountV145'); if(count)count.textContent='· '+lista.length+' registros';
       const body=document.getElementById('controlePresBodyV145'); if(!body)return;
-      const fmt=v=>{if(!v)return '—';const d=new Date(v);if(Number.isNaN(d.getTime()))return esc175(v);return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).format(d).replace(',',' às')};
+      const fmt=v=>{if(!v)return '—';const d=TZC185.data(v);if(Number.isNaN(d.getTime()))return esc175(v);return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).format(d).replace(',',' às')};
       body.innerHTML=lista.length?lista.map(x=>`<tr><td><strong>${esc175(x.Titulo||'Evento')}</strong></td><td>${esc175(x.Tipo||'—')}</td><td>${fmt(x.Data_Inicio)}</td><td>${esc175(x.Local||'—')}</td><td style="text-align:right"><button type="button" class="btn-toolbar" onclick="abrirPresencasTZCV127('${esc175(x.ID_Evento||'')}')"><i class="fa-solid fa-user-check"></i> Abrir controle</button></td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#aaa">Nenhum evento disponível.</td></tr>';
-    }catch(e){
+    }catch(e){if(!TZC185.ativa(tzcToken185))return;
       if(window.__tzcPaginaToken175!==token)return;
       const body=document.getElementById('controlePresBodyV145'); if(body)body.innerHTML='<tr><td colspan="5" style="text-align:center;color:#aaa">Não foi possível carregar os eventos.</td></tr>';
     }
-  };
+  
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
   window.abrirControlePresencasV145=window.abrirControlePresencasV175;
 
   /* Padrão final dos botões dos três modais de confirmação. */
@@ -11914,9 +12161,17 @@ html body #artesOverlayV85 #aDescricaoV85::placeholder {
 
   /* Depois que qualquer modal de confirmação for aberto, aplica padrão e ordem. */
   const abrirMembro175=window.confirmarEventoMembroTZCV128;
-  if(typeof abrirMembro175==='function')window.confirmarEventoMembroTZCV128=async function(){const r=await abrirMembro175.apply(this,arguments);padraoConfirmacoes175(document);return r};
+  if(typeof abrirMembro175==='function')window.confirmarEventoMembroTZCV128=async function(){
+ const tzcToken185=TZC185.token();try {
+const r=await TZC185.aguardar(abrirMembro175.apply(this,arguments),tzcToken185);padraoConfirmacoes175(document);return r
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
   const abrirVisit175=window.abrirConfirmacaoVisitanteTZCV130;
-  if(typeof abrirVisit175==='function')window.abrirConfirmacaoVisitanteTZCV130=async function(){const r=await abrirVisit175.apply(this,arguments);padraoConfirmacoes175(document);return r};
+  if(typeof abrirVisit175==='function')window.abrirConfirmacaoVisitanteTZCV130=async function(){
+ const tzcToken185=TZC185.token();try {
+const r=await TZC185.aguardar(abrirVisit175.apply(this,arguments),tzcToken185);padraoConfirmacoes175(document);return r
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
   const novaAdmin175=window.novaPresencaTZCV127;
   if(typeof novaAdmin175==='function')window.novaPresencaTZCV127=function(){const r=novaAdmin175.apply(this,arguments);padraoConfirmacoes175(document);return r};
   const editarAdmin175=window.editarPresencaTZCV127;
@@ -11965,41 +12220,7 @@ html body #artesOverlayV85 #aDescricaoV85::placeholder {
 
   /* 1. DESEMPENHO — uma mesma leitura não deve atravessar a rede várias vezes.
      Cache curto: 12 s. POST/PUT/DELETE limpam imediatamente o cache. */
-  if(!window.__tzcFetchBaseV176){
-    window.__tzcFetchBaseV176=window.fetch.bind(window);
-    const base=window.__tzcFetchBaseV176;
-    const cache=new Map();
-    const emCurso=new Map();
-    window.__tzcLimparCacheV176=()=>{cache.clear();emCurso.clear()};
-    window.fetch=async function(input,init){
-      const metodo=String(init?.method||'GET').toUpperCase();
-      const url=typeof input==='string'?input:String(input?.url||'');
-      const leitura=metodo==='GET' && API176 && url.startsWith(API176) && /[?&]sheet=/.test(url);
-      if(!leitura){
-        if(metodo!=='GET')window.__tzcLimparCacheV176();
-        return base(input,init);
-      }
-      /* ignora parâmetros usados apenas para furar cache, para deduplicar de verdade */
-      let chave=url.replace(/([?&])t=\d+(&?)/,'$1').replace(/[?&]$/,'');
-      const agora=Date.now();
-      const salvo=cache.get(chave);
-      if(salvo && agora-salvo.ts<12000)return new Response(salvo.body,{status:salvo.status,statusText:salvo.statusText,headers:salvo.headers});
-      if(emCurso.has(chave)){
-        const d=await emCurso.get(chave);
-        return new Response(d.body,{status:d.status,statusText:d.statusText,headers:d.headers});
-      }
-      const p=(async()=>{
-        const resp=await base(input,init);
-        const body=await resp.clone().text();
-        const d={body,status:resp.status,statusText:resp.statusText,headers:Array.from(resp.headers.entries()),ts:Date.now()};
-        if(resp.ok)cache.set(chave,d);
-        return d;
-      })();
-      emCurso.set(chave,p);
-      try{const d=await p;return new Response(d.body,{status:d.status,statusText:d.statusText,headers:d.headers})}
-      finally{emCurso.delete(chave)}
-    };
-  }
+  /* Transporte centralizado no TZC185. */
 
   /* 2. NAVEGAÇÃO — rota inequívoca para Início. */
   window.voltarInicioSeguroV176=function(){
@@ -12040,6 +12261,7 @@ html body #artesOverlayV85 #aDescricaoV85::placeholder {
     };
   }
 
+  window.modalExcluir176=modalExcluir176;
   window.excluirPresencaTZCV127=function(id){
     const botao=document.querySelector(`button[onclick*="excluirPresencaTZCV127('${CSS.escape(String(id))}')"]`) || Array.from(document.querySelectorAll('button[onclick*="excluirPresencaTZCV127"]')).find(b=>(b.getAttribute('onclick')||'').includes(String(id)));
     const tr=botao?.closest('tr');
@@ -12137,31 +12359,7 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
 
   /* V176 já deduplica GETs. Como toda gravação limpa o cache, 60 s reduz
      reconsultas ao navegar sem deixar dados antigos após salvar/excluir. */
-  if(window.__tzcFetchBaseV176 && !window.__tzcFetchV177){
-    window.__tzcFetchV177=true;
-    const fetch176=window.fetch.bind(window);
-    const cache177=new Map(), curso177=new Map();
-    const limparAnterior=window.__tzcLimparCacheV176;
-    window.__tzcLimparCacheV177=()=>{cache177.clear();curso177.clear();try{limparAnterior?.()}catch(e){}};
-    window.fetch=async function(input,init){
-      const metodo=String(init?.method||'GET').toUpperCase();
-      const url=typeof input==='string'?input:String(input?.url||'');
-      const leitura=metodo==='GET'&&API177&&url.startsWith(API177)&&/[?&]sheet=/.test(url);
-      if(!leitura){
-        if(metodo!=='GET')window.__tzcLimparCacheV177();
-        return fetch176(input,init);
-      }
-      const chave=url.replace(/([?&])t=\d+(&?)/,'$1').replace(/[?&]$/,'');
-      const c=cache177.get(chave),agora=Date.now();
-      if(c&&agora-c.ts<60000)return new Response(c.body,{status:c.status,statusText:c.statusText,headers:c.headers});
-      if(curso177.has(chave)){
-        const d=await curso177.get(chave);return new Response(d.body,{status:d.status,statusText:d.statusText,headers:d.headers});
-      }
-      const p=(async()=>{const r=await fetch176(input,init),body=await r.clone().text();const d={body,status:r.status,statusText:r.statusText,headers:Array.from(r.headers.entries()),ts:Date.now()};if(r.ok)cache177.set(chave,d);return d})();
-      curso177.set(chave,p);
-      try{const d=await p;return new Response(d.body,{status:d.status,statusText:d.statusText,headers:d.headers})}finally{curso177.delete(chave)}
-    };
-  }
+  /* Cache centralizado no TZC185. */
 
   /* MEMBRO LOGADO: fecha o formulário imediatamente, mostra o overlay aprovado,
      grava uma única vez e atualiza só o cartão — sem recarregar a página. */
@@ -12298,22 +12496,26 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
   }
 
   window.abrirPresencasTZCV127=async function(idEvento){
+ const tzcToken185=TZC185.token();try {
+
     const chave=String(idEvento||'');
     if(emAbertura179===chave)return;
     emAbertura179=chave;
     try{
       document.getElementById('sidebar')?.classList.remove('open');
       telaCarga179();
-      await aquecer179();
-      await abrirFinal178.apply(this,arguments);
-    }catch(e){
+      await TZC185.aguardar(aquecer179(),tzcToken185);
+      await TZC185.aguardar(abrirFinal178.apply(this,arguments),tzcToken185);
+    }catch(e){if(!TZC185.ativa(tzcToken185))return;
       console.error('TZC V179 - abertura de confirmações:',e);
       const c=document.getElementById('contentContainer');
       if(c)c.innerHTML=`<div class="tzc-page-head-v44"><button type="button" class="btn-toolbar tzc-page-back-v44" onclick="abrirEventosTZC_V126()"><i class="fa-solid fa-arrow-left"></i> Eventos e Giras</button><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-user-check"></i> Confirmações e Presenças</h2><p>Não foi possível carregar os dados deste evento.</p></div><div></div></div>`;
     }finally{
       emAbertura179=null;
     }
-  };
+  
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 })();
 </script>
 
@@ -12330,6 +12532,8 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
   if(typeof abrirV179!=='function')return;
 
   window.abrirPresencasTZCV127=async function(idEvento){
+ const tzcToken185=TZC185.token();try {
+
     const id=String(idEvento||'');
     let nome='';
 
@@ -12339,7 +12543,7 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
                   (typeof eventos!=='undefined'&&Array.isArray(eventos)?eventos:[]);
       const ev=lista.find(x=>String(x.ID_Evento||'')===id);
       nome=String(ev?.Titulo||'').trim();
-    }catch(e){}
+    }catch(e){if(!TZC185.ativa(tzcToken185))return;}
 
     /* Fallback: lê o próprio registro da tabela ANTES de V179 substituí-la
        pela tela "Carregando confirmações...". */
@@ -12348,11 +12552,11 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
         const botoes=Array.from(document.querySelectorAll('#eventoBodyV126 button[onclick*="abrirPresencasTZCV127"]'));
         const botao=botoes.find(b=>String(b.getAttribute('onclick')||'').includes("'"+id+"'"));
         nome=String(botao?.closest('tr')?.querySelector('td')?.textContent||'').trim();
-      }catch(e){}
+      }catch(e){if(!TZC185.ativa(tzcToken185))return;}
     }
 
     window.__tzcNomeEventoV180=nome;
-    await abrirV179.apply(this,arguments);
+    await TZC185.aguardar(abrirV179.apply(this,arguments),tzcToken185);
 
     const pagina=document.getElementById('contentContainer');
     if(!pagina||!window.__tzcNomeEventoV180)return;
@@ -12361,7 +12565,9 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
     const bloco=pagina.querySelector('.tzc-pres-evento-v148');
     const h3=bloco?.querySelector('h3');
     if(h3)h3.textContent=window.__tzcNomeEventoV180;
-  };
+  
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
 })();
 </script>
 
@@ -12436,13 +12642,17 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
   const abrirPresBaseV182=window.abrirPresencasTZCV127;
   if(typeof abrirPresBaseV182==='function'){
     window.abrirPresencasTZCV127=async function(){
+ const tzcToken185=TZC185.token();try {
+
       ocultarTituloGlobalV182();
       try{
-        return await abrirPresBaseV182.apply(this,arguments);
-      }catch(e){
+        return await TZC185.aguardar(abrirPresBaseV182.apply(this,arguments),tzcToken185);
+      }catch(e){if(!TZC185.ativa(tzcToken185))return;
         throw e;
       }
-    };
+    
+ }catch(tzcErro185){if(tzcErro185?.tzcCancelado)return;throw tzcErro185}
+};
   }
 
   const abrirEventosBaseV182=window.abrirEventosTZC_V126;
@@ -12454,31 +12664,115 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
   }
 })();
 </script>
-\n\n<!-- ============================================================\n     TZC V183 — CORREÇÃO ÚNICA: BLOQUEIA RETORNO TARDIO DA HOME\n     - ao abrir Eventos ou Confirmações, marca imediatamente a rota atual;\n     - uma consulta antiga da Home/Destaques não pode mais sobrescrever\n       a página nova quando terminar depois;\n     - não altera desempenho, CRUD, PDF, modais ou demais módulos.\n     ============================================================ -->\n<script id="tzc-v183-bloqueia-retorno-tardio-home">\n(function(){\n  'use strict';\n\n  const abrirEventosBaseV183=window.abrirEventosTZC_V126;\n  if(typeof abrirEventosBaseV183==='function'){\n    window.abrirEventosTZC_V126=function(){\n      try{ currentTab='Eventos_TZC'; }catch(e){}\n      return abrirEventosBaseV183.apply(this,arguments);\n    };\n  }\n\n  const abrirPresBaseV183=window.abrirPresencasTZCV127;\n  if(typeof abrirPresBaseV183==='function'){\n    window.abrirPresencasTZCV127=async function(){\n      try{ currentTab='Confirmacoes_Presencas_TZC'; }catch(e){}\n      return await abrirPresBaseV183.apply(this,arguments);\n    };\n  }\n})();\n</script>\n
 <!-- ============================================================
      TZC V184 — CORREÇÃO ÚNICA: HOME NÃO SOBRESCREVE PÁGINA INTERNA
      - se Eventos/Confirmações já ocupam o contentContainer, um retorno
        atrasado da Home não pode renderizar os cards de Destaques por cima;
      - não altera carregamento, CRUD, PDF, modais ou demais módulos.
      ============================================================ -->
-<script id="tzc-v184-trava-destaques-fora-home">
+
+
+<script id="tzc-v185-navegacao-crud">
+/* TZC V185 — destinos explícitos e cadastro de membros compatível com a API. */
 (function(){
   'use strict';
-  const buildHomeBaseV184=window.buildHomeAgenda;
-  if(typeof buildHomeBaseV184!=='function')return;
-
-  window.buildHomeAgenda=function(data){
-    const c=document.getElementById('contentContainer');
-    if(c){
-      const paginaInterna = !!(
-        c.querySelector('.tzc-eventos-table-v126') ||
-        c.querySelector('.tzc-pres-evento-v148') ||
-        c.querySelector('#presBodyV127') ||
-        c.querySelector('#tzcCargaPresV179')
-      );
-      if(paginaInterna)return;
-    }
-    return buildHomeBaseV184.apply(this,arguments);
+  const perfis=['dirigente','administrador','colaborador','editor/colaborador','editor'];
+  const gestor=()=>isLoggedIn&&perfis.includes(String(loggedUser?.perfil||loggedUser?.Perfil||'').trim().toLowerCase());
+  const gestaoInterna=()=>podeAcessarGestaoInternaTZC_V1();
+  const el=id=>document.getElementById(id);
+  let profundidade=0;
+  const titulos={Home:'Destaques',Agenda:'Calendário da Agenda',Mural_Imagens:'Mural de Avisos',Pontos_Cantados:'Coletânea de Pontos Cantados',Ervas_Banhos:'Guia Sagrado de Ervas & Banhos',Guias_Instrucoes:'Orientações'};
+  function preparar(rota){
+    TZC185.navegar(rota);
+    if(el('loading')){el('loading').style.display='none';el('loading').innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Carregando...'}
+    el('sidebar')?.classList.remove('open');
+    el('pageTitle')?.classList.remove('tzc-home-destaque-v110');
+    if(el('generalInfoSection'))el('generalInfoSection').style.display=rota==='Home'?'grid':'none';
+    if(el('searchContainerWrapper'))el('searchContainerWrapper').style.display='none';
+    if(el('pageSubtitleContainer'))el('pageSubtitleContainer').innerHTML='';
+    if(el('pageTitle')){el('pageTitle').style.display=titulos[rota]?'flex':'none';el('pageTitle').innerHTML=''}
+    document.body.classList.toggle('tzc-v144-pagina-eventos-aberta',/Eventos|Presencas/.test(rota));
+    document.querySelectorAll('#navList .nav-item').forEach(n=>n.classList.remove('active'));
+    const destinos={Home:"switchTab('Home'",Agenda:"switchTab('Agenda'",Mural_Imagens:"switchTab('Mural_Imagens'",Pontos_Cantados:"switchTab('Pontos_Cantados'",Ervas_Banhos:"switchTab('Ervas_Banhos'",Guias_Instrucoes:"switchTab('Guias_Instrucoes'",Quem_Somos:'abrirQuemSomosPublicoTZC',Mensagem_Dia:'abrirMensagemDiaTZC',Banho_Semana:'abrirBanhoSemanaTZC'};
+    const menu=rota==='Membros'?el('menuMembros'):rota==='Gestao_Interna'?el('menuGestaoInterna'):/Presencas/.test(rota)?el('menuPresencasV134'):/Eventos/.test(rota)?el('menuEventosV128'):Array.from(document.querySelectorAll('#navList .nav-item')).find(n=>destinos[rota]&&String(n.getAttribute('onclick')||'').includes(destinos[rota]));
+    menu?.classList.add('active');
+  }
+  function envolver(nome,rota,restrita=false){
+    const base=window[nome];if(typeof base!=='function')return;
+    window[nome]=function(){
+      if(restrita&&!(typeof restrita==='function'?restrita():gestor())){showToast('Acesso restrito à equipe de gestão.');return}
+      if(!profundidade)preparar(typeof rota==='function'?rota(...arguments):rota);
+      profundidade++;
+      try{return base.apply(this,arguments)}finally{profundidade--}
+    };
+  }
+  const switchBase=window.switchTab;
+  window.switchTab=function(tab,element){
+    if(!['Home','Agenda','Mural_Imagens','Pontos_Cantados','Ervas_Banhos','Guias_Instrucoes','Membros','Gestao_Interna'].includes(tab)){showToast('Página não encontrada.');return}
+    if(['Membros','Gestao_Interna'].includes(tab)&&!gestaoInterna()){showToast('Acesso restrito à equipe de gestão.');return}
+    if(!profundidade)preparar(tab);
+    profundidade++;
+    try{return switchBase.call(this,tab,element)}finally{profundidade--}
   };
+  const mapa={abrirQuemSomosPublicoTZC_V103:'Quem_Somos',abrirMensagemDiaTZC_V103:'Mensagem_Dia',abrirBanhoSemanaTZC_V104:'Banho_Semana',abrirEventosMembrosTZCV128:'Eventos_Publicos',abrirEventosTZC_V126:'Eventos_TZC',abrirControlePresencasV175:'Controle_Presencas',abrirControlePresencasV145:'Controle_Presencas',abrirPresencasTZCV127:id=>'Confirmacoes_Presencas:'+id,abrirEstudosTZC_V1:'Estudos',abrirCategoriasTZC_V1:'Categorias',abrirConfiguracoesTerreiroTZC_V1:'Configuracoes',abrirGestaoErvasTZC_V1:'Gestao_Ervas',abrirMidiasSociaisTZC:'Midias_Sociais',abrirArtesPdfTZC:'Artes_PDFs',abrirUsuariosPermissoesTZC:'Usuarios_Acesso',abrirPublicacoesTZC_V104:'Publicacoes',carregarEExibirMembros:'Membros'};
+  for(const [nome,rota] of Object.entries(mapa))envolver(nome,rota,(['abrirEstudosTZC_V1','abrirCategoriasTZC_V1','abrirConfiguracoesTerreiroTZC_V1','abrirGestaoErvasTZC_V1','abrirMidiasSociaisTZC','abrirArtesPdfTZC','abrirUsuariosPermissoesTZC','abrirPublicacoesTZC_V104','carregarEExibirMembros'].includes(nome)?gestaoInterna:!['abrirQuemSomosPublicoTZC_V103','abrirMensagemDiaTZC_V103','abrirBanhoSemanaTZC_V104','abrirEventosMembrosTZCV128'].includes(nome)));
+  const voltar=()=>window.switchTab('Home',document.querySelector('#navList .nav-item'));
+  window.voltarInicioEventosV133=voltar;window.voltarInicioSeguroV176=voltar;
+  // Captura determinística: instaladores antigos não podem trocar o destino do menu.
+  document.addEventListener('click',function(e){
+    const item=e.target.closest?.('#navList .nav-item');if(!item)return;
+    let executar=null;
+    if(item.id==='menuEventosV128')executar=()=>gestor()?window.abrirEventosTZC_V126():window.abrirEventosMembrosTZCV128(item);
+    else if(item.id==='menuPresencasV134')executar=()=>window.abrirControlePresencasV175();
+    else if(item.id==='menuMembros')executar=()=>window.switchTab('Membros',item);
+    else if(item.id==='menuGestaoInterna')executar=()=>window.switchTab('Gestao_Interna',item);
+    else{
+      const oc=item.getAttribute('onclick')||'';const tab=oc.match(/switchTab\(['"]([^'"]+)['"]/);
+      if(tab)executar=()=>window.switchTab(tab[1],item);
+      else if(oc.includes('abrirQuemSomos'))executar=()=>window.abrirQuemSomosPublicoTZC_V103(item);
+      else if(oc.includes('abrirMensagemDia'))executar=()=>window.abrirMensagemDiaTZC_V103(item);
+      else if(oc.includes('abrirBanhoSemana'))executar=()=>window.abrirBanhoSemanaTZC_V104(item);
+    }
+    if(executar){e.preventDefault();e.stopImmediatePropagation();Promise.resolve(executar()).catch(err=>{if(!err?.tzcCancelado)showToast('Não foi possível abrir a página: '+err.message)})}
+  },true);
+  window.parseLocalDate=function(v){const d=TZC185.data(v);return isNaN(d.getTime())?null:new Date(d.getFullYear(),d.getMonth(),d.getDate())};
+  window.isPublicAccess=function(item){
+    const s=String(item?.Acesso_Publico??item?.Acesso??item?.Visibilidade??'Sim').trim().toLowerCase();
+    return !['não','nao','false','0','fechada','fechado'].includes(s)&&!/restrit|fechad|somente.*membro/.test(s)||isLoggedIn;
+  };
+  // Permanece possível salvar os mesmos campos existentes, agora por cabeçalho.
+  window.salvarMembro=async function(){
+    if(!gestaoInterna())return showToast('Acesso restrito à equipe de gestão.');
+    if(window.__tzcSalvandoMembro185)return;
+    const valor=id=>String(el(id)?.value||'').trim();
+    const existente=valor('membroId'),id=existente||('FILHO_'+Date.now()+'_'+Math.random().toString(36).slice(2,8));
+    const dados={ID_Filho:id,Nome_Completo:valor('membroNome'),Data_Nascimento:valor('membroDataNasc'),Telefone:valor('membroTelefone'),Email:valor('membroEmail'),Endereco:valor('membroEndereco'),Data_Entrada:valor('membroDataEntrada'),Cargo_Funcao:valor('membroCargo'),Orixa_Frente:valor('membroOrixa'),Status_Ativo:valor('membroStatus'),Perfil:valor('membroPerfil'),Observacoes:valor('membroObservacoes')};
+    if(!dados.Nome_Completo||!dados.Email)return showToast('Preencha ao menos o Nome Completo e o E-mail.');
+    const token=TZC185.token();window.__tzcSalvandoMembro185=true;
+    try{
+      await fetch(WEB_APP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:existente?'atualizar':'inserir',nomeAba:'Cadastro_Filhos',id,idColuna:'ID_Filho',dados})});
+      const arr=window.__tzcMembros178||[];const i=arr.findIndex(m=>String(m.ID_Filho)===id);if(i<0)arr.push(dados);else arr[i]={...arr[i],...dados};window.__tzcMembros178=arr;listaMembros=arr;
+      closeMembroModal();if(TZC185.ativa(token))window.renderMembros178();showToast('Membro salvo com sucesso!');
+    }catch(e){showToast('Não foi possível salvar o membro: '+e.message)}finally{window.__tzcSalvandoMembro185=false}
+  };
+  window.excluirMembro=function(id){
+    if(!gestaoInterna())return showToast('Acesso restrito à equipe de gestão.');
+    const item=(window.__tzcMembros178||[]).find(m=>String(m.ID_Filho||m.id)===String(id));if(!item)return;
+    const token=TZC185.token();
+    const excluir=async()=>{
+      await fetch(WEB_APP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'excluir',nomeAba:'Cadastro_Filhos',id,idColuna:'ID_Filho'})});
+      window.__tzcMembros178=window.__tzcMembros178.filter(m=>String(m.ID_Filho||m.id)!==String(id));listaMembros=window.__tzcMembros178;
+      if(TZC185.ativa(token))window.renderMembros178();showToast('Membro excluído com sucesso!');
+    };
+    window.modalExcluir176('Excluir membro?',item.Nome_Completo||item.Nome||'Membro',excluir);
+  };
+  for(const nome of ['salvarMidiaTZC','confirmarExcluirMidiaTZC','salvarArtePdfTZC','confirmarExcluirArtePdfTZC','salvarErvaTZC_V37','confirmarExcluirErvaTZC_V37','salvarPublicacaoTZC_V104','salvarEventoTZC_V126']){
+    const base=window[nome];if(typeof base!=='function')continue;
+    let salvando=false;
+    window[nome]=async function(){if(salvando)return;salvando=true;try{return await base.apply(this,arguments)}catch(e){showToast('Não foi possível gravar: '+e.message)}finally{salvando=false}};
+  }
 })();
+
 </script>
+</body>
+</html>

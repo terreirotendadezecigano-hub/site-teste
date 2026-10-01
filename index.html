@@ -3528,6 +3528,15 @@
       try {
         const response = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/${targetSheet}`);
         let data = await response.json();
+
+        /* V183 — se o usuário saiu desta aba enquanto a consulta estava
+           aguardando resposta, o retorno antigo não pode sobrescrever a
+           página que já foi aberta depois (ex.: Eventos/Confirmações). */
+        if (currentTab !== tabName) {
+          loading.style.display = 'none';
+          return;
+        }
+
         currentData = data;
         loading.style.display = 'none';
 
@@ -12445,3 +12454,4 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
   }
 })();
 </script>
+\n\n<!-- ============================================================\n     TZC V183 — CORREÇÃO ÚNICA: BLOQUEIA RETORNO TARDIO DA HOME\n     - ao abrir Eventos ou Confirmações, marca imediatamente a rota atual;\n     - uma consulta antiga da Home/Destaques não pode mais sobrescrever\n       a página nova quando terminar depois;\n     - não altera desempenho, CRUD, PDF, modais ou demais módulos.\n     ============================================================ -->\n<script id="tzc-v183-bloqueia-retorno-tardio-home">\n(function(){\n  'use strict';\n\n  const abrirEventosBaseV183=window.abrirEventosTZC_V126;\n  if(typeof abrirEventosBaseV183==='function'){\n    window.abrirEventosTZC_V126=function(){\n      try{ currentTab='Eventos_TZC'; }catch(e){}\n      return abrirEventosBaseV183.apply(this,arguments);\n    };\n  }\n\n  const abrirPresBaseV183=window.abrirPresencasTZCV127;\n  if(typeof abrirPresBaseV183==='function'){\n    window.abrirPresencasTZCV127=async function(){\n      try{ currentTab='Confirmacoes_Presencas_TZC'; }catch(e){}\n      return await abrirPresBaseV183.apply(this,arguments);\n    };\n  }\n})();\n</script>\n

@@ -12307,3 +12307,51 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
   };
 })();
 </script>
+
+<!-- ============================================================
+     TZC V180 — CORREÇÃO ÚNICA: NOME DO EVENTO EM CONFIRMAÇÕES
+     - preserva o evento clicado ANTES da tela de carregamento;
+     - restaura o nome correto no destaque da página final;
+     - não altera desempenho, CRUD, PDF, modal ou demais módulos.
+     ============================================================ -->
+<script id="tzc-v180-corrige-nome-evento-confirmacoes">
+(function(){
+  'use strict';
+  const abrirV179=window.abrirPresencasTZCV127;
+  if(typeof abrirV179!=='function')return;
+
+  window.abrirPresencasTZCV127=async function(idEvento){
+    const id=String(idEvento||'');
+    let nome='';
+
+    /* Primeiro usa a lista de eventos que já está em memória. */
+    try{
+      const lista=Array.isArray(window.eventos)?window.eventos:
+                  (typeof eventos!=='undefined'&&Array.isArray(eventos)?eventos:[]);
+      const ev=lista.find(x=>String(x.ID_Evento||'')===id);
+      nome=String(ev?.Titulo||'').trim();
+    }catch(e){}
+
+    /* Fallback: lê o próprio registro da tabela ANTES de V179 substituí-la
+       pela tela "Carregando confirmações...". */
+    if(!nome){
+      try{
+        const botoes=Array.from(document.querySelectorAll('#eventoBodyV126 button[onclick*="abrirPresencasTZCV127"]'));
+        const botao=botoes.find(b=>String(b.getAttribute('onclick')||'').includes("'"+id+"'"));
+        nome=String(botao?.closest('tr')?.querySelector('td')?.textContent||'').trim();
+      }catch(e){}
+    }
+
+    window.__tzcNomeEventoV180=nome;
+    await abrirV179.apply(this,arguments);
+
+    const pagina=document.getElementById('contentContainer');
+    if(!pagina||!window.__tzcNomeEventoV180)return;
+
+    /* Corrige somente o bloco de destaque aprovado da V148/V150. */
+    const bloco=pagina.querySelector('.tzc-pres-evento-v148');
+    const h3=bloco?.querySelector('h3');
+    if(h3)h3.textContent=window.__tzcNomeEventoV180;
+  };
+})();
+</script>

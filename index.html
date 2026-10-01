@@ -12355,3 +12355,48 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
   };
 })();
 </script>
+
+<!-- ============================================================
+     TZC V181 — CORREÇÃO ÚNICA: PARTICIPANTE NA EDIÇÃO DA CONFIRMAÇÃO
+     - ao EDITAR, mantém o participante original do registro;
+     - não mostra a lista de outros usuários para trocar a pessoa;
+     - NOVA confirmação continua usando a lista normalmente;
+     - não altera carregamento, gravação, PDF ou demais módulos.
+     ============================================================ -->
+<script id="tzc-v181-participante-edicao-confirmacao">
+(function(){
+  'use strict';
+  const editarBase181=window.editarPresencaTZCV127;
+  if(typeof editarBase181!=='function')return;
+
+  window.editarPresencaTZCV127=function(id){
+    const botao=Array.from(document.querySelectorAll('button[onclick*="editarPresencaTZCV127"]'))
+      .find(b=>(b.getAttribute('onclick')||'').includes(String(id)));
+    const nome=(botao?.closest('tr')?.querySelector('td')?.textContent||'Participante').trim();
+
+    const r=editarBase181.apply(this,arguments);
+    const select=document.getElementById('prUsuario');
+    if(!select)return r;
+
+    const idUsuario=select.value || '';
+    const campo=document.createElement('input');
+    campo.type='text';
+    campo.id='prUsuarioNomeV181';
+    campo.value=nome;
+    campo.readOnly=true;
+    campo.setAttribute('aria-label','Participante da confirmação');
+    campo.style.cursor='default';
+
+    /* salvarPresencaTZCV127 continua lendo prUsuario.value. Mantemos um campo
+       oculto com o mesmo id e o ID original, sem permitir troca acidental. */
+    const oculto=document.createElement('input');
+    oculto.type='hidden';
+    oculto.id='prUsuario';
+    oculto.value=idUsuario;
+
+    select.replaceWith(campo);
+    campo.insertAdjacentElement('afterend',oculto);
+    return r;
+  };
+})();
+</script>

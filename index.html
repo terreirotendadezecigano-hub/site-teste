@@ -11963,3 +11963,168 @@ html body #artesOverlayV85 #aDescricaoV85::placeholder {
   padronizarModal176(document);
 })();
 </script>
+
+<!-- ============================================================
+     TZC V177 — PENTE-FINO GLOBAL / ESTABILIZAÇÃO DE UX
+     Base: V176
+     - restaura modal global "Salvando..." nas confirmações;
+     - fecha modal de confirmação imediatamente ao salvar;
+     - exclusão fecha confirmação imediatamente e processa com overlay;
+     - cache de leitura ampliado com invalidação em toda gravação;
+     - destaca o nome do evento abaixo do título de Confirmações e Presenças;
+     - remove botões "Gestão Interna" das páginas internas;
+     - preserva o menu Gestão Interna e suas permissões;
+     - mantém selects em ordem alfabética.
+     ============================================================ -->
+<style id="tzc-v177-pente-fino-style">
+/* Nome do evento: destaque discreto, sem competir com o título da página. */
+.tzc-evento-intro-v177{
+  color:var(--gold-primary)!important;
+  font-weight:700!important;
+  font-size:.95rem!important;
+}
+/* Botões de retorno para Gestão Interna não devem aparecer dentro das páginas. */
+button[onclick*="voltarGestaoInternaTZC_V1"],
+button[title*="Voltar para Gestão Interna"]{display:none!important}
+</style>
+<script id="tzc-v177-pente-fino-global">
+(function(){
+  'use strict';
+  const API177=(typeof WEB_APP_URL!=='undefined'&&WEB_APP_URL)?WEB_APP_URL:'';
+  const esc177=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+  /* Um único padrão visual para operações que dependem do Apps Script. */
+  function salvando177(texto){
+    if(typeof window.mostrarSalvandoTZCV134==='function'){
+      window.mostrarSalvandoTZCV134(texto||'Salvando...');
+      return;
+    }
+    document.getElementById('tzcSavingV177')?.remove();
+    const d=document.createElement('div');d.id='tzcSavingV177';d.className='tzc-saving-v134';
+    d.innerHTML=`<div class="tzc-saving-box-v134"><i class="fa-solid fa-spinner fa-spin"></i><strong>${esc177(texto||'Salvando...')}</strong><small>Aguarde só um instante.</small></div>`;
+    document.body.appendChild(d);
+  }
+  function fim177(){
+    try{window.fecharSalvandoTZCV134?.()}catch(e){}
+    document.getElementById('tzcSavingV177')?.remove();
+  }
+
+  /* V176 já deduplica GETs. Como toda gravação limpa o cache, 60 s reduz
+     reconsultas ao navegar sem deixar dados antigos após salvar/excluir. */
+  if(window.__tzcFetchBaseV176 && !window.__tzcFetchV177){
+    window.__tzcFetchV177=true;
+    const fetch176=window.fetch.bind(window);
+    const cache177=new Map(), curso177=new Map();
+    const limparAnterior=window.__tzcLimparCacheV176;
+    window.__tzcLimparCacheV177=()=>{cache177.clear();curso177.clear();try{limparAnterior?.()}catch(e){}};
+    window.fetch=async function(input,init){
+      const metodo=String(init?.method||'GET').toUpperCase();
+      const url=typeof input==='string'?input:String(input?.url||'');
+      const leitura=metodo==='GET'&&API177&&url.startsWith(API177)&&/[?&]sheet=/.test(url);
+      if(!leitura){
+        if(metodo!=='GET')window.__tzcLimparCacheV177();
+        return fetch176(input,init);
+      }
+      const chave=url.replace(/([?&])t=\d+(&?)/,'$1').replace(/[?&]$/,'');
+      const c=cache177.get(chave),agora=Date.now();
+      if(c&&agora-c.ts<60000)return new Response(c.body,{status:c.status,statusText:c.statusText,headers:c.headers});
+      if(curso177.has(chave)){
+        const d=await curso177.get(chave);return new Response(d.body,{status:d.status,statusText:d.statusText,headers:d.headers});
+      }
+      const p=(async()=>{const r=await fetch176(input,init),body=await r.clone().text();const d={body,status:r.status,statusText:r.statusText,headers:Array.from(r.headers.entries()),ts:Date.now()};if(r.ok)cache177.set(chave,d);return d})();
+      curso177.set(chave,p);
+      try{const d=await p;return new Response(d.body,{status:d.status,statusText:d.statusText,headers:d.headers})}finally{curso177.delete(chave)}
+    };
+  }
+
+  /* MEMBRO LOGADO: fecha o formulário imediatamente, mostra o overlay aprovado,
+     grava uma única vez e atualiza só o cartão — sem recarregar a página. */
+  window.salvarConfirmEventoTZCV128=async function(idEvento){
+    const modal=document.getElementById('confirmEventoV128');if(!modal)return;
+    const atual=JSON.parse(modal.dataset.presenca||'{}');
+    const u=JSON.parse(modal.dataset.usuario||'{}');
+    const resposta=document.getElementById('confirmRespostaV128')?.value||'Sim';
+    const obs=document.getElementById('confirmObsV128')?.value?.trim()||'';
+    modal.remove();salvando177('Salvando resposta...');
+    try{
+      const id=atual.ID_Presenca||`PRE_${Date.now()}_${Math.random().toString(36).slice(2,7).toUpperCase()}`;
+      const agora=new Date().toISOString();
+      const dados={ID_Presenca:id,ID_Evento:idEvento,ID_Usuario:u.ID_Usuario||'',Data_Resposta:agora,Resposta:resposta,Presenca:atual.Presenca||'Pendente',Observacoes:obs,Atualizado_Em:agora};
+      if(!atual.ID_Presenca)dados.Criado_Em=agora;
+      const r=await fetch(API177,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:atual.ID_Presenca?'atualizar':'inserir',nomeAba:'Presencas',id,idColuna:'ID_Presenca',dados})});
+      const j=await r.json().catch(()=>({status:'sucesso'}));if(String(j.status||'').toLowerCase()==='erro')throw new Error(j.mensagem||'Erro ao salvar');
+      document.querySelectorAll('.tzc-evento-membro-card-v128').forEach(card=>{
+        const b=Array.from(card.querySelectorAll('button[onclick*="confirmarEventoMembroTZCV128"]')).find(x=>(x.getAttribute('onclick')||'').includes(String(idEvento)));if(!b)return;
+        const info=card.querySelector('.tzc-evento-resposta-v128');if(info)info.innerHTML=`<i class="fa-solid fa-circle-check"></i> Sua resposta: <strong>${esc177(resposta)}</strong>`;
+        b.innerHTML='<i class="fa-solid fa-pen"></i> Alterar resposta';
+      });
+      showToast?.('Resposta salva com sucesso!');
+    }catch(e){showToast?.('Não foi possível salvar sua resposta. Tente novamente.')}finally{fim177()}
+  };
+
+  /* VISITANTE: mantém a função de gravação já aprovada, mas o modal fecha antes
+     da espera e o usuário vê o mesmo overlay de processamento. */
+  const salvarVisitanteBase177=window.salvarConfirmacaoVisitanteTZCV132;
+  if(typeof salvarVisitanteBase177==='function'){
+    window.salvarConfirmacaoVisitanteTZCV132=async function(){
+      const m=document.getElementById('guestConfirmV130');
+      /* A função antiga precisa ler os campos. Portanto preservamos o modal no DOM,
+         mas o ocultamos visualmente durante a gravação. */
+      if(m)m.style.visibility='hidden';salvando177('Salvando resposta...');
+      try{return await salvarVisitanteBase177.apply(this,arguments)}
+      catch(e){if(m)m.style.visibility='visible';throw e}
+      finally{fim177();document.getElementById('guestConfirmV130')?.remove()}
+    };
+  }
+
+  /* EXCLUSÃO: ao confirmar, fecha o modal de pergunta imediatamente e mostra
+     processamento global. Não deixa o usuário preso olhando "Excluindo...". */
+  const excluirPresBase177=window.excluirPresencaTZCV127;
+  window.excluirPresencaTZCV127=function(id){
+    const botao=Array.from(document.querySelectorAll('button[onclick*="excluirPresencaTZCV127"]')).find(b=>(b.getAttribute('onclick')||'').includes(String(id)));
+    const tr=botao?.closest('tr');const nome=(tr?.querySelector('td')?.textContent||'esta confirmação').trim();
+    if(typeof modalExcluir176!=='function')return excluirPresBase177?.(id);
+    modalExcluir176('Excluir confirmação?',nome,async()=>{
+      document.getElementById('tzcExcluirV176')?.remove();salvando177('Excluindo confirmação...');
+      try{
+        const r=await fetch(API177,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({acao:'excluir',nomeAba:'Presencas',id,idColuna:'ID_Presenca'})});
+        const j=await r.json().catch(()=>({status:'sucesso'}));if(String(j.status||'').toLowerCase()==='erro')throw new Error(j.mensagem||'Erro');
+        tr?.remove();const tbody=document.getElementById('presBodyV127');const qtd=tbody?Array.from(tbody.querySelectorAll('tr')).filter(x=>x.querySelectorAll('td').length>1&&!x.querySelector('td[colspan]')).length:0;
+        const c=document.getElementById('presCountV127');if(c)c.textContent=`· ${qtd} registros`;
+        if(tbody&&qtd===0)tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:#aaa">Nenhuma confirmação registrada para este evento.</td></tr>';
+        showToast?.('Confirmação excluída!');
+      }finally{fim177()}
+    });
+  };
+
+  /* Nome do evento logo abaixo do título: realça SOMENTE o nome. */
+  function destacarEvento177(root=document){
+    const c=document.getElementById('contentContainer');if(!c)return;
+    const h=Array.from(c.querySelectorAll('h2')).find(x=>/confirmações e presenças/i.test(x.textContent||''));if(!h)return;
+    const copia=h.closest('.tzc-page-copy-v44')||h.parentElement;const p=copia?.querySelector('p');if(!p)return;
+    const texto=(p.textContent||'').trim();
+    const m=texto.match(/^(.+?)\s*:\s*(acompanhe\b.*)$/i);
+    if(m)p.innerHTML=`<span class="tzc-evento-intro-v177">${esc177(m[1])}</span>: ${esc177(m[2])}`;
+  }
+
+  /* Remove apenas os BOTÕES Gestão Interna das páginas; o item do menu lateral
+     continua existindo e respeitando o perfil do usuário. */
+  function limparBotoesGestao177(root=document){
+    root.querySelectorAll?.('button').forEach(b=>{
+      const oc=String(b.getAttribute('onclick')||'');
+      const tx=String(b.textContent||'').trim();
+      if(oc.includes('voltarGestaoInternaTZC_V1')||/^gestão interna$/i.test(tx))b.remove();
+    });
+  }
+
+  function aplicar177(root=document){
+    limparBotoesGestao177(root);destacarEvento177(root);
+    /* regra global de selects da V175 permanece válida inclusive em modais novos */
+    try{window.ordenarSelects175?.(root)}catch(e){}
+  }
+  const mo177=new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes)if(n.nodeType===1)setTimeout(()=>aplicar177(n),0)});
+  mo177.observe(document.documentElement,{childList:true,subtree:true});
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>aplicar177(document),100));
+  setTimeout(()=>aplicar177(document),250);
+})();
+</script>

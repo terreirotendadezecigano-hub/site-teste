@@ -12245,3 +12245,65 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
   setTimeout(()=>aplicar177(document),250);
 })();
 </script>
+
+<!-- ============================================================
+     TZC V179 — CORREÇÃO ÚNICA: ESTABILIZA ABERTURA EVENTOS/PRESENÇAS
+     - evita a tela intermediária que muda de aparência durante a carga;
+     - pré-carrega, em paralelo, os dados usados pela cadeia;
+     - mantém uma única tela visual de carregamento até a página final;
+     - NÃO altera CRUD, nomenclatura, PDF, menu ou demais módulos.
+     ============================================================ -->
+<style id="tzc-v179-estabiliza-presencas-style">
+#tzcCargaPresV179{
+  min-height:190px;display:flex;align-items:center;justify-content:center;
+  color:var(--gold-primary);font-size:var(--tzc-font-md);text-align:center
+}
+#tzcCargaPresV179 .box{display:flex;flex-direction:column;align-items:center;gap:9px}
+#tzcCargaPresV179 i{font-size:1.35rem}
+#tzcCargaPresV179 small{color:var(--text-muted);font-size:var(--tzc-font-sm);font-weight:400}
+</style>
+<script id="tzc-v179-estabiliza-cadeia-eventos-presencas">
+(function(){
+  'use strict';
+  const API179=(typeof WEB_APP_URL!=='undefined'&&WEB_APP_URL)?WEB_APP_URL:'';
+  const abrirFinal178=window.abrirPresencasTZCV127;
+  if(typeof abrirFinal178!=='function')return;
+
+  let emAbertura179=null;
+
+  function telaCarga179(){
+    const c=document.getElementById('contentContainer');if(!c)return;
+    c.innerHTML=`<div id="tzcCargaPresV179"><div class="box"><i class="fa-solid fa-spinner fa-spin"></i><strong>Carregando confirmações...</strong><small>Preparando os dados do evento.</small></div></div>`;
+  }
+
+  async function aquecer179(){
+    if(!API179)return;
+    /* As três leituras são independentes. Dispará-las juntas elimina a espera
+       sequencial que ocorria ao atravessar os wrappers históricos. O cache
+       consolidado V176/V177 reaproveita estas mesmas respostas na abertura. */
+    await Promise.allSettled([
+      fetch(`${API179}?sheet=Eventos&t=${Date.now()}`,{cache:'no-store'}),
+      fetch(`${API179}?sheet=Presencas&t=${Date.now()}`,{cache:'no-store'}),
+      fetch(`${API179}?sheet=Usuarios_Acesso&t=${Date.now()}`,{cache:'no-store'})
+    ]);
+  }
+
+  window.abrirPresencasTZCV127=async function(idEvento){
+    const chave=String(idEvento||'');
+    if(emAbertura179===chave)return;
+    emAbertura179=chave;
+    try{
+      document.getElementById('sidebar')?.classList.remove('open');
+      telaCarga179();
+      await aquecer179();
+      await abrirFinal178.apply(this,arguments);
+    }catch(e){
+      console.error('TZC V179 - abertura de confirmações:',e);
+      const c=document.getElementById('contentContainer');
+      if(c)c.innerHTML=`<div class="tzc-page-head-v44"><button type="button" class="btn-toolbar tzc-page-back-v44" onclick="abrirEventosTZC_V126()"><i class="fa-solid fa-arrow-left"></i> Eventos e Giras</button><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-user-check"></i> Confirmações e Presenças</h2><p>Não foi possível carregar os dados deste evento.</p></div><div></div></div>`;
+    }finally{
+      emAbertura179=null;
+    }
+  };
+})();
+</script>

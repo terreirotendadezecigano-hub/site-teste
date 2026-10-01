@@ -1748,8 +1748,8 @@
             <input type="date" id="membroDataEntrada" class="form-control">
           </div>
           <div class="form-group membros-form-full">
-            <label>Endereço</label>
-            <input type="text" id="membroEndereco" class="form-control" placeholder="Endereço completo">
+            <label>Rua, número e complemento</label>
+            <input type="text" id="membroEndereco" class="form-control" placeholder="Rua, número e complemento">
           </div>
           <div class="form-group">
             <label>Cargo / Função</label>
@@ -1764,10 +1764,7 @@
               <option value="Ogã">Ogã</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>Orixá de Frente</label>
-            <input type="text" id="membroOrixa" class="form-control" placeholder="Ex: Xangô, Oxum">
-          </div>
+          <input type="hidden" id="membroOrixa">
           <div class="form-group">
             <label>Status</label>
             <select id="membroStatus" class="form-control">
@@ -12755,7 +12752,7 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
     if(window.__tzcSalvandoMembro185)return;
     const valor=id=>String(el(id)?.value||'').trim();
     const existente=valor('membroId'),id=existente||('FILHO_'+Date.now()+'_'+Math.random().toString(36).slice(2,8));
-    const dados={ID_Filho:id,Nome_Completo:valor('membroNome'),Data_Nascimento:valor('membroDataNasc'),Telefone:valor('membroTelefone'),Email:valor('membroEmail'),Endereco:valor('membroEndereco'),Data_Entrada:valor('membroDataEntrada'),Cargo_Funcao:valor('membroCargo'),Orixa_Frente:valor('membroOrixa'),Status_Ativo:valor('membroStatus'),Perfil:valor('membroPerfil'),Observacoes:valor('membroObservacoes'),Foto_URL:valor('m194_Foto_URL'),RG:valor('m194_RG'),CPF:valor('m194_CPF'),Bairro:valor('m194_Bairro'),CEP:valor('m194_CEP'),Cidade:valor('m194_Cidade'),UF:valor('m194_UF'),Estado_Civil:valor('m194_Estado_Civil'),Escolaridade:valor('m194_Escolaridade'),Situacao_Profissional:valor('m194_Situacao_Profissional'),Profissao:valor('m194_Profissao'),Guia_Chefe_Trabalho:valor('m194_Guia_Chefe_Trabalho'),Tipo_Sangue:valor('m194_Tipo_Sangue'),Alergias_Problemas_Saude:valor('m194_Alergias_Problemas_Saude'),Contato_Emergencia:valor('m194_Contato_Emergencia'),Pode_Cadastrar_Mensagem_Dia:valor('membroMensagemDia186')||'Não',Pode_Aprovar_Mensagem_Dia:valor('membroAprovarMensagem186')||'Não'};
+    const dados={ID_Filho:id,Nome_Completo:valor('membroNome'),Data_Nascimento:valor('membroDataNasc'),Telefone:valor('membroTelefone'),Email:valor('membroEmail'),Endereco:valor('membroEndereco'),Data_Entrada:valor('membroDataEntrada'),Cargo_Funcao:valor('membroCargo'),Status_Ativo:valor('membroStatus'),Perfil:valor('membroPerfil'),Observacoes:valor('membroObservacoes'),Foto_URL:valor('m194_Foto_URL'),RG:valor('m194_RG'),CPF:valor('m194_CPF'),Bairro:valor('m194_Bairro'),CEP:valor('m194_CEP'),Cidade:valor('m194_Cidade'),UF:valor('m194_UF'),Estado_Civil:valor('m194_Estado_Civil'),Escolaridade:valor('m194_Escolaridade'),Situacao_Profissional:valor('m194_Situacao_Profissional'),Profissao:valor('m194_Profissao'),Guia_Chefe_Trabalho:valor('m194_Guia_Chefe_Trabalho'),Tipo_Sangue:valor('m194_Tipo_Sangue'),Alergias_Problemas_Saude:valor('m194_Alergias_Problemas_Saude'),Contato_Emergencia:valor('m194_Contato_Emergencia'),Pode_Cadastrar_Mensagem_Dia:valor('membroMensagemDia186')||'Não',Pode_Aprovar_Mensagem_Dia:valor('membroAprovarMensagem186')||'Não'};
     if(!dados.Nome_Completo||!dados.Email)return showToast('Preencha ao menos o Nome Completo e o E-mail.');
     const token=TZC185.token();window.__tzcSalvandoMembro185=true;
     try{
@@ -12950,12 +12947,21 @@ html body #pubModalV104 .tzc-pub-field-v104 button{background:#242018!important;
  window.exportarExcel=function(){const rows=Array.isArray(listaMembros)?listaMembros:[];if(!rows.length)return showToast('Nenhum membro no filtro atual.');const cell=(v,style='Body')=>`<Cell ss:StyleID="${style}"><Data ss:Type="String">${esc(v)}</Data></Cell>`;const row=values=>'<Row>'+values.join('')+'</Row>';const counts=window.resumoStatusMembros193(rows);const headers=['Nome','E-mail','Telefone','Perfil','Status','Entrada'];const fields=['Nome_Completo','Email','Telefone','Perfil','Status_Ativo','Data_Entrada'];const filter=window.__tzcFiltroStatusMembro178||'Todos';const search=window.__tzcBuscaMembro178||'';
  const xml=`<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles><Style ss:ID="Body"><Alignment ss:Vertical="Top" ss:WrapText="1"/><Font ss:FontName="Calibri" ss:Size="11"/></Style><Style ss:ID="Head"><Font ss:FontName="Calibri" ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#76000D" ss:Pattern="Solid"/></Style></Styles><Worksheet ss:Name="Membros"><Table><Column ss:Width="190"/><Column ss:Width="210"/><Column ss:Width="120"/><Column ss:Width="100"/><Column ss:Width="90"/><Column ss:Width="100"/>${row([cell('Relatório de Membros','Head')])}${row([cell('Status: '+filter),cell('Pesquisa: '+(search||'Sem pesquisa'))])}${row(Object.entries(counts).map(([k,v])=>cell(k+': '+v)))}${row(headers.map(h=>cell(h,'Head')))}${rows.map(m=>row(fields.map(f=>cell(m[f]||'')))).join('')}</Table></Worksheet></Workbook>`;const url=URL.createObjectURL(new Blob([xml],{type:'application/vnd.ms-excel;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='Membros_Filtrados.xml';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);showToast('Arquivo formatado para abrir no Excel.');
  };
- const grid=document.querySelector('#modalMembro .membros-form-grid');if(grid){const sections=[['Dados pessoais',['membroNome','membroDataNasc','membroTelefone','membroEmail','membroEndereco','m194_Foto_URL','m194_RG','m194_CPF','m194_Bairro','m194_CEP','m194_Cidade','m194_UF','m194_Estado_Civil','m194_Escolaridade','m194_Situacao_Profissional','m194_Profissao','m194_Guia_Chefe_Trabalho','m194_Tipo_Sangue','m194_Alergias_Problemas_Saude','m194_Contato_Emergencia']],['Dados da casa',['membroDataEntrada','membroCargo','membroOrixa','membroStatus','membroPerfil','membroMensagemDia186','membroAprovarMensagem186','membroObservacoes']]];for(const [title,ids]of sections){const heading=document.createElement('h4');heading.className='membroSection193';heading.textContent=title;grid.appendChild(heading);for(const id of ids){const field=document.getElementById(id)?.parentElement;if(field)grid.appendChild(field)}}}
+ const grid=document.querySelector('#modalMembro .membros-form-grid');if(grid){const sections=[['Dados pessoais',['membroNome','membroDataNasc','membroTelefone','membroEmail','membroEndereco','m194_Foto_URL','m194_RG','m194_CPF','m194_Bairro','m194_CEP','m194_Cidade','m194_UF','m194_Estado_Civil','m194_Escolaridade','m194_Situacao_Profissional','m194_Profissao','m194_Guia_Chefe_Trabalho','m194_Tipo_Sangue','m194_Alergias_Problemas_Saude','m194_Contato_Emergencia']],['Dados da casa',['membroDataEntrada','membroCargo','membroStatus','membroPerfil','membroMensagemDia186','membroAprovarMensagem186','membroObservacoes']]];for(const [title,ids]of sections){const heading=document.createElement('h4');heading.className='membroSection193';heading.textContent=title;grid.appendChild(heading);for(const id of ids){const field=document.getElementById(id)?.parentElement;if(field)grid.appendChild(field)}}}
 })();
 </script>
 <script>(function(){const fields=['Foto_URL', 'RG', 'CPF', 'Bairro', 'CEP', 'Cidade', 'UF', 'Estado_Civil', 'Escolaridade', 'Situacao_Profissional', 'Profissao', 'Guia_Chefe_Trabalho', 'Tipo_Sangue', 'Alergias_Problemas_Saude', 'Contato_Emergencia'];
-const edit=window.editarMembro;window.editarMembro=function(id){const row=(window.__tzcMembros178||[]).find(m=>String(m.ID_Filho||m.id)===String(id));const result=edit.apply(this,arguments);if(row)for(const key of fields){const el=document.getElementById('m194_'+key);if(el)el.value=row[key]||''}return result};
+const edit=window.editarMembro;window.editarMembro=function(id){const row=(window.__tzcMembros178||[]).find(m=>String(m.ID_Filho||m.id)===String(id));const result=edit.apply(this,arguments);if(row)for(const key of fields){const el=document.getElementById('m194_'+key);if(el)el.value=key==='Guia_Chefe_Trabalho'?(row[key]||row.Orixa_Frente||''):(row[key]||'')}return result};
 const create=window.abrirModalNovoMembro;window.abrirModalNovoMembro=function(){const result=create.apply(this,arguments);for(const key of fields){const el=document.getElementById('m194_'+key);if(el)el.value=''}return result};
 })();</script>
+<style id="membros-v195-paleta">
+html body #modalMembro .modal-box{background:#181714!important;border-color:#a88b4e!important;box-shadow:0 20px 60px #0009!important}
+html body #modalMembro :is(input:not([type="hidden"]),select,textarea){background:#302f2b!important;border:1px solid #84704b!important;color:#f8f5ec!important;-webkit-text-fill-color:#f8f5ec!important;font-weight:400!important}
+html body #modalMembro :is(input,select,textarea):focus{border-color:#e0be71!important;outline:2px solid #d4af3726!important;outline-offset:1px!important}
+html body #modalMembro :is(input,textarea)::placeholder{color:#c3bfb4!important;-webkit-text-fill-color:#c3bfb4!important;font-style:normal!important;opacity:1!important}
+html body #modalMembro input:-webkit-autofill{-webkit-box-shadow:0 0 0 1000px #302f2b inset!important;-webkit-text-fill-color:#f8f5ec!important}
+html body #modalMembro label{color:#e0cd9c!important}html body #modalMembro .modal-actions button{background:#24221c!important;color:#e8d29c!important;border:1px solid #a88b4e!important}
+html body #modalMembro .modal-actions button:first-child{background:#d4af37!important;color:#17140c!important;border-color:#d4af37!important}
+</style>
 </body>
 </html>

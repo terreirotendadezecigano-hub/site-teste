@@ -12400,3 +12400,48 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
   };
 })();
 </script>
+
+<!-- ============================================================
+     TZC V182 — CORREÇÃO ÚNICA: REMOVE TÍTULO DUPLICADO "DESTAQUES"
+     EM CONFIRMAÇÕES E PRESENÇAS
+     - oculta o título global da Home ao abrir Confirmações e Presenças;
+     - restaura esse título ao sair para Eventos e Giras;
+     - não altera carregamento, CRUD, PDF, modais ou demais módulos.
+     ============================================================ -->
+<script id="tzc-v182-remove-destaques-duplicado-confirmacoes">
+(function(){
+  'use strict';
+
+  function ocultarTituloGlobalV182(){
+    const titulo=document.getElementById('pageTitle');
+    if(!titulo)return;
+    titulo.style.display='none';
+  }
+
+  function restaurarTituloGlobalV182(){
+    const titulo=document.getElementById('pageTitle');
+    if(!titulo)return;
+    titulo.style.display='';
+  }
+
+  const abrirPresBaseV182=window.abrirPresencasTZCV127;
+  if(typeof abrirPresBaseV182==='function'){
+    window.abrirPresencasTZCV127=async function(){
+      ocultarTituloGlobalV182();
+      try{
+        return await abrirPresBaseV182.apply(this,arguments);
+      }catch(e){
+        throw e;
+      }
+    };
+  }
+
+  const abrirEventosBaseV182=window.abrirEventosTZC_V126;
+  if(typeof abrirEventosBaseV182==='function'){
+    window.abrirEventosTZC_V126=function(){
+      restaurarTituloGlobalV182();
+      return abrirEventosBaseV182.apply(this,arguments);
+    };
+  }
+})();
+</script>

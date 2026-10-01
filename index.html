@@ -2922,7 +2922,7 @@ window.TZC186={
       const botaoSalvar = form.querySelector('button[type="submit"]');
       if (botaoSalvar) {
         botaoSalvar.disabled = true;
-        botaoSalvar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+        botaoSalvar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
       }
 
       const payload = {
@@ -2936,7 +2936,14 @@ window.TZC186={
         ]
       };
 
-      // Atualização otimista: o usuário vê o resultado imediatamente.
+      const rotaAoSalvar = TZC185.token();
+      try {
+        await fetch(WEB_APP_URL, {
+          method: 'POST',
+          headers: {'Content-Type':'text/plain;charset=utf-8'},
+          body: JSON.stringify(payload)
+        });
+      // Atualiza a lista somente após confirmação do servidor.
       const registroLocal = {
         ID_Estudo: idEdicao,
         'Título': titulo,
@@ -2964,27 +2971,20 @@ window.TZC186={
         window.tzcEstudosV1.push(registroLocal);
       }
 
-      // Fecha o modal ANTES de esperar o Google Apps Script responder.
-      const modal = document.getElementById('modalNovoEstudoTZC_V1');
-      if (modal) modal.remove();
 
-      renderEstudosTZC_V1(window.tzcEstudosV1);
-      showToast(modo === 'editar' ? 'Salvando alterações...' : 'Salvando estudo...');
-
-      // Envio em segundo plano.
-      fetch(WEB_APP_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify(payload)
-      }).then(() => {
+        const modal = document.getElementById('modalNovoEstudoTZC_V1');
+        if (modal && modal.contains(form)) modal.remove();
+        if (TZC185.ativa(rotaAoSalvar)) renderEstudosTZC_V1(window.tzcEstudosV1);
         showToast(modo === 'editar' ? 'Alterações salvas com sucesso!' : 'Estudo salvo com sucesso!');
-        // Sincroniza novamente com a planilha depois do processamento.
-        setTimeout(() => abrirEstudosTZC_V1(), 1800);
-      }).catch((e) => {
-        showToast('Falha ao enviar o estudo. Tente novamente: ' + e.message);
-        setTimeout(() => abrirEstudosTZC_V1(), 1200);
-      });
+      } catch (e) {
+        showToast('Não foi possível salvar o estudo: ' + e.message);
+      } finally {
+        form.dataset.salvando = '0';
+        if (botaoSalvar) {
+          botaoSalvar.disabled = false;
+          botaoSalvar.innerHTML = '<i class="fa-solid fa-save"></i> Salvar';
+        }
+      }
     }
 
     function escTZC_V1(valor) {

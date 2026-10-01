@@ -6722,8 +6722,9 @@ preparar();if(el){document.querySelectorAll('#navList .nav-item').forEach(x=>x.c
       const j=await r.json();
       if(!Array.isArray(j)) return null;
       return j.filter(x=>x.Tipo==='Mensagem do Dia' &&
-        String(x.Status||'Ativo').toLowerCase()!=='excluido' &&
-        String(x.Acesso_Publico||'Sim').toLowerCase()!=='não')
+        ['publicado','ativo'].includes(String(x.Status||'').toLowerCase()) &&
+        isPublicAccess(x) &&
+        (!x.Data_Publicacao || TZC185.data(x.Data_Publicacao).getTime()<=Date.now()))
         .sort((a,b)=>TZC185.data(b.Data_Publicacao||b.Data_Criacao||0)-TZC185.data(a.Data_Publicacao||a.Data_Criacao||0))[0]||null;
     }catch(e){return null}
   }
@@ -6733,19 +6734,13 @@ preparar();if(el){document.querySelectorAll('#navList .nav-item').forEach(x=>x.c
 
     fecharV105();
     let m=await TZC185.aguardar(buscarMensagemV105(),tzcToken185);
-    if(!m){
-      m={
-        Titulo:'Bom dia, alma gentil. 🌹',
-        Conteudo:'Que a aurora, ao abrir suas cortinas sobre o mundo, encontre teu coração em paz e derrame sobre teus caminhos a doce luz de um novo dia.\\n\\nQue nenhuma sombra seja longa demais, nem vento algum perturbe a serenidade do teu espírito. E que, entre os pequenos acontecimentos desta manhã, encontres motivos para sorrir — pois até o mais simples instante pode esconder a beleza de um verso.\\n\\nSegue teu dia com leveza, como quem caminha sob a bênção dos céus, e guarda contigo a certeza de que há beleza naqueles que tornam o mundo mais amável apenas por existirem.\\n\\nQue teu dia seja doce, tranquilo e digno de ser lembrado. 🌷✨',
-        Data_Publicacao:'2026-09-30'
-      };
-    }
+    if(!m) return false;
     window._tzcMsgDiaAtualV109=m;
     const d=document.createElement('div');d.id='tzcMsgDiaV105';d.className='tzc-msgdia-overlay-v105';
     d.innerHTML=`<div class="tzc-msgdia-box-v105" role="dialog" aria-modal="true" aria-label="Mensagem do Dia">
       <div class="tzc-msgdia-head-v105"><h3><i class="fa-solid fa-envelope-open-text"></i> Mensagem do Dia</h3><button class="tzc-msgdia-close-v105" onclick="fecharMensagemDiaTZC_V105()" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button></div>
       <div class="tzc-msgdia-title-v105">${escV105(m.Titulo||'Mensagem do Dia')}</div>
-      <div class="tzc-msgdia-text-v105">${escV105(m.Conteudo||'')}</div>
+      ${m.Imagem_URL?`<img src="${escV105(m.Imagem_URL)}" alt="Arte da Mensagem do Dia" style="display:block;max-width:100%;max-height:55vh;object-fit:contain;margin:12px auto">`:""}<div class="tzc-msgdia-text-v105">${escV105(m.Conteudo||'')}</div>
       <div class="tzc-msgdia-foot-v105"><span class="tzc-msgdia-date-v105">${dataV105(m.Data_Publicacao)}</span><div class="tzc-msgdia-actions-v109"><button class="btn-toolbar" onclick="compartilharMensagemDiaTZC_V109()"><i class="fa-solid fa-share-nodes"></i> Compartilhar</button><button class="btn-toolbar" onclick="fecharMensagemDiaTZC_V105()">Fechar</button></div></div>
     </div>`;
     d.addEventListener('click',e=>{if(e.target===d)fecharV105()});
@@ -11216,44 +11211,19 @@ html body [class*="modal"] textarea:focus{
   box-shadow:0 0 0 2px rgba(212,175,55,.15) !important;
 }
 </style>
-<script id="tzc-v118-mensagem-dia-uma-vez">
+<script id="tzc-v189-mensagem-auto">
 (function(){
-  const CHAVE='tzc_mensagem_dia_auto_v118';
-
-  function hojeLocal(){
-    const d=new Date();
-    const y=d.getFullYear();
-    const m=String(d.getMonth()+1).padStart(2,'0');
-    const dia=String(d.getDate()).padStart(2,'0');
-    return `${y}-${m}-${dia}`;
-  }
-  function jaMostrouHoje(){
-    try{return localStorage.getItem(CHAVE)===hojeLocal();}catch(e){return false;}
-  }
-  function marcarHoje(){
-    try{localStorage.setItem(CHAVE,hojeLocal());}catch(e){}
-  }
-  async function abrirAutomaticamente(){
-    if(jaMostrouHoje() || TZC185.rota()!=='Home') return;
-    if(typeof window.mostrarMensagemDiaTZC_V105!=='function') return;
-    /* Marca no momento da tentativa automática para não reaparecer ao navegar/recarregar no mesmo dia. */
-    marcarHoje();
-    try{ await window.mostrarMensagemDiaTZC_V105(); }catch(e){}
-  }
-
-  /* O V105 possuía um listener próprio de load. Este listener roda por último
-     e controla a abertura diária; o guard abaixo também impede repetição tardia. */
-  const original=window.mostrarMensagemDiaTZC_V105;
-  if(typeof original==='function'){
-    window.mostrarMensagemDiaTZC_V105=function(){
-      /* chamadas manuais continuam sempre permitidas */
-      return original.apply(this,arguments);
-    };
-  }
-
-  window.addEventListener('load',function(){
-    setTimeout(abrirAutomaticamente,900);
-  });
+ const key='tzc_mensagem_dia_auto_v189';let busy=false;
+ const day=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+ window.abrirMensagemAutomatica189=async function(){
+  if(busy||TZC185.rota()!=='Home')return false;
+  try{if(localStorage.getItem(key)===day())return false}catch(e){}
+  busy=true;try{
+   await window.mostrarMensagemDiaTZC_V105();
+   if(document.getElementById('tzcMsgDiaV105')){try{localStorage.setItem(key,day())}catch(e){}return true}return false;
+  }catch(e){return false}finally{busy=false}
+ };
+ window.addEventListener('load',()=>window.abrirMensagemAutomatica189());
 })();
 </script>
 
@@ -12912,5 +12882,17 @@ button[title*="Voltar para Gestão Interna"]{display:none!important}
  };
 })();
 </script>
+<style id="tzc-v189-modal-padrao-evento">
+/* V189: Novo Evento é a referência comum. Escopo somente de modais. */
+:is(.artBox188,.modal-box,.ervas-modal-box-v37,.tzc-pub-box-v104,.tzc-evento-box-v126,.tzc-confirm-v128-box,.tzc-guest-v130-box,.tzc-msgdia-box-v105,#artesOverlayV85 [class*="box"],#midiasOverlayV82 [class*="box"],#modalNovoEstudoTZC_V1 [class*="box"]){background:#171717!important;border:1px solid #d4af37!important;border-radius:10px!important;font-family:'Segoe UI',Arial,sans-serif!important;max-height:calc(100dvh - 32px)!important;overflow:auto!important;box-sizing:border-box!important;padding:16px!important}
+:is(.artOverlay188,.modal-overlay,.ervas-modal-v37,.tzc-pub-modal-v104,.tzc-evento-overlay-v126){padding:16px!important;box-sizing:border-box!important}
+.artOverlay188{display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important}.artBox188{width:min(760px,100%)!important;margin:0!important}.artBox188 header{position:sticky;top:-16px;background:#171717;z-index:2;border-bottom:1px solid #333;padding:10px 0}.artBox188 header h2{font-size:1rem!important;margin:0!important}.artBox188 p{font-size:.82rem;line-height:1.5;margin:10px 0}.artBox188 label{font-size:.78rem!important;color:#f3e5ab!important;font-weight:700;margin:10px 0}.artBox188 textarea{min-height:80px!important;max-height:160px!important}.artBox188 footer{justify-content:flex-end!important;gap:8px!important;border-top:1px solid #333;padding-top:12px}.artBox188 button{font-size:.8rem!important;padding:8px 11px!important;min-height:34px!important}#artClose188{border:0!important;background:transparent!important;font-size:1.3rem!important;padding:0 6px!important}#artSuggestions188 button{white-space:normal!important;text-align:left!important;width:100%!important}#artOptions188{grid-template-columns:repeat(3,minmax(0,1fr))!important}#artPreview188{max-height:52vh!important;width:auto!important;max-width:100%!important}
+html body :is([role="dialog"],.modal-box,.ervas-modal-box-v37,.tzc-pub-box-v104,.tzc-evento-box-v126,.tzc-confirm-v128-box,.tzc-guest-v130-box,.artBox188,#artesOverlayV85,#midiasOverlayV82,#modalNovoEstudoTZC_V1) :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea){font-family:'Segoe UI',Arial,sans-serif!important;font-size:.82rem!important;font-style:normal!important;background:#555!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border:1px solid rgba(212,175,55,.75)!important;border-radius:7px!important;padding:9px 10px!important;box-sizing:border-box!important}
+html body :is([role="dialog"],.modal-box,.ervas-modal-box-v37,.tzc-pub-box-v104,.tzc-evento-box-v126,.artBox188) :is(input,textarea)::placeholder{color:#eee!important;-webkit-text-fill-color:#eee!important;font-style:italic!important;opacity:1!important}
+html body input:is([type="date"],[type="time"],[type="datetime-local"]){color-scheme:dark!important}
+html body input:is([type="date"],[type="time"],[type="datetime-local"])::-webkit-calendar-picker-indicator{filter:brightness(0) invert(1)!important;opacity:1!important;cursor:pointer}
+html body :is(.modal-box,.tzc-pub-box-v104,.tzc-evento-box-v126,.artBox188) input::file-selector-button{background:#242018!important;color:#f3e5ab!important;border:1px solid #d4af37!important;border-radius:5px!important;padding:6px 9px!important}
+@media(max-width:600px){.artOverlay188{padding:8px!important}.artBox188{max-height:calc(100dvh - 16px)!important;padding:12px!important}#artOptions188{grid-template-columns:1fr!important}}
+</style>
 </body>
 </html>

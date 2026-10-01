@@ -11549,3 +11549,56 @@ html body #artesOverlayV85 #aDescricaoV85::placeholder {
   if(typeof abrirAnterior==='function')window.abrirEventosMembrosTZCV128=async function(el){await abrirAnterior(el);setTimeout(aplicarEstadoVisitanteV132,120)};
 })();
 </script>
+
+<!-- =========================================================
+     TZC V172 — DATA DA RESPOSTA NO HORÁRIO LOCAL
+     ÚNICA ALTERAÇÃO DESTA VERSÃO:
+     - Data_Resposta continua armazenada em UTC (ISO), como deve ser.
+     - Tela converte o instante para America/Sao_Paulo e exibe
+       no padrão brasileiro dd/mm/aaaa às hh:mm.
+     - O PDF herda exatamente o valor já formatado na tabela.
+     ========================================================= -->
+<script id="tzc-v172-data-resposta-local">
+(function(){
+  function formatarDataRespostaV172(valor){
+    if(valor===null || valor===undefined || valor==='') return '—';
+    const bruto=String(valor).trim();
+    let data=null;
+
+    // Timestamps ISO gerados pelo site com toISOString() representam UTC.
+    if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(bruto)){
+      const isoComFuso=/([zZ]|[+\-]\d{2}:?\d{2})$/.test(bruto) ? bruto : bruto+'Z';
+      data=new Date(isoComFuso);
+    }
+
+    if(data && !Number.isNaN(data.getTime())){
+      const partes=new Intl.DateTimeFormat('pt-BR',{
+        timeZone:'America/Sao_Paulo',
+        day:'2-digit',month:'2-digit',year:'numeric',
+        hour:'2-digit',minute:'2-digit',hour12:false
+      }).formatToParts(data);
+      const p={};
+      partes.forEach(x=>{ if(x.type!=='literal') p[x.type]=x.value; });
+      return `${p.day}/${p.month}/${p.year} às ${p.hour}:${p.minute}`;
+    }
+
+    // Registros antigos que eventualmente já estejam sem informação de fuso:
+    // apenas reorganiza a apresentação, sem inventar nova conversão.
+    const m=bruto.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+    if(m) return `${m[3]}/${m[2]}/${m[1]} às ${m[4]}:${m[5]}`;
+    return bruto;
+  }
+
+  window.formatarDataRespostaV172=formatarDataRespostaV172;
+
+  window.renderPresencasTZCV127=function(){
+    const q=(document.getElementById('presBuscaV127')?.value||'').toLowerCase();
+    const a=presencasV127.filter(x=>(`${nomeUsuario(x.ID_Usuario)} ${x.Resposta||''} ${x.Presenca||''} ${x.Observacoes||''}`).toLowerCase().includes(q));
+    const count=document.getElementById('presCountV127');
+    const body=document.getElementById('presBodyV127');
+    if(count) count.textContent=`· ${a.length} registros`;
+    if(!body) return;
+    body.innerHTML=a.map(x=>`<tr><td><strong style="color:#fff">${esc(nomeUsuario(x.ID_Usuario))}</strong></td><td><span class="tzc-pres-v127-badge">${esc(x.Resposta||'Pendente')}</span></td><td><span class="tzc-pres-v127-badge">${esc(x.Presenca||'Pendente')}</span></td><td>${esc(formatarDataRespostaV172(x.Data_Resposta))}</td><td>${esc(x.Observacoes||'—')}</td><td><button class="btn-icon-only" title="Editar" onclick="editarPresencaTZCV127('${esc(x.ID_Presenca)}')"><i class="fa-solid fa-pen"></i></button><button class="btn-icon-only" title="Excluir" onclick="excluirPresencaTZCV127('${esc(x.ID_Presenca)}')"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:#aaa">Nenhuma confirmação registrada para este evento.</td></tr>';
+  };
+})();
+</script>

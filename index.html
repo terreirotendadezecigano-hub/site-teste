@@ -3,11 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Tenda de Zé Cigano</title>
+  <title>Tenda de Zé Cigano - Gestão Interna</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Bibliotecas para exportar PDF e Excel -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
   <style>
     :root {
       --bg-primary: #0a0a0a;
@@ -34,13 +32,14 @@
 
     * { box-sizing: border-box; }
 
+    /* BANNER DE CABEÇALHO */
     header.banner {
       background: linear-gradient(135deg, var(--red-logo-dark) 0%, var(--red-logo) 50%, #1a0003 100%);
       border-bottom: 2px solid var(--gold-primary);
-      padding: 10px 12px;
+      padding: 12px 16px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
       box-shadow: 0 4px 15px rgba(0,0,0,0.7);
       position: sticky;
       top: 0;
@@ -48,49 +47,72 @@
       width: 100%;
     }
 
-    .banner-left, .banner-right { display: flex; align-items: center; flex-shrink: 0; width: 60px; }
-    .banner-right { justify-content: flex-end; }
-    .banner-center { display: flex; align-items: center; gap: 8px; margin: 0 auto; text-align: center; }
-
-    .banner-logo {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      border: 2px solid var(--gold-primary);
-      object-fit: cover;
-      background-color: #000;
-      flex-shrink: 0;
-      box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+    .banner-titles h1 { 
+      font-size: 1.1rem; 
+      color: var(--gold-primary); 
+      text-transform: uppercase; 
+      font-weight: 700; 
+      letter-spacing: 0.5px; 
+      margin: 0; 
+      line-height: 1.2; 
+      text-align: center;
+    }
+    
+    .banner-titles p { 
+      font-size: 0.75rem; 
+      color: var(--gold-light); 
+      margin: 2px 0 0 0; 
+      text-align: center;
     }
 
-    .banner-titles h1 { font-size: 0.9rem; color: var(--gold-primary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin: 0; line-height: 1.1; }
-    .banner-titles p { font-size: 0.65rem; color: var(--gold-light); margin: 0; }
-
     .container { 
-      padding: 12px; 
+      padding: 20px 16px; 
       max-width: 1200px; 
       margin: 0 auto; 
       width: 100%; 
     }
 
+    /* BOTÃO DE IMPRESSÃO / PDF */
+    .btn-pdf {
+      background: var(--gold-primary);
+      color: #000;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.2s ease, transform 0.1s ease;
+      box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+    }
+
+    .btn-pdf:hover {
+      background: var(--gold-light);
+      transform: translateY(-1px);
+    }
+
+    /* TABELA NO NAVEGADOR */
     .table-responsive {
       width: 100%;
       overflow-x: auto;
       background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: 8px;
-      margin-top: 10px;
     }
 
     .membros-table {
       width: 100%;
       border-collapse: collapse;
       text-align: left;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
     }
 
     .membros-table th, .membros-table td {
-      padding: 10px 12px;
+      padding: 12px 15px;
       border-bottom: 1px solid var(--border-color);
     }
 
@@ -100,78 +122,111 @@
       font-weight: 600;
     }
 
-    /* ESTILO EXCLUSIVO PARA O GERADOR DE PDF COM FONTE AMPLIADA E ESPAÇADA */
-    .pdf-print-container {
-      font-family: Arial, sans-serif !important;
-      color: #000 !important;
-      background: #fff !important;
-      padding: 20px !important;
-    }
-    .pdf-print-header {
-      text-align: center;
-      border-bottom: 2px solid #d4af37;
-      padding-bottom: 10px;
-      margin-bottom: 20px;
-    }
-    .pdf-print-header h2 {
-      font-size: 22px !important;
-      color: #60000a !important;
-      margin: 0 0 5px 0;
-      text-transform: uppercase;
-    }
-    .pdf-print-header p {
-      font-size: 14px !important;
-      color: #444 !important;
-      margin: 0;
-    }
-    .pdf-print-table {
-      width: 100% !important;
-      border-collapse: collapse !important;
-      margin-top: 10px !important;
-    }
-    .pdf-print-table th {
-      background-color: #f4f4f4 !important;
-      color: #000 !important;
-      font-size: 14px !important;
-      font-weight: bold !important;
-      border: 1px solid #ccc !important;
-      padding: 10px 12px !important;
-      text-align: left !important;
-    }
-    .pdf-print-table td {
-      font-size: 13px !important;
-      line-height: 1.6 !important;
-      border: 1px solid #ccc !important;
-      padding: 10px 12px !important;
-      color: #111 !important;
-    }
     .pdf-print-obs {
-      font-size: 12px !important;
-      color: #333 !important;
-      font-style: italic !important;
-      margin-top: 4px !important;
-      display: block !important;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-top: 4px;
+      display: block;
+    }
+
+    /* ============================================================
+       ESTILOS EXCLUSIVOS PARA A IMPRESSÃO / GERAR PDF (window.print)
+       ============================================================ */
+    @media print {
+      @page {
+        margin: 15mm;
+        size: auto;
+      }
+
+      body, html {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-family: Arial, sans-serif !important;
+      }
+
+      /* Oculta elementos desnecessários na impressão */
+      header.banner, 
+      .btn-pdf {
+        display: none !important;
+      }
+
+      /* Adiciona um título de relatório visível apenas no PDF/Impressão */
+      .container::before {
+        content: "TENDA DE ZÉ CIGANO\A Relatório Interno de Itens e Observações";
+        white-space: pre-wrap;
+        display: block;
+        text-align: center;
+        font-size: 20px;
+        font-weight: bold;
+        color: #60000a;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #d4af37;
+      }
+
+      .container {
+        padding: 0 !important;
+        max-width: 100% !important;
+      }
+
+      .table-responsive {
+        border: none !important;
+        overflow: visible !important;
+        background: transparent !important;
+      }
+
+      .membros-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+      }
+
+      .membros-table th {
+        background-color: #f2f2f2 !important;
+        color: #000000 !important;
+        font-size: 15px !important;
+        font-weight: bold !important;
+        border: 1px solid #999999 !important;
+        padding: 10px 12px !important;
+      }
+
+      .membros-table td {
+        font-size: 14px !important; /* Fonte maior para melhor leitura */
+        line-height: 1.6 !important; /* Espaçamento de linha amplo */
+        color: #111111 !important;
+        border: 1px solid #cccccc !important;
+        padding: 10px 12px !important;
+      }
+
+      .pdf-print-obs {
+        font-size: 12px !important;
+        color: #444444 !important;
+        font-style: italic !important;
+        margin-top: 6px !important;
+        display: block !important;
+      }
     }
   </style>
 </head>
 <body>
 
   <header class="banner">
-    <div class="banner-center">
-      <div class="banner-titles">
-        <h1>Tenda de Zé Cigano</h1>
-        <p>Gestão e Controle Interno</p>
-      </div>
+    <div class="banner-titles">
+      <h1>Tenda de Zé Cigano</h1>
+      <p>Gestão e Controle Interno</p>
     </div>
   </header>
 
   <main class="container">
-    <button onclick="gerarPDFRelatorio()" class="btn-toolbar" style="background:var(--gold-primary); color:#000; padding:10px 15px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; margin-bottom:15px;">
-      <i class="fa-solid fa-file-pdf"></i> Exportar Relatório em PDF
+    
+    <!-- Botão de Ação -->
+    <button onclick="window.print()" class="btn-pdf">
+      <i class="fa-solid fa-file-pdf"></i> Salvar / Imprimir em PDF
     </button>
 
+    <!-- Tabela de Dados -->
     <div class="table-responsive">
-      <table class="membros-table" id="tabelaDados">
+      <table class="membros-table">
         <thead>
           <tr>
             <th>Nome / Item</th>
@@ -183,52 +238,22 @@
           <tr>
             <td><strong>Erva Doce</strong></td>
             <td>Ervas Fechadas</td>
-            <td>Propriedades de calmaria, expansão magnética e harmonização do ambiente.<br><span class="pdf-print-obs">Obs: Utilizar em banhos de descarrego suave e defumações de prosperidade.</span></td>
+            <td>Propriedades de calmaria, expansão magnética e harmonização do ambiente.
+              <span class="pdf-print-obs">Obs: Utilizar em banhos de descarrego suave e defumações de prosperidade.</span>
+            </td>
           </tr>
           <tr>
             <td><strong>Canela em Pau</strong></td>
             <td>Prosperidade</td>
-            <td>Atração financeira, vitalidade e aceleração de pedidos.<br><span class="pdf-print-obs">Obs: Excelente para ser queimada junto com açúcar no início do mês.</span></td>
+            <td>Atração financeira, vitalidade e aceleração de pedidos.
+              <span class="pdf-print-obs">Obs: Excelente para ser queimada junto com açúcar no início do mês.</span>
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
+
   </main>
 
-  <script>
-    function gerarPDFRelatorio() {
-      // Cria o container temporário formatado especialmente para leitura em PDF
-      const elementoOriginal = document.getElementById('tabelaDados');
-      const containerPDF = document.createElement('div');
-      containerPDF.className = 'pdf-print-container';
-
-      // Cabeçalho Oficial do PDF
-      const cabecalho = `
-        <div class="pdf-print-header">
-          <h2>Tenda de Zé Cigano</h2>
-          <p>Relatório de Cadastros e Observações Gerais</p>
-        </div>
-      `;
-
-      // Clona a tabela e aplica os estilos ampliados
-      const tabelaClonada = elementoOriginal.cloneNode(true);
-      tabelaClonada.className = 'pdf-print-table';
-
-      containerPDF.innerHTML = cabecalho;
-      containerPDF.appendChild(tabelaClonada);
-
-      // Configurações do html2pdf ajustadas para legibilidade e margens
-      const opcoes = {
-        margin:       [12, 12, 12, 12],
-        filename:     'Relatorio_Tenda_de_Ze_Cigano.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, logging: false, useCORS: true },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      // Gera e faz o download do PDF
-      html2pdf().set(opcoes).from(containerPDF).save();
-    }
-  </script>
 </body>
 </html>

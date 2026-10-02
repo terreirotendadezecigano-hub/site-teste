@@ -3,272 +3,236 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cadastrar Membro - Tenda de Zé Cigano</title>
+  <title>Tenda de Zé Cigano - Página Inicial</title>
   <style>
-    /* Fundo Geral */
+    /* Reset e Estilos Gerais */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       background-color: #0d0003;
       color: #ffffff;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 15px;
       display: flex;
       justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 15px;
     }
 
-    /* Card/Modal no estilo do telemóvel */
-    .mobile-card {
+    /* Container Principal */
+    .main-container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Cabeçalho da Página */
+    .header-banner {
       background-color: #24050b;
       border: 2px solid #d4af37;
-      border-radius: 20px;
-      padding: 20px;
-      width: 100%;
-      max-width: 380px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
-      position: relative;
-    }
-
-    /* Cabeçalho */
-    .header {
-      text-align: center;
-      position: relative;
-      margin-bottom: 20px;
-    }
-
-    .close-btn {
-      position: absolute;
-      top: -5px;
-      right: 0;
-      color: #ffffff;
-      font-size: 1.2rem;
-      cursor: pointer;
-    }
-
-    .logo-container {
+      border-radius: 15px;
+      padding: 15px 20px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 8px;
+      justify-content: space-between;
     }
 
-    .logo-img {
-      width: 40px;
-      height: 40px;
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .brand-logo {
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
-      border: 1px solid #d4af37;
+      border: 2px solid #d4af37;
     }
 
-    .site-title {
+    .brand-title {
+      color: #f3d45a;
+      font-size: 1.3rem;
+      font-weight: bold;
+    }
+
+    .brand-subtitle {
+      color: #e0e0e0;
+      font-size: 0.85rem;
+    }
+
+    /* Grid de Blocos Topo (Quem Somos e Contatos) */
+    .top-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 15px;
+    }
+
+    .info-card {
+      background-color: #24050b;
+      border: 1px solid #d4af37;
+      border-radius: 12px;
+      padding: 18px;
+    }
+
+    .card-title {
+      color: #f3d45a;
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+      padding-bottom: 6px;
+    }
+
+    .card-text {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: #d1d1d1;
+      margin-bottom: 10px;
+    }
+
+    /* Lista de Contatos */
+    .contact-list {
+      list-style: none;
+      font-size: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .contact-list li {
+      color: #e0e0e0;
+    }
+
+    .contact-list strong {
+      color: #f3d45a;
+    }
+
+    /* Botão Destaque Conheça a Casa */
+    .btn-know-more {
+      background-color: #1a56b4;
+      color: #ffffff;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      cursor: pointer;
+      margin-top: 10px;
+      display: inline-block;
+      text-align: center;
+    }
+
+    /* Seção Destaques / Acompanhe Nossa Casa */
+    .highlights-section {
+      background-color: #1a0307;
+      border: 1px solid #d4af37;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .section-title {
       color: #f3d45a;
       font-size: 1.1rem;
       font-weight: 600;
-      margin: 0;
-      line-height: 1.2;
     }
 
-    .modal-title {
-      color: #ffffff;
-      font-size: 1.4rem;
-      font-weight: bold;
-      margin: 10px 0 0 0;
-    }
-
-    /* Formulários */
-    .form-group {
-      margin-bottom: 12px;
-    }
-
-    .form-row {
-      display: flex;
-      gap: 10px;
-    }
-
-    .form-row .form-group {
-      flex: 1;
-    }
-
-    label {
-      display: block;
-      color: #ffffff;
-      font-size: 0.8rem;
-      margin-bottom: 4px;
-    }
-
-    input, select, textarea {
-      width: 100%;
+    .highlights-container {
       background-color: #120205;
-      border: 1px solid #d4af37;
+      border: 1px dashed rgba(212, 175, 55, 0.4);
       border-radius: 8px;
-      color: #ffffff;
-      padding: 8px 10px;
-      font-size: 0.85rem;
-      box-sizing: border-box;
-      outline: none;
+      padding: 20px;
+      text-align: center;
+      color: #a0a0a0;
+      font-size: 0.9rem;
     }
 
-    input::placeholder {
-      color: #887075;
-    }
-
-    /* Secção de Upload de Imagem */
-    .upload-section {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 15px 0;
-    }
-
-    .profile-thumb {
-      width: 45px;
-      height: 45px;
-      border-radius: 6px;
-      border: 1px solid #d4af37;
-      object-fit: cover;
-    }
-
-    .btn-file {
-      background-color: #1a56b4;
-      color: #ffffff;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-weight: 600;
+    /* Rodapé */
+    .footer {
+      text-align: center;
+      padding: 15px 0;
       font-size: 0.8rem;
-      cursor: pointer;
-    }
-
-    .btn-remove {
-      color: #ffffff;
-      text-decoration: underline;
-      font-size: 0.75rem;
-      cursor: pointer;
-      background: none;
-      border: none;
-    }
-
-    /* Divisórias de Secção */
-    .section-label {
-      color: #f3d45a;
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin: 15px 0 8px 0;
-      border-bottom: 1px solid rgba(212, 175, 55, 0.3);
-      padding-bottom: 4px;
-    }
-
-    /* Botões de Ação Inferiores */
-    .footer-buttons {
-      display: flex;
-      gap: 10px;
-      margin-top: 20px;
-    }
-
-    .btn-action-blue {
-      flex: 1;
-      background-color: #1a56b4;
-      color: #ffffff;
-      border: none;
-      padding: 10px;
-      border-radius: 8px;
-      font-weight: bold;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-
-    .btn-action-red {
-      flex: 1;
-      background-color: #a31c1c;
-      color: #ffffff;
-      border: none;
-      padding: 10px;
-      border-radius: 8px;
-      font-weight: bold;
-      font-size: 0.85rem;
-      cursor: pointer;
+      color: #888888;
+      border-top: 1px solid rgba(212, 175, 55, 0.2);
     }
   </style>
 </head>
 <body>
 
-  <div class="mobile-card">
-    <div class="header">
-      <span class="close-btn">✕</span>
-      <div class="logo-container">
-        <img src="https://via.placeholder.com/40" alt="Logo" class="logo-img">
-        <div class="site-title">Tenda de<br>Zé Cigano</div>
+  <div class="main-container">
+
+    <!-- Topo da Página -->
+    <header class="header-banner">
+      <div class="brand-section">
+        <img src="https://via.placeholder.com/50" alt="Logo" class="brand-logo">
+        <div>
+          <h1 class="brand-title">TENDA DE ZÉ CIGANO</h1>
+          <p class="brand-subtitle">Terreiro de Umbanda</p>
+        </div>
       </div>
-      <h2 class="modal-title">Cadastrar Membro</h2>
-    </div>
+    </header>
 
-    <div class="form-group">
-      <label>Nome Completo</label>
-      <input type="text" placeholder="Nome do integrante">
-    </div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label>Data de Nascimento</label>
-        <input type="text" placeholder="dd/mm/aaaa">
+    <!-- Bloco Quem Somos e Contatos -->
+    <div class="top-grid">
+      
+      <!-- Card Quem Somos -->
+      <div class="info-card">
+        <h2 class="card-title">📜 Quem Somos</h2>
+        <p class="card-text">
+          Somos uma casa de fé, caridade e acolhimento, fundamentada na Umbanda e no respeito às diferentes manifestações da espiritualidade.
+        </p>
+        <p class="card-text">
+          Honramos os Orixás, as forças da natureza e as linhas de trabalho espiritual. Nossa caminhada valoriza a humildade, a fraternidade e o amor ao próximo.
+        </p>
+        <button class="btn-know-more">➔ Conheça nossa casa</button>
       </div>
-      <div class="form-group">
-        <label>Telefone / WhatsApp</label>
-        <input type="text" placeholder="(21) 99988-5538">
+
+      <!-- Card Contatos & Atendimento -->
+      <div class="info-card">
+        <h2 class="card-title">📍 Contatos & Atendimento</h2>
+        <ul class="contact-list">
+          <li><strong>Local:</strong> Coronel Fabriciano - Minas Gerais, Brasil</li>
+          <li><strong>WhatsApp:</strong> (31) 99999-9999</li>
+          <li><strong>Instagram:</strong> @tendadezecigano</li>
+          <li><strong>Giras Públicas:</strong> Conforme Agenda</li>
+          <li><strong>Contribuição:</strong> R$ 50</li>
+          <li><strong>PIX:</strong> 306.002.356-53</li>
+        </ul>
       </div>
+
     </div>
 
-    <div class="form-group">
-      <label>E-mail</label>
-      <input type="email" placeholder="email@exemplo.com">
-    </div>
-
-    <div class="form-group">
-      <label>Endereço Completo</label>
-      <input type="text" placeholder="Rua, número, complemento, bairro, cidade, UF">
-    </div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label>RG</label>
-        <input type="text" placeholder="RG">
+    <!-- Seção Destaques -->
+    <section class="highlights-section">
+      <div class="section-header">
+        <h2 class="section-title">✨ Destaques</h2>
       </div>
-      <div class="form-group">
-        <label>CPF</label>
-        <input type="text" placeholder="CPF">
+      <div class="highlights-container">
+        <p><strong>ACOMPANHE NOSSA CASA</strong></p>
+        <p style="margin-top: 5px; color: #d1d1d1;">Hoje e nos próximos dias</p>
+        <p style="font-size: 0.8rem; margin-top: 10px; color: #777;">Carregando outras áreas...</p>
       </div>
-    </div>
+    </section>
 
-    <div class="form-group">
-      <label>Alergias / Problemas de saúde</label>
-      <div class="upload-section">
-        <img src="https://via.placeholder.com/45" alt="Thumb" class="profile-thumb">
-        <button class="btn-file">Escolher Arquivo</button>
-        <button class="btn-remove">Remover</button>
-      </div>
-    </div>
+    <!-- Rodapé -->
+    <footer class="footer">
+      © Tenda de Zé Cigano | Sistema desenvolvido por SistemasAeR
+    </footer>
 
-    <div class="section-label">Dados da casa</div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label>Status</label>
-        <select>
-          <option>Ativo</option>
-          <option>Inativo</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Cargo / Função</label>
-        <input type="text" placeholder="Cargo">
-      </div>
-    </div>
-
-    <div class="footer-buttons">
-      <button class="btn-action-blue">Confirmar</button>
-      <button class="btn-action-red">Salvar Membro</button>
-    </div>
   </div>
 
 </body>

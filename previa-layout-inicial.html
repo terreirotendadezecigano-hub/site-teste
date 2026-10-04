@@ -15138,3 +15138,23 @@ header.banner .banner-right :is(.btn-login,.user-logged){border:1px solid #d0ae6
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
 </script>
+<!-- V296.4: título central de Destaques e subtítulo conforme a referência -->
+<script id="tzc-home-heading-v296">
+(function(){
+ function refresh(){
+  const intro=document.querySelector('.tzc-destaques-intro192');
+  if(!intro)return;
+  const eyebrow=intro.querySelector('span');if(eyebrow&&eyebrow.textContent.trim()!=='PRÓXIMA CASA')eyebrow.textContent='PRÓXIMA CASA';
+  const title=document.getElementById('pageTitle');
+  if(title){
+   if(!/Destaques/i.test(title.textContent||''))title.innerHTML='<i class="fa-solid fa-calendar-days" aria-hidden="true"></i> Destaques';
+   if(!title.classList.contains('tzc-home-destaque-v110'))title.classList.add('tzc-home-destaque-v110');
+   if(title.style.getPropertyValue('display')!=='flex'||title.style.getPropertyPriority('display')!=='important')title.style.setProperty('display','flex','important');
+  }
+ }
+ const content=document.getElementById('contentContainer'),title=document.getElementById('pageTitle');
+ if(content)new MutationObserver(refresh).observe(content,{childList:true,subtree:true,characterData:true});
+ if(title)new MutationObserver(refresh).observe(title,{attributes:true,childList:true,subtree:true,characterData:true});
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});else refresh();
+})();
+</script>

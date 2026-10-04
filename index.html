@@ -2022,6 +2022,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
     <ul class="nav-list" id="navList">
       <li class="nav-item active" onclick="switchTab('Home', this)"><i class="fa-solid fa-house"></i> Início</li>
       <li class="nav-item" onclick="abrirQuemSomosPublicoTZC_V103(this)"><i class="fa-solid fa-landmark"></i> Quem Somos</li>
+      <li class="nav-item" onclick="abrirContatoAquisicaoSistemaTZC_V1(this)"><i class="fa-solid fa-handshake-angle"></i> Adquira este sistema</li>
       <li class="nav-item" onclick="abrirMensagemDiaTZC_V103(this)"><i class="fa-solid fa-envelope-open-text"></i> Mensagem do Dia</li>
       <li class="nav-item" onclick="abrirBanhoSemanaTZC_V104(this)"><i class="fa-solid fa-spa"></i> Banho da Semana</li>
       <li class="nav-item" onclick="switchTab('Agenda', this)"><i class="fa-solid fa-calendar-days"></i> Agenda</li>
@@ -14874,3 +14875,57 @@ html body #modalMembro#modalMembro#modalMembro #mFotoPreview196{width:60px!impor
 const name=brand.querySelector('span'),logo=brand.querySelector('img');function sync(){const g=window.tzcGeralV1||{},title=String(g.Nome_Terreiro||document.getElementById('tzcHeaderNomeV1')?.textContent||'Nossa casa').trim();if(name.textContent!==title)name.textContent=title;let url=String(g.Logo_URL||document.getElementById('tzcHeaderLogoV1')?.getAttribute('src')||'').trim();const drive=url.match(/(?:drive\.google\.com|docs\.google\.com).*?(?:\/d\/|[?&]id=)([\w-]+)/);if(drive)url='https://lh3.googleusercontent.com/d/'+drive[1];if(!/^(https?:\/\/|data:image\/(?:png|jpeg|webp);base64,)/i.test(url)){logo.hidden=true;logo.removeAttribute('src')}else if(logo.getAttribute('src')!==url){logo.hidden=false;logo.src=url}}
 logo.addEventListener('error',()=>{logo.hidden=true});sync();new MutationObserver(sync).observe(m,{attributes:true,attributeFilter:['style']});const siteHeader=document.getElementById('tzcHeaderNomeV1')?.parentElement;if(siteHeader)new MutationObserver(sync).observe(siteHeader,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['src']});})();
 </script>
+<style id="tzc-acquisition-contact-v294">
+#tzcAcquisitionV294{position:fixed;inset:0;z-index:400000;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;font:16px/1.55 'Segoe UI',Arial,sans-serif}
+#tzcAcquisitionV294[aria-hidden="false"]{display:flex}
+#tzcAcquisitionV294 .tzc-acq-card{position:relative;width:min(100%,520px);max-height:calc(100dvh - 32px);overflow:auto;background:#24050b;color:#fff;border:1px solid #d4af37;border-radius:18px;padding:24px;box-sizing:border-box;box-shadow:0 18px 50px #0009}
+#tzcAcquisitionV294 h2{color:#f3d45a;font-size:clamp(22px,5vw,28px);line-height:1.2;margin:0 48px 10px 0}
+#tzcAcquisitionV294 p{margin:0 0 18px;color:#f5e9ec}
+#tzcAcquisitionV294 .tzc-acq-close{position:absolute;right:14px;top:14px;width:44px;height:44px;border-radius:10px;border:1px solid #d4af37;background:#120205;color:#fff;font-size:22px;cursor:pointer}
+#tzcAcquisitionV294 .tzc-acq-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#tzcAcquisitionV294 .tzc-acq-actions a{display:flex;align-items:center;justify-content:center;gap:9px;min-height:52px;padding:12px;box-sizing:border-box;border-radius:10px;border:1px solid #d4af37;background:#120205;color:#f3d45a;text-decoration:none;font-weight:700;text-align:center;overflow-wrap:anywhere}
+#tzcAcquisitionV294 .tzc-acq-actions a:first-child{background:#a31c1c;color:white;border-color:#a31c1c}
+#tzcAcquisitionV294 :is(button,a):focus-visible{outline:3px solid #f3d45a;outline-offset:3px}
+@media(max-width:480px){#tzcAcquisitionV294 .tzc-acq-card{padding:20px 16px}#tzcAcquisitionV294 .tzc-acq-actions{grid-template-columns:1fr}}
+</style>
+<div id="tzcAcquisitionV294" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="tzcAcquisitionTitleV294">
+  <section class="tzc-acq-card" tabindex="-1">
+    <button class="tzc-acq-close" type="button" aria-label="Fechar" onclick="fecharContatoAquisicaoSistemaTZC_V1()">&times;</button>
+    <h2 id="tzcAcquisitionTitleV294">Leve este sistema para o seu terreiro</h2>
+    <p>Quer conhecer ou adquirir uma versão para sua casa? Fale diretamente com a responsável. Escolha e-mail ou WhatsApp:</p>
+    <div class="tzc-acq-actions">
+      <a href="mailto:sistemaaer@gmail.com?subject=Interesse%20no%20sistema%20para%20terreiro"><i class="fa-solid fa-envelope" aria-hidden="true"></i> Enviar e-mail</a>
+      <a href="https://wa.me/5531986499826?text=Ol%C3%A1%2C%20tenho%20interesse%20em%20conhecer%20o%20sistema%20para%20terreiro." target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> Conversar pelo WhatsApp</a>
+    </div>
+  </section>
+</div>
+<script id="tzc-acquisition-contact-v294-script">
+(()=>{
+  const layer=document.getElementById('tzcAcquisitionV294');
+  if(!layer)return;
+  const card=layer.querySelector('.tzc-acq-card');
+  let previousFocus=null;
+  window.abrirContatoAquisicaoSistemaTZC_V1=function(item){
+    previousFocus=document.activeElement;
+    if(item?.classList?.contains('nav-item')){
+      document.querySelectorAll('.nav-item.active').forEach(x=>x.classList.remove('active'));
+      item.classList.add('active');
+      const sidebar=document.getElementById('sidebar');
+      if(sidebar?.classList.contains('open'))sidebar.classList.remove('open');
+    }
+    layer.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+    requestAnimationFrame(()=>card.focus());
+  };
+  window.fecharContatoAquisicaoSistemaTZC_V1=function(){
+    layer.setAttribute('aria-hidden','true');
+    document.body.style.overflow='';
+    if(previousFocus?.isConnected)previousFocus.focus();
+  };
+  layer.addEventListener('click',e=>{if(e.target===layer)window.fecharContatoAquisicaoSistemaTZC_V1()});
+  document.addEventListener('keydown',e=>{
+    if(layer.getAttribute('aria-hidden')==='false'&&e.key==='Escape')window.fecharContatoAquisicaoSistemaTZC_V1();
+  });
+})();
+</script>
+

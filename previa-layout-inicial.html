@@ -15120,3 +15120,21 @@ header.banner .banner-right :is(.btn-login,.user-logged){border:1px solid #d0ae6
  new MutationObserver(enforce).observe(section,{childList:true});
 })();
 </script>
+<!-- V296.3: inicializar a busca depois que a Home e a faixa de boas-vindas existirem -->
+<script id="tzc-home-search-ready-v296">
+(function(){
+ function init(){
+  const section=document.getElementById('generalInfoSection'),hero=document.getElementById('tzcHomeHeroV296'),search=document.getElementById('searchContainerWrapper'),input=document.getElementById('searchInput');
+  if(!section||!hero||!search)return;
+  function enforce(){
+   if(search.parentElement!==section)section.insertBefore(search,hero.nextSibling);
+   if(search.style.getPropertyValue('display')!=='block'||search.style.getPropertyPriority('display')!=='important')search.style.setProperty('display','block','important');
+  }
+  enforce();
+  new MutationObserver(enforce).observe(search,{attributes:true,attributeFilter:['style']});
+  new MutationObserver(enforce).observe(section,{childList:true});
+  if(input)input.setAttribute('aria-label','Pesquisar destaques e informações da casa');
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script>

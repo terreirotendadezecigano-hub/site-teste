@@ -15089,3 +15089,20 @@ header.banner .banner-right :is(.btn-login,.user-logged){border:1px solid #d0ae6
  if(typeof baseFilter==='function')window.filterCards=function(){baseFilter.apply(this,arguments);const q=String(document.getElementById('searchInput')?.value||'').trim().toLocaleLowerCase('pt-BR');document.querySelectorAll('#tzcDestaques192 .tzc-destaque-linha192').forEach(card=>card.hidden=!!q&&!card.textContent.toLocaleLowerCase('pt-BR').includes(q))};
 })();
 </script>
+<!-- V296.1: busca visível na Home, abaixo da faixa de boas-vindas -->
+<script id="tzc-home-search-v296">
+(function(){
+ function ensureSearch(){
+  const section=document.getElementById('generalInfoSection'),hero=document.getElementById('tzcHomeHeroV296'),search=document.getElementById('searchContainerWrapper'),input=document.getElementById('searchInput');
+  if(section&&hero&&search&&search.parentElement!==section)section.insertBefore(search,hero.nextSibling);
+  if(search&&hero){search.style.display='block';if(input){input.setAttribute('aria-label','Pesquisar destaques e informações da casa');input.placeholder='🔍 Pesquisar agenda, mensagens e avisos…'}}
+ }
+ function filterHome(){
+  const q=String(document.getElementById('searchInput')?.value||'').trim().toLocaleLowerCase('pt-BR');
+  document.querySelectorAll('#generalInfoSection .general-card,#tzcDestaques192 .tzc-destaque-linha192').forEach(card=>{card.hidden=!!q&&!card.textContent.toLocaleLowerCase('pt-BR').includes(q)});
+ }
+ ensureSearch();
+ const input=document.getElementById('searchInput');if(input)input.addEventListener('input',filterHome);
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensureSearch,{once:true});
+})();
+</script>

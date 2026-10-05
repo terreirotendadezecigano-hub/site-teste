@@ -14799,8 +14799,8 @@ body[data-tzc-route="Home"] #generalInfoSection{display:grid!important;grid-temp
  const nav=window.TZC185?.navegar;if(typeof nav==='function'&&!nav.__tzcV297){const wrapped=function(rota){const out=nav.apply(this,arguments);aplicar(rota,rota!=='Home');return out};wrapped.__tzcV297=true;window.TZC185.navegar=wrapped;}
  const sw=window.switchTab;if(typeof sw==='function'&&!sw.__tzcV297){const wrapped=function(rota){aplicar(rota,rota!=='Home');const out=sw.apply(this,arguments);aplicar(rota,false);return out};wrapped.__tzcV297=true;window.switchTab=wrapped;}
  [['abrirQuemSomosPublicoTZC_V103','Quem_Somos'],['abrirMensagemDiaTZC_V103','Mensagem_Dia'],['abrirBanhoSemanaTZC_V104','Banho_Semana'],['abrirEventosMembrosTZCV128','Eventos_Publicos'],['abrirEventosTZC_V126','Eventos_TZC'],['abrirControlePresencasV175','Controle_Presencas'],['abrirControlePresencasV145','Controle_Presencas'],['abrirEstudosTZC_V1','Estudos'],['abrirCategoriasTZC_V1','Categorias'],['abrirConfiguracoesTerreiroTZC_V1','Configuracoes'],['abrirGestaoErvasTZC_V1','Gestao_Ervas'],['abrirMidiasSociaisTZC','Midias_Sociais'],['abrirArtesPdfTZC','Artes_PDFs'],['abrirUsuariosPermissoesTZC','Usuarios_Acesso'],['abrirPublicacoesTZC_V104','Publicacoes'],['carregarEExibirMembros','Membros']].forEach(x=>wrap(x[0],x[1]));
- document.addEventListener('DOMContentLoaded',()=>{const route=window.TZC185?.rota?.()||window.currentTab||'Home';aplicar(route,route!=='Home');montar();},{once:true});
- if(document.readyState!=='loading'){const route=window.TZC185?.rota?.()||window.currentTab||'Home';aplicar(route,route!=='Home');montar();}
+ document.addEventListener('DOMContentLoaded',()=>{const route=window.TZC185?.rota?.()||window.currentTab||'Home';aplicar(route,route!=='Home');},{once:true});
+ if(document.readyState!=='loading'){const route=window.TZC185?.rota?.()||window.currentTab||'Home';aplicar(route,route!=='Home');}
 })();
 </script>
 
@@ -14866,13 +14866,12 @@ body.tzc-theme-light #tzcThemeButton298{background:#f3e7d4;color:#53172b;border-
    box.querySelectorAll('.modal-actions button').forEach(b=>{const label=(b.innerText||b.textContent||'').trim();const code=b.getAttribute('onclick')||'';if(/^(fechar|fechar modal)$/i.test(label)||/(?:close|fechar)[A-Za-z0-9_]*Modal/i.test(code)){if(!b.dataset.tzcCancel298){b.dataset.tzcCancel298='1';b.setAttribute('aria-label','Cancelar e fechar');const icon=b.querySelector('i');b.innerHTML=(icon?icon.outerHTML:'<i class="fa-solid fa-xmark" aria-hidden="true"></i>')+' Cancelar'}}})
   })
  }
- function boot(){installTheme();moveAcquisition();standardize();document.body.addEventListener('click',e=>{const el=e.target.closest?.('#navList .nav-item');if(el)markActive(el)});let queued=false;const scanAdded=records=>{for(const record of records)for(const node of record.addedNodes)if(node.nodeType===1)standardize(node)};const mo=new MutationObserver(records=>{moveAcquisition();scanAdded(records)});if(nav)mo.observe(nav,{childList:true});const bodyMo=new MutationObserver(records=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;scanAdded(records)})});bodyMo.observe(document.body,{childList:true});window.addEventListener('storage',e=>{if(e.key===themeKey)setTheme(e.newValue==='light'?'light':'dark')})}
+ function boot(){installTheme();moveAcquisition();standardize();document.body.addEventListener('click',e=>{const el=e.target.closest?.('#navList .nav-item');if(el)markActive(el);if(e.target.closest?.('button,[role=button]'))setTimeout(()=>standardize(document),180)});window.addEventListener('storage',e=>{if(e.key===themeKey)setTheme(e.newValue==='light'?'light':'dark')})}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
  window.TZC_INTERFACE_V298={setTheme};
 })();
 </script>
-</body>
-</html>
+
 
 <style id="navigation216">
 html body #contentContainer [data-page-back216],html body #contentContainer .page-back212,html body #contentContainer .tzc-page-back-v44{display:none!important}
@@ -15217,18 +15216,18 @@ logo.addEventListener('error',()=>{logo.hidden=true});sync();new MutationObserve
  html body .modal-overlay label{font-size:14px!important}
 }
 </style>
-<!-- TZC V299: fallback de destaques, limpeza de escapes soltos e observação leve -->
+<!-- TZC V300: recuperação de destaques com espera limitada e limpeza pontual -->
 <style id="tzc-v299-home-loading">
 #loading{z-index:1}
 #contentContainer .tzc-destaques-intro192{display:block!important;visibility:visible!important}
 </style>
-<script id="tzc-v299-home-recovery">
-(()=>{'use strict';window.TZC_SITE_VERSION='V299';
+<script id="tzc-v300-home-recovery">
+(()=>{'use strict';window.TZC_SITE_VERSION='V300';
 const clean=node=>{if(!node)return;if(node.nodeType===3){if(/^\\n+$/.test(node.nodeValue.trim()))node.remove();return}if(node.nodeType!==1||node.closest?.('script,style,textarea,input,pre,code'))return;const w=document.createTreeWalker(node,NodeFilter.SHOW_TEXT);const drop=[];while(w.nextNode()){const t=w.currentNode;if(/^\\n+$/.test(t.nodeValue.trim()))drop.push(t)}drop.forEach(t=>t.remove())};
-function start(){clean(document.body);const content=document.getElementById('contentContainer');if(content){new MutationObserver(records=>{for(const record of records){if(record.type==='characterData')clean(record.target);for(const node of record.addedNodes)clean(node)}}).observe(content,{subtree:true,childList:true,characterData:true});clean(content)}
-const footer=document.querySelector('footer.footer');if(footer)new MutationObserver(records=>{for(const record of records){if(record.type==='characterData')clean(record.target);for(const node of record.addedNodes)clean(node)}}).observe(footer,{subtree:true,childList:true,characterData:true});
-const body=new MutationObserver(records=>{for(const record of records)for(const node of record.addedNodes)clean(node)});body.observe(document.body,{childList:true});
-let tries=0;const recover=()=>{if((window.TZC185?.rota?.()||window.currentTab||'Home')!=='Home')return;const grid=document.getElementById('tzcDestaques192');if(grid)return;if(typeof window.selecionarDestaques190==='function'&&typeof window.buildHomeAgenda==='function'){try{window.buildHomeAgenda()}catch(e){console.error('Falha ao iniciar Destaques V299',e)}}else if(tries<8){tries++;setTimeout(recover,1200)}};setTimeout(recover,900)}
+function start(){clean(document.body);let attempts=0;const run=()=>{const route=window.TZC185?.rota?.()||document.body?.dataset?.tzcRoute||window.currentTab||'Home';if(route!=='Home')return;const grid=document.getElementById('tzcDestaques192'),content=document.getElementById('contentContainer'),loading=document.getElementById('loading');if(grid){if(loading)loading.style.display='none';clean(content);return}if(attempts<8){attempts++;try{if(typeof window.buildHomeAgenda==='function'&&typeof window.selecionarDestaques190==='function'){const result=window.buildHomeAgenda();if(result&&typeof result.catch==='function')result.catch(e=>console.error('Falha ao carregar Destaques V300',e))}}catch(e){console.error('Falha ao iniciar Destaques V300',e)}setTimeout(run,1200);return}if(content&&!document.getElementById('tzcDestaques192')){content.innerHTML='<div class="tzc-destaques-intro192"><span>ACOMPANHE NOSSA CASA</span><p>Destaques da Tenda</p><small>Os destaques não puderam ser carregados agora. Atualize a página para tentar novamente.</small></div>';if(loading)loading.style.display='none'}};setTimeout(run,350);setTimeout(()=>clean(document.body),1800)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
 </script>
+
+</body>
+</html>

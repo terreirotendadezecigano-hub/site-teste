@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scalea=1.0, user-scalable=no">
   <title>Tenda de Zé Cigano</title>
+  <script id="tzc-theme-boot302">try{if(localStorage.getItem('tzcThemePreference298')==='light')document.documentElement.classList.add('tzc-theme-light')}catch(e){}</script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Bibliotecas para exportar PDF e Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -732,6 +733,12 @@
     }
 
   </style>
+<style id="tzc-theme-paint-early302">
+html.tzc-theme-light body{background:#f4f0e9!important;color:#30252a!important;color-scheme:light}
+html.tzc-theme-light body :is(.container,#contentContainer){background:#f4f0e9!important;color:#30252a!important}
+html.tzc-theme-light body :is(#contentContainer h1,#contentContainer h2,#contentContainer h3){font-family:Georgia,'Times New Roman',serif!important;color:#76541b!important}
+html.tzc-theme-light body :is(input:not([type=checkbox]):not([type=radio]),select,textarea){background:#efefed!important;color:#30252a!important;-webkit-text-fill-color:#30252a!important;border-color:#c9c3bc!important;color-scheme:light}
+</style>
 
 <style id="tzc-v39-altura-automatica">
   /* V39 — padrão global: a página cresce conforme o conteúdo.
@@ -3892,53 +3899,59 @@ if(new URL(location.href).searchParams.has('cadastro')){loadGeneralData();return
     }
 
     async function loadGeneralData() {
+      const contacts = document.getElementById('txtContatosGeral');
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
       try {
-        const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Geral`);
+        const res = await fetch(`https://opensheet.elk.sh/${SHEET_ID}/Geral`, {
+          signal: controller.signal,
+          cache: 'no-store'
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (data && data.length > 0) {
-          dadosGeraisInstituicao = data[0];window.tzcGeralV1=data[0];
-          const info = dadosGeraisInstituicao;
-          const quemSomos = info.Quem_Somos || info.QuemSomos || '';
-          const endereco = info.Endereco || info.Endereço || '';
-          let enderecoHtml = quemSomos;
-          if (endereco) {
-            let mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
-            enderecoHtml += `<br><br><a class="info-link" href="${mapsUrl}" target="_blank"><strong><i class="fa-solid fa-location-dot" style="color: var(--gold-primary);"></i> Endereço:</strong> ${endereco}</a>`;
-          }
-          /* V103: o resumo público de Quem Somos é editorial e não é mais sobrescrito pela planilha Geral. */
-
-          const telefone = String(info.Telefone_Whatsapp || info.Telefone || '');
-          const grupoWhatsapp = info.Grupo_Zap || info.Grupo_Whatsapp || 'https://chat.whatsapp.com/KjLkk0tFu2wIuodvHEsG4e';
-          const instagram = info.Instagram || '';
-          const horario = info.Horario_Giras || info.Horario || '';
-          const valor = info.Valor || '';
-          const pix = info.PIX || info.Pix || '';
-
-          let contatoHtml = '';
-          if (endereco) {
-            let mapsUrlContato = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
-            contatoHtml += `<li><a class="info-link" href="${mapsUrlContato}" target="_blank"><i class="fa-solid fa-location-dot"></i> <span>${endereco}</span></a></li>`;
-          }
-          if (telefone) {
-            let cleanPhone = telefone.replace(/\D/g, '');
-            contatoHtml += `<li><a class="info-link" href="https://wa.me/${cleanPhone}" target="_blank"><i class="fa-brands fa-whatsapp"></i> <span>${telefone} (WhatsApp)</span></a></li>`;
-          }
-          if (grupoWhatsapp) {
-            let groupLink = grupoWhatsapp.startsWith('http') ? grupoWhatsapp : `https://${grupoWhatsapp}`;
-            contatoHtml += `<li><a class="info-link" href="${groupLink}" target="_blank"><i class="fa-solid fa-users"></i> <span>Grupo do WhatsApp</span></a></li>`;
-          }
-          if (instagram) {
-            let instaUrl = instagram.startsWith('http') ? instagram : `https://instagram.com/${instagram.replace('@','')}`;
-            contatoHtml += `<li><a class="info-link" href="${instaUrl}" target="_blank"><i class="fa-brands fa-instagram"></i> <span>${instagram}</span></a></li>`;
-          }
-          if (horario) contatoHtml += `<li><span class="info-link" style="cursor:default;"><i class="fa-solid fa-clock"></i> <span>${horario}</span></span></li>`;
-          if (valor) contatoHtml += `<li><span class="info-link" style="cursor:default;"><i class="fa-solid fa-ticket"></i> <span>Contribuição: R$ ${valor}</span></span></li>`;
-          if (pix) contatoHtml += `<li><span class="info-link" onclick="copyPix('${pix}')" style="cursor:pointer;" title="Copiar PIX"><i class="fa-solid fa-qrcode"></i> <span>PIX: ${pix}</span></span></li>`;
-
-          document.getElementById('txtContatosGeral').innerHTML = contatoHtml || '<li>Nenhum contato.</li>';
+        if (!Array.isArray(data) || data.length === 0) {
+          if (contacts) contacts.innerHTML = '<li>Nenhum contato cadastrado.</li>';
+          return;
         }
+
+        dadosGeraisInstituicao = data[0];
+        window.tzcGeralV1 = data[0];
+        const info = dadosGeraisInstituicao;
+        const endereco = info.Endereco || info.Endereço || '';
+        const telefone = String(info.Telefone_Whatsapp || info.Telefone || '');
+        const grupoWhatsapp = info.Grupo_Zap || info.Grupo_Whatsapp || 'https://chat.whatsapp.com/KjLkk0tFu2wIuodvHEsG4e';
+        const instagram = info.Instagram || '';
+        const horario = info.Horario_Giras || info.Horario || '';
+        const valor = info.Valor || '';
+        const pix = info.PIX || info.Pix || '';
+
+        let contatoHtml = '';
+        if (endereco) {
+          const mapsUrlContato = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
+          contatoHtml += `<li><a class="info-link" href="${mapsUrlContato}" target="_blank"><i class="fa-solid fa-location-dot"></i> <span>${endereco}</span></a></li>`;
+        }
+        if (telefone) {
+          const cleanPhone = telefone.replace(/\D/g, '');
+          contatoHtml += `<li><a class="info-link" href="https://wa.me/${cleanPhone}" target="_blank"><i class="fa-brands fa-whatsapp"></i> <span>${telefone} (WhatsApp)</span></a></li>`;
+        }
+        if (grupoWhatsapp) {
+          const groupLink = grupoWhatsapp.startsWith('http') ? grupoWhatsapp : `https://${grupoWhatsapp}`;
+          contatoHtml += `<li><a class="info-link" href="${groupLink}" target="_blank"><i class="fa-solid fa-users"></i> <span>Grupo do WhatsApp</span></a></li>`;
+        }
+        if (instagram) {
+          const instaUrl = instagram.startsWith('http') ? instagram : `https://instagram.com/${instagram.replace('@','')}`;
+          contatoHtml += `<li><a class="info-link" href="${instaUrl}" target="_blank"><i class="fa-brands fa-instagram"></i> <span>${instagram}</span></a></li>`;
+        }
+        if (horario) contatoHtml += `<li><span class="info-link" style="cursor:default;"><i class="fa-solid fa-clock"></i> <span>${horario}</span></span></li>`;
+        if (valor) contatoHtml += `<li><span class="info-link" style="cursor:default;"><i class="fa-solid fa-ticket"></i> <span>Contribuição: R$ ${valor}</span></span></li>`;
+        if (pix) contatoHtml += `<li><span class="info-link" onclick="copyPix('${pix}')" style="cursor:pointer;" title="Copiar PIX"><i class="fa-solid fa-qrcode"></i> <span>PIX: ${pix}</span></span></li>`;
+
+        if (contacts) contacts.innerHTML = contatoHtml || '<li>Nenhum contato cadastrado.</li>';
       } catch (e) {
-        document.getElementById('txtQuemSomos').innerText = 'Erro ao carregar dados.';
+        if (contacts) contacts.innerHTML = '<li>Contatos temporariamente indisponíveis. Tente novamente mais tarde.</li>';
+        console.warn('Não foi possível carregar os contatos da casa:', e);
+      } finally {
+        clearTimeout(timeout);
       }
     }
 
@@ -14139,7 +14152,7 @@ html body #giraStatus211 button{margin:8px 0 8px 10px}
 <script id="management212">
 (()=>{'use strict';const $=id=>document.getElementById(id);let queued=false;const allowed=()=>isLoggedIn&&(window.TZC208?.context()?.dirigenteDaCasa||window.TZC208?.context()?.podeHistorico);
 async function requestGiras(data={}){try{const j=await TZC206.request('m211_giras',data,45000);if(data.evento?!j.evento||!Array.isArray(j.registros):!Array.isArray(j.eventos))throw Error('Resposta incompatível do servidor de giras.');return j}catch(e){if(/ID do registro não informado|Operação desconhecida|Ação inválida|Resposta incompatível/i.test(e.message))throw Error('Não foi possível carregar estas informações. Tente novamente em alguns instantes. Se o problema continuar, avise a gestão da casa.');throw e}}
-async function open(){if(!isLoggedIn)return openLoginModal();await TZC208.refresh();if(!allowed())return showToast('Página restrita à gestão autorizada.');TZC185.navegar('Acessos_Historico');$('sidebar')?.classList.remove('open');for(const id of ['generalInfoSection','searchContainerWrapper','pageTitle','loading'])if($(id))$(id).style.display='none';if($('pageSubtitleContainer'))$('pageSubtitleContainer').innerHTML='';$('contentContainer').innerHTML='<section id="securityPage212"><div class="tzc-page-head-v44"><button class="btn-toolbar tzc-page-back-v44" onclick="voltarInicio211()" title="Voltar ao início" aria-label="Voltar ao início"><i class="fa-solid fa-arrow-left"></i></button><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-user-lock"></i> Acessos e histórico</h2><p>Consulte quem pode fazer cada ação e acompanhe as alterações registradas na casa.</p></div><span class="security-spacer214" aria-hidden="true"></span></div><div id="securityBody212"></div></section>';sync();if(TZC208.context()?.podeHistorico)await TZC208.history()}
+async function open(){if(!isLoggedIn)return openLoginModal();await TZC208.refresh();if(!allowed())return showToast('Página restrita à gestão autorizada.');TZC185.navegar('Acessos_Historico');$('sidebar')?.classList.remove('open');for(const id of ['generalInfoSection','searchContainerWrapper','pageTitle','loading'])if($(id))$(id).style.display='none';if($('pageSubtitleContainer'))$('pageSubtitleContainer').innerHTML='';$('contentContainer').innerHTML='<section id="securityPage212"><div class="tzc-page-head-v44"><button class="btn-toolbar tzc-page-back-v44" onclick="voltarInicio211()" title="Voltar ao início" aria-label="Voltar ao início"><i class="fa-solid fa-arrow-left"></i></button><div class="tzc-page-copy-v44"><h2><i class="fa-solid fa-user-lock"></i> Acessos e histórico</h2><p>Consulte quem pode fazer cada ação e acompanhe as alterações registradas na casa.</p></div><span class="security-spacer214" aria-hidden="true"></span></div><div id="securityBody212"></div></section>';sync()}
 function sync(){const nav=$('navList');if(nav){let n=$('menuSecurity212');if(!n){n=document.createElement('li');n.id='menuSecurity212';n.className='nav-item';n.innerHTML='<i class="fa-solid fa-user-lock"></i> Acessos e histórico';n.onclick=open;nav.insertBefore(n,$('forgetDevice203')||null)}const display=allowed()?'':'none';if(n.style.display!==display)n.style.display=display;const active=TZC185.rota()==='Acessos_Historico';if(n.classList.contains('active')!==active)n.classList.toggle('active',active)}const link=$('finSecurityLink212');if(link)link.hidden=!allowed();const host=$('securityBody212');if(host){let bar=$('security208');if(!bar){bar=document.createElement('div');bar.id='security208';host.appendChild(bar)}if(!bar.children.length){const c=TZC208.context();for(const [visible,text,icon,run]of [[c.dirigenteDaCasa||c.podeHistorico,'Autorizações','user-shield',TZC208.authorizations],[c.podeHistorico,'Histórico','clock-rotate-left',TZC208.history]])if(visible){const b=document.createElement('button');b.className='btn-toolbar';b.type='button';b.innerHTML='<i class="fa-solid fa-'+icon+'"></i> '+text;b.onclick=run;bar.appendChild(b)}}}const status=$('giraStatus211');if(status&&status.textContent&&!/Carregando/.test(status.textContent)&&!status.querySelector('button')&&!status.querySelector('[data-retry212]')){const b=document.createElement('button');b.type='button';b.className='btn-toolbar';b.dataset.retry212='1';b.innerHTML='<i class="fa-solid fa-rotate-right"></i> Tentar novamente';b.onclick=()=>window[TZC185.rota()==='Presencas_Reais'?'abrirPresencasReais211':'abrirRespostasGiras211']();status.appendChild(b)}}
 window.abrirSeguranca212=open;window.TZC212={requestGiras,sync};const base=window.switchTab;window.switchTab=function(name){if(name==='Acessos_Historico')return open();return base.apply(this,arguments)};
 new MutationObserver(()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;sync()})}).observe(document.body,{childList:true,subtree:true});const auth=window.updateAuthUI;window.updateAuthUI=function(){const out=auth.apply(this,arguments);TZC208.refresh().then(sync);return out};sync();})();
@@ -14850,7 +14863,7 @@ body.tzc-theme-light #tzcThemeButton298{background:#f3e7d4;color:#53172b;border-
 (()=>{'use strict';
  const $=id=>document.getElementById(id),nav=$('navList'),sidebar=$('sidebar');
  const themeKey='tzcThemePreference298';
- function setTheme(mode){const light=mode==='light';document.body.classList.toggle('tzc-theme-light',light);try{localStorage.setItem(themeKey,light?'light':'dark')}catch(e){}const b=$('tzcThemeButton298');if(b){b.innerHTML='<i class="fa-solid fa-'+(light?'moon':'sun')+'" aria-hidden="true"></i> Aparência: '+(light?'Clara':'Escura')+' · tocar para alternar';b.setAttribute('aria-pressed',String(light))}}
+ function setTheme(mode){const light=mode==='light';document.documentElement.classList.toggle('tzc-theme-light',light);document.body.classList.toggle('tzc-theme-light',light);try{localStorage.setItem(themeKey,light?'light':'dark')}catch(e){}const b=$('tzcThemeButton298');if(b){b.innerHTML='<i class="fa-solid fa-'+(light?'moon':'sun')+'" aria-hidden="true"></i> Aparência: '+(light?'Clara':'Escura')+' · tocar para alternar';b.setAttribute('aria-pressed',String(light))}}
  function installTheme(){if(!sidebar||!nav)return;let wrap=$('tzcThemeControl298');if(!wrap){wrap=document.createElement('div');wrap.id='tzcThemeControl298';wrap.innerHTML='<button id="tzcThemeButton298" type="button"></button>';sidebar.insertBefore(wrap,nav.nextSibling)}const b=$('tzcThemeButton298');if(b&&!b.dataset.ready){b.dataset.ready='1';b.addEventListener('click',()=>setTheme(document.body.classList.contains('tzc-theme-light')?'dark':'light'))}let saved='dark';try{saved=localStorage.getItem(themeKey)==='light'?'light':'dark'}catch(e){}setTheme(saved)}
  function moveAcquisition(){if(!nav)return;const item=nav.querySelector('.nav-item[onclick*="abrirContatoAquisicaoSistemaTZC_V1"]');if(item&&nav.lastElementChild!==item)nav.appendChild(item)}
  function markActive(el){if(!el)return;nav?.querySelectorAll('.nav-item').forEach(n=>{n.classList.toggle('active',n===el);if(n===el)n.setAttribute('aria-current','page');else n.removeAttribute('aria-current')})}
@@ -15216,18 +15229,126 @@ logo.addEventListener('error',()=>{logo.hidden=true});sync();new MutationObserve
  html body .modal-overlay label{font-size:14px!important}
 }
 </style>
-<!-- TZC V300: recuperação de destaques com espera limitada e limpeza pontual -->
+<!-- TZC V301: recuperação de destaques com espera limitada e limpeza pontual -->
 <style id="tzc-v299-home-loading">
 #loading{z-index:1}
 #contentContainer .tzc-destaques-intro192{display:block!important;visibility:visible!important}
 </style>
-<script id="tzc-v300-home-recovery">
-(()=>{'use strict';window.TZC_SITE_VERSION='V300';
+<script id="tzc-v301-home-recovery">
+(()=>{'use strict';window.TZC_SITE_VERSION='V301';
 const clean=node=>{if(!node)return;if(node.nodeType===3){if(/^\\n+$/.test(node.nodeValue.trim()))node.remove();return}if(node.nodeType!==1||node.closest?.('script,style,textarea,input,pre,code'))return;const w=document.createTreeWalker(node,NodeFilter.SHOW_TEXT);const drop=[];while(w.nextNode()){const t=w.currentNode;if(/^\\n+$/.test(t.nodeValue.trim()))drop.push(t)}drop.forEach(t=>t.remove())};
-function start(){clean(document.body);let attempts=0;const run=()=>{const route=window.TZC185?.rota?.()||document.body?.dataset?.tzcRoute||window.currentTab||'Home';if(route!=='Home')return;const grid=document.getElementById('tzcDestaques192'),content=document.getElementById('contentContainer'),loading=document.getElementById('loading');if(grid){if(loading)loading.style.display='none';clean(content);return}if(attempts<8){attempts++;try{if(typeof window.buildHomeAgenda==='function'&&typeof window.selecionarDestaques190==='function'){const result=window.buildHomeAgenda();if(result&&typeof result.catch==='function')result.catch(e=>console.error('Falha ao carregar Destaques V300',e))}}catch(e){console.error('Falha ao iniciar Destaques V300',e)}setTimeout(run,1200);return}if(content&&!document.getElementById('tzcDestaques192')){content.innerHTML='<div class="tzc-destaques-intro192"><span>ACOMPANHE NOSSA CASA</span><p>Destaques da Tenda</p><small>Os destaques não puderam ser carregados agora. Atualize a página para tentar novamente.</small></div>';if(loading)loading.style.display='none'}};setTimeout(run,350);setTimeout(()=>clean(document.body),1800)}
+function start(){clean(document.body);let attempts=0;const run=()=>{const route=window.TZC185?.rota?.()||document.body?.dataset?.tzcRoute||window.currentTab||'Home';if(route!=='Home')return;const grid=document.getElementById('tzcDestaques192'),content=document.getElementById('contentContainer'),loading=document.getElementById('loading');if(grid){if(loading)loading.style.display='none';clean(content);return}if(attempts<8){attempts++;try{if(typeof window.buildHomeAgenda==='function'&&typeof window.selecionarDestaques190==='function'){const result=window.buildHomeAgenda();if(result&&typeof result.catch==='function')result.catch(e=>console.error('Falha ao carregar Destaques V301',e))}}catch(e){console.error('Falha ao iniciar Destaques V301',e)}setTimeout(run,1200);return}if(content&&!document.getElementById('tzcDestaques192')){content.innerHTML='<div class="tzc-destaques-intro192"><span>ACOMPANHE NOSSA CASA</span><p>Destaques da Tenda</p><small>Os destaques não puderam ser carregados agora. Atualize a página para tentar novamente.</small></div>';if(loading)loading.style.display='none'}};setTimeout(run,350);setTimeout(()=>clean(document.body),1800)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
 </script>
+
+
+<style id="tzc-design-system-v302">
+:root{--tzc-gold-standard:#d4af37;--tzc-wine:#60000a;--tzc-wine-deep:#3a0005;--tzc-form-dark:#484848;--tzc-form-light:#efefed;--tzc-font-ui:'Segoe UI',Tahoma,Arial,sans-serif;--tzc-font-title:Georgia,'Times New Roman',serif}
+html body{font-family:var(--tzc-font-ui)!important}
+html body :is(#contentContainer h1,#contentContainer h2,#contentContainer h3,#contentContainer h4,.modal-box h1,.modal-box h2,.modal-box h3){font-family:var(--tzc-font-title)!important;color:var(--tzc-gold-standard)!important}
+html body :is(.tzc-page-copy-v44,.tzc-page-head-v44,.page-header,.module-header){text-align:center!important}
+html body .tzc-page-copy-v44{margin-left:auto!important;margin-right:auto!important}
+html body .search201{width:min(620px,100%)!important;max-width:100%!important;margin:14px auto 18px!important;box-sizing:border-box!important;background:#333!important;border:1px solid #655d50!important;border-radius:9px!important;padding:0 12px!important;min-height:46px!important;display:flex!important;align-items:center!important;gap:10px!important}
+html body .search201 input{flex:1 1 auto!important;min-width:0!important;width:100%!important;margin:0!important;background:transparent!important;border:0!important;box-shadow:none!important;color:#fff!important;font:16px/1.4 var(--tzc-font-ui)!important}
+html body .search201 input::placeholder{color:#c2bdb5!important;opacity:1!important}
+html body .search201:focus-within{border-color:var(--tzc-gold-standard)!important;outline:2px solid #d4af3755!important}
+html body #contentContainer :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea){font:16px/1.45 var(--tzc-font-ui)!important;min-height:44px;max-width:100%;box-sizing:border-box}
+html body #contentContainer textarea{min-height:64px!important;height:64px!important;max-height:220px!important;resize:vertical!important}
+html body .modal-overlay .modal-box,html body [role=dialog].modal-box{background:var(--tzc-wine-deep)!important;color:#fff!important;font-family:var(--tzc-font-ui)!important}
+html body .modal-overlay .modal-box :is(label,p,small,li,td,th),html body [role=dialog].modal-box :is(label,p,small,li,td,th){font-family:var(--tzc-font-ui)!important;color:#f5eee8!important;line-height:1.5}
+html body .modal-overlay .modal-box :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea),html body [role=dialog].modal-box :is(input:not([type=checkbox]):not([type=radio]):not([type=file]),select,textarea){background:var(--tzc-form-dark)!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border:1px solid #777!important;border-radius:8px!important;padding:10px 12px!important;caret-color:#fff!important;color-scheme:dark!important}
+html body .modal-overlay .modal-box :is(input,textarea)::placeholder,html body [role=dialog].modal-box :is(input,textarea)::placeholder{color:#dedede!important;-webkit-text-fill-color:#dedede!important;opacity:1!important}
+html body .modal-overlay .modal-box select option,html body [role=dialog].modal-box select option{background:#484848!important;color:#fff!important}
+html body .modal-overlay .modal-box :is(.modal-header,header){font-family:var(--tzc-font-title)!important;color:var(--tzc-gold-standard)!important}
+html body .modal-overlay .modal-box :is(.modal-header button[aria-label*="Fechar" i],.modal-close-icon,.tzc-generic-close298,button[data-close]),html body [role=dialog].modal-box :is(.modal-header button[aria-label*="Fechar" i],.modal-close-icon,.tzc-generic-close298,button[data-close]){position:absolute!important;top:8px!important;right:8px!important;width:44px!important;height:44px!important;min-width:44px!important;border:0!important;border-radius:8px!important;background:#24050b!important;color:#f4d56d!important}
+html body .modal-overlay .modal-box :is(.modal-actions,footer),html body [role=dialog].modal-box :is(.modal-actions,footer){display:flex!important;justify-content:flex-start!important;align-items:center!important;gap:10px!important;flex-wrap:wrap!important}
+html body .modal-overlay .modal-box :is(.modal-actions,footer) button:is([data-tzc-cancel298],[aria-label*="Cancelar" i]),html body [role=dialog].modal-box :is(.modal-actions,footer) button:is([data-tzc-cancel298],[aria-label*="Cancelar" i]){order:-1!important;margin-inline-end:auto!important;background:#1769c2!important;color:#fff!important;border:0!important}
+html body #contentContainer :is(.btn-toolbar,.btn-icon-only,.shop-actions276 button,[data-action]){border:0!important;box-shadow:none!important}
+html body #contentContainer :is(button,a,[role=button]):focus-visible{outline:3px solid #f4d56d!important;outline-offset:2px!important}
+html body #sidebar .nav-item:hover{background:#a31c1c!important;color:#fff!important}
+html body .gestao-interna-home .card{background:linear-gradient(145deg,#272321,#171515)!important;border:1px solid #6a5630!important;border-radius:12px!important;box-shadow:0 5px 16px #0004!important}
+html body .gestao-interna-home .card:hover{background:#33271c!important}
+html body #shop276 .tzc-page-copy-v44{text-align:center!important;margin:0 auto 18px!important}
+html body #shop276 .shop-grid276{grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr))!important;gap:12px!important}
+html body #shop276 .shop-grid276 article{min-height:0!important;padding:12px!important;border:0!important;border-radius:10px!important;background:#242120!important;color:#fff!important}
+html body #shop276 .shop-grid276 img{height:112px!important;max-height:112px!important;object-fit:contain!important}
+html body #shop276 .shop-grid276 article p{color:#eee!important;line-height:1.45!important}
+html body #shop276 .shop-grid276 article strong{font-size:18px!important;margin:6px 0!important}
+html body #notifications271 input,html body #notifications271 select,html body #notifications271 textarea,html body #n271-modal input,html body #n271-modal select,html body #n271-modal textarea{background:#484848!important;color:#fff!important;-webkit-text-fill-color:#fff!important;border:1px solid #777!important;border-radius:8px!important}
+html body #notifications271 label,html body #n271-modal label{color:#f5eee8!important;font:16px/1.45 var(--tzc-font-ui)!important}
+html body #n271-modal>section{background:#3a0005!important;color:#fff!important;border:1px solid #b99b61!important;border-radius:14px!important}
+html body #edit201.plant-editor2067 .editor-grid201{gap:8px 12px!important}
+html body #edit201.plant-editor2067 .editor-grid201 textarea{height:58px!important;min-height:58px!important}
+html body #edit201.plant-editor2067 .plant-photo-tools2067 img,html body #edit201.plant-editor2067 .gallery-preview222 img{width:68px!important;height:68px!important;max-height:68px!important;object-fit:contain!important}
+html body #edit201.plant-editor2067 label:has([data-field206*="Ref" i]),html body #edit201.plant-editor2067 label:has([data-field206*="Fonte" i]),html body #edit201.plant-editor2067 label:has([data-field206*="Refer" i]){display:none!important}
+html body .tzc-modal-standard209 textarea,html body #modalMembro textarea,html body #pubModalV104 textarea{height:64px!important;min-height:64px!important;max-height:220px!important}
+html body #contentContainer table tbody tr:nth-child(even){background:#ffffff0d}
+html body.tzc-theme-light{--bg-primary:#f4f0e9;--bg-card:#fffdf8;--text-main:#30252a;--text-muted:#5f5159;--border-color:#d8cbbb;background:#f4f0e9!important;color:#30252a!important;color-scheme:light}
+html.tzc-theme-light body,html.tzc-theme-light body .container,html.tzc-theme-light body #contentContainer{background:#f4f0e9!important;color:#30252a!important}
+html.tzc-theme-light body :is(#contentContainer,.modal-box,#shop276,#notifications271,#securityPage212,.access-page222,.general-card,.card,.content-card,.settings-card,.settings-section,.gestao-interna-home .card,.shop-grid276 article,.shop-panel276,.n273-preferences,.calendar-container,.table-responsive,.table-scroll201,.table-scroll208,.table-scroll218,.ervas-intro-box,.pontos-intro-box){color:#30252a!important;background-color:#fffdf8!important;border-color:#ded5ca!important}
+html.tzc-theme-light body :is(#contentContainer p,#contentContainer li,#contentContainer td,#contentContainer label,#contentContainer small,#contentContainer .card-text,#contentContainer .page-description,#contentContainer .mural-subtitle,#contentContainer .info-link,#shop276 p,#shop276 label,#shop276 td,#notifications271 p,#notifications271 label,#notifications271 td,.access-page222 label,.access-page222 td,.history-page219 td){color:#30252a!important;-webkit-text-fill-color:#30252a!important}
+html.tzc-theme-light body :is(#contentContainer h1,#contentContainer h2,#contentContainer h3,.modal-box h1,.modal-box h2,.modal-box h3){color:#76541b!important}
+html.tzc-theme-light body :is(#contentContainer input:not([type=checkbox]):not([type=radio]):not([type=file]),#contentContainer select,#contentContainer textarea,#shop276 select,#shop276 input,#notifications271 input,#notifications271 select,#notifications271 textarea,#n271-modal input,#n271-modal select,#n271-modal textarea,.access-page222 input:not([type=checkbox]),.access-page222 select,.access-page222 textarea){background:#efefed!important;color:#30252a!important;-webkit-text-fill-color:#30252a!important;border:1px solid #c9c3bc!important;caret-color:#30252a!important;color-scheme:light!important}
+html.tzc-theme-light body .modal-overlay .modal-box,html.tzc-theme-light body [role=dialog].modal-box,html.tzc-theme-light body #n271-modal>section{background:#fff8f6!important;color:#30252a!important;border-color:#c9a9a2!important}
+html.tzc-theme-light body .modal-overlay .modal-box :is(label,p,small,li,td,th),html.tzc-theme-light body [role=dialog].modal-box :is(label,p,small,li,td,th),html.tzc-theme-light body #n271-modal label{color:#30252a!important;-webkit-text-fill-color:#30252a!important}
+html.tzc-theme-light body #shop276 .shop-grid276 article,html.tzc-theme-light body .gestao-interna-home .card{background:#fffaf0!important;color:#30252a!important;border-color:#ddcba5!important}
+html.tzc-theme-light body #shop276 .shop-grid276 article p{color:#4e4148!important}
+html.tzc-theme-light body .search201{background:#eeeeec!important;border-color:#c9c3bc!important}
+html.tzc-theme-light body .search201 input{color:#30252a!important;-webkit-text-fill-color:#30252a!important}
+html.tzc-theme-light body .search201 input::placeholder{color:#70666a!important;-webkit-text-fill-color:#70666a!important}
+html.tzc-theme-light body #contentContainer table tbody tr:nth-child(even){background:#f2eee8!important}
+html.tzc-theme-light body #contentContainer table tbody tr:nth-child(odd){background:#fffdf8!important}
+html.tzc-theme-light body #contentContainer table thead th{background:#690c19!important;color:#f4d56d!important;-webkit-text-fill-color:#f4d56d!important}
+html.tzc-theme-light body #sidebar{background:#fffdf8!important}
+html.tzc-theme-light body #sidebar .nav-item{color:#493842!important}
+html.tzc-theme-light body #sidebar .nav-item:hover,html.tzc-theme-light body #sidebar .nav-item.active{background:#a31c1c!important;color:#fff!important}
+html.tzc-theme-light body #tzcThemeButton298{background:#f3e7d4!important;color:#53172b!important}
+@media(max-width:700px){html body .modal-overlay .modal-box,html body [role=dialog].modal-box{width:min(100%,640px)!important;max-height:calc(100dvh - 20px)!important}html body .modal-overlay .modal-box .modal-body{padding:12px!important}html body #shop276 .shop-grid276{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}html body #shop276 .shop-grid276 img{height:90px!important;max-height:90px!important}}
+@media(max-width:420px){html body #shop276 .shop-grid276{grid-template-columns:1fr!important}}
+</style>
+<script id="tzc-fixes-v302">
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+// The visitor subscription is a normal page with explicit Cancelar, not a floating modal.
+const oldVisitorOpen=window.abrirNovidades203;
+window.abrirNovidades203=function(){
+ const previous=window.TZC185?.rota?.()||'Home';
+ const route=window.TZC185?.navegar;if(route)route.call(window.TZC185,'Novidades');
+ $('sidebar')?.classList.remove('open');
+ for(const id of ['pageTitle','generalInfoSection','searchContainerWrapper','loading'])if($(id))$(id).style.display='none';
+ if($('pageSubtitleContainer'))$('pageSubtitleContainer').innerHTML='';
+ const host=$('contentContainer');if(!host){return oldVisitorOpen?.()}
+ host.innerHTML='<main id="visitor203" class="visitor-page302"><header class="visitor-head302"><h2><i class="fa-solid fa-bell" aria-hidden="true"></i> Receber novidades</h2><p>Cadastre seu e-mail para receber avisos públicos da casa.</p></header><form id="visitorForm203"><div class="editor-grid201"><label>Nome<input id="visitorNome203" required maxlength="100" autocomplete="name"></label><label>Celular<input id="visitorCelular203" type="tel" required autocomplete="tel"></label><label class="full201">E-mail<input id="visitorEmail203" type="email" required maxlength="254" autocomplete="email"></label></div><label class="remember203"><input id="visitorConsent203" type="checkbox" required> Quero receber novidades públicas por e-mail. Posso cancelar a qualquer momento.</label><div id="visitorCodeBox203" hidden><label>Código recebido por e-mail<input id="visitorCode203" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></label></div><p id="visitorStatus203" role="status" aria-live="polite"></p><div class="visitor-actions302"><button type="button" class="visitor-cancel302" id="visitorCancel302"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Cancelar</button><button id="visitorSubmit203" type="submit"><i class="fa-solid fa-bell" aria-hidden="true"></i> Confirmar cadastro</button></div></form></main>';
+ const back=()=>{if(history.state?.tzc199)history.back();else if(typeof window.switchTab==='function')window.switchTab(previous&&previous!=='Novidades'?previous:'Home');else history.back()};
+ $('visitorCancel302').onclick=back;
+ let stageEmail='';
+ $('visitorForm203').onsubmit=async e=>{e.preventDefault();const b=$('visitorSubmit203');if(b.disabled)return;b.disabled=true;try{const email=$('visitorEmail203').value.trim().toLowerCase();if(!stageEmail||stageEmail!==email){await window.moduleApi206('m203_visitante_enviar',{dados:{Nome:$('visitorNome203').value,Celular:$('visitorCelular203').value,Email:email,Consentimento_Email:$('visitorConsent203').checked}});stageEmail=email;$('visitorCodeBox203').hidden=false;$('visitorStatus203').textContent='Digite os 6 dígitos enviados por e-mail para concluir.';$('visitorCode203').focus();return}await window.moduleApi206('m203_visitante_confirmar',{email,codigo:$('visitorCode203').value});$('visitorStatus203').textContent='Cadastro confirmado. Você receberá apenas novidades públicas.';$('visitorForm203').reset();$('visitorCodeBox203').hidden=true;stageEmail=''}catch(err){$('visitorStatus203').textContent=err.message||'Não foi possível concluir. Tente novamente.'}finally{b.disabled=false}};
+ document.querySelectorAll('#navList .nav-item').forEach(n=>n.classList.toggle('active',n.id==='menuNovidades203'));
+};
+// Minha área goes straight to the single login screen when nobody is signed in.
+function normalizeMyArea(){const item=$('menuPortal201');if(item&&!item.dataset.login302){item.dataset.login302='1';item.onclick=e=>{e?.preventDefault?.();e?.stopPropagation?.();if(window.isLoggedIn||window.loggedUser){window.switchTab?.('Meus_Acessos')}else window.openLoginModal?.()}}}
+normalizeMyArea();setInterval(normalizeMyArea,900);
+// Make the history page appear immediately; records load only when the user presses Histórico.
+// Keep the existing authorization checks and server pagination unchanged.
+})();
+</script>
+<style id="tzc-visitor-page-v302">
+html body #visitor203.visitor-page302{width:min(760px,calc(100% - 24px));margin:24px auto;padding:24px;background:#242120;color:#fff;border-radius:12px}
+html body #visitor203 .visitor-head302{text-align:center;margin:0 0 20px}
+html body #visitor203 .visitor-head302 h2{margin:0 0 8px}
+html body #visitor203 form{display:grid;gap:14px}
+html body #visitor203 label{display:grid;gap:6px;font-weight:600}
+html body #visitor203 .remember203{display:flex;align-items:flex-start;gap:10px}
+html body #visitor203 .remember203 input{width:22px;min-width:22px;min-height:22px;margin-top:2px}
+html body #visitor203 .visitor-actions302{display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap}
+html body #visitor203 .visitor-actions302 button{min-height:46px;padding:10px 16px;border:0;border-radius:8px;background:#8f1827;color:#fff;font:600 16px var(--tzc-font-ui);cursor:pointer}
+html body #visitor203 .visitor-actions302 .visitor-cancel302{background:#1769c2}
+html body #visitor203 [role=status]{min-height:24px;overflow-wrap:anywhere}
+html body.tzc-theme-light #visitor203.visitor-page302{background:#fffdf8;color:#30252a;border:1px solid #ded5ca}
+html body.tzc-theme-light #visitor203 :is(label,[role=status]){color:#30252a}
+@media(max-width:600px){html body #visitor203.visitor-page302{width:calc(100% - 20px);margin:12px auto;padding:16px}html body #visitor203 .visitor-actions302 button{flex:1 1 100%}}
+</style>
 
 </body>
 </html>

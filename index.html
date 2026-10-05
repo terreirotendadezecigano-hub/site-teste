@@ -2049,7 +2049,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var n,r,i,a,
       </div>
     </div>
     <div class="banner-right" id="authContainer">
-      <button class="btn-login" onclick="openLoginModal()"><i class="fa-solid fa-lock"></i> Membros</button>
+      <button class="btn-login" onclick="window.TZC_AREA_PROMPT292?.open()"><i class="fa-solid fa-user"></i> Minha área</button>
     </div>
   </header>
 
@@ -4006,7 +4006,7 @@ if(new URL(location.href).searchParams.has('cadastro')){loadGeneralData();return
         menuMembros.style.display = TZC186.pode('Membros','criar') ? 'flex' : 'none';
         if (menuGestaoInterna) menuGestaoInterna.style.display = podeGerir ? 'flex' : 'none';
       } else {
-        container.innerHTML = `<button class="btn-login" onclick="openLoginModal()"><i class="fa-solid fa-lock"></i> Membros</button>`;
+        container.innerHTML = `<button class="btn-login" onclick="window.TZC_AREA_PROMPT292?.open()"><i class="fa-solid fa-user"></i> Minha área</button>`;
         menuMembros.style.display = 'none';
         if (menuGestaoInterna) menuGestaoInterna.style.display = 'none';
       }
@@ -13422,7 +13422,7 @@ html body #contentContainer :is(.tzc-gestao-title-v51,#pageTitle){font-size:1.1r
  window.abrirParticipacao201=async function(){if(!isLoggedIn){openLoginModal();return}prepare('Participacao');const version=TZC185.token();$('contentContainer').innerHTML=header('Participação nas giras','Informe se pretende participar. A presença real é registrada pela gestão depois da gira.')+'<div id="body201">Carregando...</div>';try{const response=await fetch(WEB_APP_URL+'?sheet=Eventos'),data=await response.json();if(!TZC185.ativa(version))return;const renderParticipation=()=>{const q=$('search201').value.toLowerCase(),list=data.filter(r=>!/^exclu[ií]do$/i.test(r.Status||'')&&isPublicAccess(r)&&String(r.Titulo||'').toLowerCase().includes(q));$('body201').innerHTML='<div class="table-scroll201"><table class="table201"><thead><tr><th>Gira / atividade</th><th>Data</th><th>Ações</th></tr></thead><tbody>'+list.map((r,i)=>`<tr><td>${esc(r.Titulo||'Atividade')}</td><td>${esc(r.Data_Inicio||'')}</td><td>${icon('user-check','Informar participação','respond201_'+i)}${TZC186.perfil()==='dirigente'?icon('clipboard-check','Registrar presença real','attendance201_'+i):''}</td></tr>`).join('')+'</tbody></table></div>';list.forEach((r,i)=>{$('respond201_'+i).onclick=()=>confirmarEventoMembroTZCV128(r.ID_Evento);if($('attendance201_'+i))$('attendance201_'+i).onclick=()=>abrirPresencasTZCV127(r.ID_Evento)})};$('search201').oninput=renderParticipation;renderParticipation()}catch(e){if(TZC185.ativa(version))$('body201').textContent=e.message}};
  window.abrirControlePresencasV175=window.abrirParticipacao201;
  const switchParticipation=window.switchTab;window.switchTab=function(name){if(name==='Participacao')return abrirParticipacao201();return switchParticipation.apply(this,arguments)};
- function menu(){if(!$('menuPortal201')){const li=document.createElement('li');li.id='menuPortal201';li.className='nav-item';li.innerHTML='<i class="fa-solid fa-user"></i> Meus acessos';li.onclick=()=>switchTab('Meus_Acessos');$('navList').appendChild(li)}$('menuPortal201').style.display=isLoggedIn?'':'none';let p=$('menuPresencasV134');if(!p){p=document.createElement('li');p.id='menuPresencasV134';p.className='nav-item';$('navList').appendChild(p)}p.innerHTML='<i class="fa-solid fa-user-check"></i> Presenças';p.style.display=isLoggedIn?'':'none';p.onclick=()=>abrirParticipacao201();$('tzcMeusAcessos186')?.remove()}
+ function menu(){if(!$('menuPortal201')){const li=document.createElement('li');li.id='menuPortal201';li.className='nav-item';li.innerHTML='<i class="fa-solid fa-user"></i> Minha área';li.onclick=()=>{if(isLoggedIn)switchTab('Meus_Acessos');else window.TZC_AREA_PROMPT292?.open()};$('navList').appendChild(li)}$('menuPortal201').style.display='';let p=$('menuPresencasV134');if(!p){p=document.createElement('li');p.id='menuPresencasV134';p.className='nav-item';$('navList').appendChild(p)}p.innerHTML='<i class="fa-solid fa-user-check"></i> Presenças';p.style.display=isLoggedIn?'':'none';p.onclick=()=>abrirParticipacao201();$('tzcMeusAcessos186')?.remove()}
  const authUI=window.updateAuthUI;window.updateAuthUI=function(){const result=authUI.apply(this,arguments);menu();const route=TZC185.rota();if(defs[route])open(route);else if(['Mensagem_Dia','Banho_Semana'].includes(route))window.renderPub178?.();return result};
  function standardize(root=document){root.querySelectorAll?.('#contentContainer button[onclick],#modalMembro .modal-actions button').forEach(b=>{const code=b.getAttribute('onclick')||'',label=b.textContent.trim();if(!/novaPubTipo|abrirModalNovo|novoEvento|editar|excluir|Excluir|Compartilhar|compartilhar|historicoMembro/.test(code)&&! /^(Cadastrar|Novo|Nova|Editar|Excluir|Compartilhar)\b/i.test(label))return;let i=b.querySelector('i');if(!i){i=document.createElement('i');i.className='fa-solid fa-'+(/compartilh/i.test(code)?'share-nodes':/historico/i.test(code)?'clock-rotate-left':/excluir/i.test(code)?'trash':/editar/i.test(code)?'pen':'plus')}b.title=b.getAttribute('title')||label;b.setAttribute('aria-label',b.title);if(!b.dataset.icon201){b.dataset.icon201='1';b.replaceChildren(i)}});$('tzcMeusAcessos186')?.remove()}
  new MutationObserver(()=>standardize()).observe(document.body,{subtree:true,childList:true});menu();standardize();
@@ -14660,10 +14660,10 @@ function install(){const nav=document.getElementById('navList');if(!nav)return;i
  const visible=e=>!!e&&e.isConnected&&getComputedStyle(e).display!=='none'&&getComputedStyle(e).visibility!=='hidden';
  function close(){const d=document.getElementById('areaPrompt292');if(d)d.remove();opened=false;try{localStorage.setItem(key,today())}catch(e){}}
  function launch(action){close();try{if(action==='membro'){if(typeof window.openLoginModal==='function')window.openLoginModal();else document.querySelector('#loginModal')?.style.setProperty('display','flex')}else if(action==='visitante'){if(typeof window.abrirNovidades203==='function')window.abrirNovidades203();else document.getElementById('menuNovidades203')?.click()}else if(action==='comprador'){if(window.TZC_SHOP276?.open)window.TZC_SHOP276.open('Meus pedidos');else document.getElementById('menuMyOrders289')?.click()}}catch(e){window.showToast?.('Não foi possível abrir esta opção. Use o menu Minha área.')}}
- function show(){if(opened||window.TZC208?.context())return;try{if(localStorage.getItem(key)===today())return}catch(e){}opened=true;const d=document.createElement('div');d.id='areaPrompt292';d.setAttribute('role','presentation');d.innerHTML='<section class="area-card292" role="dialog" aria-modal="true" aria-labelledby="areaPromptTitle292"><button type="button" class="area-close292" aria-label="Fechar" title="Fechar">×</button><h2 id="areaPromptTitle292">Acesse sua área</h2><p>Escolha seu perfil para encontrar rapidamente suas opções. Você também pode continuar navegando sem entrar.</p><div class="area-options292"><button type="button" data-area-action="membro">Sou membro da casa — entrar</button><button type="button" data-area-action="visitante">Sou visitante — receber novidades</button><button type="button" data-area-action="comprador">Já fiz uma compra — consultar meus pedidos</button></div><button type="button" class="area-continue292">Continuar navegando</button></section>';document.body.append(d);d.querySelector('.area-close292').onclick=close;d.querySelector('.area-continue292').onclick=close;d.addEventListener('click',e=>{if(e.target===d)close()});d.addEventListener('keydown',e=>{if(e.key==='Escape')close()});d.querySelectorAll('[data-area-action]').forEach(b=>b.onclick=()=>launch(b.dataset.areaAction));d.querySelector('.area-options292 button').focus()}
- function check(){const daily=document.getElementById('tzcMsgDiaV105');if(visible(daily)){sawDaily=true;return}if(sawDaily||Date.now()-started>=5000)show()}
+ function show(){if(opened||window.TZC208?.context())return;opened=true;const d=document.createElement('div');d.id='areaPrompt292';d.setAttribute('role','presentation');d.innerHTML='<section class="area-card292" role="dialog" aria-modal="true" aria-labelledby="areaPromptTitle292"><button type="button" class="area-close292" aria-label="Fechar" title="Fechar">×</button><h2 id="areaPromptTitle292">Acesse sua área</h2><p>Escolha seu perfil para encontrar rapidamente suas opções. Você também pode continuar navegando sem entrar.</p><div class="area-options292"><button type="button" data-area-action="membro">Sou membro da casa — entrar</button><button type="button" data-area-action="visitante">Sou visitante — receber novidades</button><button type="button" data-area-action="comprador">Já fiz uma compra — consultar meus pedidos</button></div><button type="button" class="area-continue292">Cancelar</button></section>';document.body.append(d);d.querySelector('.area-close292').onclick=close;d.querySelector('.area-continue292').onclick=close;d.addEventListener('click',e=>{if(e.target===d)close()});d.addEventListener('keydown',e=>{if(e.key==='Escape')close()});d.querySelectorAll('[data-area-action]').forEach(b=>b.onclick=()=>launch(b.dataset.areaAction));d.querySelector('.area-options292 button').focus()}
+ function check(){}
  const oldClose=window.fecharV105;if(typeof oldClose==='function')window.fecharV105=function(){oldClose.apply(this,arguments);setTimeout(check,0)};
- const observer=new MutationObserver(check);observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['style','class','hidden']});setInterval(check,400);check();
+
  window.TZC_AREA_PROMPT292={open:show,close};
 })();
 </script>
@@ -14801,6 +14801,74 @@ body[data-tzc-route="Home"] #generalInfoSection{display:grid!important;grid-temp
  [['abrirQuemSomosPublicoTZC_V103','Quem_Somos'],['abrirMensagemDiaTZC_V103','Mensagem_Dia'],['abrirBanhoSemanaTZC_V104','Banho_Semana'],['abrirEventosMembrosTZCV128','Eventos_Publicos'],['abrirEventosTZC_V126','Eventos_TZC'],['abrirControlePresencasV175','Controle_Presencas'],['abrirControlePresencasV145','Controle_Presencas'],['abrirEstudosTZC_V1','Estudos'],['abrirCategoriasTZC_V1','Categorias'],['abrirConfiguracoesTerreiroTZC_V1','Configuracoes'],['abrirGestaoErvasTZC_V1','Gestao_Ervas'],['abrirMidiasSociaisTZC','Midias_Sociais'],['abrirArtesPdfTZC','Artes_PDFs'],['abrirUsuariosPermissoesTZC','Usuarios_Acesso'],['abrirPublicacoesTZC_V104','Publicacoes'],['carregarEExibirMembros','Membros']].forEach(x=>wrap(x[0],x[1]));
  document.addEventListener('DOMContentLoaded',()=>{const route=window.TZC185?.rota?.()||window.currentTab||'Home';aplicar(route,route!=='Home');montar();},{once:true});
  if(document.readyState!=='loading'){const route=window.TZC185?.rota?.()||window.currentTab||'Home';aplicar(route,route!=='Home');montar();}
+})();
+</script>
+
+<style id="tzc-interface-consistency-v298">
+:root{--tzc-gold-standard:#d9bd7c;--tzc-wine-modal:#3a0005;--tzc-wine-panel:#4b0712;--tzc-field-gray:#514c4b;--tzc-light-text:#f5f1ea;--tzc-muted-light:#d8d1c7}
+html,body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif!important;color:var(--tzc-light-text)}
+html body :is(h1,h2,h3,h4,h5,h6,.section-title,#pageTitle,.modal-header h2,.modal-header h3){font-family:Georgia,"Times New Roman",serif!important}
+html body :is(.section-title,#pageTitle,.modal-header h2,.modal-header h3,.general-card h3,.mural-subtitle strong){color:var(--tzc-gold-standard)!important}
+#tzcHomeHeroV296{display:none!important}
+#searchContainerWrapper{display:none!important;visibility:hidden!important;height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}
+#generalInfoSection{scroll-margin-top:90px}
+header.banner{background:linear-gradient(110deg,#4b0712,#690c19 52%,#35050d)!important}
+html body :is(.modal-overlay .modal-box,#shopDialog276 .shop-body276,#tzcAcquisitionV294 .tzc-acq-card,.area-card292){background:var(--tzc-wine-modal)!important;color:var(--tzc-light-text)!important;border-color:var(--tzc-gold-standard)!important}
+html body :is(.modal-overlay .modal-header,.modal-overlay .modal-actions,#shopDialog276 header,#shopDialog276 footer){background:var(--tzc-wine-panel)!important;color:var(--tzc-light-text)!important;border-color:#7d5b50!important}
+html body :is(.modal-overlay .modal-box,.modal-overlay .modal-body,.modal-overlay .modal-box p,.modal-overlay .modal-box label,.modal-overlay .modal-box li,#shopDialog276 :is(p,label,dt,dd),.area-card292 p){color:var(--tzc-light-text)!important}
+html body :is(.modal-overlay input:not([type=checkbox]):not([type=radio]),.modal-overlay select,.modal-overlay textarea,#shopDialog276 input,#shopDialog276 select,#shopDialog276 textarea){background:#514c4b!important;color:var(--tzc-light-text)!important;-webkit-text-fill-color:var(--tzc-light-text)!important;border:1px solid #9d918b!important;border-radius:8px!important;min-height:44px!important;font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif!important}
+html body :is(.modal-overlay input,.modal-overlay textarea,#shopDialog276 input,#shopDialog276 textarea)::placeholder{color:#e0d9d2!important;-webkit-text-fill-color:#e0d9d2!important;opacity:1!important}
+html body :is(.modal-overlay input,.modal-overlay select,.modal-overlay textarea,#shopDialog276 input,#shopDialog276 select,#shopDialog276 textarea):focus{outline:2px solid var(--tzc-gold-standard)!important;outline-offset:1px!important;border-color:var(--tzc-gold-standard)!important}
+html body .modal-actions{display:flex!important;flex-direction:row!important;justify-content:flex-start!important;align-items:center!important;flex-wrap:wrap!important;gap:10px!important}
+html body .modal-actions [data-tzc-cancel298]{order:-1!important;flex:0 0 auto!important;width:auto!important;min-width:112px!important;background:#1a56b4!important;color:#fff!important;border:1px solid #1a56b4!important}
+html body .modal-close-icon,html body .tzc-generic-close298{color:var(--tzc-gold-standard)!important}
+html body #areaPrompt292 .area-options292 button{background:#4b0712!important;color:#f5f1ea!important;border-color:#b99b61!important}
+html body #areaPrompt292 .area-continue292{width:auto!important;min-width:112px!important;margin-inline-start:0!important;background:#1a56b4!important;color:#fff!important;border-color:#1a56b4!important}
+html body #contentContainer table thead th,html body #contentContainer table thead tr,html body #contentContainer table th{background:#690c19!important;color:var(--tzc-gold-standard)!important;border-color:#8c5e48!important}
+html body #contentContainer table tbody tr:hover{background:#d0ad671c!important}
+#sidebar #navList .nav-item.active,#sidebar #navList .nav-item[aria-current="page"]{background:#d0ad6730!important;color:var(--tzc-gold-standard)!important;border-left:4px solid var(--tzc-gold-standard)!important}
+#tzcThemeControl298{margin-top:auto;padding:12px 14px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border-color,#51483b)}
+#tzcThemeButton298{width:100%;min-height:48px;padding:10px 12px;border:1px solid #b99b61;border-radius:9px;background:#3a0710;color:#f5f1ea;font:600 15px/1.3 system-ui,-apple-system,"Segoe UI",sans-serif;cursor:pointer;text-align:left}
+#tzcThemeButton298:focus-visible{outline:3px solid #f0d79e;outline-offset:2px}
+#sidebar{display:flex;flex-direction:column}
+#sidebar #navList{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain}
+body.tzc-theme-light{--bg-primary:#f5f1ea;--bg-card:#fffdf8;--text-main:#30252a;--text-muted:#675961;--border-color:#d8cbbb;background:#f5f1ea!important;color:#30252a!important;color-scheme:light}
+body.tzc-theme-light .container,body.tzc-theme-light #contentContainer{background:#f5f1ea!important;color:#30252a!important}
+body.tzc-theme-light :is(.general-card,.card,.calendar-container,.table-responsive,.ervas-intro-box,.pontos-intro-box,.settings-card,.settings-section,.content-card){background:#fffdf8!important;color:#30252a!important;border-color:#d8cbbb!important}
+body.tzc-theme-light :is(p,li,td,th,label,.card-text,.page-description,.mural-subtitle,.info-link){color:#30252a}
+body.tzc-theme-light :is(header.banner,.nav-item.active){color:#f5f1ea!important}
+body.tzc-theme-light aside.sidebar{background:#fffdf8!important;border-color:#d8cbbb!important}
+body.tzc-theme-light #sidebar .nav-item{color:#493842}
+body.tzc-theme-light #sidebar .nav-item.active,body.tzc-theme-light #sidebar .nav-item:hover{background:#f3e7d4!important;color:#53172b!important}
+body.tzc-theme-light #sidebar #navList .nav-item.active{border-left-color:#947020!important}
+body.tzc-theme-light #contentContainer :is(input:not([type=checkbox]):not([type=radio]),select,textarea){background:#fff!important;color:#30252a!important;border-color:#bcae9d!important}
+body.tzc-theme-light #contentContainer table thead th,body.tzc-theme-light #contentContainer table th{background:#690c19!important;color:#f0d79e!important}
+body.tzc-theme-light #tzcThemeButton298{background:#f3e7d4;color:#53172b;border-color:#947020}
+@media(max-width:700px){html body .modal-actions{flex-direction:column!important;align-items:flex-start!important}html body .modal-actions [data-tzc-cancel298]{align-self:flex-start!important;width:auto!important;min-width:112px!important}#tzcThemeControl298{padding-bottom:calc(14px + env(safe-area-inset-bottom))}}
+</style>
+<script id="tzc-interface-consistency-v298-script">
+(()=>{'use strict';
+ const $=id=>document.getElementById(id),nav=$('navList'),sidebar=$('sidebar');
+ const themeKey='tzcThemePreference298';
+ function setTheme(mode){const light=mode==='light';document.body.classList.toggle('tzc-theme-light',light);try{localStorage.setItem(themeKey,light?'light':'dark')}catch(e){}const b=$('tzcThemeButton298');if(b){b.innerHTML='<i class="fa-solid fa-'+(light?'moon':'sun')+'" aria-hidden="true"></i> Aparência: '+(light?'Clara':'Escura')+' · tocar para alternar';b.setAttribute('aria-pressed',String(light))}}
+ function installTheme(){if(!sidebar||!nav)return;let wrap=$('tzcThemeControl298');if(!wrap){wrap=document.createElement('div');wrap.id='tzcThemeControl298';wrap.innerHTML='<button id="tzcThemeButton298" type="button"></button>';sidebar.insertBefore(wrap,nav.nextSibling)}const b=$('tzcThemeButton298');if(b&&!b.dataset.ready){b.dataset.ready='1';b.addEventListener('click',()=>setTheme(document.body.classList.contains('tzc-theme-light')?'dark':'light'))}let saved='dark';try{saved=localStorage.getItem(themeKey)==='light'?'light':'dark'}catch(e){}setTheme(saved)}
+ function moveAcquisition(){if(!nav)return;const item=nav.querySelector('.nav-item[onclick*="abrirContatoAquisicaoSistemaTZC_V1"]');if(item&&nav.lastElementChild!==item)nav.appendChild(item)}
+ function markActive(el){if(!el)return;nav?.querySelectorAll('.nav-item').forEach(n=>{n.classList.toggle('active',n===el);if(n===el)n.setAttribute('aria-current','page');else n.removeAttribute('aria-current')})}
+ function standardize(root=document){
+  root.querySelectorAll?.('.modal-overlay .modal-box,[role="dialog"].modal-box').forEach(box=>{
+   const header=box.querySelector('.modal-header,header');if(!header)return;
+   const close=header.querySelector('button[aria-label*="Fechar" i],button[title*="Fechar" i],.modal-close-icon,.tzc-generic-close298,button[data-close]');
+   if(!close){
+    box.style.position='relative';const x=document.createElement('button');x.type='button';x.className='tzc-generic-close298';x.setAttribute('aria-label','Fechar');x.title='Fechar';x.innerHTML='<i class="fa-solid fa-xmark" aria-hidden="true"></i>';x.style.cssText='position:absolute;right:10px;top:8px;z-index:3;width:44px;height:44px;border:1px solid #b99b61;border-radius:8px;background:#3a0005;font-size:20px;cursor:pointer';
+    x.addEventListener('click',()=>{const layer=box.closest('.modal-overlay,[role="dialog"]')||box.parentElement;if(layer){layer.style.display='none';layer.setAttribute('aria-hidden','true')}document.body.style.overflow=''});
+    header.appendChild(x)
+   }
+   box.querySelectorAll('.modal-actions button').forEach(b=>{const label=(b.innerText||b.textContent||'').trim();const code=b.getAttribute('onclick')||'';if(/^(fechar|fechar modal)$/i.test(label)||/(?:close|fechar)[A-Za-z0-9_]*Modal/i.test(code)){if(!b.dataset.tzcCancel298){b.dataset.tzcCancel298='1';b.setAttribute('aria-label','Cancelar e fechar');const icon=b.querySelector('i');b.innerHTML=(icon?icon.outerHTML:'<i class="fa-solid fa-xmark" aria-hidden="true"></i>')+' Cancelar'}}})
+  })
+ }
+ function boot(){installTheme();moveAcquisition();standardize();document.body.addEventListener('click',e=>{const el=e.target.closest?.('#navList .nav-item');if(el)markActive(el)});const mo=new MutationObserver(()=>{moveAcquisition();standardize()});if(nav)mo.observe(nav,{childList:true,subtree:true});const bodyMo=new MutationObserver(standardize);bodyMo.observe(document.body,{childList:true,subtree:true});window.addEventListener('storage',e=>{if(e.key===themeKey)setTheme(e.newValue==='light'?'light':'dark')})}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+ window.TZC_INTERFACE_V298={setTheme};
 })();
 </script>
 </body>

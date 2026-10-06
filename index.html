@@ -1,4 +1,4 @@
-<!-- SITE TZC V304 | endereço no rodapé, login unificado na Minha área e histórico com carregamento automático -->
+<!-- SITE TZC V304 | endereço em Contatos & Atendimento, falhas sem aviso genérico, login unificado e histórico automático -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -2744,16 +2744,12 @@ if(new URL(location.href).searchParams.has('cadastro')){loadGeneralData();return
       if (!rodape) return;
       const nome = String(d?.Nome_Terreiro || document.getElementById('tzcHeaderNomeV1')?.textContent || 'Nossa casa').trim();
       const extra = String(d?.Rodape_Texto || '').trim();
-      const endereco = encontrarEnderecoTZC_V304(d);
-      const enderecoHtml = endereco
-        ? `<div class="footer-address213"><a href="https://www.google.com/maps/search/?api=1&amp;query=${encodeURIComponent(endereco)}" target="_blank" rel="noopener"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> ${escHtmlTZC_V1(endereco)}</a></div>`
-        : '';
       const linkTexto = String(d?.Rodape_Link_Texto || '').trim();
       let linkUrl = '';try { const u = new URL(String(d?.Rodape_Link_URL || '')); if (/^https?:$/.test(u.protocol)) linkUrl = u.href; } catch(e) {}
       let linha = `© ${escHtmlTZC_V1(nome)}`;
       if (extra) linha += ` · ${escHtmlTZC_V1(extra)}`;
       if (linkTexto) linha += linkUrl ? ` · <a href="${escHtmlTZC_V1(linkUrl)}" target="_blank" rel="noopener">${escHtmlTZC_V1(linkTexto)}</a>` : ` · ${escHtmlTZC_V1(linkTexto)}`;
-      rodape.innerHTML = `${enderecoHtml}<div class="footer-house213">${linha}</div><div class="footer-credit213">Sistema desenvolvido por <span>SistemaAeR</span></div>`;
+      rodape.innerHTML = `<div class="footer-house213">${linha}</div><div class="footer-credit213">Sistema desenvolvido por <span>SistemaAeR</span></div>`;
     }
 
     function normalizarLogoTZC_V1(url) {
@@ -3941,7 +3937,6 @@ if(new URL(location.href).searchParams.has('cadastro')){loadGeneralData();return
         dadosGeraisInstituicao = data[0];
         window.tzcGeralV1 = data[0];
         const info = dadosGeraisInstituicao;
-        aplicarRodapeTZC_V1(info);
         const endereco = encontrarEnderecoTZC_V304(info);
         const telefone = String(info.Telefone_Whatsapp || info.Telefone || '');
         const grupoWhatsapp = info.Grupo_Zap || info.Grupo_Whatsapp || 'https://chat.whatsapp.com/KjLkk0tFu2wIuodvHEsG4e';
@@ -13252,7 +13247,7 @@ html body :is(.modal-box,.tzc-pub-box-v104,.tzc-evento-box-v126,.artBox188) inpu
  const valid=()=>id===round&&TZC185.ativa(token)&&TZC185.rota()==='Home';
  const render=()=>{if(!valid())return;const items=window.selecionarDestaques190(data);c.innerHTML='';const grid=document.createElement('div');grid.className='cards-grid';grid.id='tzcDestaques192';
 const intro=document.createElement('div');intro.className='tzc-destaques-intro192';intro.innerHTML='<span>ACOMPANHE NOSSA CASA</span><p>Hoje e nos próximos dias</p><small>Mensagens, encontros e novidades, organizados pela proximidade da data.</small>';c.appendChild(intro);
-for(const item of items){const b=document.createElement('button');b.type='button';b.className='tzc-destaque-linha192';const parts=item.data.split('-'),diff=Math.round((Date.parse(item.data+'T12:00:00Z')-Date.parse(today()+'T12:00:00Z'))/86400000);const relative=diff===0?'Hoje':diff===1?'Amanhã':diff>1?'Em '+diff+' dias':Math.abs(diff)===1?'Desde ontem':'Há '+Math.abs(diff)+' dias';const months=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];const icon={'Eventos':'calendar-check','Agenda':'calendar-days','Mensagem do Dia':'envelope-open-text','Banho da Semana':'leaf','Mural de Avisos':'bullhorn','Orientações':'book-open','Reflexão/Ensinamento':'feather'}[item.tipo]||'star';b.innerHTML=`<span class="tzc-data192" aria-label="${esc(item.data.split('-').reverse().join('/'))}"><strong>${esc(parts[2])}</strong><small>${months[Number(parts[1])-1]||''} ${esc(parts[0])}</small></span>${item.tipo==='Mensagem do Dia'?TZC225.highlight(item.registro||{},item.titulo):''}<span class="tzc-conteudo192"><span class="tzc-meta192"><span><i class="fa-solid fa-${icon}" aria-hidden="true"></i> ${esc(item.tipo)}</span><em>${esc(relative)}</em></span><strong class="tzc-titulo192">${esc(item.titulo)}</strong><span class="tzc-resumo192">${esc(String(item.texto).slice(0,160))}</span></span><span class="tzc-abrir192" aria-hidden="true">Ver <i class="fa-solid fa-arrow-right"></i></span>`;b.onclick=item.abrir;grid.appendChild(b)}if(items.length)c.appendChild(grid);const status=document.createElement('p');status.style.color='var(--text-muted)';status.textContent=pending?'Carregando outras áreas…':failed?'Algumas áreas não puderam ser carregadas.':items.length?'':'Nenhum destaque válido hoje.';if(status.textContent)c.appendChild(status);document.getElementById('loading').style.display='none'};
+for(const item of items){const b=document.createElement('button');b.type='button';b.className='tzc-destaque-linha192';const parts=item.data.split('-'),diff=Math.round((Date.parse(item.data+'T12:00:00Z')-Date.parse(today()+'T12:00:00Z'))/86400000);const relative=diff===0?'Hoje':diff===1?'Amanhã':diff>1?'Em '+diff+' dias':Math.abs(diff)===1?'Desde ontem':'Há '+Math.abs(diff)+' dias';const months=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];const icon={'Eventos':'calendar-check','Agenda':'calendar-days','Mensagem do Dia':'envelope-open-text','Banho da Semana':'leaf','Mural de Avisos':'bullhorn','Orientações':'book-open','Reflexão/Ensinamento':'feather'}[item.tipo]||'star';b.innerHTML=`<span class="tzc-data192" aria-label="${esc(item.data.split('-').reverse().join('/'))}"><strong>${esc(parts[2])}</strong><small>${months[Number(parts[1])-1]||''} ${esc(parts[0])}</small></span>${item.tipo==='Mensagem do Dia'?TZC225.highlight(item.registro||{},item.titulo):''}<span class="tzc-conteudo192"><span class="tzc-meta192"><span><i class="fa-solid fa-${icon}" aria-hidden="true"></i> ${esc(item.tipo)}</span><em>${esc(relative)}</em></span><strong class="tzc-titulo192">${esc(item.titulo)}</strong><span class="tzc-resumo192">${esc(String(item.texto).slice(0,160))}</span></span><span class="tzc-abrir192" aria-hidden="true">Ver <i class="fa-solid fa-arrow-right"></i></span>`;b.onclick=item.abrir;grid.appendChild(b)}if(items.length)c.appendChild(grid);const status=document.createElement('p');status.style.color='var(--text-muted)';status.textContent=pending?'Carregando outras áreas…':failed?'':items.length?'':'Nenhum destaque válido hoje.';if(status.textContent)c.appendChild(status);document.getElementById('loading').style.display='none'};
  refresh=render;render();await Promise.allSettled(sources.map(async sheet=>{const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),8000);try{const res=await fetch(WEB_APP_URL+'?sheet='+encodeURIComponent(sheet),{signal:controller.signal,cache:'no-store'});if(!res.ok)throw Error('HTTP '+res.status);const rows=await res.json();if(!Array.isArray(rows))throw Error('Resposta inválida');data[sheet]=rows}catch(e){failed++}finally{clearTimeout(timeout);pending--;render()}}));
  };
  const previous=window.loadTabData;window.loadTabData=function(tab){if(tab==='Home')return window.buildHomeAgenda();return previous.apply(this,arguments)};

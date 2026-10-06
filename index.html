@@ -15250,7 +15250,18 @@ html body header.banner .banner-titles p{font-size:.74rem!important;line-height:
 </style>
 <!-- SITE TZC V312: carregamento paralelo, restauração de núcleo e cabeçalho. -->
 
-<!-- TZC V313 — STATUS: APROVADO PARA IMPLEMENTAÇÃO CONFORME PEDIDO DA RESPONSÁVEL (06/10/2026). A validação funcional após a publicação continua pendente. -->
+<!--
+TZC V313 — APROVADO PARA IMPLEMENTAÇÃO PELA RESPONSÁVEL — 06/10/2026.
+APROVADO NESTA RODADA:
+- Mostrar estado “Carregando…” imediatamente ao escolher Autorizações, Histórico ou Lixeira.
+- Travar o botão durante a consulta para evitar clique repetido.
+- Usar avisos simples, sem detalhes de erro técnico.
+- Ocultar códigos internos REG_/SOL_/ID_ nos títulos da Lixeira, mantendo o ID interno para a restauração.
+TEMPOS INFORMADOS ANTES DA ALTERAÇÃO: Histórico ~7 s; Autorizações ~5 s após dois cliques; Lixeira ~3 s.
+VERIFICAÇÃO FINAL PENDENTE NO PERFIL DIRIGENTE: confirmar que cada opção responde ao primeiro clique e mostra o carregamento; verificar 10 registros e paginação do Histórico; confirmar busca/tabela de Autorizações sem salvar mudanças; conferir que a Lixeira não mostra códigos internos e não restaurar itens reais; validar que falhas exibem aviso simples.
+Código.gs não foi alterado. Esta confirmação final ainda não foi feita na sessão autenticada.
+-->
+
 <style id="tzcLoadingFeedbackV313">
 #tzcProgressV313{display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px;margin:12px 0;padding:10px 14px;border-radius:8px;background:rgba(255,255,255,.08);color:var(--text-main,#fff);font-weight:600;text-align:center}
 #tzcProgressV313[hidden]{display:none!important}

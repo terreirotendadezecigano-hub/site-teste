@@ -1,4 +1,4 @@
-<!-- SITE TZC V312 | restaura núcleo do app, início paralelo e cabeçalho aprovado -->
+<!-- SITE TZC V315 | Lixeira rápida com paginação local e compatibilidade V121/V123/V124 -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -14906,7 +14906,92 @@ async function api(action,data={}){try{return await TZC206.request(action,{...da
 function modal(){return window.TZC_ACCESS222.mount('trash216','Lixeira','trash-arrow-up','<p>Recupere registros excluídos.</p><div class="search218"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><input type="search" id="trashSearch216" aria-label="Pesquisar registros excluídos" placeholder="Pesquisar nome ou área…"></div><p role="status" id="trashStatus216">Carregando registros…</p><div id="trashList216"></div>')}
 
 function confirmRestore(r){return new Promise(resolve=>{const o=document.createElement('div');o.id='restoreConfirm216';o.className='modal-overlay';o.style.display='flex';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');o.setAttribute('aria-labelledby','restoreTitle216');o.innerHTML='<section class="modal-box"><div class="modal-header"><h3 id="restoreTitle216"><i class="fa-solid fa-rotate-left"></i> Restaurar registro</h3><button type="button" data-no216 aria-label="Fechar" title="Fechar"><i class="fa-solid fa-xmark"></i></button></div><div class="modal-body"><p>Restaurar <strong>'+esc(r.nome)+'</strong>?</p><p>Ele voltará a aparecer na página de origem.</p></div><div class="modal-actions"><button type="button" data-no216><i class="fa-solid fa-xmark"></i> Cancelar</button><button type="button" data-yes216><i class="fa-solid fa-rotate-left"></i> Restaurar</button></div></section>';const finish=yes=>{document.removeEventListener('keydown',key);o.remove();resolve(yes)},key=e=>{if(e.key==='Escape')finish(false)};document.body.appendChild(o);document.addEventListener('keydown',key);o.querySelectorAll('[data-no216]').forEach(b=>b.onclick=()=>finish(false));o.querySelector('[data-yes216]').onclick=()=>finish(true)})}
-async function open(){if(!allowed())return showToast('Recuperação restrita à gestão autorizada.');if(!$('securityBody212'))await window.abrirSeguranca212();const o=modal();let rows=[],page=0,cursors=[null],nextCursor=null,hasMore=false,loading=false;const pageSize=20,omitted=new Set();function status(text){const el=$('trashStatus216');if(el)el.textContent=text}function draw(){if(!o.isConnected)return;const q=$('trashSearch216').value.toLocaleLowerCase('pt-BR'),visible=rows.filter(r=>(r.nome+' '+(modules[r.modulo]||r.modulo)).toLocaleLowerCase('pt-BR').includes(q));const date=v=>{const d=new Date(v);return v&&!isNaN(d)?d.toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo',year:'2-digit',month:'2-digit',day:'2-digit'}):'Data não disponível'};$('trashList216').innerHTML=visible.length?visible.map((r,i)=>'<article class="trash-item216"><div><strong>'+esc(r.nome)+'</strong><p>'+esc(modules[r.modulo]||r.modulo)+' · '+esc(date(r.excluidoEm))+'</p><p>Excluído por: '+esc(r.excluidoPor||'Não identificado')+'</p>'+(!r.podeRestaurar?'<p>Peça à gestão para conferir este item antes de recuperá-lo.</p>':'')+'</div><button type="button" class="btn-toolbar" data-restore216="'+i+'" '+(!r.podeRestaurar?'disabled':'')+'><i class="fa-solid fa-rotate-left"></i> Restaurar</button></article>').join(''):'<p>Nenhum registro encontrado nesta página.</p>';const controls=document.createElement('div');controls.className='audit-pages251';controls.innerHTML='<button type="button" data-prev216 '+(page===0||loading?'disabled':'')+'><i class="fa-solid fa-chevron-left"></i> Anterior</button><span>Página '+(page+1)+'</span><button type="button" data-next216 '+(!hasMore||loading?'disabled':'')+'>Próxima <i class="fa-solid fa-chevron-right"></i></button>';$('trashList216').appendChild(controls);controls.querySelector('[data-prev216]').onclick=()=>{if(page>0&&!loading){page--;load(cursors[page],false)}};controls.querySelector('[data-next216]').onclick=()=>{if(hasMore&&!loading){cursors[page+1]=nextCursor;page++;load(nextCursor,false)}};$('trashList216').querySelectorAll('[data-restore216]').forEach(b=>b.onclick=async()=>{const r=visible[Number(b.dataset.restore216)];if(!r||loading)return;if(!await confirmRestore(r)||!o.isConnected)return;loading=true;b.disabled=true;b.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Restaurando…';status('Restaurando “'+r.nome+'”… Aguarde.');await new Promise(resolve=>requestAnimationFrame(()=>resolve()));try{await api('t216_restaurar',{modulo:r.modulo,id:r.id});window.__moduleCache206?.clear();window.TZC185?.limparCache?.();if(!o.isConnected)return;rows=rows.filter(x=>x.modulo!==r.modulo||x.id!==r.id);omitted.add(r.modulo+'|'+r.id);loading=false;status('Registro restaurado.');draw()}catch(e){if(!o.isConnected)return;status('Não foi possível confirmar a resposta. Conferindo a Lixeira…');try{const check=await api('t216_lixeira',{cursor:cursors[page],limit:pageSize,omitidos:Array.from(omitted)});if(Array.isArray(check.registros)){rows=check.registros.map(r=>({...r,nome:/^(?:REG|SOL|ID)_[A-Fa-f0-9_-]{18,}$/.test(String(r.nome||''))?'Registro excluído':r.nome}));nextCursor=check.cursor??null;hasMore=check.temMais===true;const stillThere=rows.some(x=>x.modulo===r.modulo&&String(x.id)===String(r.id));loading=false;status(stillThere?'Não foi possível confirmar a restauração. Tente novamente.':'Restauração concluída; lista atualizada.');draw();return}}catch(refreshError){}loading=false;status(e.message);draw()}})}async function load(cursor,reset){if(loading||!o.isConnected)return;loading=true;hasMore=false;draw();status('Carregando até '+pageSize+' registros da Lixeira…');try{const reply=await api('t216_lixeira',{cursor,limit:pageSize,omitidos:Array.from(omitted)});if(!o.isConnected)return;if(!Array.isArray(reply.registros))throw Error('Não foi possível carregar a Lixeira.');rows=reply.registros.map(r=>({...r,nome:/^(?:REG|SOL|ID)_[A-Fa-f0-9_-]{18,}$/.test(String(r.nome||''))?'Registro excluído':r.nome}));nextCursor=reply.cursor??null;hasMore=reply.temMais===true;loading=false;status(rows.length?rows.length+' registro(s) carregado(s) · Página '+(page+1):'Nenhum registro excluído encontrado.');draw()}catch(e){if(!o.isConnected)return;loading=false;status('Não foi possível carregar a Lixeira agora. Tente novamente.');const retry=document.createElement('button');retry.type='button';retry.className='btn-toolbar';retry.innerHTML='<i class="fa-solid fa-rotate-right"></i> Tentar novamente';retry.onclick=()=>load(cursors[page],false);$('trashList216').replaceChildren(retry)}}$('trashSearch216').oninput=draw;draw();load(null,true)}
+async function open(){
+  if(!allowed())return showToast('Recuperação restrita à gestão autorizada.');
+  if(!$('securityBody212'))await window.abrirSeguranca212();
+  const o=modal();
+  let rows=[],page=0,cursors=[null],nextCursor=null,hasMore=false,loading=false,serverPaging=false;
+  const pageSize=20,omitted=new Set();
+  function status(text){const el=$('trashStatus216');if(el)el.textContent=text;}
+  function matches(){
+    const input=$('trashSearch216');
+    const q=(input?.value||'').toLocaleLowerCase('pt-BR');
+    return rows.filter(r=>(r.nome+' '+(modules[r.modulo]||r.modulo)).toLocaleLowerCase('pt-BR').includes(q));
+  }
+  function draw(){
+    if(!o.isConnected)return;
+    const found=matches();
+    const pageCount=Math.max(1,Math.ceil(found.length/pageSize));
+    if(!serverPaging&&page>=pageCount)page=pageCount-1;
+    const visible=serverPaging?found:found.slice(page*pageSize,(page+1)*pageSize);
+    const date=v=>{const d=new Date(v);return v&&!isNaN(d)?d.toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo',year:'2-digit',month:'2-digit',day:'2-digit'}):'Data não disponível';};
+    $('trashList216').innerHTML=visible.length?visible.map((r,i)=>'<article class="trash-item216"><div><strong>'+esc(r.nome)+'</strong><p>'+esc(modules[r.modulo]||r.modulo)+' · '+esc(date(r.excluidoEm))+'</p><p>Excluído por: '+esc(r.excluidoPor||'Não identificado')+'</p>'+(!r.podeRestaurar?'<p>Peça à gestão para conferir este item antes de recuperá-lo.</p>':'')+'</div><button type="button" class="btn-toolbar" data-restore216="'+i+'" '+(!r.podeRestaurar?'disabled':'')+'><i class="fa-solid fa-rotate-left"></i> Restaurar</button></article>').join(''):'<p>Nenhum registro encontrado.</p>';
+    const canNext=serverPaging?hasMore:(page+1<pageCount);
+    const pageLabel=serverPaging?'Página '+(page+1):'Página '+(page+1)+' de '+pageCount;
+    const controls=document.createElement('div');
+    controls.className='audit-pages251';
+    controls.innerHTML='<button type="button" data-prev216 '+(page===0||loading?'disabled':'')+'><i class="fa-solid fa-chevron-left"></i> Anterior</button><span>'+pageLabel+'</span><button type="button" data-next216 '+(!canNext||loading?'disabled':'')+'>Próxima <i class="fa-solid fa-chevron-right"></i></button>';
+    $('trashList216').appendChild(controls);
+    controls.querySelector('[data-prev216]').onclick=()=>{if(page===0||loading)return;if(serverPaging){page--;load(cursors[page],false);}else{page--;draw();}};
+    controls.querySelector('[data-next216]').onclick=()=>{if(!canNext||loading)return;if(serverPaging){cursors[page+1]=nextCursor;page++;load(nextCursor,false);}else{page++;draw();}};
+    $('trashList216').querySelectorAll('[data-restore216]').forEach(b=>b.onclick=async()=>{
+      const r=visible[Number(b.dataset.restore216)];
+      if(!r||loading)return;
+      if(!await confirmRestore(r)||!o.isConnected)return;
+      loading=true;b.disabled=true;b.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i> Restaurando…';
+      status('Restaurando “'+r.nome+'”… Aguarde.');
+      await new Promise(resolve=>requestAnimationFrame(()=>resolve()));
+      try{
+        await api('t216_restaurar',{modulo:r.modulo,id:r.id});
+        window.__moduleCache206?.clear();window.TZC185?.limparCache?.();
+        if(!o.isConnected)return;
+        rows=rows.filter(x=>x.modulo!==r.modulo||x.id!==r.id);
+        omitted.add(r.modulo+'|'+r.id);
+        loading=false;status('Registro restaurado.');draw();
+      }catch(e){
+        if(!o.isConnected)return;
+        status('Não foi possível confirmar a restauração. Conferindo a Lixeira…');
+        try{
+          const check=await api('t216_lixeira',{cursor:cursors[page],limit:pageSize,omitidos:Array.from(omitted)});
+          if(Array.isArray(check.registros)){
+            const oldPage=page;
+            rows=check.registros.map(r=>({...r,nome:/^(?:REG|SOL|ID)_[A-Fa-f0-9_-]{18,}$/.test(String(r.nome||''))?'Registro excluído':r.nome}));
+            serverPaging=typeof check.temMais==='boolean'||Object.prototype.hasOwnProperty.call(check,'cursor');
+            nextCursor=check.cursor??null;hasMore=check.temMais===true;
+            page=serverPaging?oldPage:Math.min(oldPage,Math.max(0,Math.ceil(matches().length/pageSize)-1));
+            const stillThere=rows.some(x=>x.modulo===r.modulo&&String(x.id)===String(r.id));
+            loading=false;status(stillThere?'Não foi possível confirmar a restauração. Tente novamente.':'Restauração concluída; lista atualizada.');draw();return;
+          }
+        }catch(refreshError){}
+        loading=false;status(e.message);draw();
+      }
+    });
+  }
+  async function load(cursor,reset){
+    if(loading||!o.isConnected)return;
+    loading=true;hasMore=false;draw();status('Carregando registros da Lixeira…');
+    try{
+      const reply=await api('t216_lixeira',{cursor,limit:pageSize,omitidos:Array.from(omitted)});
+      if(!o.isConnected)return;
+      if(!Array.isArray(reply.registros))throw Error('Não foi possível carregar a Lixeira.');
+      rows=reply.registros.map(r=>({...r,nome:/^(?:REG|SOL|ID)_[A-Fa-f0-9_-]{18,}$/.test(String(r.nome||''))?'Registro excluído':r.nome}));
+      serverPaging=typeof reply.temMais==='boolean'||Object.prototype.hasOwnProperty.call(reply,'cursor');
+      nextCursor=reply.cursor??null;hasMore=reply.temMais===true;
+      if(reset||!serverPaging){page=0;cursors=[null];}
+      loading=false;
+      const found=matches();
+      const pages=serverPaging?'Página '+(page+1):'Página '+(page+1)+' de '+Math.max(1,Math.ceil(found.length/pageSize));
+      status(found.length?found.length+' registro(s) carregado(s) · '+pages:'Nenhum registro excluído encontrado.');
+      draw();
+    }catch(e){
+      if(!o.isConnected)return;
+      loading=false;status('Não foi possível carregar a Lixeira agora. Tente novamente.');
+      const retry=document.createElement('button');retry.type='button';retry.className='btn-toolbar';retry.innerHTML='<i class="fa-solid fa-rotate-right"></i> Tentar novamente';retry.onclick=()=>load(cursors[page],false);$('trashList216').replaceChildren(retry);
+    }
+  }
+  $('trashSearch216').oninput=()=>{page=0;draw();};
+  draw();load(null,true);
+}
 window.TZC216={sync,open};new MutationObserver(()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;sync()})}).observe(document.body,{subtree:true,childList:true});sync();})();
 </script>
 
@@ -15325,11 +15410,4 @@ VERIFICAÇÃO PENDENTE COM A RESPONSÁVEL:
 - Confirmar que a página Acessos abre de imediato e mantém as opções conforme o perfil dirigente.
 - Medir novamente o Histórico e a Lixeira. Se continuarem acima do esperado, a demora está na leitura do Google Sheets/Apps Script e exigirá otimização backend separada, com revisão e nova implantação do Código.gs.
 Código.gs não foi alterado nesta versão; nenhuma nova implantação do Apps Script é necessária para estas correções do site.
--->
-
-<!-- REGISTRO DE VALIDAÇÃO DA RESPONSÁVEL — 06/10/2026.
-FUNÇÃO APROVADA: Autorizações funcionou corretamente na conferência da responsável.
-MELHORIA ADIADA: o layout da página de Autorizações será revisto em uma etapa própria; não é bloqueio funcional e não será ajustado nesta rodada.
-PENDÊNCIAS DE DESEMPENHO: Histórico levou mais de 20 segundos; Lixeira também continua lenta. A consulta do Apps Script/Google Sheets precisa de otimização e nova validação antes de marcar esses tempos como resolvidos.
-ESTA APROVAÇÃO SE REFERE À FUNÇÃO DE AUTORIZAÇÕES. Não altera nem aprova as pendências de desempenho do Histórico e da Lixeira.
 -->

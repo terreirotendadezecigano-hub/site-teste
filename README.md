@@ -1,42 +1,52 @@
 # Site-teste — Tenda de Zé Cigano
 
-Este é o ambiente de desenvolvimento e validação. O repositório final `Tendadezecigano` continua separado e não foi alterado.
+Este repositório é o ambiente de desenvolvimento e validação. O repositório final `Tendadezecigano` permanece separado e sem alterações.
 
-## O que está ativo aqui
+## Versões atuais
 
-- `index.html`: site V29, baseado no layout aprovado V13.
-- Google Apps Script de teste: implantação V15, ligada ao banco de dados fictício de testes.
-- A ponte externa V02 aceita somente mensagens do domínio GitHub Pages deste site e nomes de função definidos em uma lista fechada. O modo `ALLOWALL` é aplicado só à página mínima da ponte.
-- A home carrega apresentação, mensagem do dia, agenda próxima, contatos e redes cadastradas no banco de dados.
-- O botão Membros abre o fluxo de acesso por e-mail. A conferência do endereço já respondeu pelo caminho GitHub Pages → ponte V15 → função Apps Script.
-- O fluxo de código numérico, sessão e as ações de presença continuam precisando de validação completa com uma conta de teste autorizada.
+- `index.html`: V31, com títulos mais claros na configuração e agenda reorganizada para celular.
+- Apps Script de teste: implantação V16. A sessão não vence por tempo; termina ao sair ou se a conta for desativada.
+- A ponte externa V02 mantém a lista fechada de funções e só aceita a origem GitHub Pages do site de teste.
+- Nenhuma linha da planilha foi apagada nesta atualização.
 
-## Arquivos da raiz
+## Arquivos publicados e arquivos de consulta
 
-- `index.html`: única página inicial publicada pelo GitHub Pages.
-- Arquivos `.txt` com versões antigas: arquivo histórico para consulta; não são páginas publicadas nem carregados pela home.
-- As prévias visuais independentes foram removidas porque não eram usadas nem referenciadas pelo site.
+- `index.html`: única página publicada pelo GitHub Pages.
+- Arquivos `.txt`: histórico e cópias de leitura; não são páginas publicadas nem carregados pela home.
+- Pré-visualizações independentes que não eram usadas já foram removidas anteriormente.
+
+## Configurações existentes
+
+A tela atual controla dados básicos, título e apresentação da home, os blocos que já existem em `Blocos_Pagina`, ordem/exibição desses blocos e redes sociais.
+
+A configuração completa dos conteúdos ainda será implementada nos módulos correspondentes:
+
+| Conteúdo | Tabela |
+|---|---|
+| Mensagem do dia | `Publicacoes` |
+| Banho da semana | `Biblioteca_Banhos` |
+| Agenda | `Eventos` |
+| Primeira visita | `Paginas_Site` e `Blocos_Pagina` |
+| Orientações | `Guias_Instrucoes` |
+
+A agenda atual já lista eventos públicos; a edição integral do conteúdo dessas tabelas será conectada à tela administrativa durante a construção dos módulos.
 
 ## Cronograma de implementação
 
-1. **Base visual e home — em uso no teste:** layout aprovado, responsivo, tema claro/escuro, conteúdo inicial e dados públicos.
-2. **Acesso e sessões — em validação:** conferência do e-mail, código numérico, sessão lembrada, encerramento da sessão e perfis.
-3. **Agenda e presença — em validação:** previsão de presença de membros e visitantes, check-in de membros, confirmação por responsável autorizado e relatório PDF.
-4. **Configurações do site — próximo passo:** controlar dados básicos, aparência, páginas e blocos configuráveis pela casa.
-5. **Módulos de conteúdo:** história, mensagens, banhos/ervas, pontos cantados, orientações, mural e estudos.
-6. **Gestão de membros e área interna:** cadastro, atualização sem duplicidade, exclusão lógica, histórico, permissões e avisos de mensalidade.
-7. **Loja:** catálogo, cadastro de compradores, pedidos e integração de pagamentos, em banco/abas definidos sem misturar com dados do terreiro.
-8. **Revisão e publicação:** testar celular e computador, perfis, acessibilidade para pessoas mais velhas, desempenho, backup e só então promover para o repositório final.
+1. **Base visual e home — em validação:** layout V13 aprovado, temas claro/escuro, dados da casa e home configurável.
+2. **Acesso e sessão — V16 implantada no teste:** código numérico por e-mail, sessão lembrada sem vencimento automático e saída explícita.
+3. **Agenda e presença — em validação:** previsão de membros e visitantes, check-in, confirmação do responsável e relatório.
+4. **Configurações da home — em andamento:** completar campos e controles das cinco fontes listadas acima.
+5. **Módulos de conteúdo:** mensagens, banhos/ervas, orientações, história, pontos cantados, mural e estudos.
+6. **Gestão de membros e área interna:** cadastro, atualização sem duplicidade, exclusão lógica, permissões e avisos.
+7. **Loja:** catálogo, cadastro de compradores e pedidos, com banco organizado para a loja.
+8. **Revisão final:** celular, computador, acessibilidade, desempenho e permissões; só depois promover a versão aprovada ao repositório final.
 
-## Regras para o teste
+## Testes da versão V31/V16
 
-- Os dados da planilha são fictícios. Não tratar registros de teste como informação real.
-- Os acessos permanecem liberados para facilitar a construção; as permissões finais serão configuradas e testadas antes da publicação.
-- Não publicar nem alterar o site final durante esta fase.
-- Ao testar o acesso, use um e-mail de teste autorizado. A primeira ação apenas confere o cadastro; o botão **Enviar código** envia um e-mail.
+1. No celular, abra a agenda e confira se título, data, local e botão cabem sem rolagem horizontal.
+2. Abra Configurações e confira a hierarquia dos títulos: Identidade e contatos; Abertura da página inicial; Página inicial — títulos e seções; Redes e canais.
+3. Entre uma vez, recarregue o site e confirme que o acesso lembrado continua ativo. Toque em **Sair**, recarregue e confirme que o site pede login, mantendo o e-mail preenchido.
+4. Em Configurações, confira os nomes dos blocos e se continuam permitindo mudar título, texto, ordem e exibição.
 
-## Verificação da ponte V15
-
-Foi testada a chamada de conferência com endereço fictício. O sistema respondeu pela ponte e manteve a resposta genérica para não revelar se um e-mail pertence a um membro. Nenhum código foi enviado nesse teste.
-
-O próximo teste funcional é o fluxo com uma conta de teste autorizada: conferir o e-mail, solicitar o código numérico, entrar, reabrir a página para validar a sessão lembrada e sair.
+Use sempre apenas contas e registros fictícios enquanto estiver no ambiente de teste. Não altere nem publique o site final nesta fase.

@@ -1,39 +1,42 @@
-# Site de teste — Tenda de Zé Cigano
+# Site-teste — Tenda de Zé Cigano
 
-Este repositório é o ambiente de teste dos módulos antes de qualquer publicação no site final.
+Este é o ambiente de desenvolvimento e validação. O repositório final `Tendadezecigano` continua separado e não foi alterado.
 
-## Layout e arquivos
+## O que está ativo aqui
 
-- `index.html`: layout V13 aprovado, conectado aos dados públicos da planilha.
-- `site versão V13.txt`: cópia TXT da interface para arquivo e revisão.
-- `codigo.gs versao V02.txt`: serviço de dados Apps Script do Módulo 01.
-- Projeto Apps Script: `TZC_Modulo01_V02.gs` + `Index.html`.
-- Implantação de teste: versão 2; mantém o mesmo link `/exec`.
+- `index.html`: site V29, baseado no layout aprovado V13.
+- Google Apps Script de teste: implantação V15, ligada ao banco de dados fictício de testes.
+- A ponte externa V02 aceita somente mensagens do domínio GitHub Pages deste site e nomes de função definidos em uma lista fechada. O modo `ALLOWALL` é aplicado só à página mínima da ponte.
+- A home carrega apresentação, mensagem do dia, agenda próxima, contatos e redes cadastradas no banco de dados.
+- O botão Membros abre o fluxo de acesso por e-mail. A conferência do endereço já respondeu pelo caminho GitHub Pages → ponte V15 → função Apps Script.
+- O fluxo de código numérico, sessão e as ações de presença continuam precisando de validação completa com uma conta de teste autorizada.
 
-## Módulo 01 — página inicial pública
+## Arquivos da raiz
 
-**Status: publicado no ambiente de teste; dados carregados no navegador em desktop.**
+- `index.html`: única página inicial publicada pelo GitHub Pages.
+- Arquivos `.txt` com versões antigas: arquivo histórico para consulta; não são páginas publicadas nem carregados pela home.
+- As prévias visuais independentes foram removidas porque não eram usadas nem referenciadas pelo site.
 
-A home usa as abas `Configuracoes_Site`, `Paginas_Site`, `Blocos_Pagina`, `Midias_Sociais`, `Eventos`, `Publicacoes` e os campos públicos permitidos de `Geral`. Os blocos, páginas, canais e cores são controlados pela planilha.
+## Cronograma de implementação
 
-A leitura de Publicacoes não inclui a coluna P, que guarda imagens em base64. O endpoint não devolve dados de membros, saúde, documentos ou auditoria. A chave Pix é incluída porque a interface pública oferece a ação de copiar.
+1. **Base visual e home — em uso no teste:** layout aprovado, responsivo, tema claro/escuro, conteúdo inicial e dados públicos.
+2. **Acesso e sessões — em validação:** conferência do e-mail, código numérico, sessão lembrada, encerramento da sessão e perfis.
+3. **Agenda e presença — em validação:** previsão de presença de membros e visitantes, check-in de membros, confirmação por responsável autorizado e relatório PDF.
+4. **Configurações do site — próximo passo:** controlar dados básicos, aparência, páginas e blocos configuráveis pela casa.
+5. **Módulos de conteúdo:** história, mensagens, banhos/ervas, pontos cantados, orientações, mural e estudos.
+6. **Gestão de membros e área interna:** cadastro, atualização sem duplicidade, exclusão lógica, histórico, permissões e avisos de mensalidade.
+7. **Loja:** catálogo, cadastro de compradores, pedidos e integração de pagamentos, em banco/abas definidos sem misturar com dados do terreiro.
+8. **Revisão e publicação:** testar celular e computador, perfis, acessibilidade para pessoas mais velhas, desempenho, backup e só então promover para o repositório final.
 
-**Atenção:** a Base de Dados de teste ainda contém registros fictícios. Troque ou oculte os exemplos antes de divulgar o link publicamente.
+## Regras para o teste
 
-## Ainda não implementado
+- Os dados da planilha são fictícios. Não tratar registros de teste como informação real.
+- Os acessos permanecem liberados para facilitar a construção; as permissões finais serão configuradas e testadas antes da publicação.
+- Não publicar nem alterar o site final durante esta fase.
+- Ao testar o acesso, use um e-mail de teste autorizado. A primeira ação apenas confere o cadastro; o botão **Enviar código** envia um e-mail.
 
-- Login e perfis de administrador, dirigente, colaborador e membro.
-- Área administrativa e operações de cadastro/edição/exclusão lógica.
-- Loja, pedidos e pagamentos.
-- Teste em celular e validação com usuários.
-- Revisão dos registros fictícios e aprovação final do conteúdo.
+## Verificação da ponte V15
 
-## Como testar o Módulo 01
+Foi testada a chamada de conferência com endereço fictício. O sistema respondeu pela ponte e manteve a resposta genérica para não revelar se um e-mail pertence a um membro. Nenhum código foi enviado nesse teste.
 
-1. Abra a página de teste em desktop e celular.
-2. Confirme logo, menu, título, apresentação, publicações, agenda, redes e contatos.
-3. No celular, toque em Menu, Membros, tema e voltar ao topo.
-4. Confira na planilha que alterar um bloco ou canal muda a página após atualizar.
-5. Não use registros fictícios como dados reais.
-
-O site final permanece separado no repositório `Tendadezecigano`.
+O próximo teste funcional é o fluxo com uma conta de teste autorizada: conferir o e-mail, solicitar o código numérico, entrar, reabrir a página para validar a sessão lembrada e sair.

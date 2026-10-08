@@ -181,7 +181,11 @@ body:not(.dados-carregados) .app{visibility:visible}
 <dialog id="m04DelegateDialog" class="m04-dialog"><div class="dialog-head"><div><h2>Autorizar responsável</h2><p class="m04-note">Escolha um evento e um filho de santo.</p></div><button class="close" type="button" data-action="close-delegate" aria-label="Fechar">×</button></div><div class="dialog-body"><div class="field"><label for="m04DelegateEvent">Gira ou evento</label><select id="m04DelegateEvent"><option value="">Carregando eventos…</option></select></div><div class="field"><label for="m04DelegateMember">Filho de santo</label><select id="m04DelegateMember"><option value="">Carregando membros…</option></select></div><p id="m04DelegateStatus" class="m04-status" role="status" aria-live="polite"></p><div class="m04-delegate-actions" id="m04DelegateActions"><button type="button" id="m04Grant">Autorizar</button><button type="button" id="m04Revoke">Revogar autorização</button></div><section id="m04DelegateConfirm" class="m04-inline-confirm" hidden><p id="m04DelegateConfirmText"></p><div><button class="secondary" type="button" id="m04CancelDelegate">Voltar</button><button class="member-btn" type="button" id="m04ConfirmDelegate">Confirmar</button></div></section></div><div class="dialog-actions"><button class="secondary" type="button" data-action="close-delegate">Fechar</button></div></dialog>
 <div id="toast" class="toast" role="status"></div>
 <script>
-/* TZC — SITE V26: confirmação no modal, sessão simples e apresentação em largura total. */
+/* TZC — SITE V27 — ACESSO E INTERFACE.
+ * Status: publicado no site-teste e servido pela implantação Apps Script V12.
+ * Sessão salva: validada ao abrir; sem sessão, e-mail conferido antes do envio do código.
+ * Resta testar login real, persistência ao reabrir a página e saída voluntária.
+ */
 (function(){
   'use strict';
   var dados=null, paginas=[], paginaAtual='inicio', chavePix='', timerToast=null, authCodeRequested=false, authEmailVerificado=false, authRestaurando=true, authRestauracaoErro=false, authToken='', authUser=null, authCallbacks=Object.create(null), authRequestSeq=0, podeConfig=false, configAtual=null, m04PdfBlob=null, m04ReportData=null, m04GestaoCarregando=false, m04GestaoCarregada=false;

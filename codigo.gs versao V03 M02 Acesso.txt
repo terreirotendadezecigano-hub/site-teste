@@ -1,0 +1,205 @@
+/* TZC — MÓDULO 02 / AUTENTICAÇÃO E AUTORIZAÇÃO — V03
+ * Status: BASE DE AUTENTICAÇÃO PREPARADA; AINDA NÃO INSTALADA NEM PUBLICADA.
+ * Ambiente previsto: site-teste + planilha fictícia “Base de Dados”.
+ * Não substitui TZC_Modulo01_V02.gs nem modifica o site final.
+ *
+ * Objetivo:
+ * 1) validar usuários ativos da aba Usuarios_Acesso;
+ * 2) permitir login por código temporário enviado ao e-mail cadastrado;
+ * 3) emitir uma sessão curta e opaca, sem senha salva na planilha ou no navegador;
+ * 4) negar por padrão ações e módulos que ainda não tenham regra explícita.
+ *
+ * IMPORTANTE: a ponte segura entre a página GitHub e este projeto Apps Script
+ * precisa aceitar somente as quatro funções públicas deste arquivo e somente
+ * mensagens vindas de https://terreirotendadezecigano-hub.github.io. Nunca
+ * encaminhe uma função arbitrária solicitada pelo navegador.
+ */
+
+const TZC_M02_CFG_V03 = Object.freeze({
+  PLANILHA_ID: '1WGlSF_Z9zxQ1zO52wWmiLOlkegJEczsgTJEtj8GvlhM',
+  ABA_USUARIOS: 'Usuarios_Acesso',
+  OTP_TTL_SEG: 600,
+  SESSAO_TTL_SEG: 21600,
+  INTERVALO_ENVIO_SEG: 60,
+  MAX_CODIGOS_HORA: 3,
+  MAX_TENTATIVAS: 5
+});
+
+/**
+ * Pede um código temporário. A resposta é genérica para não revelar se o
+ * endereço está cadastrado. O e-mail só é enviado a usuário ativo reconhecido.
+ */
+function TZC_M02_solicitarCodigo(email) {
+  const resposta = {
+    ok: true,
+    mensagem: 'Se o e-mail estiver autorizado, enviaremos um código de acesso.'
+  };
+  const endereco = tzcM02_emailV03_(email);
+  if (!endereco) return resposta;
+
+  const cache = CacheService.getScriptCache();
+  const chave = tzcM02_hashV03_('email:' + endereco);
+  const trava = LockService.getScriptLock();
+  try {
+    trava.waitLock(5000);
+    const agora = Date.now();
+    const rateKey = 'TZC_M02_RATE_' + chave;
+    const limite = JSON.parse(cache.get(rateKey) || '{"inicio":0,"qtd":0,"ultimo":0}');
+    if (agora - Number(limite.ultimo || 0) < TZC_M02_CFG_V03.INTERVALO_ENVIO_SEG * 1000) return resposta;
+    if (!limite.inicio || agora - limite.inicio >= 3600000) {
+      limite.inicio = agora;
+      limite.qtd = 0;
+    }
+    if (Number(limite.qtd || 0) >= TZC_M02_CFG_V03.MAX_CODIGOS_HORA) return resposta;
+
+    const usuario = tzcM02_buscarUsuarioV03_(endereco);
+    // Atualiza o limite também para e-mails desconhecidos: reduz enumeração e abuso.
+    limite.qtd = Number(limite.qtd || 0) + 1;
+    limite.ultimo = agora;
+    cache.put(rateKey, JSON.stringify(limite), 3600);
+    if (!usuario) return resposta;
+
+    const codigo = Utilities.getUuid().replace(/-/g, '').slice(0, 6).toUpperCase();
+    cache.put('TZC_M02_OTP_' + chave, JSON.stringify({
+      hash: tzcM02_hashV03_('otp:' + codigo),
+      tentativas: 0,
+      criado: agora
+    }), TZC_M02_CFG_V03.OTP_TTL_SEG);
+
+    MailApp.sendEmail({
+      to: endereco,
+      subject: 'Seu código de acesso — Tenda de Zé Cigano',
+      body: 'Olá, ' + usuario.nome + '.\n\nSeu código de acesso é: ' + codigo +
+        '\n\nEle expira em 10 minutos e só pode ser usado uma vez. Se você não pediu este código, ignore esta mensagem.\n\nTenda de Zé Cigano',
+      name: 'Tenda de Zé Cigano'
+    });
+  } catch (erro) {
+    // Detalhes ficam no log do proprietário; não são devolvidos ao visitante.
+    console.error('TZC_M02_solicitarCodigo: ' + erro.message);
+  } finally {
+    try { trava.releaseLock(); } catch (ignorar) {}
+  }
+  return resposta;
+}
+
+/** Confere o código, consome-o e devolve uma sessão temporária. */
+function TZC_M02_validarCodigo(email, codigo) {
+  const endereco = tzcM02_emailV03_(email);
+  const pin = String(codigo || '').trim().toUpperCase();
+  if (!endereco || !/^[A-F0-9]{6}$/.test(pin)) return {ok:false, mensagem:'Código inválido ou expirado.'};
+  const cache = CacheService.getScriptCache();
+  const chave = tzcM02_hashV03_('email:' + endereco);
+  const otpKey = 'TZC_M02_OTP_' + chave;
+  const trava = LockService.getScriptLock();
+  try {
+    trava.waitLock(5000);
+    const guardado = cache.get(otpKey);
+    if (!guardado) return {ok:false, mensagem:'Código inválido ou expirado.'};
+    const estado = JSON.parse(guardado);
+    if (Number(estado.tentativas || 0) >= TZC_M02_CFG_V03.MAX_TENTATIVAS) {
+      cache.remove(otpKey);
+      return {ok:false, mensagem:'Código inválido ou expirado.'};
+    }
+    if (estado.hash !== tzcM02_hashV03_('otp:' + pin)) {
+      estado.tentativas = Number(estado.tentativas || 0) + 1;
+      cache.put(otpKey, JSON.stringify(estado), TZC_M02_CFG_V03.OTP_TTL_SEG);
+      return {ok:false, mensagem:'Código inválido ou expirado.'};
+    }
+    cache.remove(otpKey); // código de uso único
+    const usuario = tzcM02_buscarUsuarioV03_(endereco);
+    if (!usuario) return {ok:false, mensagem:'Este acesso não está ativo. Fale com a administração.'};
+    const token = Utilities.getUuid() + Utilities.getUuid();
+    cache.put('TZC_M02_SESSAO_' + tzcM02_hashV03_(token), JSON.stringify({
+      email: usuario.email,
+      idUsuario: usuario.id,
+      nome: usuario.nome,
+      perfil: usuario.perfil,
+      criada: Date.now()
+    }), TZC_M02_CFG_V03.SESSAO_TTL_SEG);
+    return {ok:true, mensagem:'Acesso confirmado.', token:token,
+      usuario:{nome:usuario.nome,perfil:usuario.perfil}, expiraEmSegundos:TZC_M02_CFG_V03.SESSAO_TTL_SEG};
+  } catch (erro) {
+    console.error('TZC_M02_validarCodigo: ' + erro.message);
+    return {ok:false, mensagem:'Não foi possível validar agora. Tente novamente.'};
+  } finally {
+    try { trava.releaseLock(); } catch (ignorar) {}
+  }
+}
+
+/** Confirma se a sessão existe e continua ligada a um usuário ativo. */
+function TZC_M02_validarSessao(token) {
+  const sessao = tzcM02_sessaoV03_(token);
+  if (!sessao) return {ok:false, mensagem:'Sua sessão expirou. Entre novamente.'};
+  const usuario = tzcM02_buscarUsuarioV03_(sessao.email);
+  if (!usuario || usuario.status !== 'ativo') {
+    CacheService.getScriptCache().remove('TZC_M02_SESSAO_' + tzcM02_hashV03_(String(token || '')));
+    return {ok:false, mensagem:'Este acesso não está ativo.'};
+  }
+  return {ok:true, usuario:{nome:usuario.nome,perfil:usuario.perfil}};
+}
+
+/** Encerra uma sessão sem afetar outras pessoas. */
+function TZC_M02_encerrarSessao(token) {
+  const valor = String(token || '');
+  if (valor) CacheService.getScriptCache().remove('TZC_M02_SESSAO_' + tzcM02_hashV03_(valor));
+  return {ok:true};
+}
+
+/** Checagem fechada: somente regras explicitamente cadastradas neste módulo liberam ação. */
+function TZC_M02_pode(token, modulo, acao) {
+  const sessao = tzcM02_sessaoV03_(token);
+  if (!sessao) return {ok:false, permitido:false, mensagem:'Acesso necessário.'};
+  const usuario = tzcM02_buscarUsuarioV03_(sessao.email);
+  if (!usuario || usuario.status !== 'ativo') return {ok:false, permitido:false, mensagem:'Acesso inativo.'};
+  const area = String(modulo || '').toUpperCase();
+  const operacao = String(acao || '').toLowerCase();
+  // A tela de configurações inicia restrita à direção e administração.
+  const permitido = area === 'CONFIGURACOES_SITE' &&
+    ['ver','editar'].includes(operacao) &&
+    ['dirigente','administrador'].includes(usuario.perfil.toLowerCase());
+  return {ok:true, permitido:permitido, perfil:usuario.perfil,
+    mensagem:permitido ? 'Acesso permitido.' : 'Seu perfil não pode realizar esta ação.'};
+}
+
+/** Procura apenas a linha do e-mail e devolve os campos mínimos de acesso. */
+function tzcM02_buscarUsuarioV03_(email) {
+  const ss = SpreadsheetApp.openById(TZC_M02_CFG_V03.PLANILHA_ID);
+  const aba = ss.getSheetByName(TZC_M02_CFG_V03.ABA_USUARIOS);
+  if (!aba || aba.getLastRow() < 2) return null;
+  const valores = aba.getRange(1, 1, aba.getLastRow(), Math.min(6, aba.getLastColumn())).getDisplayValues();
+  const cab = valores.shift().map(v => String(v || '').trim());
+  const ix = {};
+  ['ID_Usuario','Email','Nome','Perfil','Status'].forEach(k => ix[k] = cab.indexOf(k));
+  if (Object.keys(ix).some(k => ix[k] < 0)) throw new Error('Cabeçalho de Usuarios_Acesso inválido.');
+  for (let i = 0; i < valores.length; i++) {
+    const linha = valores[i];
+    if (tzcM02_emailV03_(linha[ix.Email]) !== email) continue;
+    const status = String(linha[ix.Status] || '').trim().toLowerCase();
+    const perfil = String(linha[ix.Perfil] || '').trim();
+    if (status !== 'ativo' || !['Dirigente','Administrador','Colaborador','Membro'].includes(perfil)) return null;
+    return {id:String(linha[ix.ID_Usuario] || ''),email:email,
+      nome:String(linha[ix.Nome] || 'Membro'),perfil:perfil,status:status};
+  }
+  return null;
+}
+
+/** Valida e normaliza um endereço sem devolver dados pessoais. */
+function tzcM02_emailV03_(email) {
+  const valor = String(email || '').trim().toLowerCase();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor) ? valor : '';
+}
+
+/** Consulta a sessão somente pelo hash do token; o token nunca vira chave em claro. */
+function tzcM02_sessaoV03_(token) {
+  const valor = String(token || '').trim();
+  if (!valor || valor.length > 100) return null;
+  const salvo = CacheService.getScriptCache().get('TZC_M02_SESSAO_' + tzcM02_hashV03_(valor));
+  if (!salvo) return null;
+  try { return JSON.parse(salvo); } catch (ignorar) { return null; }
+}
+
+/** Hash SHA-256 para que códigos e tokens não sejam armazenados em claro no cache. */
+function tzcM02_hashV03_(texto) {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(texto), Utilities.Charset.UTF_8)
+    .map(b => ('0' + ((b + 256) % 256).toString(16)).slice(-2)).join('');
+}

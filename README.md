@@ -1,28 +1,39 @@
 # Site de teste — Tenda de Zé Cigano
 
-Este repositório é o ambiente de teste dos módulos antes de qualquer publicação final.
+Este repositório é o ambiente de teste dos módulos antes de qualquer publicação no site final.
 
-## Repositórios
+## Layout e arquivos
 
-- `site-teste`: interface e validações de desenvolvimento.
-- `Tendadezecigano`: site final; por enquanto exibe somente o aviso de construção.
+- `index.html`: layout V13 aprovado, conectado aos dados públicos da planilha.
+- `site versão V13.txt`: cópia TXT da interface para arquivo e revisão.
+- `codigo.gs versao V02.txt`: serviço de dados Apps Script do Módulo 01.
+- Projeto Apps Script: `TZC_Modulo01_V02.gs` + `Index.html`.
+- Implantação de teste: versão 2; mantém o mesmo link `/exec`.
 
-## Arquivos e estado atual
+## Módulo 01 — página inicial pública
 
-- `index.html`: prévia da página inicial baseada no layout aprovado V16.
-- `site versão V16.txt`: cópia de referência da interface escolhida.
-- O código Apps Script V04 do Módulo 01 fica em arquivo TXT privado, pois contém a configuração da planilha de teste. Ele ainda não foi instalado nem conectado a esta interface.
-- Ainda não há arquivo `.gs` ativo neste repositório. Não substitua o Apps Script do site antigo por esse material.
+**Status: publicado no ambiente de teste; dados carregados no navegador em desktop.**
 
-## Módulo 01 — início público configurável
+A home usa as abas `Configuracoes_Site`, `Paginas_Site`, `Blocos_Pagina`, `Midias_Sociais`, `Eventos`, `Publicacoes` e os campos públicos permitidos de `Geral`. Os blocos, páginas, canais e cores são controlados pela planilha.
 
-- Layout responsivo da página inicial: referência aprovada V16.
-- Dados configuráveis pela planilha: estrutura de backend preparada.
-- Conexão entre o backend de teste e a interface: pendente.
-- Instalação e publicação do Apps Script de teste: pendentes.
-- Visitantes, membros, login e permissões: não implementados nesta prévia.
-- Botões que dependem de backend permanecem demonstrativos até a integração.
+A leitura de Publicacoes não inclui a coluna P, que guarda imagens em base64. O endpoint não devolve dados de membros, saúde, documentos ou auditoria. A chave Pix é incluída porque a interface pública oferece a ação de copiar.
 
-## Padrão de trabalho
+**Atenção:** a Base de Dados de teste ainda contém registros fictícios. Troque ou oculte os exemplos antes de divulgar o link publicamente.
 
-Cada mudança será registrada com versão em TXT, testada primeiro no ambiente de teste e anotada aqui. A versão final só recebe módulos concluídos e revisados.
+## Ainda não implementado
+
+- Login e perfis de administrador, dirigente, colaborador e membro.
+- Área administrativa e operações de cadastro/edição/exclusão lógica.
+- Loja, pedidos e pagamentos.
+- Teste em celular e validação com usuários.
+- Revisão dos registros fictícios e aprovação final do conteúdo.
+
+## Como testar o Módulo 01
+
+1. Abra a página de teste em desktop e celular.
+2. Confirme logo, menu, título, apresentação, publicações, agenda, redes e contatos.
+3. No celular, toque em Menu, Membros, tema e voltar ao topo.
+4. Confira na planilha que alterar um bloco ou canal muda a página após atualizar.
+5. Não use registros fictícios como dados reais.
+
+O site final permanece separado no repositório `Tendadezecigano`.

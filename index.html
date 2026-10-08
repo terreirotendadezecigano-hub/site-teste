@@ -189,7 +189,7 @@ body:not(.dados-carregados) .app{visibility:visible}
 (function(){
   'use strict';
   var dados=null, paginas=[], paginaAtual='inicio', chavePix='', timerToast=null, authCodeRequested=false, authEmailVerificado=false, authRestaurando=true, authRestauracaoErro=false, authToken='', authUser=null, authCallbacks=Object.create(null), authRequestSeq=0, podeConfig=false, configAtual=null, m04PdfBlob=null, m04ReportData=null, m04GestaoCarregando=false, m04GestaoCarregada=false;
-  var APP_WEB_URL='https://script.google.com/macros/s/AKfycbyDcqX3eflx4sUx3Gn-6Q0EO4ijbKQfbO-d824gqaQsLXAqkX4zMIo7oC5H_vVfUnQLQQ/exec';
+  var APP_WEB_URL='https://script.google.com/macros/s/AKfycbx8a9JCcxksxkvD-xLs9Iw0JaybFRCmw7rqnZeKtvWdr0hMrkjCRWsMHB3rNQVllMxrlA/exec';
   function el(id){return document.getElementById(id)}
   function classe(node,nome,ativo){if(!node)return;var c=(' '+(node.className||'')+' ').replace(/\s+/g,' '),has=c.indexOf(' '+nome+' ')>=0;if(ativo&&!has)node.className=(node.className?node.className+' ':'')+nome;if(!ativo&&has)node.className=c.replace(' '+nome+' ',' ').trim()}
   function texto(tag,valor,classeNome){var node=document.createElement(tag);node.textContent=valor||'';if(classeNome)node.className=classeNome;return node}

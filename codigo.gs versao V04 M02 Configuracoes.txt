@@ -1,0 +1,246 @@
+/* TZC — COMPLEMENTO DO MÓDULO 02 — CONFIGURAÇÕES DO SITE V01
+ * Status: preparado para o projeto de TESTE; depende de instalação junto ao
+ * TZC_Modulo02_V04.gs e da publicação de uma versão de teste.
+ *
+ * Permite a dirigente e administrador alterar dados básicos, redes, páginas
+ * e blocos da página inicial. Cada chamada valida novamente o usuário ativo
+ * no servidor. A tela do navegador não decide as permissões.
+ *
+ * Não apaga linhas. Para ocultar conteúdo, grava Ativo=NAO. Novos blocos são
+ * criados como TEXTO, que é o formato simples já entendido pelo site.
+ */
+const TZC_CFG_V01 = Object.freeze({
+  PLANILHA_ID: '1WGlSF_Z9zxQ1zO52wWmiLOlkegJEczsgTJEtj8GvlhM',
+  ABA_CONFIG: 'Configuracoes_Site',
+  ABA_GERAL: 'Geral',
+  ABA_PAGINAS: 'Paginas_Site',
+  ABA_BLOCOS: 'Blocos_Pagina',
+  ABA_MIDIAS: 'Midias_Sociais',
+  MAX_BLOCOS_HOME: 12,
+  MAX_MIDIAS: 20,
+  MAX_TEXTO: 5000
+});
+
+/** Entrega somente os campos editáveis da configuração, após validar o perfil. */
+function TZC_CFG_obter(token) {
+  try {
+    const usuario = tzcCfg_autorizarV01_(token);
+    const ss = SpreadsheetApp.openById(TZC_CFG_V01.PLANILHA_ID);
+    const config = tzcCfg_lerObjetosV01_(ss.getSheetByName(TZC_CFG_V01.ABA_CONFIG));
+    const geral = tzcCfg_lerObjetosV01_(ss.getSheetByName(TZC_CFG_V01.ABA_GERAL));
+    const paginas = tzcCfg_lerObjetosV01_(ss.getSheetByName(TZC_CFG_V01.ABA_PAGINAS));
+    const blocos = tzcCfg_lerObjetosV01_(ss.getSheetByName(TZC_CFG_V01.ABA_BLOCOS));
+    const midias = tzcCfg_lerObjetosV01_(ss.getSheetByName(TZC_CFG_V01.ABA_MIDIAS));
+    const valores = {};
+    config.forEach(function(r) { if (r.Chave) valores[String(r.Chave)] = String(r.Valor || ''); });
+    const linhaGeral = geral[0] || {};
+    const pagina = paginas.filter(function(r) { return String(r.ID_Pagina) === 'inicio'; })[0] || {};
+    return {
+      ok: true,
+      usuario: {nome: usuario.nome, perfil: usuario.perfil},
+      valores: valores,
+      contatos: {
+        ENDERECO: valores.ENDERECO || String(linhaGeral.Endereco || ''),
+        WHATSAPP: valores.WHATSAPP || String(linhaGeral.Telefone_Whatsapp || ''),
+        GRUPO_WHATSAPP_URL: valores.GRUPO_WHATSAPP_URL || String(linhaGeral.Grupo_Zap || ''),
+        HORARIO_ATENDIMENTO: valores.HORARIO_ATENDIMENTO || String(linhaGeral.Horario_Giras || ''),
+        CONTRIBUICAO: valores.CONTRIBUICAO || String(linhaGeral.Valor || '')
+      },
+      inicio: {titulo: String(pagina.Titulo || ''), subtitulo: String(pagina.Subtitulo || '')},
+      blocos: blocos.filter(function(r) { return String(r.ID_Pagina || '') === 'inicio'; })
+        .sort(function(a,b) { return Number(a.Ordem || 0) - Number(b.Ordem || 0); })
+        .slice(0, TZC_CFG_V01.MAX_BLOCOS_HOME).map(tzcCfg_blocoPublicoV01_),
+      redes: midias.slice(0, TZC_CFG_V01.MAX_MIDIAS).map(function(r) {
+        return {id:String(r.ID_Midia || ''), nome:String(r.Nome_Exibicao || r.Rede || ''),
+          url:String(r.URL || ''), ativo:tzcCfg_simV01_(r.Ativo), ordem:Number(r.Ordem || 0)};
+      })
+    };
+  } catch (erro) {
+    console.error('TZC_CFG_obter: ' + erro.message);
+    return {ok:false, mensagem:erro.message || 'Não foi possível abrir as configurações.'};
+  }
+}
+
+/** Salva dados básicos e blocos em lote, com validação e permissão no servidor. */
+function TZC_CFG_salvar(token, json) {
+  const trava = LockService.getScriptLock();
+  try {
+    tzcCfg_autorizarV01_(token);
+    const p = JSON.parse(String(json || '{}'));
+    tzcCfg_validarPayloadV01_(p);
+    trava.waitLock(10000);
+    const ss = SpreadsheetApp.openById(TZC_CFG_V01.PLANILHA_ID);
+    const config = tzcCfg_abaV01_(ss, TZC_CFG_V01.ABA_CONFIG);
+    const pagina = tzcCfg_abaV01_(ss, TZC_CFG_V01.ABA_PAGINAS);
+    const blocos = tzcCfg_abaV01_(ss, TZC_CFG_V01.ABA_BLOCOS);
+    const midias = tzcCfg_abaV01_(ss, TZC_CFG_V01.ABA_MIDIAS);
+
+    Object.keys(p.valores).forEach(function(chave) {
+      tzcCfg_gravarConfigV01_(config, chave, p.valores[chave]);
+    });
+    tzcCfg_atualizarLinhaV01_(pagina, 'ID_Pagina', 'inicio', {
+      Titulo:p.inicio.titulo, Subtitulo:p.inicio.subtitulo
+    });
+    p.blocos.forEach(function(b, i) {
+      const dados = {ID_Pagina:'inicio', Ordem:i+1, Tipo_Bloco:b.tipo || 'TEXTO',
+        Titulo:b.titulo, Subtitulo:b.subtitulo, Texto:b.texto,
+        Botao_Texto:b.botaoTexto || '', Botao_Destino:b.botaoDestino || '',
+        Imagem_URL:b.imagemUrl || '', Acesso:'PUBLICO', Ativo:b.ativo ? 'SIM' : 'NAO'};
+      if (b.id) tzcCfg_atualizarLinhaV01_(blocos, 'ID_Bloco', b.id, dados);
+      else tzcCfg_adicionarBlocoV01_(blocos, dados);
+    });
+    p.redes.forEach(function(r, i) {
+      const dados = {Nome_Exibicao:r.nome, URL:r.url, Ativo:r.ativo ? 'Sim' : 'Não', Ordem:i+1};
+      if (r.id) tzcCfg_atualizarLinhaV01_(midias, 'ID_Midia', r.id, dados);
+      else tzcCfg_adicionarMidiaV01_(midias, r.nome, r.url, r.ativo, i+1);
+    });
+    CacheService.getScriptCache().remove('TZC_M01_INICIO_PUBLICO_V02');
+    SpreadsheetApp.flush();
+    return {ok:true, mensagem:'Configurações salvas.', atualizadoEm:new Date().toISOString()};
+  } catch (erro) {
+    console.error('TZC_CFG_salvar: ' + erro.message);
+    return {ok:false, mensagem:erro.message || 'Não foi possível salvar as configurações.'};
+  } finally {
+    try { trava.releaseLock(); } catch (ignorar) {}
+  }
+}
+
+/** Revalida usuário, status e perfil antes de qualquer leitura ou gravação. */
+function tzcCfg_autorizarV01_(token) {
+  const sessao = tzcM02_sessaoV03_(token);
+  if (!sessao) throw new Error('Sua sessão expirou. Entre novamente.');
+  const usuario = tzcM02_buscarUsuarioV03_(sessao.email);
+  if (!usuario || usuario.status !== 'ativo') throw new Error('Este acesso não está ativo.');
+  // No ambiente de teste, a sessão autenticada é suficiente. O perfil será
+  // aplicado ao desligar MODO_TESTE antes da implantação final.
+  return usuario;
+}
+
+/** Converte uma aba em objetos sem expor outros campos ao navegador. */
+function tzcCfg_lerObjetosV01_(aba) {
+  if (!aba || aba.getLastRow() < 2) return [];
+  const valores = aba.getRange(1,1,aba.getLastRow(),aba.getLastColumn()).getDisplayValues();
+  const cab = valores.shift().map(function(v) { return String(v || '').trim(); });
+  return valores.map(function(linha) {
+    const obj = {}; cab.forEach(function(k,i) { if (k) obj[k] = linha[i]; }); return obj;
+  });
+}
+
+/** Devolve somente campos necessários para editar um bloco da página inicial. */
+function tzcCfg_blocoPublicoV01_(r) {
+  return {id:String(r.ID_Bloco || ''), tipo:String(r.Tipo_Bloco || 'TEXTO'),
+    titulo:String(r.Titulo || ''), subtitulo:String(r.Subtitulo || ''), texto:String(r.Texto || ''),
+    botaoTexto:String(r.Botao_Texto || ''), botaoDestino:String(r.Botao_Destino || ''),
+    imagemUrl:String(r.Imagem_URL || ''), ativo:tzcCfg_simV01_(r.Ativo), ordem:Number(r.Ordem || 0)};
+}
+
+/** Confere campos, tamanhos e protocolos antes de tocar na planilha. */
+function tzcCfg_validarPayloadV01_(p) {
+  if (!p || !p.valores || !p.inicio || !Array.isArray(p.blocos) || !Array.isArray(p.redes))
+    throw new Error('Os dados do formulário estão incompletos.');
+  const permitidas = ['NOME_TERREIRO','SUBTITULO_TERREIRO','LOGO_URL','RODAPE_TEXTO',
+    'ENDERECO','WHATSAPP','GRUPO_WHATSAPP_URL','HORARIO_ATENDIMENTO','CONTRIBUICAO',
+    'WHATSAPP_URL','MAPA_URL','COR_BORDAO','COR_PRIMARIA','COR_DESTAQUE'];
+  Object.keys(p.valores).forEach(function(k) {
+    if (!permitidas.includes(k)) throw new Error('Campo de configuração não reconhecido.');
+    p.valores[k] = tzcCfg_textoV01_(p.valores[k], 500);
+  });
+  if (p.valores.LOGO_URL && !/^https:\/\//i.test(p.valores.LOGO_URL)) throw new Error('O endereço da logo precisa começar com https://.');
+  ['COR_BORDAO','COR_PRIMARIA','COR_DESTAQUE'].forEach(function(k) {
+    if (p.valores[k] && !/^#[0-9A-F]{6}$/i.test(p.valores[k])) throw new Error('Use uma cor no formato #RRGGBB.');
+  });
+  ['GRUPO_WHATSAPP_URL','WHATSAPP_URL','MAPA_URL'].forEach(function(k) {
+    if (p.valores[k] && !/^https:\/\//i.test(p.valores[k])) throw new Error('Os links precisam começar com https://.');
+  });
+  p.inicio.titulo = tzcCfg_textoV01_(p.inicio.titulo, 180);
+  p.inicio.subtitulo = tzcCfg_textoV01_(p.inicio.subtitulo, 500);
+  if (p.blocos.length > TZC_CFG_V01.MAX_BLOCOS_HOME) throw new Error('A página inicial permite até 12 blocos nesta versão.');
+  p.blocos.forEach(function(b) {
+    if (!b || (b.id && !/^[A-Za-z0-9_-]{1,80}$/.test(String(b.id)))) throw new Error('Identificador de bloco inválido.');
+    if (!b.id && String(b.tipo || 'TEXTO') !== 'TEXTO') throw new Error('Novos blocos são criados como texto.');
+    b.titulo = tzcCfg_textoV01_(b.titulo, 180); b.subtitulo = tzcCfg_textoV01_(b.subtitulo, 500);
+    b.texto = tzcCfg_textoV01_(b.texto, TZC_CFG_V01.MAX_TEXTO);
+    b.botaoTexto = tzcCfg_textoV01_(b.botaoTexto, 100); b.botaoDestino = tzcCfg_textoV01_(b.botaoDestino, 80);
+    b.imagemUrl = tzcCfg_textoV01_(b.imagemUrl, 1000);
+    if (b.imagemUrl && !/^https:\/\//i.test(b.imagemUrl)) throw new Error('O endereço da imagem precisa começar com https://.');
+  });
+  if (p.redes.length > TZC_CFG_V01.MAX_MIDIAS) throw new Error('Limite de redes e canais atingido.');
+  p.redes.forEach(function(r) {
+    if (r.id && !/^[A-Za-z0-9_-]{1,80}$/.test(String(r.id))) throw new Error('Identificador de mídia inválido.');
+    r.nome = tzcCfg_textoV01_(r.nome, 80); r.url = tzcCfg_textoV01_(r.url, 1000);
+    if (r.url && !/^https:\/\//i.test(r.url)) throw new Error('O endereço de cada canal precisa começar com https://.');
+  });
+}
+
+/** Atualiza um item pelo ID sem mudar colunas desconhecidas da tabela. */
+function tzcCfg_atualizarLinhaV01_(aba, chave, id, campos) {
+  const mapa = tzcCfg_indicesV01_(aba), col = mapa.indices[chave];
+  if (col === undefined) throw new Error('A coluna ' + chave + ' não existe em ' + aba.getName() + '.');
+  const linha = tzcCfg_encontrarLinhaV01_(aba, col+1, id);
+  if (!linha) throw new Error('Não encontrei o item ' + id + ' em ' + aba.getName() + '.');
+  const atual = aba.getRange(linha,1,1,mapa.cab.length).getValues()[0];
+  Object.keys(campos).forEach(function(k) { if (mapa.indices[k] !== undefined) atual[mapa.indices[k]] = campos[k]; });
+  aba.getRange(linha,1,1,mapa.cab.length).setValues([atual]);
+}
+
+/** Cria uma seção de texto nova, sem apagar ou sobrescrever blocos existentes. */
+function tzcCfg_adicionarBlocoV01_(aba, campos) {
+  const mapa = tzcCfg_indicesV01_(aba), linha = new Array(mapa.cab.length).fill('');
+  const id = 'home-' + Utilities.getUuid().replace(/-/g,'').slice(0,12);
+  const dados = Object.assign({ID_Bloco:id, Tipo_Bloco:'TEXTO', Fonte_Dados:'MANUAL',
+    Tipo_Conteudo:'', Acesso:'PUBLICO', Exibir_Se_Vazio:'NAO', Ajuda_Preenchimento:'Bloco de texto configurado no site.'}, campos);
+  Object.keys(dados).forEach(function(k) { if (mapa.indices[k] !== undefined) linha[mapa.indices[k]] = dados[k]; });
+  aba.appendRow(linha);
+}
+
+/** Adiciona rede/canal mantendo o histórico; ocultar usa Ativo=Não. */
+function tzcCfg_adicionarMidiaV01_(aba, nome, url, ativo, ordem) {
+  const mapa = tzcCfg_indicesV01_(aba), linha = new Array(mapa.cab.length).fill('');
+  const dados = {ID_Midia:'MIDIA-' + Utilities.getUuid().replace(/-/g,'').slice(0,12),
+    Rede:nome, Nome_Exibicao:nome, URL:url, Ativo:ativo ? 'Sim' : 'Não', Ordem:ordem,
+    Observacoes:'', Atualizado_Em:new Date()};
+  Object.keys(dados).forEach(function(k) { if (mapa.indices[k] !== undefined) linha[mapa.indices[k]] = dados[k]; });
+  aba.appendRow(linha);
+}
+
+/** Atualiza ou inclui uma chave sem duplicar configurações existentes. */
+function tzcCfg_gravarConfigV01_(aba, chave, valor) {
+  const mapa = tzcCfg_indicesV01_(aba), idx = mapa.indices.Chave;
+  if (idx === undefined || mapa.indices.Valor === undefined) throw new Error('Cabeçalho de Configuracoes_Site inválido.');
+  const linha = tzcCfg_encontrarLinhaV01_(aba, idx+1, chave);
+  if (linha) { aba.getRange(linha, mapa.indices.Valor+1).setValue(valor); return; }
+  const nova = new Array(mapa.cab.length).fill('');
+  nova[idx] = chave; nova[mapa.indices.Valor] = valor;
+  if (mapa.indices.Tipo !== undefined) nova[mapa.indices.Tipo] = chave.indexOf('_URL') >= 0 ? 'url' : 'texto';
+  if (mapa.indices.Grupo !== undefined) nova[mapa.indices.Grupo] = 'Dados básicos';
+  if (mapa.indices.Ativo !== undefined) nova[mapa.indices.Ativo] = 'Sim';
+  if (mapa.indices.Descricao !== undefined) nova[mapa.indices.Descricao] = 'Editável nas configurações do site.';
+  aba.appendRow(nova);
+}
+
+/** Lê os cabeçalhos uma vez por operação e mapeia seus índices. */
+function tzcCfg_indicesV01_(aba) {
+  if (!aba || aba.getLastRow() < 1) throw new Error('A tabela necessária não foi encontrada.');
+  const cab = aba.getRange(1,1,1,aba.getLastColumn()).getDisplayValues()[0].map(function(v){return String(v||'').trim();});
+  const indices = {}; cab.forEach(function(k,i){if(k)indices[k]=i;}); return {cab:cab,indices:indices};
+}
+
+/** Acha exatamente uma linha pela chave, sem usar filtros da interface. */
+function tzcCfg_encontrarLinhaV01_(aba, coluna, valor) {
+  if (aba.getLastRow() < 2) return 0;
+  const valores = aba.getRange(2,coluna,aba.getLastRow()-1,1).getDisplayValues();
+  for (let i=0;i<valores.length;i++) if (String(valores[i][0]||'') === String(valor)) return i+2;
+  return 0;
+}
+
+/** Normaliza texto e impede campos excessivamente longos. */
+function tzcCfg_textoV01_(valor, max) {
+  const s = String(valor == null ? '' : valor).trim();
+  if (s.length > max) throw new Error('Um dos campos ultrapassou o limite permitido.');
+  return s;
+}
+
+/** Aceita os marcadores usados na planilha de teste. */
+function tzcCfg_simV01_(valor) {
+  return valor === true || ['sim','ativo','true','1'].includes(String(valor || '').trim().toLowerCase());
+}

@@ -40,6 +40,7 @@ function TZC_M02_solicitarCodigo(email) {
   const cache = CacheService.getScriptCache();
   const chave = tzcM02_hashV03_('email:' + endereco);
   const trava = LockService.getScriptLock();
+  let liberado = false;
   try {
     trava.waitLock(5000);
     const agora = Date.now();
@@ -52,20 +53,26 @@ function TZC_M02_solicitarCodigo(email) {
     }
     if (Number(limite.qtd || 0) >= TZC_M02_CFG_V03.MAX_CODIGOS_HORA) return resposta;
 
-    const usuario = tzcM02_buscarUsuarioV03_(endereco);
     // Atualiza o limite também para e-mails desconhecidos: reduz enumeração e abuso.
     limite.qtd = Number(limite.qtd || 0) + 1;
     limite.ultimo = agora;
     cache.put(rateKey, JSON.stringify(limite), 3600);
+    liberado = true;
+  } catch (erro) {
+    // Detalhes ficam no log do proprietário; não são devolvidos ao visitante.
+    console.error('TZC_M02_solicitarCodigo: ' + erro.message);
+  } finally {
+    try { trava.releaseLock(); } catch (ignorar) {}
+  }
+  if (!liberado) return resposta;
+  // A trava já foi liberada antes da consulta e do envio do e-mail.
+  try {
+    const usuario = tzcM02_buscarUsuarioV03_(endereco);
     if (!usuario) return resposta;
-
     const codigo = Utilities.getUuid().replace(/-/g, '').slice(0, 6).toUpperCase();
     cache.put('TZC_M02_OTP_' + chave, JSON.stringify({
-      hash: tzcM02_hashV03_('otp:' + codigo),
-      tentativas: 0,
-      criado: agora
+      hash: tzcM02_hashV03_('otp:' + codigo), tentativas: 0, criado: Date.now()
     }), TZC_M02_CFG_V03.OTP_TTL_SEG);
-
     MailApp.sendEmail({
       to: endereco,
       subject: 'Seu código de acesso — Tenda de Zé Cigano',
@@ -74,10 +81,7 @@ function TZC_M02_solicitarCodigo(email) {
       name: 'Tenda de Zé Cigano'
     });
   } catch (erro) {
-    // Detalhes ficam no log do proprietário; não são devolvidos ao visitante.
     console.error('TZC_M02_solicitarCodigo: ' + erro.message);
-  } finally {
-    try { trava.releaseLock(); } catch (ignorar) {}
   }
   return resposta;
 }

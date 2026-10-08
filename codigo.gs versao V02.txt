@@ -1,0 +1,235 @@
+/* TZC — CÓDIGO.GS V02 — MÓDULO 01: INÍCIO PÚBLICO
+ * Status: layout V13 conectado; pronto para instalar e validar no projeto de teste.
+ * Layout: site versão V13 aprovada, com navegação, conteúdo e contatos configuráveis.
+ * Base: planilha "Base de Dados" na pasta Banco de dados.
+ *
+ * Este módulo publica a página inicial e lê apenas campos públicos.
+ * Publicacoes é lida até a coluna O para ignorar a coluna P, que contém
+ * imagens em base64 e aumentaria o tempo de leitura.
+ * CPF, RG, saúde, auditoria e dados de membros não são retornados. A chave Pix
+ * só é enviada à página pública para a ação de cópia já prevista no layout V13.
+ *
+ * Instalação: crie no Apps Script o arquivo HTML "Index" com o conteúdo
+ * de "site versão V13.txt"; cole este arquivo em Código.gs.
+ * Em seguida, publique como Web App de teste.
+ */
+
+const TZC_M01_V01 = Object.freeze({
+  PLANILHA: '1WGlSF_Z9zxQ1zO52wWmiLOlkegJEczsgTJEtj8GvlhM',
+  CACHE: 'TZC_M01_INICIO_PUBLICO_V02',
+  CACHE_SEGUNDOS: 120
+});
+
+/** Abre a interface aprovada quando a URL do Web App é acessada. */
+function doGet(e) {
+  const params = e && e.parameter ? e.parameter : {};
+  if (params.api === 'home') {
+    const callback = String(params.callback || '');
+    if (!/^[A-Za-z_$][A-Za-z0-9_$]{0,80}$/.test(callback)) {
+      return ContentService.createTextOutput('/* callback inválido */')
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+    const json = JSON.stringify(TZC_M01_V06_obterInicioPublico())
+      .replace(/</g, '\\u003c');
+    return ContentService.createTextOutput(callback + '(' + json + ');')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return HtmlService.createHtmlOutputFromFile('Index')
+    .setTitle('Tenda de Zé Cigano');
+}
+
+/**
+ * Endpoint público chamado pela interface V16.
+ * Devolve apenas páginas, contatos, redes, agenda e publicações públicas.
+ */
+function TZC_M01_V06_obterInicioPublico() {
+  const cache = CacheService.getScriptCache();
+  const guardado = cache.get(TZC_M01_V01.CACHE);
+  if (guardado) {
+    try { return JSON.parse(guardado); } catch (ignorar) {}
+  }
+
+  try {
+    const ss = SpreadsheetApp.openById(TZC_M01_V01.PLANILHA);
+    const cfg = tzcM01_config_(tzcM01_ler_(ss, 'Configuracoes_Site', 7));
+    const geral = tzcM01_geralPublico_(ss);
+    const blocos = tzcM01_ler_(ss, 'Blocos_Pagina', 15)
+      .filter(r => tzcM01_sim_(r.Ativo) && tzcM01_publico_(r.Acesso))
+      .sort((a, b) => Number(a.Ordem || 0) - Number(b.Ordem || 0));
+    const paginas = tzcM01_ler_(ss, 'Paginas_Site', 9)
+      .filter(r => tzcM01_sim_(r.Ativo) && tzcM01_publico_(r.Acesso))
+      .sort((a, b) => Number(a.Ordem || 0) - Number(b.Ordem || 0))
+      .map(r => ({
+        id: String(r.ID_Pagina || ''),
+        nomeMenu: String(r.Nome_Menu || ''),
+        titulo: String(r.Titulo || ''),
+        subtitulo: String(r.Subtitulo || ''),
+        icone: String(r.Icone || 'book-open'),
+        ordem: Number(r.Ordem || 0),
+        exibirMenu: tzcM01_sim_(r.Exibir_Menu),
+        blocos: blocos.filter(b => String(b.ID_Pagina || '') === String(r.ID_Pagina || ''))
+          .map(b => ({
+            tipo: String(b.Tipo_Bloco || ''),
+            titulo: String(b.Titulo || ''),
+            subtitulo: String(b.Subtitulo || ''),
+            texto: String(b.Texto || ''),
+            fonteDados: String(b.Fonte_Dados || ''),
+            tipoConteudo: String(b.Tipo_Conteudo || ''),
+            imagemUrl: tzcM01_https_(b.Imagem_URL),
+            botaoTexto: String(b.Botao_Texto || ''),
+            botaoDestino: String(b.Botao_Destino || ''),
+            exibirSeVazio: tzcM01_sim_(b.Exibir_Se_Vazio)
+          }))
+      }));
+
+    const redes = tzcM01_ler_(ss, 'Midias_Sociais', 6)
+      .filter(r => tzcM01_sim_(r.Ativo) && tzcM01_https_(r.URL))
+      .sort((a, b) => Number(a.Ordem || 0) - Number(b.Ordem || 0))
+      .map(r => ({nome: String(r.Nome_Exibicao || r.Rede || ''), url: tzcM01_https_(r.URL)}));
+
+    const hoje = Utilities.formatDate(new Date(), ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd');
+    const eventos = tzcM01_ler_(ss, 'Eventos', 18)
+      .filter(r => {
+        const data = tzcM01_data_(r.Data_Inicio, ss);
+        return tzcM01_sim_(r.Status) && tzcM01_publico_(r.Acesso_Publico) &&
+          data && data.slice(0, 10) >= hoje;
+      })
+      .sort((a, b) => tzcM01_data_(a.Data_Inicio, ss)
+        .localeCompare(tzcM01_data_(b.Data_Inicio, ss)))
+      .slice(0, 4)
+      .map(r => ({
+        titulo: String(r.Titulo || ''), tipo: String(r.Tipo || ''),
+        data: tzcM01_data_(r.Data_Inicio, ss), local: String(r.Local || ''),
+        descricao: String(r.Descricao || '')
+      }));
+
+    // Não lê a coluna P de Publicacoes, que guarda imagens em base64.
+    const publicacoes = tzcM01_ler_(ss, 'Publicacoes', 15)
+      .filter(r => String(r.Status || '').toLowerCase() === 'publicado' &&
+        tzcM01_publico_(r.Acesso_Publico))
+      .sort((a, b) => String(b.Data_Publicacao || '').localeCompare(String(a.Data_Publicacao || '')))
+      .slice(0, 6)
+      .map(r => {
+        const conteudo = String(r.Conteudo || '');
+        const resumo = String(r.Resumo || '') || conteudo.slice(0, 220);
+        return {
+          tipo: String(r.Tipo || 'Conteúdo'), titulo: String(r.Titulo || ''),
+          resumo: resumo, conteudo: conteudo,
+          data: tzcM01_data_(r.Data_Publicacao, ss),
+          destaque: tzcM01_sim_(r.Destaque)
+        };
+      });
+
+    const resultado = {
+      ok: true,
+      identidade: {
+        nome: cfg.NOME_TERREIRO || geral.Nome_Terreiro || 'Tenda de Zé Cigano',
+        subtitulo: cfg.SUBTITULO_TERREIRO || geral.Subtitulo || 'Terreiro de Umbanda',
+        logoUrl: cfg.LOGO_URL || geral.Logo_URL || '',
+        apresentacao: geral.Quem_Somos || ''
+      },
+      contatos: {
+        endereco: cfg.ENDERECO || geral.Endereco || '',
+        telefoneWhatsapp: cfg.WHATSAPP || geral.Telefone_Whatsapp || '',
+        whatsappUrl: tzcM01_https_(cfg.WHATSAPP_URL || ''),
+        mapaUrl: tzcM01_https_(cfg.MAPA_URL || ''),
+        grupoWhatsapp: cfg.GRUPO_WHATSAPP_URL || geral.Grupo_Zap || '',
+        horario: cfg.HORARIO_ATENDIMENTO || geral.Horario_Giras || '',
+        contribuicao: cfg.CONTRIBUICAO || geral.Valor || '',
+        pixKey: geral.PIX || ''
+      },
+      cores: {
+        vinho: cfg.COR_BORDAO || '',
+        vinhoEscuro: cfg.COR_BORDAO_ESCURA || '',
+        dourado: cfg.COR_PRIMARIA || '',
+        destaque: cfg.COR_DESTAQUE || ''
+      },
+      rodape: cfg.RODAPE_TEXTO || '',
+      paginas: paginas, redes: redes, proximosEventos: eventos,
+      publicacoesRecentes: publicacoes
+    };
+    cache.put(TZC_M01_V01.CACHE, JSON.stringify(resultado), TZC_M01_V01.CACHE_SEGUNDOS);
+    return resultado;
+  } catch (erro) {
+    // O visitante recebe aviso simples; detalhes internos não são expostos.
+    return {ok: false, mensagem: 'Não foi possível carregar as informações agora.'};
+  }
+}
+
+/** Lê somente até a coluna usada pelo módulo e associa valores aos cabeçalhos. */
+function tzcM01_ler_(ss, nome, maxColunas) {
+  const aba = ss.getSheetByName(nome);
+  if (!aba || aba.getLastRow() < 2) return [];
+  const colunas = Math.min(aba.getLastColumn(), maxColunas);
+  if (!colunas) return [];
+  const linhas = aba.getRange(1, 1, aba.getLastRow(), colunas).getValues();
+  const cab = linhas.shift().map(v => String(v || '').trim());
+  return linhas.map(linha => {
+    const item = {};
+    cab.forEach((chave, i) => { if (chave) item[chave] = linha[i]; });
+    return item;
+  });
+}
+
+/** Busca no Geral somente campos públicos e pula a coluna do Pix. */
+function tzcM01_geralPublico_(ss) {
+  const aba = ss.getSheetByName('Geral');
+  if (!aba || aba.getLastRow() < 2) return {};
+  const esquerda = aba.getRange('A1:H2').getValues();
+  const pix = aba.getRange('I1:I2').getValues();
+  const direita = aba.getRange('J1:L2').getValues();
+  const cab = esquerda[0].concat(pix[0], direita[0]);
+  const val = esquerda[1].concat(pix[1], direita[1]);
+  const permitidos = new Set([
+    'Quem_Somos','Endereco','Telefone_Whatsapp','Grupo_Zap','Horario_Giras',
+    'Valor','PIX','Nome_Terreiro','Subtitulo','Logo_URL'
+  ]);
+  const item = {};
+  cab.forEach((c, i) => {
+    const chave = String(c || '').trim();
+    if (permitidos.has(chave)) item[chave] = val[i];
+  });
+  return item;
+}
+
+/** Transforma tabela Chave/Valor em configuração para o site. */
+function tzcM01_config_(linhas) {
+  const mapa = {};
+  linhas.forEach(r => {
+    if (r.Chave && tzcM01_sim_(r.Ativo)) mapa[String(r.Chave).trim()] = r.Valor;
+  });
+  return mapa;
+}
+
+/** Lê Sim/Ativo/Publicado como verdadeiro. */
+function tzcM01_sim_(valor) {
+  return valor === true || ['sim','ativo','publicado','true','1']
+    .includes(String(valor == null ? '' : valor).trim().toLowerCase());
+}
+
+/** Reconhece somente níveis explicitamente públicos. */
+function tzcM01_publico_(valor) {
+  return ['sim','publico','público','true','1','aberto']
+    .includes(String(valor == null ? '' : valor).trim().toLowerCase());
+}
+
+/** Aceita somente URLs HTTPS vindas da planilha. */
+function tzcM01_https_(valor) {
+  const url = String(valor || '').trim();
+  return /^https:\/\//i.test(url) ? url : '';
+}
+
+/** Converte datas da planilha para o formato usado pela interface. */
+function tzcM01_data_(valor, ss) {
+  if (!valor) return '';
+  if (Object.prototype.toString.call(valor) === '[object Date]' && !isNaN(valor.getTime())) {
+    return Utilities.formatDate(valor, ss.getSpreadsheetTimeZone(), "yyyy-MM-dd'T'HH:mm:ss");
+  }
+  const texto = String(valor).trim();
+  const iso = texto.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (iso) return iso[1] + '-' + ('0' + iso[2]).slice(-2) + '-' + ('0' + iso[3]).slice(-2);
+  const br = texto.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (br) return br[3] + '-' + ('0' + br[2]).slice(-2) + '-' + ('0' + br[1]).slice(-2);
+  return '';
+}
+

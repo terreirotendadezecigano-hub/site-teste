@@ -1,5 +1,5 @@
 /* TZC — CÓDIGO.GS V02 — MÓDULO 01: INÍCIO PÚBLICO
- * Status: layout V13 conectado; pronto para instalar e validar no projeto de teste.
+ * Status: instalado e publicado na implantação de teste V02; validar no celular e revisar dados fictícios.
  * Layout: site versão V13 aprovada, com navegação, conteúdo e contatos configuráveis.
  * Base: planilha "Base de Dados" na pasta Banco de dados.
  *
@@ -9,12 +9,11 @@
  * CPF, RG, saúde, auditoria e dados de membros não são retornados. A chave Pix
  * só é enviada à página pública para a ação de cópia já prevista no layout V13.
  *
- * Instalação: crie no Apps Script o arquivo HTML "Index" com o conteúdo
- * de "site versão V13.txt"; cole este arquivo em Código.gs.
- * Em seguida, publique como Web App de teste.
+ * Instalação: cole este arquivo em Código.gs e crie o arquivo HTML "Index"
+ * usando "site versão V13.txt". Depois publique uma nova versão do Web App.
  */
 
-const TZC_M01_V01 = Object.freeze({
+const TZC_M01_V02 = Object.freeze({
   PLANILHA: '1WGlSF_Z9zxQ1zO52wWmiLOlkegJEczsgTJEtj8GvlhM',
   CACHE: 'TZC_M01_INICIO_PUBLICO_V02',
   CACHE_SEGUNDOS: 120
@@ -39,18 +38,18 @@ function doGet(e) {
 }
 
 /**
- * Endpoint público chamado pela interface V16.
+ * Endpoint público chamado pela interface V13.
  * Devolve apenas páginas, contatos, redes, agenda e publicações públicas.
  */
 function TZC_M01_V06_obterInicioPublico() {
   const cache = CacheService.getScriptCache();
-  const guardado = cache.get(TZC_M01_V01.CACHE);
+  const guardado = cache.get(TZC_M01_V02.CACHE);
   if (guardado) {
     try { return JSON.parse(guardado); } catch (ignorar) {}
   }
 
   try {
-    const ss = SpreadsheetApp.openById(TZC_M01_V01.PLANILHA);
+    const ss = SpreadsheetApp.openById(TZC_M01_V02.PLANILHA);
     const cfg = tzcM01_config_(tzcM01_ler_(ss, 'Configuracoes_Site', 7));
     const geral = tzcM01_geralPublico_(ss);
     const blocos = tzcM01_ler_(ss, 'Blocos_Pagina', 15)
@@ -148,7 +147,7 @@ function TZC_M01_V06_obterInicioPublico() {
       paginas: paginas, redes: redes, proximosEventos: eventos,
       publicacoesRecentes: publicacoes
     };
-    cache.put(TZC_M01_V01.CACHE, JSON.stringify(resultado), TZC_M01_V01.CACHE_SEGUNDOS);
+    cache.put(TZC_M01_V02.CACHE, JSON.stringify(resultado), TZC_M01_V02.CACHE_SEGUNDOS);
     return resultado;
   } catch (erro) {
     // O visitante recebe aviso simples; detalhes internos não são expostos.

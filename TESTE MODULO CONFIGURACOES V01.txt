@@ -1,0 +1,34 @@
+TENDA DE ZÉ CIGANO — MÓDULO CONFIGURAÇÕES V01
+
+ESCOPO
+Esta versão acrescenta uma tela para dirigente e administrador editarem os dados básicos, textos da página inicial, blocos, contatos e redes sociais.
+O site final Tendadezecigano não é alterado.
+
+ARQUIVOS
+1. codigo.gs versao V03 M02 Acesso.txt — arquivo adicional TZC_Modulo02_V03.gs.
+2. codigo.gs versao V04 M02 Configuracoes.txt — arquivo adicional TZC_Modulo02_Config_V01.gs.
+3. Index.html versao V02 ponte Configuracoes.txt — substitui o conteúdo do arquivo Index.html do Apps Script de teste.
+4. site versão V15 Configurações.txt — publicação em index.html do repositório site-teste.
+
+O QUE A TELA PERMITE
+- Alterar nome, subtítulo, logo, rodapé e contatos.
+- Alterar título e subtítulo da página inicial.
+- Editar, reordenar, ocultar e reativar os blocos existentes da página inicial.
+- Criar novas seções de texto.
+- Editar, ocultar, reativar e adicionar redes e canais.
+- Gravar alterações nas tabelas Configuracoes_Site, Paginas_Site, Blocos_Pagina e Midias_Sociais, sem apagar registros.
+- O servidor exige sessão ligada a usuário ativo em cada leitura e gravação. Durante o teste, qualquer perfil ativo recebe acesso de configuração. Essa abertura será desligada antes da versão final.
+
+TESTE EXATO DEPOIS DA PUBLICAÇÃO
+1. Abra o App da Web de TESTE no computador ou celular e pressione Membros.
+2. Use o e-mail que já está cadastrado e ativo. Quando o Google pedir nova autorização para envio de códigos, confira que ela se refere ao envio de e-mail pelo Apps Script e confirme dentro da conta Google. Não envie código para ninguém.
+3. Digite o código recebido. O teste de senha não é usado.
+4. Abra o Menu e confirme que Configurações aparece para dirigente/administrador.
+5. Altere o subtítulo da página inicial para uma frase temporária de teste e salve.
+6. Volte ao início e atualize a página. Confira que a frase mudou.
+7. Abra Configurações novamente, restaure o texto original e salve.
+8. Edite o título de um bloco, desmarque Mostrar na página inicial, salve e confira que ele some da página pública. Reative-o em seguida.
+9. Confira o site no celular: rolagem, menu, campos, botão Salvar e voltar ao início.
+
+LIMITE DESTA ENTREGA
+A paleta automática extraída da logo não está incluída; esta versão permite ajustar vinho e dourado manualmente. O login por código depende da autorização de envio de e-mail no Apps Script. A validação por telefone ainda será feita depois; nenhum serviço de SMS está conectado. Nenhum e-mail foi enviado durante a preparação.

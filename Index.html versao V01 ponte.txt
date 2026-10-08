@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tenda de Zé Cigano</title>
+  <style>
+    html,body,iframe{width:100%;height:100%;margin:0;border:0}
+    body{overflow:hidden}
+    iframe{display:block}
+  </style>
+</head>
+<body>
+  <!-- O site visual continua no GitHub Pages de teste. -->
+  <iframe id="tzcSite" src="https://terreirotendadezecigano-hub.github.io/site-teste/" title="Tenda de Zé Cigano"></iframe>
+  <script>
+  (function(){
+    'use strict';
+    var origemPermitida='https://terreirotendadezecigano-hub.github.io';
+    var site=document.getElementById('tzcSite');
+    var rotas={
+      solicitarCodigo:{funcao:'TZC_M02_solicitarCodigo',tamanhos:[254]},
+      validarCodigo:{funcao:'TZC_M02_validarCodigo',tamanhos:[254,6]},
+      validarSessao:{funcao:'TZC_M02_validarSessao',tamanhos:[100]},
+      encerrarSessao:{funcao:'TZC_M02_encerrarSessao',tamanhos:[100]}
+    };
+    function responder(id,resultado){
+      if(site&&site.contentWindow)site.contentWindow.postMessage({tipo:'TZC_M02_RESULT',id:id,resultado:resultado},origemPermitida);
+    }
+    window.addEventListener('message',function(evento){
+      if(evento.origin!==origemPermitida||!site||evento.source!==site.contentWindow)return;
+      var msg=evento.data;
+      if(!msg||msg.tipo!=='TZC_M02_RPC'||typeof msg.id!=='string'||
+          !/^tzc_m02_[0-9]+_[0-9]+$/.test(msg.id))return;
+      var rota=rotas[msg.acao],args=msg.args;
+      if(!rota||!Array.isArray(args)||args.length!==rota.tamanhos.length||
+          args.some(function(v,i){return typeof v!=='string'||v.length>rota.tamanhos[i]})){
+        responder(msg.id,{ok:false,mensagem:'Solicitação inválida.'});
+        return;
+      }
+      var runner=google.script.run
+        .withSuccessHandler(function(resultado){responder(msg.id,resultado)})
+        .withFailureHandler(function(){responder(msg.id,{ok:false,mensagem:'Não foi possível concluir o acesso agora.'})});
+      runner[rota.funcao].apply(runner,args);
+    });
+  })();
+  </script>
+</body>
+</html>

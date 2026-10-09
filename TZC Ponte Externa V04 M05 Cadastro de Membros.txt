@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><base target="_top"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ponte segura — TZC</title></head>
+<body>
+<script>
+/* TZC — PONTE EXTERNA V04
+ * Página mínima carregada dentro do HTML Service, sem duplicar o site.
+ * Só aceita chamadas provenientes do site-teste GitHub Pages e só executa
+ * os nomes de função desta lista fechada. Não envia tokens pela URL.
+ */
+(function(){
+  'use strict';
+  var origem='https://terreirotendadezecigano-hub.github.io';
+  var rotas={
+    verificarEmail:{funcao:'TZC_M02_verificarEmailV06',limites:[254]},
+    solicitarCodigo:{funcao:'TZC_M02_solicitarCodigoV06',limites:[254]},
+    validarCodigo:{funcao:'TZC_M02_validarCodigo',limites:[254,6]},
+    validarSessao:{funcao:'TZC_M02_validarSessao',limites:[100]},
+    encerrarSessao:{funcao:'TZC_M02_encerrarSessao',limites:[100]},
+    podeConfig:{funcao:'TZC_M02_pode',limites:[100,40,20]},
+    obterConfig:{funcao:'TZC_CFG_obter',limites:[100]},
+    salvarConfig:{funcao:'TZC_CFG_salvar',limites:[100,20000]},
+    listarAgendaPublica:{funcao:'TZC_M04_listarAgendaPublica',limites:[]},
+    responderEvento:{funcao:'TZC_M04_responderEvento',limites:[4000]},
+    obterMinhaArea:{funcao:'TZC_M04_obterMinhaArea',limites:[100]},
+    registrarVisitantesPresentes:{funcao:'TZC_M04_registrarVisitantesPresentes',limites:[100,100,5,300]},
+    registrarCheckin:{funcao:'TZC_M04_registrarCheckin',limites:[100,100,30]},
+    obterCheckinsPendentes:{funcao:'TZC_M04_obterCheckinsPendentes',limites:[100]},
+    listarEventosGestao:{funcao:'TZC_M04_listarEventosGestao',limites:[100]},
+    listarPendencias:{funcao:'TZC_M04_listarPendencias',limites:[100,100]},
+    listarEventosRelatorio:{funcao:'TZC_M04_listarEventosRelatorio',limites:[100]},
+    gerarPrevisaoEvento:{funcao:'TZC_M04_gerarPrevisaoEvento',limites:[100,100]},
+    confirmarCheckin:{funcao:'TZC_M04_confirmarCheckin',limites:[100,100,30]},
+    listarMembrosAtivos:{funcao:'TZC_M04_listarMembrosAtivos',limites:[100]},
+    definirResponsavel:{funcao:'TZC_M04_definirResponsavel',limites:[100,100,100,10]},
+    listarMembros:{funcao:'TZC_M05_listarMembros',limites:[100]},
+    salvarMembro:{funcao:'TZC_M05_salvarMembro',limites:[100,20000]},
+    alterarStatusMembro:{funcao:'TZC_M05_alterarStatus',limites:[100,100,20]}
+  };
+  function responder(id,resultado){window.top.postMessage({tipo:'TZC_M02_RESULT',id:id,resultado:resultado},origem)}
+  window.addEventListener('message',function(evento){
+    if(evento.origin!==origem||evento.source!==window.top)return;
+    var msg=evento.data;if(!msg||msg.tipo!=='TZC_M02_RPC'||typeof msg.id!=='string'||!/^tzc_m02_[0-9]+_[0-9]+$/.test(msg.id))return;
+    var rota=rotas[msg.acao],args=msg.args;
+    if(!rota||!Array.isArray(args)||args.length!==rota.limites.length||args.some(function(v,i){return typeof v!=='string'||v.length>rota.limites[i]})){
+      responder(msg.id,{ok:false,mensagem:'Solicitação inválida.'});return;
+    }
+    var runner=google.script.run.withSuccessHandler(function(r){responder(msg.id,r)}).withFailureHandler(function(){responder(msg.id,{ok:false,mensagem:'Não foi possível concluir a solicitação agora.'})});
+    runner[rota.funcao].apply(runner,args);
+  });
+  window.top.postMessage({tipo:'TZC_PONTE_PRONTA'},origem);
+})();
+</script>
+</body>
+</html>

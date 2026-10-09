@@ -1,0 +1,548 @@
+/* TZC — CÓDIGO.GS V04 — MÓDULO 04: AGENDA, RESPOSTAS, PRESENÇAS E MINHA ÁREA
+ * Ambiente: projeto isolado de teste + planilha fictícia "Base de Dados".
+ *
+ * Separação dos registros:
+ * 1. Respostas_Eventos guarda previsões de membros e visitantes (Vou, Não vou,
+ *    Talvez e quantidade do grupo). Visitantes nunca entram em Presencas.
+ * 2. Presencas guarda somente check-in de filho de santo, ainda pendente.
+ * 3. Um dirigente/administrador pode autorizar um membro específico por evento
+ *    na aba Responsaveis_Presenca. A autorização pode ser revogada.
+ * 4. Só dirigente/administrador ou delegado ativo pode validar presença real.
+ *    Cada validação/correção grava quem fez e registra a mudança em Auditoria.
+ * 5. O e-mail de lembrete está implementado, mas NÃO será ativado nem enviado
+ *    até o teste ser aprovado. O acionador deve ser instalado manualmente depois.
+ *
+ * Dependências já existentes no M02 V04: tzcM02_sessaoV03_(),
+ * tzcM02_buscarUsuarioV03_(), tzcM02_emailV03_().
+ * Status: proposta V04 pronta para revisão e instalação no Apps Script de TESTE.
+ * Falta instalar, implantar e testar esta versão de ponta a ponta.
+ * Nenhuma resposta ou presença fictícia foi criada nesta etapa.
+ * V04 acrescenta Minha Área (eventos, presenças e mensalidades próprias), contato WhatsApp
+ * de visitante e contagem real de visitantes em aba separada; sem envio automático de WhatsApp.
+ */
+
+const TZC_M04_CFG_V01 = Object.freeze({
+  PLANILHA_ID: '1WGlSF_Z9zxQ1zO52wWmiLOlkegJEczsgTJEtj8GvlhM',
+  ABA_EVENTOS: 'Eventos',
+  ABA_PRESENCAS: 'Presencas',
+  ABA_RESPOSTAS: 'Respostas_Eventos',
+  ABA_RESPONSAVEIS: 'Responsaveis_Presenca',
+  ABA_USUARIOS: 'Usuarios_Acesso',
+  ABA_AUDITORIA: 'Auditoria',
+  ABA_MENSALIDADES: 'Mensalidades',
+  ABA_VISITAS: 'Visitas_Eventos',
+  FUSO: 'America/Sao_Paulo',
+  MAX_PESSOAS: 20
+});
+
+const TZC_M04_CAB_RESPOSTAS_V01 = [
+  'ID_Resposta','ID_Evento','Tipo_Participante','ID_Usuario','Nome_Visitante',
+  'Email_Visitante','Resposta','Qtd_Participantes','Observacoes','Data_Resposta',
+  'Atualizado_Em','Status','Lembrete_Presenca_Enviado_Em','Lembrete_Email_Visitante_Aceito','Lembrete_Evento_Enviado_Em','WhatsApp_Visitante','Aceita_Contato_Evento'
+];
+
+const TZC_M04_CAB_VISITAS_V04 = [
+  'ID_Visita','ID_Evento','ID_Resposta','Quantidade_Presente','Registrado_Por','Registrado_Em','Observacoes','Status'
+];
+
+const TZC_M04_CAB_RESPONSAVEIS_V01 = [
+  'ID_Delegacao','ID_Evento','ID_Usuario_Autorizado','Autorizado_Por',
+  'Ativo','Criado_Em','Revogado_Em'
+];
+const TZC_M04_CAB_PRESENCAS_V01 = [
+  'ID_Presenca','ID_Evento','ID_Usuario','Data_Resposta','Resposta','Presenca',
+  'Observacoes','Criado_Em','Atualizado_Em','Nome_Visitante','WhatsApp_Visitante',
+  'Email_Visitante','Tipo_Participante','Aceita_Lembrete','Contato_Lembrete',
+  'Status','Confirmado_Por','Checkin_Em','Confirmado_Em'
+];
+
+/** Cria somente as duas abas novas e acrescenta Confirmado_Em ao cabeçalho atual. */
+function TZC_M04_prepararEstrutura() {
+  const ss = SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID);
+  tzcM04_garantirAbaV01_(ss, TZC_M04_CFG_V01.ABA_RESPOSTAS, TZC_M04_CAB_RESPOSTAS_V01);
+  tzcM04_garantirAbaV01_(ss, TZC_M04_CFG_V01.ABA_RESPONSAVEIS, TZC_M04_CAB_RESPONSAVEIS_V01);
+  tzcM04_garantirAbaV01_(ss, TZC_M04_CFG_V01.ABA_VISITAS, TZC_M04_CAB_VISITAS_V04);
+  const presencas = ss.getSheetByName(TZC_M04_CFG_V01.ABA_PRESENCAS);
+  if (!presencas) throw new Error('A aba Presencas não foi encontrada.');
+  tzcM04_garantirColunasV01_(presencas, TZC_M04_CAB_PRESENCAS_V01);
+  return {ok:true, abas:[TZC_M04_CFG_V01.ABA_RESPOSTAS,TZC_M04_CFG_V01.ABA_RESPONSAVEIS],
+    presencas:'Confirmado_Em verificado', consentimentoLembreteVisitante:'coluna verificada', emailAutomatico:'desativado'};
+}
+
+/** Lista eventos públicos futuros; normaliza datas que o Sheets entrega como Date. */
+function TZC_M04_listarAgendaPublica() {
+  try {
+    const cache=CacheService.getScriptCache(), saved=cache.get('TZC_M04_AGENDA_PUBLICA_V02');
+    if(saved)return JSON.parse(saved);
+    const ss=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID);
+    const aba=ss.getSheetByName(TZC_M04_CFG_V01.ABA_EVENTOS);
+    if(!aba||aba.getLastRow()<2)return {ok:true,eventos:[]};
+    const rows=tzcM04_lerObjetosV01_(aba);
+    const hoje=Utilities.formatDate(new Date(),TZC_M04_CFG_V01.FUSO,'yyyy-MM-dd');
+    const eventos=rows.map(e=>({origem:e,dataISO:tzcM04_dataISO_V02_(e.Data_Inicio)}))
+      .filter(x=>x.dataISO&&x.dataISO.slice(0,10)>=hoje&&
+        tzcM04_simV01_(x.origem.Status)&&tzcM04_simV01_(x.origem.Acesso_Publico)&&
+        x.origem.ID_Evento&&x.origem.Titulo)
+      .sort((a,b)=>a.dataISO.localeCompare(b.dataISO))
+      .slice(0,30).map(x=>({id:String(x.origem.ID_Evento),titulo:String(x.origem.Titulo),
+        tipo:String(x.origem.Tipo||''),data:x.dataISO,local:String(x.origem.Local||''),
+        descricao:String(x.origem.Descricao||''),limite:tzcM04_dataISO_V02_(x.origem.Data_Limite_Confirmacao),
+        lanche:tzcM04_simV01_(x.origem.Oferece_Lanche)}));
+    const result={ok:true,eventos:eventos};
+    cache.put('TZC_M04_AGENDA_PUBLICA_V02',JSON.stringify(result),30);
+    return result;
+  } catch(e) {
+    console.error('M04 listarAgendaPublica: '+e.message);
+    return {ok:false,mensagem:'Não foi possível carregar a agenda agora.',eventos:[]};
+  }
+}
+
+/** Registra intenção de membro logado ou previsão de visitante em aba separada. */
+function TZC_M04_responderEvento(json) {
+  const p = tzcM04_jsonV01_(json);
+  if (!p) return {ok:false,mensagem:'Resposta inválida.'};
+  const eventoId = tzcM04_textoV01_(p.eventoId,100);
+  const resposta = tzcM04_respostaV01_(p.resposta);
+  const qtd = Math.max(0,Math.min(TZC_M04_CFG_V01.MAX_PESSOAS,Math.floor(Number(p.quantidade)||0)));
+  if (!eventoId || !resposta || (resposta!=='Não vou' && qtd<1)) return {ok:false,mensagem:'Escolha uma resposta e informe quantas pessoas irão.'};
+  const evento = tzcM04_eventoV01_(eventoId);
+  if (!evento || !tzcM04_simV01_(evento.Status)) return {ok:false,mensagem:'Este evento não está aberto para respostas.'};
+  if (tzcM04_fechadoV01_(evento) || tzcM04_iniciadoV01_(evento)) return {ok:false,mensagem:'O prazo de resposta para este evento terminou.'};
+
+  let tipo='Visitante', user=null, nome='', email='', whatsapp='';
+  if (String(p.tipo||'').toLowerCase()==='membro') {
+    const sessao = tzcM02_sessaoV03_(p.token);
+    if (!sessao) return {ok:false,mensagem:'Entre na área de membros para registrar sua resposta.'};
+    user = tzcM02_buscarUsuarioV03_(sessao.email);
+    if (!user || user.status!=='ativo') return {ok:false,mensagem:'Seu acesso não está ativo.'};
+    tipo='Membro'; nome=user.nome; email=user.email;
+  } else {
+    if (!tzcM04_simV01_(evento.Acesso_Publico)) return {ok:false,mensagem:'Este evento está disponível somente para membros.'};
+    nome=tzcM04_textoV01_(p.nome,100);
+    email=tzcM04_emailV01_(p.email);
+    whatsapp=tzcM04_whatsappV04_(p.whatsapp);
+    if (!nome || !email || !whatsapp) return {ok:false,mensagem:'Informe nome, e-mail e WhatsApp com DDD.'};
+    if (p.aceitaContatoEvento!==true) return {ok:false,mensagem:'Confirme que podemos usar esses contatos para avisos deste evento.'};
+  }
+
+  try {
+    const lock=LockService.getScriptLock(); lock.waitLock(8000);
+    try {
+      const ss=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID);
+      const sh=ss.getSheetByName(TZC_M04_CFG_V01.ABA_RESPOSTAS);
+      if (!sh || sh.getLastRow()<1) throw new Error('Execute TZC_M04_prepararEstrutura antes do uso.');
+      const map=tzcM04_indicesV01_(sh), rows=sh.getLastRow()>1?sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).getValues():[];
+      const key=tipo==='Membro'?String(user.id):email.toLowerCase(); let rowNo=0;
+      for (let i=0;i<rows.length;i++) {
+        const r=rows[i];
+        if (String(r[map.ID_Evento]||'')===eventoId && String(r[map.Tipo_Participante]||'')===tipo &&
+          (tipo==='Membro'?String(r[map.ID_Usuario]||'')===key:(String(r[map.Email_Visitante]||'').toLowerCase()===key&&(!String(r[map.WhatsApp_Visitante]||'')||tzcM04_whatsappV04_(r[map.WhatsApp_Visitante])===whatsapp)))) {rowNo=i+2;break;}
+      }
+      const now=new Date(), id=rowNo?sh.getRange(rowNo,map.ID_Resposta+1).getValue():'RSP_'+Utilities.getUuid();
+      const values={ID_Resposta:id,ID_Evento:eventoId,Tipo_Participante:tipo,ID_Usuario:user?user.id:'',
+        Nome_Visitante:tipo==='Visitante'?nome:'',Email_Visitante:tipo==='Visitante'?email:'',WhatsApp_Visitante:tipo==='Visitante'?whatsapp:'',
+        Aceita_Contato_Evento:tipo==='Visitante'?'Sim':'Não',Resposta:resposta,
+        Qtd_Participantes:resposta==='Não vou'?0:qtd,Observacoes:tzcM04_textoV01_(p.observacoes,500),
+        Data_Resposta:rowNo?(rows[rowNo-2][map.Data_Resposta]||now):now,Atualizado_Em:now,
+        Status:'Ativa',Lembrete_Presenca_Enviado_Em:rowNo?(rows[rowNo-2][map.Lembrete_Presenca_Enviado_Em]||''):'',
+        Lembrete_Email_Visitante_Aceito:tipo==='Visitante'&&p.aceitaLembrete?'Sim':'Não',
+        Lembrete_Evento_Enviado_Em:rowNo?(rows[rowNo-2][map.Lembrete_Evento_Enviado_Em]||''):''};
+      tzcM04_gravarObjetoV01_(sh,map,rowNo||sh.getLastRow()+1,values);
+      return {ok:true,mensagem:'Resposta salva. Obrigado!',tipo:tipo,quantidade:values.Qtd_Participantes};
+    } finally {lock.releaseLock();}
+  } catch(e) { console.error('M04 responderEvento: '+e.message); return {ok:false,mensagem:'Não foi possível salvar sua resposta agora.'}; }
+}
+
+/** Retorna, em uma única consulta, somente os dados pessoais da sessão ativa. */
+function TZC_M04_obterMinhaArea(token) {
+  const user=tzcM04_usuarioSessaoV01_(token);
+  if(!user)return {ok:false,mensagem:'Entre novamente para abrir sua área.'};
+  try {
+    const ss=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID);
+    const eventsSh=ss.getSheetByName(TZC_M04_CFG_V01.ABA_EVENTOS);
+    const responsesSh=ss.getSheetByName(TZC_M04_CFG_V01.ABA_RESPOSTAS);
+    const presenceSh=ss.getSheetByName(TZC_M04_CFG_V01.ABA_PRESENCAS);
+    const duesSh=ss.getSheetByName(TZC_M04_CFG_V01.ABA_MENSALIDADES);
+    const id=String(user.id), now=Utilities.formatDate(new Date(),TZC_M04_CFG_V01.FUSO,'yyyy-MM-dd');
+    const events=eventsSh?tzcM04_lerObjetosV01_(eventsSh):[];
+    const myResponses=Object.create(null);
+    if(responsesSh&&responsesSh.getLastRow()>1){
+      const m=tzcM04_indicesV01_(responsesSh), rows=responsesSh.getRange(2,1,responsesSh.getLastRow()-1,responsesSh.getLastColumn()).getDisplayValues();
+      rows.forEach(r=>{if(String(r[m.ID_Usuario]||'')===id&&String(r[m.Status]||'Ativa').toLowerCase()!=='cancelada')myResponses[String(r[m.ID_Evento])]={resposta:String(r[m.Resposta]||''),quantidade:Number(r[m.Qtd_Participantes]||0),atualizadoEm:String(r[m.Atualizado_Em]||'')};});
+    }
+    const upcoming=events.filter(e=>tzcM04_simV01_(e.Status)&&e.ID_Evento&&e.Titulo&&tzcM04_dataISO_V02_(e.Data_Inicio).slice(0,10)>=now&&!tzcM04_iniciadoV01_(e))
+      .sort((a,b)=>tzcM04_dataISO_V02_(a.Data_Inicio).localeCompare(tzcM04_dataISO_V02_(b.Data_Inicio))).slice(0,12)
+      .map(e=>({id:String(e.ID_Evento),titulo:String(e.Titulo),data:tzcM04_dataISO_V02_(e.Data_Inicio),local:String(e.Local||''),resposta:myResponses[String(e.ID_Evento)]||null,ofereceLanche:tzcM04_simV01_(e.Oferece_Lanche)}));
+    const eventsById=Object.create(null);events.forEach(e=>eventsById[String(e.ID_Evento)]=e);
+    const presencas=[];
+    if(presenceSh&&presenceSh.getLastRow()>1){
+      const m=tzcM04_indicesV01_(presenceSh), rows=presenceSh.getRange(2,1,presenceSh.getLastRow()-1,presenceSh.getLastColumn()).getDisplayValues();
+      rows.forEach(r=>{if(String(r[m.ID_Usuario]||'')!==id)return;const ev=eventsById[String(r[m.ID_Evento]||'')];presencas.push({evento:ev?String(ev.Titulo):'Evento',data:ev?tzcM04_dataISO_V02_(ev.Data_Inicio):'',resposta:String(r[m.Resposta]||''),situacao:String(r[m.Presenca]||r[m.Status]||'Pendente'),confirmadoEm:String(r[m.Confirmado_Em]||''),checkinEm:String(r[m.Checkin_Em]||'')});});
+    }
+    presencas.sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+    const mensalidades=[];
+    if(duesSh&&duesSh.getLastRow()>1){
+      const m=tzcM04_indicesV01_(duesSh), rows=duesSh.getRange(2,1,duesSh.getLastRow()-1,duesSh.getLastColumn()).getDisplayValues();
+      rows.forEach(r=>{if(String(r[m.ID_Usuario]||'')!==id)return;mensalidades.push({competencia:String(r[m.Competencia]||''),vencimento:String(r[m.Data_Vencimento]||''),valor:String(r[m.Valor]||''),status:String(r[m.Status]||'Em aberto'),dataPagamento:String(r[m.Data_Pagamento]||''),formaPagamento:String(r[m.Forma_Pagamento]||'')});});
+    }
+    mensalidades.sort((a,b)=>(b.vencimento||'').localeCompare(a.vencimento||''));
+    return {ok:true,usuario:{id:id,nome:String(user.nome||''),perfil:String(user.perfil||'')},eventos:upcoming,presencas:presencas,mensalidades:mensalidades};
+  } catch(e){console.error('M04 obterMinhaArea: '+e.message);return {ok:false,mensagem:'Não foi possível carregar sua área agora.'};}
+}
+
+/** Após o evento, o filho registra uma declaração; ela fica pendente de validação. */
+function TZC_M04_registrarCheckin(token, eventoId, relato) {
+  const sessao=tzcM02_sessaoV03_(token), evento=tzcM04_eventoV01_(eventoId);
+  if (!sessao) return {ok:false,mensagem:'Entre na área de membros para continuar.'};
+  const user=tzcM02_buscarUsuarioV03_(sessao.email);
+  if (!user || user.status!=='ativo') return {ok:false,mensagem:'Seu acesso não está ativo.'};
+  if (!evento || !tzcM04_encerradoV01_(evento)) return {ok:false,mensagem:'O check-in fica disponível depois do término do evento.'};
+  const declaracao=String(relato||'').trim()==='Não compareci'?'Não compareci':'Compareci';
+  try {
+    const ss=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID), sh=ss.getSheetByName(TZC_M04_CFG_V01.ABA_PRESENCAS);
+    if (!sh) throw new Error('A aba Presencas não foi encontrada.');
+    const map=tzcM04_indicesV01_(sh), rows=sh.getLastRow()>1?sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).getValues():[];
+    for(let i=0;i<rows.length;i++) if(String(rows[i][map.ID_Evento]||'')===String(eventoId)&&String(rows[i][map.ID_Usuario]||'')===String(user.id)) {
+      if(String(rows[i][map.Presenca]||'').toLowerCase()==='presente'||String(rows[i][map.Presenca]||'').toLowerCase()==='ausente')
+        return {ok:true,mensagem:'Sua presença já foi validada pela gestão.'};
+      const row=i+2, now=new Date();
+      tzcM04_gravarObjetoV01_(sh,map,row,{Presenca:'Pendente',Status:'Pendente de validação',Resposta:declaracao,
+        Checkin_Em:now,Atualizado_Em:now,Confirmado_Por:'',Confirmado_Em:''});
+      return {ok:true,mensagem:'Aviso recebido. A presença ficou pendente para validação.'};
+    }
+    const row=sh.getLastRow()+1, now=new Date();
+    tzcM04_gravarObjetoV01_(sh,map,row,{ID_Presenca:'PRE_'+Utilities.getUuid(),ID_Evento:String(eventoId),ID_Usuario:String(user.id),
+      Data_Resposta:now,Resposta:declaracao,Presenca:'Pendente',Observacoes:'',Criado_Em:now,Atualizado_Em:now,
+      Nome_Visitante:'',WhatsApp_Visitante:'',Email_Visitante:'',Tipo_Participante:'Membro',Aceita_Lembrete:'Sim',
+      Contato_Lembrete:user.email,Status:'Pendente de validação',Confirmado_Por:'',Checkin_Em:now,Confirmado_Em:''});
+    return {ok:true,mensagem:'Aviso recebido. A presença ficou pendente para validação.'};
+  } catch(e) { console.error('M04 registrarCheckin: '+e.message); return {ok:false,mensagem:'Não foi possível registrar seu aviso agora.'}; }
+}
+
+/** Lista pendências somente para dirigente/administrador ou delegado daquele evento. */
+function TZC_M04_listarPendencias(token, eventoId) {
+  const caller=tzcM04_usuarioSessaoV01_(token); if(!caller) return {ok:false,mensagem:'Entre novamente.'};
+  if(!tzcM04_podeGerirEventoV01_(caller,eventoId)) return {ok:false,mensagem:'Você não está autorizado para este evento.'};
+  try {
+    const sh=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID).getSheetByName(TZC_M04_CFG_V01.ABA_PRESENCAS);
+    if(!sh||sh.getLastRow()<2) return {ok:true,registros:[]};
+    const map=tzcM04_indicesV01_(sh), rows=sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).getDisplayValues();
+    const users=tzcM04_mapaNomesV01_();
+    const records=rows.map((r,i)=>({linha:i+2,id:r[map.ID_Presenca],evento:r[map.ID_Evento],idUsuario:r[map.ID_Usuario],
+      nome:users[String(r[map.ID_Usuario]||'')]||'Membro',relato:r[map.Resposta],presenca:r[map.Presenca],
+      checkin:r[map.Checkin_Em],status:r[map.Status]})).filter(r=>r.evento===String(eventoId)&&
+        String(r.checkin||'')&&['pendente','presente','ausente'].includes(String(r.presenca||'').toLowerCase()));
+    return {ok:true,registros:records};
+  } catch(e) {console.error('M04 listarPendencias: '+e.message);return {ok:false,mensagem:'Não foi possível carregar a lista.'};}
+}
+
+/** Retorna eventos encerrados com check-in pendente que o responsável pode revisar. */
+function TZC_M04_listarEventosGestao(token) {
+  const caller=tzcM04_usuarioSessaoV01_(token); if(!caller)return {ok:false,mensagem:'Entre novamente.',eventos:[]};
+  try {
+    const ss=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID), ev=ss.getSheetByName(TZC_M04_CFG_V01.ABA_EVENTOS), pr=ss.getSheetByName(TZC_M04_CFG_V01.ABA_PRESENCAS);
+    if(!ev||!pr||pr.getLastRow()<2)return {ok:true,eventos:[]};
+    const events=tzcM04_lerObjetosV01_(ev), pm=tzcM04_indicesV01_(pr), rows=pr.getRange(2,1,pr.getLastRow()-1,pr.getLastColumn()).getDisplayValues();
+    const pending=Object.create(null); rows.forEach(r=>{if(String(r[pm.Checkin_Em]||'')&&r[pm.ID_Evento])pending[String(r[pm.ID_Evento])]=true;});
+    const out=events.filter(e=>pending[String(e.ID_Evento)]&&tzcM04_encerradoV01_(e)&&tzcM04_podeGerirEventoV01_(caller,e.ID_Evento))
+      .map(e=>({id:String(e.ID_Evento),titulo:String(e.Titulo),data:String(e.Data_Inicio||''),local:String(e.Local||'')}));
+    return {ok:true,eventos:out};
+  } catch(e) {console.error('M04 listarEventosGestao: '+e.message);return {ok:false,mensagem:'Não foi possível carregar a gestão.',eventos:[]};}
+}
+
+/** Lista só eventos futuros que o dirigente ou responsável autorizado pode consultar. */
+function TZC_M04_listarEventosRelatorio(token) {
+  const caller=tzcM04_usuarioSessaoV01_(token);
+  if(!caller)return {ok:false,mensagem:'Entre novamente.',eventos:[]};
+  try {
+    const ss=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID), sh=ss.getSheetByName(TZC_M04_CFG_V01.ABA_EVENTOS);
+    if(!sh||sh.getLastRow()<2)return {ok:true,eventos:[]};
+    const hoje=Utilities.formatDate(new Date(),TZC_M04_CFG_V01.FUSO,'yyyy-MM-dd');
+    const eventos=tzcM04_lerObjetosV01_(sh).filter(e=>tzcM04_simV01_(e.Status)&&e.ID_Evento&&e.Titulo&&
+      tzcM04_dataISO_V02_(e.Data_Inicio).slice(0,10)>=hoje&&tzcM04_podeGerirEventoV01_(caller,e.ID_Evento))
+      .sort((a,b)=>tzcM04_dataISO_V02_(a.Data_Inicio).localeCompare(tzcM04_dataISO_V02_(b.Data_Inicio)))
+      .slice(0,50).map(e=>({id:String(e.ID_Evento),titulo:String(e.Titulo),data:tzcM04_dataISO_V02_(e.Data_Inicio)}));
+    return {ok:true,eventos:eventos};
+  } catch(e) {console.error('M04 listarEventosRelatorio: '+e.message);return {ok:false,mensagem:'Não foi possível carregar os eventos.',eventos:[]};}
+}
+
+/** Gera prévia e PDF A4 de previsão, sem expor contatos pessoais dos participantes. */
+function TZC_M04_gerarPrevisaoEvento(token, eventoId) {
+  const caller=tzcM04_usuarioSessaoV01_(token);
+  if(!caller)return {ok:false,mensagem:'Entre novamente.'};
+  try {
+    const ss=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID), event=tzcM04_eventoV01_(eventoId);
+    if(!event||!tzcM04_podeGerirEventoV01_(caller,eventoId))return {ok:false,mensagem:'Você não está autorizado para ver este evento.'};
+    const sh=ss.getSheetByName(TZC_M04_CFG_V01.ABA_RESPOSTAS);
+    if(!sh||sh.getLastRow()<1)return {ok:false,mensagem:'A tabela de respostas não está preparada.'};
+    const map=tzcM04_indicesV01_(sh), rows=sh.getLastRow()>1?sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).getDisplayValues():[];
+    const nomes=tzcM04_mapaNomesV01_(), respostas=[];
+    rows.forEach(r=>{
+      if(String(r[map.ID_Evento]||'')!==String(eventoId)||String(r[map.Status]||'Ativa').toLowerCase()==='cancelada')return;
+      const tipo=String(r[map.Tipo_Participante]||''), id=String(r[map.ID_Usuario]||''), resposta=String(r[map.Resposta]||'');
+      const nome=tipo==='Membro'?(nomes[id]||'Filho de santo'):String(r[map.Nome_Visitante]||'Visitante');
+      respostas.push({nome:nome,tipo:tipo,resposta:resposta,quantidade:Number(r[map.Qtd_Participantes]||0)});
+    });
+    respostas.sort((a,b)=>a.tipo.localeCompare(b.tipo,'pt-BR')||a.nome.localeCompare(b.nome,'pt-BR'));
+    const resumo={vou:0,talvez:0,naoVou:0,total:0};
+    respostas.forEach(r=>{if(r.resposta==='Vou'){resumo.vou++;resumo.total+=r.quantidade;}else if(r.resposta==='Talvez'){resumo.talvez++;resumo.total+=r.quantidade;}else if(r.resposta==='Não vou')resumo.naoVou++;});
+    const data=tzcM04_dataISO_V02_(event.Data_Inicio), when=String(data||'').split(' '), local=String(event.Local||'A definir');
+    const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const bodyRows=respostas.length?respostas.map(r=>'<tr><td>'+esc(r.nome)+'</td><td>'+esc(r.tipo)+'</td><td>'+esc(r.resposta)+'</td><td>'+esc(r.quantidade)+'</td></tr>').join(''):'<tr><td colspan="4">Nenhuma resposta registrada até o momento.</td></tr>';
+    const html='<!doctype html><html><head><meta charset="utf-8"><style>body{font:10pt Arial,sans-serif;color:#332823;padding:18px}h1{font:700 20pt Georgia,serif;color:#6b1e2c;margin:0 0 5px}.sub{color:#766b62;margin:0 0 16px}.meta{background:#f7f2e9;padding:12px;border-radius:7px;margin:12px 0}.summary{margin:15px 0;padding:10px;background:#f3e8d1;border-radius:7px;font-weight:bold}table{border-collapse:collapse;width:100%;font-size:9pt}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid #ddd}th{color:#6b1e2c}.foot{color:#766b62;font-size:8pt;margin-top:18px}</style></head><body><h1>'+esc(event.Titulo)+'</h1><p class="sub">Previsão de participantes · Tenda de Zé Cigano</p><div class="meta"><b>Data:</b> '+esc(when[0]||'')+' &nbsp; <b>Horário:</b> '+esc(when[1]||'A definir')+'<br><b>Local:</b> '+esc(local)+' &nbsp; <b>Lanche:</b> '+(tzcM04_simV01_(event.Oferece_Lanche)?'Sim':'Não informado')+'</div><div class="summary">Pessoas previstas: '+resumo.total+' &nbsp; | &nbsp; Vou: '+resumo.vou+' &nbsp; | &nbsp; Talvez: '+resumo.talvez+' &nbsp; | &nbsp; Não vou: '+resumo.naoVou+'</div><table><thead><tr><th>Participante</th><th>Tipo</th><th>Resposta</th><th>Qtd.</th></tr></thead><tbody>'+bodyRows+'</tbody></table><p class="foot">Gerado em '+Utilities.formatDate(new Date(),TZC_M04_CFG_V01.FUSO,'dd/MM/yyyy HH:mm')+'</p></body></html>';
+    const blob=Utilities.newBlob(html,'text/html','previsao.html').getAs(MimeType.PDF).setName('Previsao_'+String(event.Titulo).replace(/[^a-z0-9]+/gi,'_')+'.pdf');
+    return {ok:true,evento:{titulo:String(event.Titulo),data:when[0]||'',horario:when[1]||'',local:local,lanche:tzcM04_simV01_(event.Oferece_Lanche)},resumo:resumo,respostas:respostas,pdfBase64:Utilities.base64Encode(blob.getBytes())};
+  } catch(e) {console.error('M04 gerarPrevisaoEvento: '+e.message);return {ok:false,mensagem:'Não foi possível preparar o PDF agora.'};}
+}
+
+/** Lista nomes mínimos para o dirigente escolher quem pode validar determinado evento. */
+function TZC_M04_listarMembrosAtivos(token) {
+  const caller=tzcM04_usuarioSessaoV01_(token);
+  if(!caller||!['dirigente','administrador'].includes(String(caller.perfil).toLowerCase()))return {ok:false,mensagem:'Acesso restrito à direção.',membros:[]};
+  try {
+    const sh=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID).getSheetByName(TZC_M04_CFG_V01.ABA_USUARIOS);
+    if(!sh||sh.getLastRow()<2)return {ok:true,membros:[]};
+    const m=tzcM04_indicesV01_(sh), rows=sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).getDisplayValues();
+    return {ok:true,membros:rows.filter(r=>String(r[m.Status]).toLowerCase()==='ativo'&&String(r[m.Perfil]).toLowerCase()==='membro')
+      .map(r=>({id:r[m.ID_Usuario],nome:r[m.Nome]}))};
+  } catch(e) {console.error('M04 listarMembrosAtivos: '+e.message);return {ok:false,mensagem:'Não foi possível carregar os membros.',membros:[]};}
+}
+
+/** Após o login, devolve somente respostas do próprio membro a eventos encerrados sem check-in. */
+function TZC_M04_obterCheckinsPendentes(token) {
+  const u=tzcM04_usuarioSessaoV01_(token); if(!u)return {ok:false,eventos:[]};
+  try {
+    const ss=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID), resp=ss.getSheetByName(TZC_M04_CFG_V01.ABA_RESPOSTAS);
+    if(!resp||resp.getLastRow()<2)return {ok:true,eventos:[]};
+    const map=tzcM04_indicesV01_(resp), rs=resp.getRange(2,1,resp.getLastRow()-1,resp.getLastColumn()).getDisplayValues();
+    const eventsSh=ss.getSheetByName(TZC_M04_CFG_V01.ABA_EVENTOS), events=Object.create(null);
+    tzcM04_lerObjetosV01_(eventsSh).forEach(e=>events[String(e.ID_Evento)]=e);
+    const pres=ss.getSheetByName(TZC_M04_CFG_V01.ABA_PRESENCAS), checked=Object.create(null);
+    if(pres&&pres.getLastRow()>1){const pm=tzcM04_indicesV01_(pres);pres.getRange(2,1,pres.getLastRow()-1,pres.getLastColumn()).getDisplayValues().forEach(r=>{if(r[pm.Checkin_Em])checked[String(r[pm.ID_Evento])+'|'+String(r[pm.ID_Usuario])]=true;});}
+    const seen=Object.create(null), out=[];
+    rs.forEach(r=>{
+      const eid=String(r[map.ID_Evento]||'');
+      if(String(r[map.Tipo_Participante])!=='Membro'||String(r[map.ID_Usuario])!==String(u.id)||!eid||seen[eid]||!['Vou','Talvez'].includes(String(r[map.Resposta])))return;
+      const ev=events[eid]; if(!ev||!tzcM04_encerradoV01_(ev)||checked[eid+'|'+String(u.id)])return;
+      seen[eid]=true;out.push({id:eid,titulo:String(ev.Titulo||''),data:String(ev.Data_Inicio||'')});
+    });
+    return {ok:true,eventos:out};
+  } catch(e) {console.error('M04 obterCheckinsPendentes: '+e.message);return {ok:false,eventos:[]};}
+}
+
+/** Confirma/corrige a presença e audita o responsável que alterou o resultado. */
+function TZC_M04_confirmarCheckin(token, presencaId, resultado) {
+  const caller=tzcM04_usuarioSessaoV01_(token); if(!caller) return {ok:false,mensagem:'Entre novamente.'};
+  const final=String(resultado||'').trim(); if(!['Presente','Ausente'].includes(final)) return {ok:false,mensagem:'Escolha Presente ou Ausente.'};
+  try {
+    const ss=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID), sh=ss.getSheetByName(TZC_M04_CFG_V01.ABA_PRESENCAS);
+    if(!sh||sh.getLastRow()<2)return {ok:false,mensagem:'Registro não encontrado.'};
+    const map=tzcM04_indicesV01_(sh), data=sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).getValues();
+    let row=0, old=null;
+    for(let i=0;i<data.length;i++)if(String(data[i][map.ID_Presenca]||'')===String(presencaId)){row=i+2;old=data[i];break;}
+    if(!row)return {ok:false,mensagem:'Registro não encontrado.'};
+    const eventId=String(old[map.ID_Evento]||'');
+    if(!tzcM04_podeGerirEventoV01_(caller,eventId))return {ok:false,mensagem:'Você não está autorizado para este evento.'};
+    const evento=tzcM04_eventoV01_(eventId); if(!evento||!tzcM04_encerradoV01_(evento))return {ok:false,mensagem:'A validação só fica disponível após o evento.'};
+    const before={Presenca:old[map.Presenca],Status:old[map.Status],Confirmado_Por:old[map.Confirmado_Por]};
+    const now=new Date(), label=caller.nome+' ('+caller.email+')';
+    tzcM04_gravarObjetoV01_(sh,map,row,{Presenca:final,Status:'Confirmado',Confirmado_Por:label,Confirmado_Em:now,Atualizado_Em:now});
+    tzcM04_auditarV01_(ss,caller,'VALIDAR_PRESENCA',String(presencaId),before,{Presenca:final,Status:'Confirmado',Confirmado_Por:label,Confirmado_Em:now});
+    return {ok:true,mensagem:'Presença atualizada para '+final+'.'};
+  } catch(e) {console.error('M04 confirmarCheckin: '+e.message);return {ok:false,mensagem:'Não foi possível validar a presença agora.'};}
+}
+
+/** Só dirigentes/administradores podem conceder ou revogar um delegado por evento. */
+function TZC_M04_definirResponsavel(token, eventoId, usuarioId, ativo) {
+  const caller=tzcM04_usuarioSessaoV01_(token);
+  if(!caller||!['dirigente','administrador'].includes(String(caller.perfil).toLowerCase()))return {ok:false,mensagem:'Somente dirigente ou administrador pode autorizar responsáveis.'};
+  const event=tzcM04_eventoV01_(eventoId), target=tzcM04_usuarioIdV01_(usuarioId);
+  if(!event||!target||String(target.perfil).toLowerCase()!=='membro')return {ok:false,mensagem:'Evento ou membro não encontrado.'};
+  try {
+    const ss=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID), sh=ss.getSheetByName(TZC_M04_CFG_V01.ABA_RESPONSAVEIS);
+    if(!sh||sh.getLastRow()<1)throw new Error('Execute TZC_M04_prepararEstrutura antes de autorizar.');
+    const map=tzcM04_indicesV01_(sh), rows=sh.getLastRow()>1?sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).getValues():[];
+    let row=0,prev=null;
+    for(let i=0;i<rows.length;i++)if(String(rows[i][map.ID_Evento]||'')===String(eventoId)&&String(rows[i][map.ID_Usuario_Autorizado]||'')===String(usuarioId)){row=i+2;prev=rows[i];break;}
+    const now=new Date(), enable=String(ativo).toLowerCase()!=='false';
+    const values={ID_Delegacao:row?prev[map.ID_Delegacao]:'DEL_'+Utilities.getUuid(),ID_Evento:String(eventoId),
+      ID_Usuario_Autorizado:String(usuarioId),Autorizado_Por:caller.nome+' ('+caller.email+')',Ativo:enable?'Sim':'Não',
+      Criado_Em:row?(prev[map.Criado_Em]||now):now,Revogado_Em:enable?'':now};
+    tzcM04_gravarObjetoV01_(sh,map,row||sh.getLastRow()+1,values);
+    tzcM04_auditarV01_(ss,caller,enable?'AUTORIZAR_RESPONSAVEL_PRESENCA':'REVOGAR_RESPONSAVEL_PRESENCA',values.ID_Delegacao,prev||{},values);
+    return {ok:true,mensagem:enable?'Responsável autorizado para este evento.':'Autorização revogada.'};
+  } catch(e) {console.error('M04 definirResponsavel: '+e.message);return {ok:false,mensagem:'Não foi possível salvar a autorização.'};}
+}
+
+/** Registra ou atualiza a quantidade real de visitantes; não grava visitante em Presencas. */
+function TZC_M04_registrarVisitantesPresentes(token,eventoId,quantidade,observacoes) {
+  const caller=tzcM04_usuarioSessaoV01_(token), event=tzcM04_eventoV01_(eventoId);
+  if(!caller)return {ok:false,mensagem:'Entre novamente.'};
+  if(!event||!tzcM04_podeGerirEventoV01_(caller,eventoId))return {ok:false,mensagem:'Você não pode registrar visitantes neste evento.'};
+  const count=Math.max(0,Math.min(TZC_M04_CFG_V01.MAX_PESSOAS*20,Math.floor(Number(quantidade)||0)));
+  try {
+    const ss=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID), sh=ss.getSheetByName(TZC_M04_CFG_V01.ABA_VISITAS);
+    if(!sh)throw Error('Execute TZC_M04_prepararEstrutura antes do uso.');
+    const lock=LockService.getScriptLock();lock.waitLock(8000);
+    try {
+      const m=tzcM04_indicesV01_(sh), rows=sh.getLastRow()>1?sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).getDisplayValues():[];
+      let row=0;for(let i=0;i<rows.length;i++)if(String(rows[i][m.ID_Evento]||'')===String(eventoId)){row=i+2;break;}
+      const now=new Date(), values={ID_Visita:row?rows[row-2][m.ID_Visita]:'VIS_'+Utilities.getUuid(),ID_Evento:String(eventoId),ID_Resposta:'',Quantidade_Presente:count,Registrado_Por:String(caller.id),Registrado_Em:now,Observacoes:tzcM04_textoV01_(observacoes,300),Status:'Ativa'};
+      tzcM04_gravarObjetoV01_(sh,m,row||sh.getLastRow()+1,values);
+      return {ok:true,mensagem:'Quantidade de visitantes atualizada.'};
+    } finally {lock.releaseLock();}
+  } catch(e){console.error('M04 registrarVisitantesPresentes: '+e.message);return {ok:false,mensagem:'Não foi possível atualizar a quantidade.'};}
+}
+
+/** Acionador diário único: avisa membros sem check-in e visitantes com consentimento.
+ * O e-mail de visitante só segue quando marcou “Quero receber lembrete”. */
+function TZC_M04_enviarLembretesPendentes() {
+  const ss=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID), resp=ss.getSheetByName(TZC_M04_CFG_V01.ABA_RESPOSTAS);
+  if(!resp||resp.getLastRow()<2)return {ok:true,enviados:0};
+  const map=tzcM04_indicesV01_(resp);
+  if(map.Lembrete_Email_Visitante_Aceito===undefined||map.Lembrete_Evento_Enviado_Em===undefined)return {ok:false,enviados:0,mensagem:'Execute TZC_M04_prepararEstrutura antes de ativar os lembretes.'};
+  const vals=resp.getRange(2,1,resp.getLastRow()-1,resp.getLastColumn()).getValues();
+  const events=Object.create(null);tzcM04_lerObjetosV01_(ss.getSheetByName(TZC_M04_CFG_V01.ABA_EVENTOS)).forEach(e=>events[String(e.ID_Evento)]=e);
+  const users=tzcM04_usuariosAtivosV01_();
+  const pres=ss.getSheetByName(TZC_M04_CFG_V01.ABA_PRESENCAS), checked=Object.create(null);
+  if(pres&&pres.getLastRow()>1){const pm=tzcM04_indicesV01_(pres);pres.getRange(2,1,pres.getLastRow()-1,pres.getLastColumn()).getDisplayValues().forEach(r=>{if(r[pm.Checkin_Em])checked[String(r[pm.ID_Evento])+'|'+String(r[pm.ID_Usuario])]=true;});}
+  const agora=new Date(); let enviados=0, visitantes=0;
+  const amanhaBR=Utilities.formatDate(new Date(agora.getTime()+24*60*60*1000),TZC_M04_CFG_V01.FUSO,'yyyy-MM-dd');
+  vals.forEach((r,i)=>{
+    if(String(r[map.Tipo_Participante])==='Visitante'&&String(r[map.Lembrete_Email_Visitante_Aceito]||'').toLowerCase()==='sim'&&
+      ['Vou','Talvez'].includes(String(r[map.Resposta]))&&!r[map.Lembrete_Evento_Enviado_Em]){
+      const eid=String(r[map.ID_Evento]),ev=events[eid],date=ev?tzcM04_dataISO_V02_(ev.Data_Inicio).slice(0,10):'',mail=String(r[map.Email_Visitante]||'');
+      if(ev&&date===amanhaBR&&mail){const greeting=String(r[map.Nome_Visitante]||'');MailApp.sendEmail({to:mail,subject:'Lembrete do evento — '+ev.Titulo,body:'Olá, '+greeting+'.\n\nEste é um lembrete do evento \"'+ev.Titulo+'\", marcado para amanhã, '+date+'.\nLocal: '+String(ev.Local||'A confirmar')+'.\n\nSe precisar atualizar sua previsão, acesse o site.\n\nTenda de Zé Cigano',name:'Tenda de Zé Cigano'});resp.getRange(i+2,map.Lembrete_Evento_Enviado_Em+1).setValue(agora);visitantes++;}
+      return;
+    }
+    if(String(r[map.Tipo_Participante])!=='Membro'||String(r[map.Resposta])!=='Vou'||r[map.Lembrete_Presenca_Enviado_Em])return;
+    const eid=String(r[map.ID_Evento]),uid=String(r[map.ID_Usuario]),ev=events[eid],user=users[uid];
+    if(!ev||!tzcM04_encerradoV01_(ev)||!user||!user.email||checked[eid+'|'+uid])return;
+    MailApp.sendEmail({to:user.email,subject:'Você esteve no evento? — '+ev.Titulo,
+      body:'Olá, '+user.nome+'.\n\nQuando puder, entre no site e informe se compareceu ao evento "'+ev.Titulo+'". Seu aviso ficará pendente até a confirmação do responsável.\n\nTenda de Zé Cigano'});
+    resp.getRange(i+2,map.Lembrete_Presenca_Enviado_Em+1).setValue(agora); enviados++;
+  });
+  return {ok:true,enviados:enviados,lembretesVisitantes:visitantes};
+}
+
+/** Instala envio diário às 10h de Brasília; executar somente depois de aprovar os testes. */
+function TZC_M04_instalarAcionadorLembretes() {
+  const exists=ScriptApp.getProjectTriggers().some(t=>t.getHandlerFunction()==='TZC_M04_enviarLembretesPendentes');
+  if(!exists) ScriptApp.newTrigger('TZC_M04_enviarLembretesPendentes').timeBased().everyDays(1).atHour(10).inTimezone(TZC_M04_CFG_V01.FUSO).create();
+  return {ok:true,instalado:true};
+}
+
+function tzcM04_eventoV01_(id) {
+  const sh=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID).getSheetByName(TZC_M04_CFG_V01.ABA_EVENTOS);
+  if(!sh||sh.getLastRow()<2)return null;
+  return tzcM04_lerObjetosV01_(sh).filter(e=>String(e.ID_Evento)===String(id))[0]||null;
+}
+function tzcM04_usuarioSessaoV01_(token) {
+  const s=tzcM02_sessaoV03_(token); if(!s)return null; const u=tzcM02_buscarUsuarioV03_(s.email);
+  return u&&u.status==='ativo'?u:null;
+}
+function tzcM04_podeGerirEventoV01_(u,eventId) {
+  if(['dirigente','administrador'].includes(String(u.perfil||'').toLowerCase()))return true;
+  const sh=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID).getSheetByName(TZC_M04_CFG_V01.ABA_RESPONSAVEIS);
+  if(!sh||sh.getLastRow()<2)return false;
+  const m=tzcM04_indicesV01_(sh), rs=sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).getDisplayValues();
+  return rs.some(r=>String(r[m.ID_Evento])===String(eventId)&&String(r[m.ID_Usuario_Autorizado])===String(u.id)&&tzcM04_simV01_(r[m.Ativo]));
+}
+function tzcM04_encerradoV01_(e) {
+  const raw=String(e.Data_Fim||e.Data_Inicio||''); const date=tzcM04_dataV01_(raw);
+  if(!date)return false;
+  if(!/\d{1,2}:\d{2}/.test(raw))date.setTime(date.getTime()+24*60*60*1000-1);
+  return date.getTime()<Date.now();
+}
+function tzcM04_iniciadoV01_(e) {const d=tzcM04_dataV01_(String(e.Data_Inicio||''));return !!(d&&d.getTime()<=Date.now());}
+function tzcM04_fechadoV01_(e) {
+  const raw=String(e.Data_Limite_Confirmacao||''); if(!raw)return false;
+  const d=tzcM04_dataV01_(raw); if(d&&!/\d{1,2}:\d{2}/.test(raw))d.setTime(d.getTime()+24*60*60*1000-1);
+  return d?d.getTime()<Date.now():false;
+}
+/**
+ * Converte datas do Google Sheets em texto ISO local, para que a agenda e o
+ * botão de resposta encontrem o mesmo evento mesmo quando a célula é Date.
+ */
+function tzcM04_dataISO_V02_(value) {
+  if(value===null||value===undefined||value==='')return '';
+  let d;
+  if(value instanceof Date)d=value;
+  else {
+    const s=String(value).trim();
+    const match=s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+    if(match)return match[1]+'-'+match[2]+'-'+match[3]+(match[4]?' '+('0'+match[4]).slice(-2)+':'+match[5]+(match[6]?':'+match[6]:''):'');
+    d=new Date(s);
+  }
+  if(!(d instanceof Date)||isNaN(d.getTime()))return '';
+  return Utilities.formatDate(d,TZC_M04_CFG_V01.FUSO,'yyyy-MM-dd HH:mm:ss');
+}
+function tzcM04_dataV01_(raw) {
+  const s=String(raw||'').trim(); if(!s)return null;
+  const m=s.match(/^(\d{4})-(\d{2})-(\d{2})(?:\s+(\d{1,2}):(\d{2}))?/);
+  // Converte explicitamente o horário de Brasília (-03) para UTC, independente
+  // do fuso configurado no projeto Apps Script ou na planilha.
+  if(m)return new Date(Date.UTC(Number(m[1]),Number(m[2])-1,Number(m[3]),Number(m[4]||0)+3,Number(m[5]||0)));
+  const d=new Date(s); return isNaN(d.getTime())?null:d;
+}
+function tzcM04_lerObjetosV01_(sh) {
+  const vals=sh.getDataRange().getValues(); if(vals.length<2)return [];
+  const headers=vals[0].map(v=>String(v||'').trim());
+  return vals.slice(1).map(row=>{const o={};headers.forEach((h,i)=>{if(h)o[h]=row[i]});return o}).filter(o=>Object.keys(o).some(k=>o[k]!==''&&o[k]!==null));
+}
+function tzcM04_indicesV01_(sh) {
+  const h=sh.getRange(1,1,1,sh.getLastColumn()).getDisplayValues()[0].map(v=>String(v||'').trim()),m={};
+  h.forEach((x,i)=>{if(x)m[x]=i}); return m;
+}
+function tzcM04_garantirAbaV01_(ss,name,headers) {
+  let sh=ss.getSheetByName(name); if(!sh)sh=ss.insertSheet(name);
+  tzcM04_garantirColunasV01_(sh,headers); return sh;
+}
+function tzcM04_garantirColunasV01_(sh,headers) {
+  const n=Math.max(1,sh.getLastColumn()), h=sh.getRange(1,1,1,n).getDisplayValues()[0].map(v=>String(v||'').trim());
+  if(!h.some(Boolean)){sh.getRange(1,1,1,headers.length).setValues([headers]);sh.setFrozenRows(1);return;}
+  headers.forEach(x=>{if(h.indexOf(x)<0){const col=sh.getLastColumn()+1;sh.getRange(1,col).setValue(x);h.push(x);}});
+}
+function tzcM04_gravarObjetoV01_(sh,map,row,obj) {
+  Object.keys(obj).forEach(k=>{if(map[k]!==undefined)sh.getRange(row,map[k]+1).setValue(obj[k]);});
+}
+function tzcM04_simV01_(v) {return ['sim','true','1','ativo','ativa','yes'].includes(String(v||'').trim().toLowerCase());}
+function tzcM04_respostaV01_(v) {const s=String(v||'').trim().toLowerCase();return s==='vou'?'Vou':s==='não vou'||s==='nao vou'?'Não vou':s==='talvez'?'Talvez':'';}
+function tzcM04_textoV01_(v,max) {return String(v||'').replace(/[<>\u0000-\u001f]/g,' ').trim().slice(0,max);}
+function tzcM04_whatsappV04_(v) {const d=String(v||'').replace(/\D/g,'');return d.length>=10&&d.length<=13?d:''}
+function tzcM04_emailV01_(v) {const s=String(v||'').trim().toLowerCase();return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)?s:'';}
+function tzcM04_jsonV01_(v) {try{const p=JSON.parse(String(v||''));return p&&typeof p==='object'?p:null;}catch(e){return null;}}
+function tzcM04_usuarioIdV01_(id) {
+  const sh=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID).getSheetByName(TZC_M04_CFG_V01.ABA_USUARIOS);
+  if(!sh||sh.getLastRow()<2)return null;
+  const m=tzcM04_indicesV01_(sh),rows=sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).getDisplayValues();
+  for(const r of rows)if(String(r[m.ID_Usuario])===String(id)&&String(r[m.Status]).toLowerCase()==='ativo')
+    return {id:r[m.ID_Usuario],email:r[m.Email],nome:r[m.Nome],perfil:r[m.Perfil]};
+  return null;
+}
+function tzcM04_mapaNomesV01_() {
+  const sh=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID).getSheetByName(TZC_M04_CFG_V01.ABA_USUARIOS),out=Object.create(null);
+  if(!sh||sh.getLastRow()<2)return out;
+  const m=tzcM04_indicesV01_(sh),rows=sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).getDisplayValues();
+  rows.forEach(r=>{if(String(r[m.Status]).toLowerCase()==='ativo')out[String(r[m.ID_Usuario])]=String(r[m.Nome]||'Membro')});
+  return out;
+}
+function tzcM04_usuariosAtivosV01_() {
+  const sh=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID).getSheetByName(TZC_M04_CFG_V01.ABA_USUARIOS),out=Object.create(null);
+  if(!sh||sh.getLastRow()<2)return out;
+  const m=tzcM04_indicesV01_(sh),rows=sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).getDisplayValues();
+  rows.forEach(r=>{if(String(r[m.Status]).toLowerCase()==='ativo')out[String(r[m.ID_Usuario])]={id:r[m.ID_Usuario],email:r[m.Email],nome:r[m.Nome],perfil:r[m.Perfil]};});
+  return out;
+}
+function tzcM04_checkinV01_(ss,eventId,userId) {
+  const sh=ss.getSheetByName(TZC_M04_CFG_V01.ABA_PRESENCAS); if(!sh||sh.getLastRow()<2)return false;
+  const m=tzcM04_indicesV01_(sh), rows=sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).getDisplayValues();
+  return rows.some(r=>String(r[m.ID_Evento])===String(eventId)&&String(r[m.ID_Usuario])===String(userId)&&String(r[m.Checkin_Em]||''));
+}
+function tzcM04_auditarV01_(ss,u,action,id,before,after) {
+  const sh=ss.getSheetByName(TZC_M04_CFG_V01.ABA_AUDITORIA); if(!sh)return;
+  const m=tzcM04_indicesV01_(sh), row=sh.getLastRow()+1, now=new Date();
+  tzcM04_gravarObjetoV01_(sh,m,row,{ID_Auditoria:'AUD_'+Utilities.getUuid(),Data_Hora:now,Google_Sub:'',Email_Usuario:u.email,
+    Nome_Usuario:u.nome,Perfil_Usuario:u.perfil,Acao:action,Area:'Presencas',Entidade:'Evento',ID_Registro:id,
+    Descricao:'Atualização de check-in / responsável de evento',Valores_Antigos:JSON.stringify(before),Valores_Novos:JSON.stringify(after),Resultado:'Sucesso'});
+}

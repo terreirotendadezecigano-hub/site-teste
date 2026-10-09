@@ -1,12 +1,12 @@
 <!doctype html>
-<!-- TZC SITE V64 — Módulo 05: gestão de membros e ficha individual em PDF. Título e pesquisa centralizados. Site-teste; segurança de perfil fica para a revisão final. Não usar em produção.
+<!-- TZC SITE V65 — Módulo 05: gestão de membros, fotos e fichas PDF. Busca centralizada e telefones normalizados para WhatsApp. Site-teste; segurança de perfil fica para a revisão final.
  * Revisão final de acesso: membro não edita cadastro próprio, não cria/altera pagamentos e não exclui dados; aplicar junto à matriz de perfis antes de publicar. -->
 <html lang="pt-BR" data-theme="claro">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <script>try{var temaSalvo=localStorage.getItem('tenda-tema');if(temaSalvo==='claro'||temaSalvo==='escuro')document.documentElement.setAttribute('data-theme',temaSalvo)}catch(e){}</script>
 <meta name="theme-color" content="#f7f3eb">
-<title>Tenda de Zé Cigano — Layout aprovado V13 · Módulo 05 · V64 — Gestão de membros</title>
+<title>Tenda de Zé Cigano — Layout aprovado V13 · Módulo 05 · V65 — Gestão de membros</title>
 <style>
 /* BASE VISUAL V01 — estilos claros e escuros derivados do dourado e vinho da logo. */
 :root{--brand-wine:#641d29;--brand-gold:#bd8b38;--brand-gold-soft:#f3e4c5;--brand-wine2:#7b2934;font-family:"Segoe UI",Arial,sans-serif;color-scheme:light;--bg:#f7f3eb;--surface:#fffdf8;--surface2:#efe8dc;--text:#30231f;--muted:#6f625a;--line:#e5d9c9;--primary:#641d29;--primary2:#7b2934;--gold:#bd8b38;--gold-soft:#f3e4c5;--shadow:0 12px 34px #3c20140d;--radius:18px}
@@ -277,7 +277,7 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
 </style>
 <div id="m05PublicRoot" hidden></div><div id="toast" class="toast" role="status"></div>
 <script>
-/* TZC — SITE V64 — Módulo 05: gestão de membros e ficha PDF.
+/* TZC — SITE V65 — Módulo 05: gestão de membros e ficha PDF.
  * Mantém o layout aprovado V13. A permissão final de perfil fica para a revisão de segurança.
  */
 (function(){
@@ -469,8 +469,8 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
      var name=document.createElement('td'),strong=document.createElement('strong');strong.textContent=m.Nome_Completo||'—';name.appendChild(strong);
      var status=document.createElement('span');status.className='m05-status-chip '+(m.Status_Ativo==='Inativo'?'is-inactive':'');status.textContent=m.Status_Ativo==='Inativo'?'Inativo':'Ativo';name.appendChild(status);tr.appendChild(name);
      var birth=document.createElement('td');birth.textContent=m05BR(m.Data_Nascimento)||'—';tr.appendChild(birth);
-     var emailCell=document.createElement('td');if(m.Email){var mail=document.createElement('a');mail.href='mailto:'+encodeURIComponent(String(m.Email));mail.textContent=m.Email;mail.setAttribute('aria-label','Enviar e-mail para '+m.Email);emailCell.appendChild(mail)}else emailCell.textContent='—';tr.appendChild(emailCell);
-     var phoneCell=document.createElement('td'),digits=String(m.Telefone||'').replace(/\\D/g,'');if(digits){if(digits.length===10||digits.length===11)digits='55'+digits;var wa=document.createElement('a');wa.href='https://wa.me/'+digits;wa.target='_blank';wa.rel='noopener';wa.textContent=m.Telefone;wa.setAttribute('aria-label','Enviar mensagem pelo WhatsApp para '+m.Telefone);phoneCell.appendChild(wa)}else phoneCell.textContent='—';tr.appendChild(phoneCell);
+     var emailCell=document.createElement('td');if(m.Email){var mail=document.createElement('a');mail.href='mailto:'+String(m.Email).trim();mail.textContent=m.Email;mail.setAttribute('aria-label','Enviar e-mail para '+m.Email);emailCell.appendChild(mail)}else emailCell.textContent='—';tr.appendChild(emailCell);
+     var phoneCell=document.createElement('td'),digits=String(m.Telefone||'').replace(/\D/g,'');if(digits){if(digits.length===10||digits.length===11)digits='55'+digits;var wa=document.createElement('a');wa.href='https://wa.me/'+digits;wa.target='_blank';wa.rel='noopener';wa.textContent=m.Telefone;wa.setAttribute('aria-label','Enviar mensagem pelo WhatsApp para '+m.Telefone);phoneCell.appendChild(wa)}else phoneCell.textContent='—';tr.appendChild(phoneCell);
      var entry=document.createElement('td');entry.textContent=m05BR(m.Data_Entrada)||'—';tr.appendChild(entry);body.appendChild(tr)
    });
    if(!rows.length){var tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=5;td.textContent='Nenhum cadastro encontrado.';tr.appendChild(td);body.appendChild(tr)}

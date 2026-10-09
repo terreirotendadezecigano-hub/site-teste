@@ -1,11 +1,11 @@
 <!doctype html>
-<!-- TZC SITE V60 — Módulo 05: gestão de membros. PRONTO PARA INSTALAÇÃO APÓS Apps Script M05 V02 + Ponte V05; aguarda teste no site-teste. Não usar em produção. -->
+<!-- TZC SITE V61 — Módulo 05: gestão de membros. PRONTO PARA INSTALAÇÃO APÓS Apps Script M05 V02 + Ponte V05; aguarda teste no site-teste. Não usar em produção. -->
 <html lang="pt-BR" data-theme="claro">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <script>try{var temaSalvo=localStorage.getItem('tenda-tema');if(temaSalvo==='claro'||temaSalvo==='escuro')document.documentElement.setAttribute('data-theme',temaSalvo)}catch(e){}</script>
 <meta name="theme-color" content="#f7f3eb">
-<title>Tenda de Zé Cigano — Layout aprovado V13 · Módulo 05 · V60 — Gestão de membros</title>
+<title>Tenda de Zé Cigano — Layout aprovado V13 · Módulo 05 · V61 — Gestão de membros</title>
 <style>
 /* BASE VISUAL V01 — estilos claros e escuros derivados do dourado e vinho da logo. */
 :root{--brand-wine:#641d29;--brand-gold:#bd8b38;--brand-gold-soft:#f3e4c5;--brand-wine2:#7b2934;font-family:"Segoe UI",Arial,sans-serif;color-scheme:light;--bg:#f7f3eb;--surface:#fffdf8;--surface2:#efe8dc;--text:#30231f;--muted:#6f625a;--line:#e5d9c9;--primary:#641d29;--primary2:#7b2934;--gold:#bd8b38;--gold-soft:#f3e4c5;--shadow:0 12px 34px #3c20140d;--radius:18px}
@@ -415,7 +415,7 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
     });
     document.querySelectorAll('#nav button').forEach(function(b){classe(b,'active',b.getAttribute('data-page-id')==='__eventos_presencas')});closeMenu();window.scrollTo({top:0,behavior:'smooth'});
   }
-  var m05Dados=[],m05Pendentes=[],m05Funcoes=[];
+  var m05Dados=[],m05PendentesData=[],m05Funcoes=[];
   function m05BR(v){var s=String(v||''),m=s.match(/^(\\d{4})[-/](\\d{1,2})[-/](\\d{1,2})/);return m?('0'+m[3]).slice(-2)+'/'+('0'+m[2]).slice(-2)+'/'+m[1]:s}
   function m05Abrir(){
    if(!authToken){memberOpen();return}paginaAtual='__membros';el('settingsView').hidden=true;el('homeView').hidden=true;var area=el('dynamicPage');area.hidden=false;area.replaceChildren();
@@ -448,7 +448,7 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
   }
   function m05Toggle(m){var s=m.Status_Ativo==='Inativo'?'Ativo':'Inativo';authRpc('alterarStatusV02',[authToken,m.ID_Filho,s],r=>{el('m05PageStatus').textContent=r&&r.mensagem||'Não foi possível atualizar.';if(r&&r.ok)m05Abrir()})}
   function m05Invite(){authRpc('criarConviteV02',[authToken],r=>{if(!r||!r.ok){aviso(r&&r.mensagem||'Não foi possível criar o link.');return}var url=location.origin+location.pathname+'?cadastro='+encodeURIComponent(r.token),text='Preencha sua ficha de cadastro. A gestão completará os dados da casa. Link válido por '+r.validadeDias+' dias e de uso único.';if(navigator.share)navigator.share({title:'Ficha de cadastro',text:text,url:url}).catch(()=>{});else if(navigator.clipboard)navigator.clipboard.writeText(url).then(()=>aviso('Link copiado para compartilhar.'));else window.prompt('Copie o link da ficha:',url)})}
-  function m05Pendentes(){authRpc('listarPendentesV02',[authToken],r=>{if(!r||!r.ok){el('m05PageStatus').textContent=r&&r.mensagem||'Falha ao buscar fichas.';return}m05Pendentes=r.pendentes||[];el('m05PageStatus').textContent=m05Pendentes.length+' ficha(s) aguardando revisão.';var t=document.createElement('table');t.className='m05-table';t.innerHTML='<thead><tr><th>Nome</th><th>E-mail</th><th>Recebida</th><th>Ação</th></tr></thead>';var body=document.createElement('tbody');m05Pendentes.forEach(p=>{var tr=document.createElement('tr');[p.nome,p.email,p.enviado].forEach(v=>{var td=document.createElement('td');td.textContent=v||'—';tr.appendChild(td)});var td=document.createElement('td'),b=document.createElement('button');b.type='button';b.className='member-btn';b.textContent='Revisar e concluir';b.onclick=()=>m05Form(null,p);td.appendChild(b);tr.appendChild(td);body.appendChild(tr)});t.appendChild(body);el('m05List').replaceChildren(t)})}
+  function m05Pendentes(){authRpc('listarPendentesV02',[authToken],r=>{if(!r||!r.ok){el('m05PageStatus').textContent=r&&r.mensagem||'Falha ao buscar fichas.';return}m05PendentesData=r.pendentes||[];el('m05PageStatus').textContent=m05Pendentes.length+' ficha(s) aguardando revisão.';var t=document.createElement('table');t.className='m05-table';t.innerHTML='<thead><tr><th>Nome</th><th>E-mail</th><th>Recebida</th><th>Ação</th></tr></thead>';var body=document.createElement('tbody');m05PendentesData.forEach(p=>{var tr=document.createElement('tr');[p.nome,p.email,p.enviado].forEach(v=>{var td=document.createElement('td');td.textContent=v||'—';tr.appendChild(td)});var td=document.createElement('td'),b=document.createElement('button');b.type='button';b.className='member-btn';b.textContent='Revisar e concluir';b.onclick=()=>m05Form(null,p);td.appendChild(b);tr.appendChild(td);body.appendChild(tr)});t.appendChild(body);el('m05List').replaceChildren(t)})}
   function m05Report(){
    var f=el('m05ReportFilter').value,rows=m05Dados.filter(m=>f==='Todos'||m.Status_Ativo===f),paper=el('m05ReportPaper');paper.replaceChildren();
    var head=document.createElement('div');head.className='report-head';var brand=document.createElement('div');brand.className='report-brand';var logo=el('siteLogo').cloneNode(true);logo.removeAttribute('id');brand.appendChild(logo);var title=document.createElement('div');title.append(texto('strong','Tenda de Zé Cigano'),texto('small','Relatório de membros'));brand.appendChild(title);head.append(brand,texto('div','Emitido em '+new Date().toLocaleDateString('pt-BR'),'report-issued'));paper.append(head);paper.appendChild(texto('div','','report-rule'));

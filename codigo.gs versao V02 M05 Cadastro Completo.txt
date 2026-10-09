@@ -1,0 +1,203 @@
+/* TZC — MÓDULO 05 V02 — GESTÃO E CADASTRO DE FILHOS
+ * Estado: versão de teste, ligada às abas já existentes.
+ * Campos: preserva os 25 campos de Cadastro_Filhos. Nenhum campo é obrigatório
+ * além do nome nesta fase; a matriz final será definida na revisão de segurança.
+ * Fluxo de ficha: convite de uso único → Cadastros_Pendentes → revisão da casa →
+ * salvamento em Cadastro_Filhos. O link não cria usuário nem ativa acesso.
+ * Exclusão: lógica, por situação Inativo. Nenhuma linha financeira é removida.
+ */
+const TZC_M05_CFG_V02 = Object.freeze({
+  ABA_MEMBROS:'Cadastro_Filhos', ABA_USUARIOS:'Usuarios_Acesso',
+  ABA_AUDITORIA:'Auditoria', ABA_PENDENTES:'Cadastros_Pendentes',
+  ABA_CONVITES:'Convites_Cadastro', FUSO:'America/Sao_Paulo',
+  EXPIRA_CONVITE_DIAS:14,
+  PERFIS:['Membro','Colaborador','Dirigente','Administrador'],
+  FUNCOES_BASE:['Filho(a)','Dirigente','Colaborador','Pai de Santo','Mãe de Santo']
+});
+const TZC_M05_CAMPOS_V02 = Object.freeze([
+ 'Nome_Completo','Data_Nascimento','Telefone','Email','Endereco','Data_Entrada',
+ 'Cargo_Funcao','Orixa_Frente','Status_Ativo','Perfil','Observacoes',
+ 'Tipo_Sangue','Alergias_Problemas_Saude','Contato_Emergencia',
+ 'Pode_Cadastrar_Mensagem_Dia','Pode_Aprovar_Mensagem_Dia','Foto_URL','RG','CPF',
+ 'Estado_Civil','Escolaridade','Situacao_Profissional','Profissao','Guia_Chefe_Trabalho'
+]);
+const TZC_M05_PUBLICOS_V02 = Object.freeze([
+ 'Nome_Completo','Data_Nascimento','Telefone','Email','Endereco',
+ 'Tipo_Sangue','Alergias_Problemas_Saude','Contato_Emergencia','Foto_URL',
+ 'RG','CPF','Estado_Civil','Escolaridade','Situacao_Profissional','Profissao'
+]);
+function tzcM05_autorizarV02_(token){
+ const sess=tzcM02_sessaoV03_(String(token||''));
+ if(!sess||!sess.email)return {ok:false,mensagem:'Entre novamente para continuar.'};
+ const u=tzcM02_buscarUsuarioV03_(sess.email);
+ if(!u||String(u.status||'').toLowerCase()!=='ativo')return {ok:false,mensagem:'Seu acesso não está ativo.'};
+ const teste=typeof TZC_M02_CFG_V03!=='undefined'&&TZC_M02_CFG_V03.MODO_TESTE===true;
+ if(!teste&&!['dirigente','administrador'].includes(String(u.perfil||'').toLowerCase()))
+  return {ok:false,mensagem:'Somente a gestão pode acessar este cadastro.'};
+ return {ok:true,usuario:u};
+}
+function tzcM05_mapaV02_(sh){
+ if(!sh||!sh.getLastColumn())throw Error('Tabela sem cabeçalhos.');
+ const m={};sh.getRange(1,1,1,sh.getLastColumn()).getDisplayValues()[0].forEach((v,i)=>{const k=String(v||'').trim();if(k)m[k]=i;});return m;
+}
+function tzcM05_textoV02_(v,max){return String(v==null?'':v).trim().slice(0,max||2000)}
+function tzcM05_emailV02_(v){const x=String(v||'').trim().toLowerCase();return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x)?x:''}
+function tzcM05_dataBRV02_(v){
+ if(v instanceof Date&&!isNaN(v.getTime()))return Utilities.formatDate(v,TZC_M05_CFG_V02.FUSO,'dd/MM/yyyy');
+ const s=String(v==null?'':v).trim();let a=s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+ if(a)return ('0'+a[3]).slice(-2)+'/'+('0'+a[2]).slice(-2)+'/'+a[1];
+ a=s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+ return a?('0'+a[1]).slice(-2)+'/'+('0'+a[2]).slice(-2)+'/'+a[3]:s;
+}
+function tzcM05_dadosLinhaV02_(row,map){const o={};Object.keys(map).forEach(k=>o[k]=row[map[k]]);return o}
+function tzcM05_auditarV02_(ss,actor,acao,id,antes,depois){
+ const sh=ss.getSheetByName(TZC_M05_CFG_V02.ABA_AUDITORIA);if(!sh||sh.getLastColumn()<1)return;
+ const m=tzcM05_mapaV02_(sh),r=new Array(sh.getLastColumn()).fill('');
+ const v={ID_Auditoria:'AUD-M05-'+Utilities.getUuid(),Data_Hora:new Date(),Email_Usuario:actor.email||'',
+ Nome_Usuario:actor.nome||'',Perfil_Usuario:actor.perfil||'',Acao:acao,Area:'Membros',
+ Entidade:'Cadastro_Filhos',ID_Registro:id,Descricao:'Módulo de membros: '+acao,
+ Valores_Antigos:JSON.stringify(antes||{}),Valores_Novos:JSON.stringify(depois||{}),Resultado:'Sucesso'};
+ Object.keys(v).forEach(k=>{if(m[k]!=null)r[m[k]]=v[k]});sh.appendRow(r);
+}
+function tzcM05_atualizarUsuarioV02_(ss,member,id){
+ const sh=ss.getSheetByName(TZC_M05_CFG_V02.ABA_USUARIOS);if(!sh)return;
+ const map=tzcM05_mapaV02_(sh);if(map.ID_Filho==null||map.Email==null)return;
+ const rows=sh.getLastRow()>1?sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).getValues():[];
+ for(let i=0;i<rows.length;i++){
+  const r=rows[i],sameId=String(r[map.ID_Filho]||'')===String(id),memberEmail=tzcM05_emailV02_(member.Email),sameEmail=!!memberEmail&&tzcM05_emailV02_(r[map.Email])===memberEmail;
+  if(!sameId&&!sameEmail)continue;
+  if(map.ID_Filho!=null)r[map.ID_Filho]=id;
+  if(map.Email!=null&&member.Email)r[map.Email]=member.Email;
+  if(map.Nome!=null)r[map.Nome]=member.Nome_Completo;
+  if(map.Perfil!=null)r[map.Perfil]=member.Perfil||'Membro';
+  if(map.Status!=null)r[map.Status]=member.Status_Ativo||'Ativo';
+  sh.getRange(i+2,1,1,r.length).setValues([r]);
+ }
+}
+/** Retorna todos os campos ao editor autenticado; a tabela resumida usa só colunas de gestão. */
+function TZC_M05_listarMembrosV02(token){
+ const a=tzcM05_autorizarV02_(token);if(!a.ok)return a;
+ try{
+  const ss=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID),sh=ss.getSheetByName(TZC_M05_CFG_V02.ABA_MEMBROS);
+  if(!sh||sh.getLastRow()<2)return {ok:true,membros:[],opcoesFuncao:TZC_M05_CFG_V02.FUNCOES_BASE};
+  const map=tzcM05_mapaV02_(sh),rows=sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).getDisplayValues(),fun=[];
+  const membros=rows.map(r=>tzcM05_dadosLinhaV02_(r,map)).filter(x=>x.ID_Filho&&x.Nome_Completo).map(x=>{
+   const o={};TZC_M05_CAMPOS_V02.forEach(k=>o[k]=x[k]==null?'':String(x[k]));
+   o.ID_Filho=String(x.ID_Filho);o.Data_Nascimento=tzcM05_dataBRV02_(o.Data_Nascimento);o.Data_Entrada=tzcM05_dataBRV02_(o.Data_Entrada);
+   if(o.Cargo_Funcao&&fun.indexOf(o.Cargo_Funcao)<0)fun.push(o.Cargo_Funcao);return o;
+  }).sort((x,y)=>x.Nome_Completo.localeCompare(y.Nome_Completo,'pt-BR',{sensitivity:'base'}));
+  return {ok:true,membros:membros,opcoesFuncao:Array.from(new Set(TZC_M05_CFG_V02.FUNCOES_BASE.concat(fun))).sort((x,y)=>x.localeCompare(y,'pt-BR'))};
+ }catch(e){console.error('M05 listar V02: '+e.message);return {ok:false,mensagem:'Não foi possível carregar os membros.'}}
+}
+/** Cria ou atualiza sem trocar ID; grava os campos da ficha e só sincroniza contas já existentes. */
+function TZC_M05_salvarMembroV02(token,json){
+ const a=tzcM05_autorizarV02_(token);if(!a.ok)return a;
+ let p;try{p=JSON.parse(String(json||''))}catch(e){return {ok:false,mensagem:'Dados do cadastro inválidos.'}}
+ const id=tzcM05_textoV02_(p.id,100),pendingId=tzcM05_textoV02_(p.pendingId,100),fields=p.fields||{};
+ const nome=tzcM05_textoV02_(fields.Nome_Completo,150),email=tzcM05_emailV02_(fields.Email);
+ if(!nome)return {ok:false,mensagem:'Informe o nome completo.'};
+ if(fields.Email&&!email)return {ok:false,mensagem:'Confira o formato do e-mail.'};
+ const lock=LockService.getScriptLock();
+ try{
+  lock.waitLock(8000);
+  const ss=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID),sh=ss.getSheetByName(TZC_M05_CFG_V02.ABA_MEMBROS);
+  if(!sh)throw Error('Cadastro_Filhos não encontrada.');
+  const map=tzcM05_mapaV02_(sh),rows=sh.getLastRow()>1?sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).getValues():[];
+  let rowNo=0,before=null;
+  rows.forEach((r,i)=>{const o=tzcM05_dadosLinhaV02_(r,map);if(id&&String(o.ID_Filho)===id){rowNo=i+2;before=o}});
+  if(id&&!rowNo)return {ok:false,mensagem:'Este cadastro não existe mais. Atualize a lista.'};
+  rows.forEach(r=>{const o=tzcM05_dadosLinhaV02_(r,map);if(String(o.ID_Filho||'')!==id&&email&&tzcM05_emailV02_(o.Email)===email)throw Error('Este e-mail já está cadastrado para outra pessoa.')});
+  const wasExisting=!!rowNo;
+  const memberId=id||('FILHO_'+Utilities.getUuid().replace(/-/g,'').slice(0,16));
+  const current=rowNo?sh.getRange(rowNo,1,1,sh.getLastColumn()).getValues()[0]:new Array(sh.getLastColumn()).fill('');
+  const after={};
+  TZC_M05_CAMPOS_V02.forEach(k=>{
+   if(map[k]==null)return;
+   let v=fields[k]==null?'':fields[k];
+   if(k==='Email')v=email;
+   else if(k==='Nome_Completo')v=nome;
+   else if(k==='Data_Entrada'||k==='Data_Nascimento')v=tzcM05_dataBRV02_(v);
+   else if(k==='Pode_Cadastrar_Mensagem_Dia'||k==='Pode_Aprovar_Mensagem_Dia')v=String(v).toLowerCase()==='sim'?'Sim':'Não';
+   else v=tzcM05_textoV02_(v,k==='Alergias_Problemas_Saude'||k==='Observacoes'?2000:500);
+   current[map[k]]=v;after[k]=v;
+  });
+  if(map.ID_Filho==null)throw Error('Falta a coluna ID_Filho.');
+  current[map.ID_Filho]=memberId;
+  if(!rowNo&&map.Status_Ativo!=null&&!after.Status_Ativo)current[map.Status_Ativo]='Ativo';
+  if(!rowNo&&map.Perfil!=null&&!after.Perfil)current[map.Perfil]='Membro';
+  if(rowNo)sh.getRange(rowNo,1,1,current.length).setValues([current]);
+  else{sh.appendRow(current);rowNo=sh.getLastRow()}
+  const saved=Object.assign({},after,{ID_Filho:memberId});
+  tzcM05_atualizarUsuarioV02_(ss,saved,memberId);
+  if(pendingId){
+   const ps=ss.getSheetByName(TZC_M05_CFG_V02.ABA_PENDENTES),pm=tzcM05_mapaV02_(ps);
+   const pr=ps.getLastRow()>1?ps.getRange(2,1,ps.getLastRow()-1,ps.getLastColumn()).getValues():[];
+   for(let i=0;i<pr.length;i++)if(String(pr[i][pm.ID_Solicitacao]||'')===pendingId){
+    if(pm.Status!=null)pr[i][pm.Status]='Aprovado';
+    if(pm.Decidido_Em!=null)pr[i][pm.Decidido_Em]=new Date();
+    if(pm.Decidido_Por!=null)pr[i][pm.Decidido_Por]=a.usuario.email||'';
+    if(pm.ID_Filho!=null)pr[i][pm.ID_Filho]=memberId;
+    ps.getRange(i+2,1,1,pr[i].length).setValues([pr[i]]);break;
+   }
+  }
+  tzcM05_auditarV02_(ss,a.usuario,wasExisting?'EDITAR':'INCLUIR',memberId,before,saved);
+  return {ok:true,mensagem:pendingId?'Ficha revisada e cadastrada.':id?'Cadastro atualizado.':'Membro cadastrado.',id:memberId};
+ }catch(e){console.error('M05 salvar V02: '+e.message);return {ok:false,mensagem:e.message==='Este e-mail já está cadastrado para outra pessoa.'?e.message:'Não foi possível salvar o cadastro agora.'}}
+ finally{try{lock.releaseLock()}catch(ignore){}}
+}
+/** Inativa/reativa cadastro e atualiza apenas uma conta que já exista, sem criar acesso novo. */
+function TZC_M05_alterarStatusV02(token,id,status){
+ const a=tzcM05_autorizarV02_(token);if(!a.ok)return a;
+ id=tzcM05_textoV02_(id,100);status=String(status||'').toLowerCase()==='inativo'?'Inativo':'Ativo';if(!id)return {ok:false,mensagem:'Membro não informado.'};
+ const lock=LockService.getScriptLock();
+ try{lock.waitLock(8000);const ss=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID),sh=ss.getSheetByName(TZC_M05_CFG_V02.ABA_MEMBROS),map=tzcM05_mapaV02_(sh),rows=sh.getLastRow()>1?sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).getValues():[];
+ let rowNo=0,before=null;rows.forEach((r,i)=>{const o=tzcM05_dadosLinhaV02_(r,map);if(String(o.ID_Filho)===id){rowNo=i+2;before=o}});
+ if(!rowNo)return {ok:false,mensagem:'Membro não encontrado.'};sh.getRange(rowNo,map.Status_Ativo+1).setValue(status);
+ const after=Object.assign({},before,{Status_Ativo:status});tzcM05_atualizarUsuarioV02_(ss,after,id);tzcM05_auditarV02_(ss,a.usuario,status==='Ativo'?'RESTAURAR':'INATIVAR',id,before,after);
+ return {ok:true,mensagem:status==='Ativo'?'Cadastro reativado.':'Cadastro inativado.'}
+ }catch(e){console.error('M05 status V02: '+e.message);return {ok:false,mensagem:'Não foi possível alterar o status.'}}finally{try{lock.releaseLock()}catch(ignore){}}
+}
+function tzcM05_hashConviteV02_(token){return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,String(token),Utilities.Charset.UTF_8).map(b=>('0'+((b+256)%256).toString(16)).slice(-2)).join('')}
+/** Gera convite pessoal, de uso único e validade de 14 dias; guarda apenas o hash. */
+function TZC_M05_criarConviteV02(token){
+ const a=tzcM05_autorizarV02_(token);if(!a.ok)return a;
+ try{const ss=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID),sh=ss.getSheetByName(TZC_M05_CFG_V02.ABA_CONVITES);if(!sh)throw Error('Convites_Cadastro não encontrada.');
+ const map=tzcM05_mapaV02_(sh),raw=Utilities.getUuid()+Utilities.getUuid()+Utilities.getUuid(),invite='TZC-'+raw.replace(/-/g,'');
+ const row=new Array(sh.getLastColumn()).fill(''),id='CONV-'+Utilities.getUuid().replace(/-/g,'');
+ const values={ID_Convite:id,Token_Hash:tzcM05_hashConviteV02_(invite),Expira_Em:Date.now()+TZC_M05_CFG_V02.EXPIRA_CONVITE_DIAS*86400000,Usado_Em:'',ID_Solicitacao:'',Criado_Por:a.usuario.email||''};
+ Object.keys(values).forEach(k=>{if(map[k]!=null)row[map[k]]=values[k]});sh.appendRow(row);
+ return {ok:true,token:invite,validadeDias:TZC_M05_CFG_V02.EXPIRA_CONVITE_DIAS}
+ }catch(e){console.error('M05 convite V02: '+e.message);return {ok:false,mensagem:'Não foi possível criar o link agora.'}}
+}
+/** Recebe apenas dados da ficha pessoal; token de convite é validado e consumido uma única vez. */
+function TZC_M05_enviarCadastroPublicoV02(convite,json){
+ convite=tzcM05_textoV02_(convite,120);let p;try{p=JSON.parse(String(json||''))}catch(e){return {ok:false,mensagem:'Confira os dados enviados.'}}
+ const fields={};TZC_M05_PUBLICOS_V02.forEach(k=>fields[k]=tzcM05_textoV02_(p[k],k==='Alergias_Problemas_Saude'?1500:500));
+ fields.Email=tzcM05_emailV02_(fields.Email);if(!fields.Nome_Completo)return {ok:false,mensagem:'Informe o nome completo.'};
+ if(p.Email&&!fields.Email)return {ok:false,mensagem:'Confira o formato do e-mail.'};
+ const lock=LockService.getScriptLock();
+ try{lock.waitLock(8000);const ss=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID),inv=ss.getSheetByName(TZC_M05_CFG_V02.ABA_CONVITES),pend=ss.getSheetByName(TZC_M05_CFG_V02.ABA_PENDENTES),im=tzcM05_mapaV02_(inv),pm=tzcM05_mapaV02_(pend);
+ const tokenHash=tzcM05_hashConviteV02_(convite),ir=inv.getLastRow()>1?inv.getRange(2,1,inv.getLastRow()-1,inv.getLastColumn()).getValues():[];let inviteRow=0,inviteData=null;
+ ir.forEach((r,i)=>{if(String(r[im.Token_Hash]||'')===tokenHash){inviteRow=i+2;inviteData=r}});
+ if(!inviteRow)return {ok:false,mensagem:'Este link não é válido. Solicite um novo à gestão.'};
+ if(inviteData[im.Usado_Em])return {ok:false,mensagem:'Este link já foi utilizado.'};
+ if(Number(inviteData[im.Expira_Em])<Date.now())return {ok:false,mensagem:'Este link expirou. Solicite outro à gestão.'};
+ const ms=ss.getSheetByName(TZC_M05_CFG_V02.ABA_MEMBROS),mm=tzcM05_mapaV02_(ms);
+ if(fields.Email&&ms.getLastRow()>1){const main=ms.getRange(2,1,ms.getLastRow()-1,ms.getLastColumn()).getValues();if(main.some(r=>tzcM05_emailV02_(r[mm.Email])===fields.Email))return {ok:false,mensagem:'Este e-mail já possui cadastro. Fale com a gestão.'}}
+ const requestId='SOL-'+Utilities.getUuid().replace(/-/g,'').slice(0,18),row=new Array(pend.getLastColumn()).fill('');
+ const v={ID_Solicitacao:requestId,ID_Convite:inviteData[im.ID_Convite],Nome_Completo:fields.Nome_Completo,Email:fields.Email,CPF:fields.CPF,Dados_JSON:JSON.stringify(fields),Status:'Pendente',Enviado_Em:new Date(),Decidido_Em:'',Decidido_Por:'',ID_Filho:''};
+ Object.keys(v).forEach(k=>{if(pm[k]!=null)row[pm[k]]=v[k]});pend.appendRow(row);
+ inviteData[im.Usado_Em]=new Date();inviteData[im.ID_Solicitacao]=requestId;inv.getRange(inviteRow,1,1,inviteData.length).setValues([inviteData]);
+ return {ok:true,mensagem:'Ficha recebida. A gestão concluirá os dados da casa.'}
+ }catch(e){console.error('M05 ficha pública V02: '+e.message);return {ok:false,mensagem:'Não foi possível enviar a ficha. Tente novamente ou fale com a gestão.'}}
+ finally{try{lock.releaseLock()}catch(ignore){}}
+}
+/** Lista apenas fichas em análise para a gestão autenticada. */
+function TZC_M05_listarPendentesV02(token){
+ const a=tzcM05_autorizarV02_(token);if(!a.ok)return a;
+ try{const ss=SpreadsheetApp.openById(TZC_M04_CFG_V01.PLANILHA_ID),sh=ss.getSheetByName(TZC_M05_CFG_V02.ABA_PENDENTES);if(!sh||sh.getLastRow()<2)return {ok:true,pendentes:[]};
+ const m=tzcM05_mapaV02_(sh),rows=sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).getDisplayValues(),pendentes=[];
+ rows.forEach(r=>{const x=tzcM05_dadosLinhaV02_(r,m);if(x.ID_Solicitacao&&String(x.Status).toLowerCase()==='pendente'){let data={};try{data=JSON.parse(x.Dados_JSON||'{}')}catch(e){}pendentes.push({id:String(x.ID_Solicitacao),nome:String(x.Nome_Completo||''),email:String(x.Email||''),enviado:String(x.Enviado_Em||''),fields:data})}});
+ return {ok:true,pendentes:pendentes.sort((x,y)=>x.nome.localeCompare(y.nome,'pt-BR'))}
+ }catch(e){console.error('M05 pendentes V02: '+e.message);return {ok:false,mensagem:'Não foi possível carregar as fichas recebidas.'}}
+}

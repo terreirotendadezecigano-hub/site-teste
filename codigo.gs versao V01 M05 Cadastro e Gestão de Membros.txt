@@ -57,9 +57,8 @@ function tzcM05_sincronizarUsuarioV01_(ss, member, memberId, actor) {
   const sh=ss.getSheetByName(TZC_M05_CFG_V01.ABA_USUARIOS); if(!sh)throw new Error('Usuarios_Acesso não encontrada.');
   const map=tzcM05_mapaV01_(sh), required=['ID_Usuario','Email','Nome','Perfil','Status','ID_Filho'];
   required.forEach(k=>{if(map[k]==null)throw new Error('Falta a coluna '+k+' em Usuarios_Acesso.');});
-  const email=tzcM05_emailV01_(member.Email);
+  const email=tzcM05_emailV01_(member.Email); if(!email)return;
   const rows=sh.getLastRow()>1?sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).getValues():[];
-  if(!email){rows.forEach((r,i)=>{const o=tzcM05_objV01_(r,map);if(String(o.ID_Filho||'')===String(memberId)){sh.getRange(i+2,map.Status+1).setValue('Inativo');}});return;}
   let rowNo=0, existing=null;
   rows.forEach((r,i)=>{
     const row=tzcM05_objV01_(r,map), sameEmail=tzcM05_emailV01_(row.Email)===email;
@@ -99,10 +98,8 @@ function TZC_M05_salvarMembro(token,json) {
   const auth=tzcM05_autorizarV01_(token); if(!auth.ok)return auth;
   let p; try{p=JSON.parse(String(json||''));}catch(e){return {ok:false,mensagem:'Dados do cadastro inválidos.'};}
   const id=tzcM05_textoV01_(p.id,100), nome=tzcM05_textoV01_(p.nome,150), email=tzcM05_emailV01_(p.email);
-  const cpf=String(p.cpf||'').replace(/\D/g,'').slice(0,11);
   if(!nome)return {ok:false,mensagem:'Informe o nome completo.'};
   if(p.email&&!email)return {ok:false,mensagem:'Confira o formato do e-mail.'};
-  if(cpf&&cpf.length!==11)return {ok:false,mensagem:'Confira o CPF informado.'};
   const lock=LockService.getScriptLock();
   try {
     lock.waitLock(8000);
@@ -112,13 +109,12 @@ function TZC_M05_salvarMembro(token,json) {
     let rowNo=0,before=null;
     rows.forEach((r,i)=>{const o=tzcM05_objV01_(r,map);if(id&&String(o.ID_Filho)===id){rowNo=i+2;before=o;}});
     if(id&&!rowNo)return {ok:false,mensagem:'Este cadastro não existe mais. Atualize a lista.'};
-    rows.forEach(r=>{const o=tzcM05_objV01_(r,map);if(String(o.ID_Filho||'')!==id&&email&&tzcM05_emailV01_(o.Email)===email)throw new Error('Este e-mail já está cadastrado para outra pessoa.');if(String(o.ID_Filho||'')!==id&&cpf&&String(o.CPF||'').replace(/\D/g,'')===cpf)throw new Error('Este CPF já está cadastrado para outra pessoa.');});
+    rows.forEach(r=>{const o=tzcM05_objV01_(r,map);if(String(o.ID_Filho||'')!==id&&email&&tzcM05_emailV01_(o.Email)===email)throw new Error('Este e-mail já está cadastrado para outra pessoa.');});
     const memberId=id||('FILHO_'+Utilities.getUuid().replace(/-/g,'').slice(0,16));
     const current=rowNo?sh.getRange(rowNo,1,1,sh.getLastColumn()).getValues()[0]:new Array(sh.getLastColumn()).fill('');
     const vals={ID_Filho:memberId,Nome_Completo:nome,Email:email,Telefone:tzcM05_textoV01_(p.telefone,40),
       Perfil:tzcM05_textoV01_(p.perfil,40)||'Membro',Cargo_Funcao:tzcM05_textoV01_(p.funcao,100),
-      Data_Entrada:tzcM05_textoV01_(p.entrada,30),Status_Ativo:String(p.status||'Ativo').toLowerCase()==='inativo'?'Inativo':'Ativo'};
-    if(cpf&&map.CPF!=null)vals.CPF=cpf;
+      Data_Entrada:tzcM05_textoV01_(p.entrada,30),Status_Ativo:tzcM05_textoV01_(p.status,20)||'Ativo'};
     Object.keys(vals).forEach(k=>{if(map[k]!=null)current[map[k]]=vals[k];});
     if(!rowNo){if(map.Data_Nascimento!=null)current[map.Data_Nascimento]='';sh.getRange(sh.getLastRow()+1,1,1,current.length).setValues([current]);}
     else sh.getRange(rowNo,1,1,current.length).setValues([current]);
@@ -126,7 +122,7 @@ function TZC_M05_salvarMembro(token,json) {
     tzcM05_sincronizarUsuarioV01_(ss,after,memberId,auth.usuario);
     tzcM05_auditarV01_(ss,auth.usuario,rowNo?'EDITAR':'INCLUIR',memberId,before,after);
     return {ok:true,mensagem:rowNo?'Cadastro atualizado.':'Membro cadastrado.',id:memberId};
-  } catch(e) { console.error('M05 salvar: '+e.message); return {ok:false,mensagem:e.message==='Este e-mail já está cadastrado para outra pessoa.'||e.message==='Este CPF já está cadastrado para outra pessoa.'||e.message==='Este e-mail já está ligado a outro membro.'||e.message.indexOf('mais de uma conta')>=0?e.message:'Não foi possível salvar o cadastro agora.'}; }
+  } catch(e) { console.error('M05 salvar: '+e.message); return {ok:false,mensagem:e.message==='Este e-mail já está cadastrado para outra pessoa.'||e.message==='Este e-mail já está ligado a outro membro.'||e.message.indexOf('mais de uma conta')>=0?e.message:'Não foi possível salvar o cadastro agora.'}; }
   finally {try{lock.releaseLock();}catch(ignore){}}
 }
 

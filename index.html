@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <script>try{var temaSalvo=localStorage.getItem('tenda-tema');if(temaSalvo==='claro'||temaSalvo==='escuro')document.documentElement.setAttribute('data-theme',temaSalvo)}catch(e){}</script>
 <meta name="theme-color" content="#f7f3eb">
-<title>Tenda de Zé Cigano — Layout aprovado V13 · Módulo 04 · V55 — relatório A4 em pé</title>
+<title>Tenda de Zé Cigano — Layout aprovado V13 · Módulo 05 · V56 — Gestão de membros</title>
 <style>
 /* BASE VISUAL V01 — estilos claros e escuros derivados do dourado e vinho da logo. */
 :root{--brand-wine:#641d29;--brand-gold:#bd8b38;--brand-gold-soft:#f3e4c5;--brand-wine2:#7b2934;font-family:"Segoe UI",Arial,sans-serif;color-scheme:light;--bg:#f7f3eb;--surface:#fffdf8;--surface2:#efe8dc;--text:#30231f;--muted:#6f625a;--line:#e5d9c9;--primary:#641d29;--primary2:#7b2934;--gold:#bd8b38;--gold-soft:#f3e4c5;--shadow:0 12px 34px #3c20140d;--radius:18px}
@@ -244,6 +244,24 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
 <dialog id="m04ReportDialog" class="m04-dialog m04-report"><div class="dialog-head"><div><h2>Previsão do evento</h2><p class="m04-note">Veja quantas pessoas são esperadas.</p></div><button class="close" type="button" data-action="close-report" aria-label="Fechar">×</button></div><div class="dialog-body"><div class="m04-report-controls" id="m04ReportControls"><label for="m04ReportEvent">Evento</label><select id="m04ReportEvent" disabled><option value="">Carregando eventos…</option></select><button class="member-btn" id="m04GenerateReport" type="button" disabled>Ver previsão</button></div><p id="m04ReportStatus" class="m04-status" role="status" aria-live="polite">Buscando os próximos eventos…</p><article id="m04ReportPaper" class="m04-report-paper" hidden></article><div id="m04ReportActions" class="m04-report-actions" hidden><button class="secondary" id="m04ShareReport" type="button">Compartilhar</button><button class="secondary" id="m04PrintReport" type="button">Imprimir</button><button class="member-btn" id="m04DownloadReport" type="button">Baixar PDF</button><button class="secondary" type="button" data-action="close-report">Fechar</button></div></div><div class="dialog-actions"><button class="secondary" type="button" data-action="close-report">Fechar</button></div></dialog>
 <dialog id="m04Manager" class="m04-dialog"><div class="dialog-head"><div><h2>Presenças do evento</h2><p class="m04-note">Confira quem informou que compareceu.</p></div><button class="close" type="button" data-action="close-manager" aria-label="Fechar">×</button></div><div class="dialog-body"><div class="m04-manage-row"><select id="m04EventSelect" aria-label="Evento" disabled><option value="">Carregando eventos…</option></select><button type="button" id="m04LoadRoster" disabled>Ver presenças</button></div><div id="m04Roster" class="m04-roster"></div><p id="m04ManagerStatus" class="m04-status" role="status" aria-live="polite">Carregando eventos…</p><div class="m04-manager-tools"><button type="button" id="m04OpenDelegate" hidden>Autorizar responsável</button></div></div></dialog>
 <dialog id="m04DelegateDialog" class="m04-dialog"><div class="dialog-head"><div><h2>Autorizar responsável</h2><p class="m04-note">Escolha um evento e um filho de santo.</p></div><button class="close" type="button" data-action="close-delegate" aria-label="Fechar">×</button></div><div class="dialog-body"><div class="field"><label for="m04DelegateEvent">Gira ou evento</label><select id="m04DelegateEvent"><option value="">Carregando eventos…</option></select></div><div class="field"><label for="m04DelegateMember">Filho de santo</label><select id="m04DelegateMember"><option value="">Carregando membros…</option></select></div><p id="m04DelegateStatus" class="m04-status" role="status" aria-live="polite"></p><div class="m04-delegate-actions" id="m04DelegateActions"><button type="button" id="m04Grant">Autorizar</button><button type="button" id="m04Revoke">Revogar autorização</button></div><section id="m04DelegateConfirm" class="m04-inline-confirm" hidden><p id="m04DelegateConfirmText"></p><div><button class="secondary" type="button" id="m04CancelDelegate">Voltar</button><button class="member-btn" type="button" id="m04ConfirmDelegate">Confirmar</button></div></section></div><div class="dialog-actions"><button class="secondary" type="button" data-action="close-delegate">Fechar</button></div></dialog>
+<dialog id="m05MemberDialog" class="m05-dialog">
+  <div class="dialog-head"><div><h2 id="m05DialogTitle">Novo membro</h2><p>Preencha os dados básicos. Ao editar, o cadastro existente será atualizado.</p></div><button class="close" type="button" data-action="m05-close" aria-label="Fechar">×</button></div>
+  <form id="m05MemberForm"><div class="dialog-body">
+    <input id="m05Id" type="hidden">
+    <div class="m05-fields">
+      <div class="field"><label for="m05Nome">Nome completo</label><input id="m05Nome" required maxlength="150"></div>
+      <div class="field"><label for="m05Email">E-mail</label><input id="m05Email" type="email" maxlength="254"></div>
+      <div class="field"><label for="m05Cpf">CPF (opcional)</label><input id="m05Cpf" inputmode="numeric" maxlength="14" placeholder="Somente números"></div>
+      <div class="field"><label for="m05Telefone">Telefone / WhatsApp</label><input id="m05Telefone" maxlength="40"></div>
+      <div class="field"><label for="m05Funcao">Função na casa</label><input id="m05Funcao" maxlength="100" placeholder="Ex.: Filho(a), dirigente"></div>
+      <div class="field"><label for="m05Perfil">Perfil de acesso</label><select id="m05Perfil"><option>Membro</option><option>Colaborador</option><option>Dirigente</option><option>Administrador</option></select></div>
+      <div class="field"><label for="m05Entrada">Data de entrada</label><input id="m05Entrada" placeholder="dd/mm/aaaa" maxlength="30"></div>
+      <div class="field"><label for="m05Status">Situação</label><select id="m05Status"><option>Ativo</option><option>Inativo</option></select></div>
+    </div>
+    <p id="m05FormStatus" class="m05-status" role="status" aria-live="polite"></p>
+    <div class="dialog-actions"><button class="member-btn" type="submit" id="m05Save">Salvar cadastro</button><button class="secondary" type="button" data-action="m05-close">Fechar</button></div>
+  </div></form>
+</dialog>
 <div id="toast" class="toast" role="status"></div>
 <script>
 /* TZC — SITE V52 — PREVISÃO POR PESSOAS E PDF NO PADRÃO APROVADO.
@@ -268,7 +286,7 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
   function atualizarMarca(id){var imagem=el('siteLogo'),padrao=imagem.getAttribute('src'),logo=seguroLink(id.logoUrl);if(logo){imagem.src=logo;imagem.hidden=false;imagem.onerror=function(){imagem.src=padrao};tzcExtrairPaletaLogo(logo)}else{imagem.src=padrao;imagem.hidden=false;tzcExtrairPaletaLogo(padrao)}el('brandMonogram').hidden=true;el('siteName').textContent=id.nome||'Tenda de Zé Cigano';el('siteSubtitle').textContent=id.subtitulo||'TERREIRO DE UMBANDA'}
   /* Extrai tons da logo no navegador sem chamar Apps Script. Se o Drive bloquear pixels do canvas, usa a paleta salva. */
   function tzcExtrairPaletaLogo(url){if(!url)return;var img=new Image();img.crossOrigin='anonymous';img.onload=function(){try{var c=document.createElement('canvas'),w=48,h=48;c.width=w;c.height=h;var x=c.getContext('2d',{willReadFrequently:true});x.drawImage(img,0,0,w,h);var d=x.getImageData(0,0,w,h).data,wine=[],gold=[];function lum(r,g,b){return(.2126*r+.7152*g+.0722*b)/255}for(var i=0;i<d.length;i+=16){var r=d[i],g=d[i+1],b=d[i+2],a=d[i+3];if(a<170)continue;var mx=Math.max(r,g,b),mn=Math.min(r,g,b),sat=mx?((mx-mn)/mx):0,l=lum(r,g,b),hue=0;if(mx===mn)hue=0;else if(mx===r)hue=(60*((g-b)/(mx-mn))+360)%360;else if(mx===g)hue=60*((b-r)/(mx-mn))+120;else hue=60*((r-g)/(mx-mn))+240;if(sat<.23)continue;var rgb=[r,g,b];if((hue<22||hue>335)&&l<.62)wine.push(rgb);if(hue>=24&&hue<=62&&l>.34)gold.push(rgb)}function avg(list,fallback){if(!list.length)return fallback;var s=[0,0,0];list.forEach(function(v){s[0]+=v[0];s[1]+=v[1];s[2]+=v[2]});return s.map(function(v){return Math.round(v/list.length)})}function hex(rgb){return'#'+rgb.map(function(v){return('0'+v.toString(16)).slice(-2)}).join('')}function blend(rgb,other,p){return rgb.map(function(v,i){return Math.round(v*(1-p)+other[i]*p)})}var wcol=avg(wine,[100,29,41]),gcol=avg(gold,[189,139,56]),root=document.documentElement;root.style.setProperty('--brand-wine',hex(wcol));root.style.setProperty('--brand-wine2',hex(blend(wcol,[0,0,0],.2)));root.style.setProperty('--brand-gold',hex(gcol));root.style.setProperty('--brand-gold-soft',hex(blend(gcol,[255,255,255],.76)))}catch(ignore){}};img.src=url}
-  function renderMenu(lista){var host=el('nav');host.replaceChildren();lista.filter(function(p){return p.exibirMenu&&p.nomeMenu}).forEach(function(p){var b=document.createElement('button');b.type='button';b.setAttribute('data-page-id',p.id);var icon=document.createElement('span');icon.className='ico';icon.appendChild(iconSvg(iconePorPagina(p)));b.append(icon,document.createTextNode(p.nomeMenu));bindTap(b,function(){abrirPagina(p.id)});host.appendChild(b)});if(authToken&&authUser){var e=document.createElement('button');e.type='button';e.setAttribute('data-page-id','__eventos_presencas');var ei=document.createElement('span');ei.className='ico';ei.appendChild(iconSvg('calendar'));e.append(ei,document.createTextNode('Presenças e eventos'));bindTap(e,function(){abrirPagina('__eventos_presencas')});host.appendChild(e)}if(podeConfig){var c=document.createElement('button');c.type='button';c.setAttribute('data-page-id','__config');var i=document.createElement('span');i.className='ico';i.appendChild(iconSvg('book'));c.append(i,document.createTextNode('Configurações'));bindTap(c,function(){configAbrir()});host.appendChild(c)}}
+  function renderMenu(lista){var host=el('nav');host.replaceChildren();lista.filter(function(p){return p.exibirMenu&&p.nomeMenu}).forEach(function(p){var b=document.createElement('button');b.type='button';b.setAttribute('data-page-id',p.id);var icon=document.createElement('span');icon.className='ico';icon.appendChild(iconSvg(iconePorPagina(p)));b.append(icon,document.createTextNode(p.nomeMenu));bindTap(b,function(){abrirPagina(p.id)});host.appendChild(b)});if(authToken&&authUser){var e=document.createElement('button');e.type='button';e.setAttribute('data-page-id','__eventos_presencas');var ei=document.createElement('span');ei.className='ico';ei.appendChild(iconSvg('calendar'));e.append(ei,document.createTextNode('Presenças e eventos'));bindTap(e,function(){abrirPagina('__eventos_presencas')});host.appendChild(e);var mm=document.createElement('button');mm.type='button';mm.setAttribute('data-page-id','__membros');var mi=document.createElement('span');mi.className='ico';mi.appendChild(iconSvg('visit'));mm.append(mi,document.createTextNode('Gestão de membros'));bindTap(mm,function(){abrirPagina('__membros')});host.appendChild(mm)}if(podeConfig){var c=document.createElement('button');c.type='button';c.setAttribute('data-page-id','__config');var i=document.createElement('span');i.className='ico';i.appendChild(iconSvg('book'));c.append(i,document.createTextNode('Configurações'));bindTap(c,function(){configAbrir()});host.appendChild(c)}}
   function criarCard(item){var card=document.createElement('article');card.className='card';var top=document.createElement('div');top.className='card-top';var ico=document.createElement('div');ico.className='card-icon';ico.appendChild(iconSvg(iconePorPagina({icone:item.icone||item.tipo})));var info=document.createElement('div');info.appendChild(texto('h3',item.titulo||item.tipo||'Conteúdo'));if(item.subtitulo||item.tipo)info.appendChild(texto('small',item.subtitulo||item.tipo));top.append(ico,info);card.appendChild(top);if(item.resumo||item.texto||item.conteudo)card.appendChild(texto('p',item.resumo||item.texto||item.conteudo));if(item.destaque)card.appendChild(texto('span','Em destaque','status'));return card}
   function blocoTipo(b){return String(b.tipo||'').toUpperCase()}
   /* A home mostra uma única Mensagem do Dia: a publicação cuja data está mais próxima de hoje.
@@ -410,7 +428,60 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
     });
     document.querySelectorAll('#nav button').forEach(function(b){classe(b,'active',b.getAttribute('data-page-id')==='__eventos_presencas')});closeMenu();window.scrollTo({top:0,behavior:'smooth'});
   }
-  function abrirPagina(id){if(id==='__config'){configAbrir();return}if(id==='__eventos_presencas'){abrirPaginaPresencas();return}if(!dados)return;paginaAtual=id
+  var m05DadosV01=[];
+  function m05AbrirV01(){
+    if(!authToken){memberOpen();return}
+    paginaAtual='__membros';el('settingsView').hidden=true;el('homeView').hidden=true;
+    var area=el('dynamicPage');area.hidden=false;area.replaceChildren();
+    area.appendChild(texto('h1','Gestão de membros','intro-title'));
+    area.appendChild(texto('p','Cadastre, atualize ou inative um cadastro. Os registros e pagamentos permanecem guardados.','m04-note'));
+    var bar=document.createElement('div');bar.className='m05-toolbar';
+    var search=document.createElement('input');search.id='m05Search';search.type='search';search.placeholder='Buscar por nome, e-mail ou telefone';search.setAttribute('aria-label','Buscar membros');
+    var filter=document.createElement('select');filter.id='m05Filter';filter.setAttribute('aria-label','Filtrar status');[['Ativos','Ativo'],['Inativos','Inativo'],['Todos','Todos']].forEach(function(x){filter.add(new Option(x[0],x[1]))});
+    var add=document.createElement('button');add.type='button';add.className='member-btn';add.textContent='Novo membro';add.addEventListener('click',function(){m05FormularioV01(null)});
+    bar.append(search,filter,add);area.appendChild(bar);
+    var status=document.createElement('p');status.id='m05PageStatus';status.className='m05-status';status.setAttribute('role','status');status.textContent='Carregando membros…';area.appendChild(status);
+    var list=document.createElement('div');list.id='m05List';list.className='m05-list';area.appendChild(list);
+    search.addEventListener('input',m05RenderV01);filter.addEventListener('change',m05RenderV01);
+    list.addEventListener('click',function(ev){var b=ev.target.closest('button[data-m05-action]');if(!b)return;var m=m05DadosV01.find(function(x){return String(x.id)===b.dataset.id});if(!m)return;if(b.dataset.m05Action==='editar')m05FormularioV01(m);else m05StatusV01(m)});
+    authRpc('listarMembros',[authToken],function(r){if(!r||!r.ok){status.textContent=(r&&r.mensagem)||'Não foi possível carregar a lista.';return}m05DadosV01=r.membros||[];status.textContent=m05DadosV01.length?m05DadosV01.length+' cadastro(s).':'Nenhum cadastro encontrado.';m05RenderV01()});
+  }
+  function m05RenderV01(){
+    var box=el('m05List');if(!box)return;var q=(el('m05Search').value||'').trim().toLocaleLowerCase('pt-BR'),f=el('m05Filter').value;
+    var arr=m05DadosV01.filter(function(m){return(f==='Todos'||String(m.status||'Ativo').toLowerCase()===f.toLowerCase())&&(!q||[m.nome,m.email,m.telefone,m.funcao,m.perfil].join(' ').toLocaleLowerCase('pt-BR').indexOf(q)>=0)});
+    box.replaceChildren();
+    if(!arr.length){var empty=document.createElement('article');empty.className='card';empty.textContent='Nenhum membro encontrado com estes filtros.';box.appendChild(empty);return}
+    arr.forEach(function(m){var card=document.createElement('article');card.className='m05-person';var h=document.createElement('h3');h.textContent=m.nome||'Sem nome';card.appendChild(h);
+      var badge=document.createElement('span');badge.className='m05-badge';badge.textContent=(m.status||'Ativo')+' · '+(m.perfil||'Membro');card.appendChild(badge);
+      [['E-mail',m.email],['Telefone',m.telefone],['Função',m.funcao],['Entrada',m.entrada]].forEach(function(pair){if(pair[1]){var p=document.createElement('p');p.textContent=pair[0]+': '+pair[1];card.appendChild(p)}});
+      var actions=document.createElement('div');actions.className='m05-person-actions';
+      var edit=document.createElement('button');edit.type='button';edit.className='secondary';edit.textContent='Editar';edit.dataset.m05Action='editar';edit.dataset.id=m.id;
+      var toggle=document.createElement('button');toggle.type='button';toggle.className='secondary';toggle.textContent=String(m.status).toLowerCase()==='inativo'?'Reativar':'Inativar';toggle.dataset.m05Action='status';toggle.dataset.id=m.id;
+      actions.append(edit,toggle);card.appendChild(actions);box.appendChild(card)
+    });
+  }
+  function m05FormularioV01(m){
+    var form=el('m05MemberForm');form.reset();el('m05FormStatus').textContent='';el('m05Id').value=m?m.id:'';
+    el('m05DialogTitle').textContent=m?'Editar membro':'Novo membro';el('m05Nome').value=m?m.nome||'':'';
+    el('m05Email').value=m?m.email||'':'';el('m05Cpf').value='';el('m05Telefone').value=m?m.telefone||'':'';
+    el('m05Funcao').value=m?m.funcao||'':'';el('m05Perfil').value=m?m.perfil||'Membro':'Membro';el('m05Entrada').value=m?m.entrada||'':'';el('m05Status').value=m?m.status||'Ativo':'Ativo';
+    el('m05MemberDialog').showModal();
+  }
+  function m05SalvarV01(ev){
+    ev.preventDefault();var status=el('m05FormStatus');status.textContent='Salvando…';el('m05Save').disabled=true;
+    var payload={id:el('m05Id').value,nome:el('m05Nome').value,email:el('m05Email').value,cpf:el('m05Cpf').value,telefone:el('m05Telefone').value,funcao:el('m05Funcao').value,perfil:el('m05Perfil').value,entrada:el('m05Entrada').value,status:el('m05Status').value};
+    authRpc('salvarMembro',[authToken,JSON.stringify(payload)],function(r){el('m05Save').disabled=false;status.textContent=(r&&r.mensagem)||'Não foi possível salvar.';if(r&&r.ok){el('m05MemberDialog').close();m05AbrirV01()}});
+  }
+  function m05StatusV01(m){
+    var next=String(m.status).toLowerCase()==='inativo'?'Ativo':'Inativo';
+    authRpc('alterarStatusMembro',[authToken,String(m.id),next],function(r){var s=el('m05PageStatus');if(s)s.textContent=(r&&r.mensagem)||'Não foi possível atualizar.';if(r&&r.ok)m05AbrirV01()});
+  }
+  function m05BindV01(){
+    el('m05MemberForm').addEventListener('submit',m05SalvarV01);
+    document.addEventListener('click',function(ev){if(ev.target.closest('[data-action="m05-close"]'))el('m05MemberDialog').close()});
+    el('m05MemberDialog').addEventListener('click',function(ev){if(ev.target===el('m05MemberDialog'))el('m05MemberDialog').close()});
+  }
+  function abrirPagina(id){if(id==='__membros'){m05AbrirV01();return}if(id==='__config'){configAbrir();return}if(id==='__eventos_presencas'){abrirPaginaPresencas();return}if(!dados)return;paginaAtual=id
 ;el('settingsView').hidden=true;var home=id==='inicio';el('homeView').hidden=!home;var area=el('dynamicPage');area.hidden=home;area.replaceChildren();var p=paginas.filter(function(x){return x.id===id})[0];if(!home&&p){area.appendChild(texto('h1',p.titulo||p.nomeMenu,'intro-title'));if(p.subtitulo)area.appendChild(texto('p',p.subtitulo));(p.blocos||[]).forEach(function(b){if(blocoTipo(b)==='PROXIMO_EVENTO'){(dados.proximosEventos||[]).forEach(function(e){area.appendChild(criarCard({titulo:e.titulo,tipo:e.tipo,resumo:[e.data,e.local,e.descricao].filter(Boolean).join(' · ')}))});return}if(blocoTipo(b)==='GRADE_CONTEUDO'||String(b.fonteDados||'').toUpperCase()==='PUBLICACOES'){(dados.publicacoesRecentes||[]).forEach(function(x){area.appendChild(criarCard(x))});return}if(b.titulo||b.subtitulo||b.texto){var card=document.createElement('article');card.className='card';if(b.titulo)card.appendChild(texto('h2',b.titulo));if(b.subtitulo)card.appendChild(texto('p',b.subtitulo));if(b.texto)card.appendChild(texto('p',b.texto));if(b.imagemUrl){var im=document.createElement('img');im.src=seguroLink(b.imagemUrl);im.alt=b.titulo||'';im.loading='lazy';im.style.cssText='max-width:100%;height:auto;border-radius:14px';card.appendChild(im)}area.appendChild(card)}});if(!area.children.length)area.appendChild(texto('p','Este conteúdo será publicado em breve.','callout'))}document.querySelectorAll('#nav button').forEach(function(b){classe(b,'active',b.getAttribute('data-page-id')===id)});closeMenu();window.scrollTo({top:0,behavior:'smooth'})}
   function menuOpen(open){var side=el('sidebar'),back=el('menuBackdrop'),button=el('menuToggle');if(!side||!back||!button)return;classe(side,'open',open);classe(back,'open',open);side.setAttribute('aria-hidden',open?'false':'true');back.setAttribute('aria-hidden',open?'false':'true');button.setAttribute('aria-expanded',open?'true':'false')}
   function closeMenu(){menuOpen(false)}
@@ -625,7 +696,7 @@ edOptions[0].text,memberName=el('m04DelegateMember').selectedOptions[0].text;m04
   function authRestaurarSessao(){authRestaurando=true;var emailSalvo=authEmailSalvo_();if(emailSalvo&&!el('email').value)el('email').value=emailSalvo;var token='';try{token=localStorage.getItem('tzc-m02-token')||sessionStorage.getItem('tzc-m02-token')||''}catch(ignore){}if(!token){authRestaurando=false;if(emailSalvo){authLoginAutomaticoEmailSalvo_();return}authLimpar(true);return}authRevalidarSessao()}
   function bindTap(node,fn){if(!node)return;node.style.touchAction='manipulation';node.addEventListener('click',function(e){fn.call(node,e)},false)}
   function iniciar(){el('closeHomeMessage').addEventListener('click',function(){el('homeMessageDialog').close()});el('closeHomeMessageAction').addEventListener('click',function(){el('homeMessageDialog').close()});bindTap(el('closeFirstVisit'),primeiraVisitaFechar);bindTap(el('closeFirstVisitAction'),primeiraVisitaFechar);bindTap(el('firstVisitPrev'),function(){if(primeiraVisitaIndice>0){primeiraVisitaIndice--;primeiraVisitaRenderizar()}});bindTap(el('firstVisitNext'),function(){if(primeiraVisitaIndice<primeiraVisitaEtapas.length-1){primeiraVisitaIndice++;primeiraVisitaRenderizar()}});try{themeSet(localStorage.getItem('tenda-tema')||'claro')}catch(e){themeSet('claro')}bindTap(el('menuToggle'),function(){menuOpen(!el('sidebar').classList.contains('open'))});bindTap(el('menuBackdrop'),closeMenu);bindTap(el('themeToggle'),themeToggle);bindTap(el('memberButton'),memberOpen);bindTap(el('m04OpenMyArea'),m04AbrirMinhaArea);document.querySelectorAll('[data-action="close-my-area"]').forEach(function(b){bindTap(b,m04MinhaAreaFechar)});document.querySelectorAll('[data-action="close-member"]').forEach(function(x){bindTap(x,memberClose)});bindTap(el('logoutButton'),authSair);bindTap(el('backToTop'),function(){window.scrollTo({top:0,behavior:'smooth'})});bindTap(document.querySelector('[data-action="show-contact"]'),function(){el('contatos').scrollIntoView({behavior:'smooth'});closeMenu()});el('memberForm').addEventListener('submit',authEnviarOuConfirmar);el('email').addEventListener('input',authEmailAlterado);el('email').addEventListener('change',authEmailAlterado);el('m04ResponseForm').addEventListener('submit',function(e){if(!el('m04CheckinField').hidden)m04EnviarCheckin(e);else m04EnviarResposta(e)});el('authCode').addEventListener('input',function(){var v=this.value.replace(/\D/g,'').slice(0,6);if(this.value!==v)this.value=v});el('m04Actor').addEventListener('change',m04AtualizarTipo);el('eventDialog').addEventListener('close',m04LimparResposta);el('m04Reply').addEventListener('change',m04AtualizarResposta);bindTap(el('m04LoadRoster'),m04AbrirLista);el('m04EventSelect').addEventListener('change',function(){el('m04Roster').replaceChildren();el('m04LoadRoster').disabled=!this.value;el('m04ManagerStatus').textContent=this.value?'Toque em “Ver presenças” para abrir a lista.':''});el('m04ReportEvent').addEventListener('change',function(){el('m04GenerateReport').disabled=!this.value});bindTap(el('m04OpenManager'),m04AbrirGestao);bindTap(el('m04OpenDelegate'),m04AbrirDelegacao);bindTap(el('m04OpenReport'),m04AbrirRelatorio);bindTap(el('m04GenerateReport'),m04GerarRelatorio);bindTap(el('m04DownloadReport'),m04BaixarRelatorio);bindTap(el('m04ShareReport'),m04CompartilharRelatorio);bindTap(el('m04PrintReport'),m04ImprimirRelatorio);document.querySelectorAll('[data-action="close-thanks"]').forEach(function(b){bindTap(b,m04FecharAgradecimento)});document.querySelectorAll('[data-action="close-report"]').forEach(function(b){bindTap(b,function(){var d=el('m04ReportDialog');if(d.close)d.close();else d.removeAttribute('open');el('m04ReportPaper').replaceChildren();el('m04ReportPaper').hidden=true;el('m04ReportActions').hidden=true;m04PdfBlob=null})});document.querySelectorAll('[data-action="close-manager"]').forEach(function(b){bindTap(b,function(){var d=el('m04Manager');if(d.close)d.close();else d.removeAttribute('open')})});document.querySelectorAll('[data-action="close-delegate"]').forEach(function(b){bindTap(b,function(){m04DelegacaoPendente=null;el('m04DelegateConfirm').hidden=true;el('m04DelegateActions').hidden=false;var d=el('m04DelegateDialog');if(d.close)d.close();else d.removeAttribute('open')})});bindTap(el('m04Grant'),function(){m04DefinirDelegado(true)});bindTap(el('m04Revoke'),function(){m04DefinirDelegado(false)});bindTap(el('m04CancelDelegate'),m04CancelarDelegado);bindTap(el('m04ConfirmDelegate'),m04ConfirmarDelegado);document.querySelectorAll('[data-action="close-event"]').forEach(function(b){bindTap(b,function(){m04Dialog(false)})});document.addEventListener('click',outside,true);el('eventDialog').addEventListener('click',function(e){if(e.target===el('eventDialog'))m04Dialog(false)});el('m04Thanks').addEventListener('click',function(e){if(e.target===el('m04Thanks'))m04FecharAgradecimento()});el('m04ReportDialog').addEventListener('click',function(e){if(e.target===el('m04ReportDialog')){var d=el('m04ReportDialog');d.close();el('m04ReportPaper').replaceChildren();m04PdfBlob=null}});document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeMenu();memberClose();primeiraVisitaFechar()}});window.addEventListener('scroll',function(){classe(el('backToTop'),'show',(window.pageYOffset||0)>280)},{passive:true});carregarDados();authRestaurarSessao()}
-  document.addEventListener('DOMContentLoaded',iniciar);
+  document.addEventListener('DOMContentLoaded',iniciar); m05BindV01();
 })();
 </script>
 
@@ -682,6 +753,26 @@ edOptions[0].text,memberName=el('m04DelegateMember').selectedOptions[0].text;m04
   #m04PrintRoot .report-footer{font-size:8pt}
 }
 </style>
-</body></html>
+<style id="tzc-m05-styles">
+.m05-toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:16px 0}
+.m05-toolbar input,.m05-toolbar select{min-height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text);font:inherit}
+.m05-toolbar input{flex:1;min-width:min(260px,100%)}
+.m05-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px}
+.m05-person{padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+.m05-person h3{margin:0 0 6px;color:var(--primary);font:700 20px Georgia,serif}
+.m05-person p{margin:4px 0;color:var(--muted);overflow-wrap:anywhere}
+.m05-person-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.m05-person-actions button{min-height:42px}
+.m05-badge{display:inline-block;border-radius:999px;padding:4px 10px;background:var(--surface2);color:var(--text);font-size:14px}
+.m05-status{min-height:1.5em;color:var(--muted)}
+.m05-dialog{width:min(620px,calc(100vw - 28px));max-width:620px;max-height:88vh;padding:0;border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--text);box-shadow:0 20px 60px #0004}
+.m05-dialog::backdrop{background:#17110fc0}
+.m05-dialog .dialog-body{padding:16px 20px 20px}
+.m05-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.m05-fields .field{margin:0}
+.m05-dialog .dialog-head{padding:16px 20px;border-bottom:1px solid var(--line)}
+.m05-dialog .dialog-head h2{margin:0;color:var(--primary);font:700 22px Georgia,serif}
+@media(max-width:600px){.m05-fields{grid-template-columns:1fr}.m05-dialog{max-height:90dvh}.m05-dialog .dialog-body{padding:14px}}
+</style></body></html>
 
 

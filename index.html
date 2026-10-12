@@ -798,9 +798,8 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
       events.forEach(function(ev){
         var answer=ev.resposta&&ev.resposta.resposta?String(ev.resposta.resposta):'Ainda não respondeu';
         if(ev.resposta&&ev.resposta.quantidade&&Number(ev.resposta.quantidade)>1)answer+=' · '+ev.resposta.quantidade+' pessoas';
-        var row=document.createElement('tr');row.tabIndex=0;row.setAttribute('role','button');
-        row.setAttribute('aria-label','Abrir '+String(ev.titulo||'evento')+' para responder ou alterar sua resposta');
-        [ev.titulo||'Evento',m04DataLegivel(ev.data)||'—',ev.local||'—',answer].forEach(function(value){var td=document.createElement('td');td.textContent=value;row.appendChild(td)});
+        var row=document.createElement('tr');row.tabIndex=0;row.setAttribute('aria-label','Abrir '+String(ev.titulo||'evento')+' para responder ou alterar sua resposta');
+        [ev.titulo||'Evento',m04DataLegivel(ev.data)||'—',ev.local||'—',answer].forEach(function(value,index){var td=document.createElement('td');if(index===0){var openButton=document.createElement('button');openButton.type='button';openButton.className='myarea-event-open';openButton.textContent=value;openButton.setAttribute('aria-label','Abrir '+String(value)+' para responder ou alterar sua resposta');td.appendChild(openButton)}else td.textContent=value;row.appendChild(td)});
         var openEvent=function(){if(m04InicioEventoPassou_(ev.data)){aviso('Este evento já começou. A resposta só pode ser alterada antes do início.');return}m04AbrirResposta(ev);el('m04Actor').value='Membro';m04AtualizarTipo();if(ev.resposta){el('m04Reply').value=ev.resposta.resposta||'Vou';el('m04Count').value=String(ev.resposta.quantidade||1);m04AtualizarResposta()}};
         bindTap(row,openEvent);row.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openEvent()}});
         tbody.appendChild(row)
@@ -1202,7 +1201,8 @@ html[data-theme="escuro"] .myarea-tab[aria-selected="true"]{color:#24191a}
 .myarea-events-table tbody tr:nth-child(even){background:color-mix(in srgb,var(--surface2) 35%,var(--surface))}
 .myarea-events-table tbody tr{cursor:pointer}
 .myarea-events-table tbody tr:hover,.myarea-events-table tbody tr:focus-visible{background:color-mix(in srgb,var(--gold-soft) 42%,var(--surface));outline:none}
-.myarea-events-table tbody tr:focus-visible{box-shadow:inset 0 0 0 3px var(--gold)}
+.myarea-events-table tbody tr:focus-visible,.myarea-events-table tbody tr:focus-within{box-shadow:inset 0 0 0 3px var(--gold)}
+.myarea-event-open{border:0;background:transparent;padding:0;color:inherit;font:inherit;font-weight:750;text-align:left;cursor:pointer}.myarea-event-open:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:2px}
 .myarea-events-table tbody tr:last-child td{border-bottom:0}
 .myarea-events-table th:first-child,.myarea-events-table td:first-child{width:29%;font-weight:700}
 .myarea-events-table th:nth-child(2),.myarea-events-table td:nth-child(2){width:22%}

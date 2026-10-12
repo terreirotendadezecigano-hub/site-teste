@@ -886,9 +886,10 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
   function m04PendenciasPresencasBuscar_(done){
     var profile=String(authUser&&authUser.perfil||'').toLowerCase();
     var allowed=/^(dirigente|administrador|pai de santo|mãe de santo|mae de santo)$/.test(profile);
-    m04CarregarGestao(function(ok,events){
-      if(!ok){done({ok:true,solicitacoes:[],erro:allowed});return}
-      var rows=[],index=0,erro=false;
+    /* A fila precisa incluir eventos antigos; a lista de gestão ativa pode omitir itens já arquivados. */
+    authRpc('listarEventosRelatorio',[authToken],function(eventResult){
+      if(!eventResult||!eventResult.ok){done({ok:true,solicitacoes:[],erro:allowed});return}
+      var events=Array.isArray(eventResult.eventos)?eventResult.eventos:[],rows=[],index=0,erro=false;
       function next_(){
         if(index>=events.length){done({ok:true,solicitacoes:rows,erro:erro});return}
         var ev=events[index++];if(!ev||!ev.id||!m04InicioEventoPassou_(ev.data)){next_();return}
@@ -903,7 +904,7 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
         });
       }
       next_();
-    },true);
+    });
   }
   function m04PendenciasCentraisBuscar_(done,force){
     if(!authToken||!m04AreaResponsavel_()){done({ok:false,mensagem:'Seu perfil não tem acesso a esta fila.'});return}

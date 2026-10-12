@@ -886,24 +886,40 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
   function m04PendenciasPresencasBuscar_(done){
     var profile=String(authUser&&authUser.perfil||'').toLowerCase();
     var allowed=/^(dirigente|administrador|pai de santo|mãe de santo|mae de santo)$/.test(profile);
-    /* A fila precisa incluir eventos antigos; a lista de gestão ativa pode omitir itens já arquivados. */
-    authRpc('listarEventosRelatorio',[authToken],function(eventResult){
-      if(!eventResult||!eventResult.ok){done({ok:true,solicitacoes:[],erro:allowed});return}
-      var events=Array.isArray(eventResult.eventos)?eventResult.eventos:[],rows=[],index=0,erro=false;
-      function next_(){
-        if(index>=events.length){done({ok:true,solicitacoes:rows,erro:erro});return}
-        var ev=events[index++];if(!ev||!ev.id||!m04InicioEventoPassou_(ev.data)){next_();return}
-        authRpc('listarPendencias',[authToken,String(ev.id)],function(r){
-          if(!r||!r.ok){if(allowed)erro=true;next_();return}
-          (Array.isArray(r.registros)?r.registros:[]).forEach(function(p){
-            if(String(p.presenca||'').toLowerCase()!=='pendente')return;
-            if(String(p.idUsuario||'')===String(authUser&&authUser.id||''))return;
-            rows.push({tipo:'presenca',id:String(p.id||''),idUsuario:String(p.idUsuario||''),eventoId:String(ev.id),evento:String(ev.titulo||'Evento'),data:ev.data||'',nome:p.nome||'Membro',automatico:p.automatico===true,relato:p.relato||''});
+    /* Relatórios listam só eventos futuros. Para a fila, combinamos o histórico ativo
+       com eventos encerrados que já têm check-in, incluindo itens automáticos após 72h. */
+    authRpc('listarArquivoEventos',[authToken],function(historyResult){
+      authRpc('listarEventosGestao',[authToken],function(manageResult){
+        var historyOk=!!(historyResult&&historyResult.ok),manageOk=!!(manageResult&&manageResult.ok);
+        if(!historyOk&&!manageOk){done({ok:true,solicitacoes:[],erro:true});return}
+        var events=[],byId=Object.create(null);
+        [historyOk?historyResult.eventos:[],manageOk?manageResult.eventos:[]].forEach(function(list){
+          (Array.isArray(list)?list:[]).forEach(function(ev){
+            if(!ev||!ev.id)return;
+            var id=String(ev.id);
+            if(!byId[id]){byId[id]=true;events.push(ev)}
           });
-          next_();
         });
-      }
-      next_();
+        var rows=[],index=0,erro=(!historyOk&&allowed)||(!manageOk&&allowed);
+        function next_(){
+          if(index>=events.length){done({ok:true,solicitacoes:rows,erro:erro});return}
+          var ev=events[index++];if(!ev||!m04InicioEventoPassou_(ev.data)){next_();return}
+          authRpc('listarPendencias',[authToken,String(ev.id)],function(r){
+            if(!r||!r.ok){
+              var msg=String(r&&r.mensagem||'');
+              if(!/n[aã]o est[aá] autorizado para este evento/i.test(msg))erro=true;
+              next_();return;
+            }
+            (Array.isArray(r.registros)?r.registros:[]).forEach(function(p){
+              if(String(p.presenca||'').toLowerCase()!=='pendente')return;
+              if(String(p.idUsuario||'')===String(authUser&&authUser.id||''))return;
+              rows.push({tipo:'presenca',id:String(p.id||''),idUsuario:String(p.idUsuario||''),eventoId:String(ev.id),evento:String(ev.titulo||'Evento'),data:ev.data||'',nome:p.nome||'Membro',automatico:p.automatico===true,relato:p.relato||''});
+            });
+            next_();
+          });
+        }
+        next_();
+      });
     });
   }
   function m04PendenciasCentraisBuscar_(done,force){

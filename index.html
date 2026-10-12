@@ -463,15 +463,16 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
     controls.append(label,sel,pdfBtn);area.appendChild(controls);
     var status=document.createElement('p');status.className='m04-status';status.setAttribute('role','status');status.textContent='Buscando eventos…';area.appendChild(status);
     var roster=document.createElement('div');roster.className='m04-page-roster';area.appendChild(roster);
-    var listRequest=0;
+    var listRequest=0,respostaCache=null;
     function carregarRespostas(eventId){
-      var request=++listRequest;roster.replaceChildren();
+      var request=++listRequest;respostaCache=null;roster.replaceChildren();
       if(!eventId){pdfBtn.disabled=true;status.textContent='Escolha um evento.';return}
       pdfBtn.disabled=true;status.textContent='Carregando respostas…';
       authRpc('gerarPrevisaoEvento',[authToken,eventId],function(r){
         if(request!==listRequest||sel.value!==eventId)return;
+        if(!r||!r.ok){pdfBtn.disabled=false;status.textContent=r&&r.mensagem||'Não foi possível carregar as respostas. Tente novamente.';return}
+        respostaCache={eventoId:String(eventId),carregadoEm:Date.now(),dados:r};
         pdfBtn.disabled=false;
-        if(!r||!r.ok){status.textContent=r&&r.mensagem||'Não foi possível carregar as respostas. Tente novamente.';return}
         var responses=Array.isArray(r.respostas)?r.respostas:[];
         status.textContent='Previsão total: '+(r.resumo&&r.resumo.total||0)+' pessoa(s).';
         var table=document.createElement('table');table.className='m04-page-table';var thead=document.createElement('thead'),head=document.createElement('tr');
@@ -482,7 +483,7 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
       });
     }
     sel.addEventListener('change',function(){carregarRespostas(sel.value)});
-    pdfBtn.addEventListener('click',function(){if(sel.value)m04AbrirRelatorio(sel.value)});
+    pdfBtn.addEventListener('click',function(){if(!sel.value)return;var cacheValido=respostaCache&&respostaCache.eventoId===String(sel.value)&&Date.now()-respostaCache.carregadoEm<20000;m04AbrirRelatorio(sel.value,cacheValido?respostaCache.dados:null)});
     authRpc('listarEventosRelatorio',[authToken],function(r){
       sel.replaceChildren();
       if(!r||!r.ok){sel.add(new Option('Eventos indisponíveis',''));status.textContent=r&&r.mensagem||'Não foi possível carregar eventos.';return}
@@ -891,13 +892,13 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
   function m04DataLegivel(value){var s=String(value||'').trim();if(!s)return '';var br=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);if(br)return br[1]+'/'+br[2]+'/'+br[3];var m=s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{1,2}):(\d{2}))?/);if(m)return m[3]+'/'+m[2]+'/'+m[1]+(m[4]?' · '+('0'+m[4]).slice(-2)+'h'+m[5]:'');var d=new Date(s);if(isNaN(d.getTime()))return '';var parts=new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(d),o={};parts.forEach(function(p){o[p.type]=p.value});return (o.day||'')+'/'+(o.month||'')+'/'+(o.year||'')+(o.hour? ' · '+o.hour+'h'+o.minute:'')}
   /* Horário amigável para relatórios: conserva hora e minuto e remove segundos. */
   function m04HorarioSemSegundos_(value){var s=String(value==null?'':value).trim();if(!s)return '';var clean=s.replace(/(?:Z|[+-]\d{2}:?\d{2})$/i,'');var m=clean.match(/(?:^|[ T])(\d{1,2}):(\d{2})(?::\d{2})?(?:\.\d+)?$/);if(m)return ('0'+m[1]).slice(-2)+':'+m[2];return s.replace(/\b(\d{1,2}:\d{2}):\d{2}\b/g,'$1')}
-  function m04AbrirRelatorio(eventoInicial){
+  function m04AbrirRelatorio(eventoInicial,dadosCarregados){
     if(!authToken)return;
     var id=String(eventoInicial||'').trim(),dialog=el('m04ReportDialog'),paper=el('m04ReportPaper');
     paper.replaceChildren();paper.hidden=true;el('m04ReportActions').hidden=true;m04PdfBlob=null;m04ReportData=null;
     el('m04ReportStatus').textContent=id?'Carregando a prévia do evento…':'Selecione um evento antes de abrir o relatório.';
     if(dialog.showModal)dialog.showModal();else dialog.setAttribute('open','open');
-    if(id)m04GerarRelatorio(id);
+    if(id)m04GerarRelatorio(id,dadosCarregados);
   }
   function m04ResumoPorPessoas_(respostas){
     var resumo={vou:0,talvez:0,naoVou:0,total:0},normalizadas=[];
@@ -912,13 +913,13 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
     return {resumo:resumo,respostas:normalizadas};
   }
   function m04IdentidadeRelatorio_(){var id=dados&&dados.identidade||{},c=dados&&dados.contatos||{};return {nome:id.nome||'Tenda de Zé Cigano',subtitulo:id.subtitulo||'Terreiro de Umbanda',endereco:c.endereco||'',telefone:c.telefoneWhatsapp||''}}
-  function m04GerarRelatorio(eventoId){var id=String(eventoId||'').trim();if(!id){el('m04ReportStatus').textContent='Selecione um evento para preparar o relatório.';return}el('m04ReportStatus').textContent='Preparando a prévia…';authRpc('gerarPrevisaoEvento',[authToken,id],function(r){if(!r||!r.ok){el('m04ReportStatus').textContent=r&&r.mensagem||'Não foi possível preparar o relatório.';return}var computed=m04ResumoPorPessoas_(r.respostas);r.resumo=computed.resumo;r.respostas=computed.respostas;m04ReportData=r;var identity=m04IdentidadeRelatorio_(),paper=el('m04ReportPaper');paper.replaceChildren();
+  function m04GerarRelatorio(eventoId,dadosCarregados){var id=String(eventoId||'').trim();if(!id){el('m04ReportStatus').textContent='Selecione um evento para preparar o relatório.';return}el('m04ReportStatus').textContent='Preparando a prévia…';function renderizar(r){if(!r||!r.ok){el('m04ReportStatus').textContent=r&&r.mensagem||'Não foi possível preparar o relatório.';return}var computed=m04ResumoPorPessoas_(r.respostas);r.resumo=computed.resumo;r.respostas=computed.respostas;m04ReportData=r;var identity=m04IdentidadeRelatorio_(),paper=el('m04ReportPaper');paper.replaceChildren();
     var head=document.createElement('div');head.className='report-head';var brand=document.createElement('div');brand.className='report-brand';var logo=el('siteLogo').cloneNode(true);logo.removeAttribute('id');logo.alt='';brand.appendChild(logo);var brandText=document.createElement('div');brandText.append(texto('strong',identity.nome),texto('small',identity.subtitulo));brand.appendChild(brandText);var issued=document.createElement('div');issued.className='report-issued';issued.append(texto('div','Emitido em '+new Date().toLocaleDateString('pt-BR')));head.append(brand,issued);paper.appendChild(head);paper.appendChild(texto('div','','report-rule'));
     var title=document.createElement('div');title.className='report-titlebar';var titleText=document.createElement('div');titleText.append(texto('small','Previsão de presença'),texto('h3',r.evento.titulo||'Evento'));title.appendChild(titleText);paper.appendChild(title);
     var meta=document.createElement('div');meta.className='report-meta';[["Data",m04DataLegivel(r.evento.data)||r.evento.data||'A definir'],["Horário",m04HorarioSemSegundos_(r.evento.horario)||'A definir'],["Local",r.evento.local||identity.endereco||'A definir']].forEach(function(x){var cell=document.createElement('div');cell.append(texto('b',x[0]),texto('span',String(x[1])));meta.appendChild(cell)});paper.appendChild(meta);
     var summary=document.createElement('div');summary.className='report-summary';[["Pessoas previstas",r.resumo.total],["Vou · pessoas",r.resumo.vou],["Talvez · respostas",r.resumo.talvez],["Não vou · respostas",r.resumo.naoVou]].forEach(function(x){var card=document.createElement('span');card.append(texto('b',x[0]),texto('strong',String(x[1])));summary.appendChild(card)});paper.appendChild(summary);
     var table=document.createElement('table');table.innerHTML='<thead><tr><th>Participante</th><th>Tipo</th><th>Resposta</th><th>Qtd.</th></tr></thead>';var body=document.createElement('tbody');(r.respostas||[]).forEach(function(x){var tr=document.createElement('tr');[x.nome,x.tipo,x.resposta,x.resposta==='Vou'?x.quantidade:'—'].forEach(function(v){var td=document.createElement('td');td.textContent=String(v==null?'':v);tr.appendChild(td)});body.appendChild(tr)});if(!r.respostas||!r.respostas.length){var tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=4;td.textContent='Nenhuma resposta registrada até o momento.';tr.appendChild(td);body.appendChild(tr)}table.appendChild(body);paper.appendChild(table);
-    el('m04ReportStatus').textContent='Prévia pronta. PDF no padrão aprovado, com a quantidade real de pessoas.';paper.hidden=false;el('m04ReportActions').hidden=false;m04PdfBlob=null})}
+    el('m04ReportStatus').textContent='Prévia pronta. PDF no padrão aprovado, com a quantidade real de pessoas.';paper.hidden=false;el('m04ReportActions').hidden=false;m04PdfBlob=null}if(dadosCarregados&&dadosCarregados.ok){renderizar(dadosCarregados);return}authRpc('gerarPrevisaoEvento',[authToken,id],renderizar)}
   function m04CriarPdf_(done){
     if(m04PdfBlob){done(m04PdfBlob);return}
     if(!m04ReportData){el('m04ReportStatus').textContent='Gere a prévia antes de criar o PDF.';return}

@@ -885,7 +885,21 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
   }
   var m04PendenciasCache=null,m04PendenciasCacheAt=0,m04PendenciasCentralCache=null,m04PendenciasCentralCacheAt=0,m04PendenciasCount=null,m04GestaoCallbacks=[];
   function m04PendenciasBuscar_(done,force){if(!authToken||!m04AreaResponsavel_()){done({ok:false,mensagem:'Seu perfil não tem acesso a esta fila.'});return}if(!force&&m04PendenciasCache&&Date.now()-m04PendenciasCacheAt<30000){done({ok:true,solicitacoes:m04PendenciasCache});return}authRpc('listarComprovantesMensalidade',[authToken],function(r){if(r&&r.ok){m04PendenciasCache=Array.isArray(r.solicitacoes)?r.solicitacoes:[];m04PendenciasCacheAt=Date.now()}done(r||{ok:false,mensagem:'Não foi possível carregar as pendências.'})})}
-  function m04PendenciasAtualizarSinal_(){var card=el('pendingAttention');if(!authToken||!authUser||!m04AreaResponsavel_()){if(card)card.hidden=true;m04PendenciasCount=null;var badge=el('pendingMenuCount');if(badge)badge.textContent='';return}if(!m04PendenciasCentralCache||Date.now()-m04PendenciasCentralCacheAt>=30000){if(el('pendingAttentionText'))el('pendingAttentionText').textContent='Conferindo pagamentos e presenças pendentes…';var badgeLoad=el('pendingMenuCount');if(badgeLoad)badgeLoad.textContent='…';m04PendenciasCentraisBuscar_(function(){m04PendenciasAtualizarSinal_()},false);return}var n=m04PendenciasCount||0,txt=m04PendenciasCentralCache.erroPagamento?'Não foi possível atualizar as pendências. Tente novamente em instantes.':n===0?'Não há solicitações aguardando análise no momento.':n===1?'Há 1 pendência aguardando sua conferência.':'Há '+n+' pendências aguardando sua conferência.';if(el('pendingAttentionText'))el('pendingAttentionText').textContent=txt;var b=el('pendingMenuCount');if(b){b.textContent=String(n);b.setAttribute('aria-label',n===1?'1 pendência aguardando conferência':n+' pendências aguardando conferência')}}
+  function m04PendenciasAtualizarSinal_(){
+    var card=el('pendingAttention'),badge=el('pendingMenuCount');
+    if(!authToken||!authUser||!m04AreaResponsavel_()){if(card)card.hidden=true;m04PendenciasCount=null;if(badge)badge.textContent='';return;}
+    if(!m04PendenciasCentralCache||Date.now()-m04PendenciasCentralCacheAt>=30000){
+      if(el('pendingAttentionText'))el('pendingAttentionText').textContent='Conferindo pagamentos, presenças e Loja…';
+      if(badge){badge.textContent='…';badge.setAttribute('aria-label','Contagem de pendências carregando');}
+      m04PendenciasCentraisBuscar_(function(){m04PendenciasAtualizarSinal_()},false);return;
+    }
+    var data=m04PendenciasCentralCache||{},n=Number(m04PendenciasCount||0),issues=[];
+    if(data.erroPagamento)issues.push('pagamentos');if(data.erroPresenca)issues.push('presenças');if(data.erroLoja)issues.push('Loja');
+    var txt=data.erroPagamento?'Não foi possível atualizar as pendências. Tente novamente em instantes.':!n?'Não há solicitações aguardando análise no momento.':n===1?'Há 1 pendência aguardando sua conferência.':'Há '+n+' pendências aguardando sua conferência.';
+    if(issues.length&&!data.erroPagamento)txt+=' A contagem pode estar incompleta: não foi possível consultar '+issues.join(' e ')+'.';
+    if(el('pendingAttentionText'))el('pendingAttentionText').textContent=txt;
+    if(badge){badge.textContent=issues.length?'?':String(n);badge.setAttribute('aria-label',issues.length?'Não foi possível conferir todas as filas de pendências':n===1?'1 pendência aguardando conferência':n+' pendências aguardando conferência');badge.title=issues.length?'A contagem está incompleta. Abra Pendências e atualize.':'';}
+  }
   function m04PendenciasPresencasBuscar_(done){
     var profile=String(authUser&&authUser.perfil||'').toLowerCase();
     var allowed=/^(dirigente|administrador|pai de santo|mãe de santo|mae de santo)$/.test(profile);

@@ -108,6 +108,12 @@
   .loja-row-actions button{min-height:38px;padding:7px 11px;white-space:nowrap}
   .loja-manage-pane .loja-section{gap:8px}
   @media(max-width:600px){.loja-manage-toolbar{align-items:stretch}.loja-manage-toolbar button{width:100%}.loja-row-actions{min-width:160px}}
+  .loja-table-products th:first-child{width:48%}.loja-table-products th:nth-child(2),.loja-table-products th:nth-child(3){width:26%}
+  .loja-table-types th:first-child{width:34%}.loja-table-types th:nth-child(2){width:66%}
+  .loja-table tr.loja-clickable-row{cursor:pointer}
+  .loja-table tr.loja-clickable-row:hover,.loja-table tr.loja-clickable-row:focus-visible{background:color-mix(in srgb,var(--gold-soft) 42%,var(--surface));outline:none}
+  .loja-table tr.loja-clickable-row:focus-visible{box-shadow:inset 0 0 0 3px var(--gold)}
+
   `;
   function el(tag, text, cls){var n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n}
   function btn(text,fn,cls){var b=el('button',text,cls||'secondary');b.type='button';b.addEventListener('click',fn);return b}
@@ -345,36 +351,47 @@
         pane.replaceChildren();
         var sectionProducts=section('Produtos digitais','',pane);
         var toolbar=el('div',null,'loja-manage-toolbar'),add=btn('＋ Novo produto',function(){openProductEditor(null)},'member-btn');
-        toolbar.append(el('span','Materiais exibidos na vitrine para compra.','loja-muted'),add);sectionProducts.append(toolbar);
+        toolbar.append(add);sectionProducts.append(toolbar);
         var editorSlot=el('div',null,'loja-editor-slot');sectionProducts.append(editorSlot);
         if(!existing.length){var empty=el('div',null,'loja-empty');empty.append(el('strong','Nenhum produto cadastrado'),el('span','Cadastre um PDF para publicar o primeiro material.','loja-muted'));sectionProducts.append(empty);return}
-        var t=table(['Produto','Categoria','Preço','Situação','Ações']);
+        var t=table(['Produto','Categoria','Preço']);t.wrap.querySelector('table').classList.add('loja-table-products');
         existing.forEach(function(p){
-          var tr=el('tr'),state=el('span',p.status||'Rascunho','loja-status'),actions=el('div',null,'loja-row-actions');
-          var edit=btn('Editar',function(){openProductEditor(p)},'secondary'),published=p.status==='Publicado';
-          var toggle=btn(published?'Retirar da loja':'Publicar',function(){
-            toggle.disabled=true;toggle.textContent='Salvando…';say('Atualizando a publicação…');
-            invoke('publicarProdutoLoja',[api.token(),p.id,published?'false':'true'],function(out){
-              if(!out.ok){toggle.disabled=false;toggle.textContent=published?'Retirar da loja':'Publicar';return}
-              p.status=out.status;clearCatalogCache();say(published?'Produto retirado da loja.':'Produto publicado na loja.','success');renderProducts()
-            })
-          },published?'secondary':'member-btn');
-          actions.append(edit,toggle);tr.append(el('td',p.nome),el('td',p.categoria||'—'),el('td',money(p.precoCentavos),'loja-price'),el('td',state),el('td',actions));t.body.append(tr)
-        });sectionProducts.append(t.wrap);
+          var tr=el('tr');tr.className='loja-clickable-row';tr.tabIndex=0;tr.setAttribute('aria-label','Editar produto '+String(p.nome||''));
+          tr.addEventListener('click',function(){openProductEditor(p)});
+          tr.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openProductEditor(p)}});
+          tr.append(el('td',p.nome||'—'),el('td',p.categoria||'—'),el('td',money(p.precoCentavos),'loja-price'));t.body.append(tr)
+        });
+        sectionProducts.append(t.wrap);
         function openProductEditor(item){
           editorSlot.replaceChildren();
-          var editing=!!item,editor=el('section',null,'loja-editor'),head=el('header',null,'loja-editor-head');head.append(el('h3',editing?'Editar produto':'Novo produto digital'));
+          var editing=!!item,editor=el('section',null,'loja-editor'),head=el('header',null,'loja-editor-head');
+          head.append(el('h3',editing?'Editar produto':'Novo produto digital'));
+          if(editing)head.append(el('p','Situação atual: '+String(item.status||'Rascunho'),'loja-muted'));
           var grid=el('div',null,'loja-form-grid'),name=el('input'),cat=el('input'),desc=el('textarea'),price=el('input'),file=el('input');
           name.placeholder='Ex.: Livro de estudos da Umbanda';name.maxLength=120;name.required=true;name.value=item&&item.nome||'';
           cat.placeholder='Ex.: Estudos';cat.maxLength=60;cat.value=item&&item.categoria||'';
           desc.placeholder='Descrição do material';desc.maxLength=2000;desc.value=item&&item.descricao||'';
           price.type='number';price.min='0.01';price.step='0.01';price.placeholder='0,00';price.required=true;price.value=item?(Number(item.precoCentavos||0)/100).toFixed(2):'';
           file.type='file';file.accept='.pdf,application/pdf';file.required=!editing;
-          function field(label,input,cls){var l=el('label',label,'loja-field'+(cls?' '+cls:''));l.append(input);return l}
+          function field(label,input,cls){var f=el('label',label,'loja-field'+(cls?' '+cls:''));f.append(input);return f}
           grid.append(field('Nome do produto',name,'wide'),field('Categoria',cat),field('Preço (R$)',price),field('Descrição',desc,'full'));
           var pdfField=field('Arquivo em PDF',file,'full');pdfField.append(el('span',editing?'Selecione outro PDF somente se quiser trocar o arquivo.':'Selecione o livro ou material em PDF.','loja-file-note'));grid.append(pdfField);
           var actions=el('div',null,'loja-editor-actions'),save=btn(editing?'Salvar alterações':'Salvar e publicar',saveProduct,'member-btn'),cancel=btn('Cancelar',function(){editorSlot.replaceChildren()},'secondary');
-          actions.append(save,cancel);editor.append(head,grid,actions);editorSlot.append(editor);name.focus();
+          actions.append(save);
+          if(editing){
+            var remove=btn('Excluir da loja',removeProduct,'secondary');
+            remove.title='Retira o produto da vitrine e preserva os pedidos já realizados.';
+            actions.append(remove)
+          }
+          actions.append(cancel);editor.append(head,grid,actions);editorSlot.append(editor);editor.scrollIntoView({behavior:'smooth',block:'nearest'});name.focus();
+          function removeProduct(){
+            if(!window.confirm('Retirar “'+item.nome+'” da vitrine? Os pedidos e o cadastro serão preservados.'))return;
+            remove.disabled=true;remove.textContent='Retirando…';say('Retirando o produto da vitrine…');
+            invoke('publicarProdutoLoja',[api.token(),item.id,'false'],function(out){
+              if(!out.ok){remove.disabled=false;remove.textContent='Excluir da loja';return}
+              item.status=out.status||'Rascunho';clearCatalogCache();say('Produto retirado da vitrine. O cadastro e os pedidos foram preservados.','success');renderProducts()
+            })
+          }
           function saveProduct(){
             var f=file.files&&file.files[0],cost=Number(price.value);
             if(name.value.trim().length<2){say('Informe o nome do produto.','error');name.focus();return}
@@ -389,7 +406,7 @@
                 if(editing){item.nome=data.nome;item.categoria=data.categoria;item.descricao=data.descricao;item.precoCentavos=data.precoCentavos;clearCatalogCache();say('Produto atualizado.','success');renderProducts();return}
                 save.textContent='Publicando na loja…';say('Publicando o produto na vitrine…');
                 invoke('publicarProdutoLoja',[api.token(),out.id,'true'],function(pub){
-                  if(!pub.ok){save.disabled=false;cancel.disabled=false;save.textContent='Salvar e publicar';say('O produto foi salvo, mas não publicado. Tente “Publicar” na lista.','error');return}
+                  if(!pub.ok){save.disabled=false;cancel.disabled=false;save.textContent='Salvar e publicar';say('O produto foi salvo, mas não publicado. Tente novamente pela edição.','error');return}
                   clearCatalogCache();afterCatalogMessage='Produto salvo e publicado na loja.';current='catalogo';if(catalogTabButton)catalogTabButton.click();else loadCatalog()
                 })
               })
@@ -411,30 +428,42 @@
   }
   function loadTypeManagement(host){
     host.replaceChildren();
-    var sectionTypes=section('Tipos de atendimento','Cadastre, edite ou retire as opções apresentadas na vitrine.',host);
+    var sectionTypes=section('Tipos de atendimento','',host);
     var toolbar=el('div',null,'loja-manage-toolbar'),add=btn('＋ Novo tipo',function(){openEditor(null)},'member-btn');
-    toolbar.append(el('span','As alterações aparecem no formulário público.','loja-muted'),add);sectionTypes.append(toolbar);
+    toolbar.append(add);sectionTypes.append(toolbar);
     var editorSlot=el('div',null,'loja-editor-slot'),listSlot=el('div',null);sectionTypes.append(editorSlot,listSlot);loadTypes();
     function openEditor(item){
       editorSlot.replaceChildren();
-      var editing=!!item,editor=el('section',null,'loja-editor'),head=el('header',null,'loja-editor-head');head.append(el('h3',editing?'Editar tipo de atendimento':'Novo tipo de atendimento'));
-      var grid=el('div',null,'loja-form-grid'),name=el('input'),description=el('textarea'),order=el('input'),enabled=el('input');
+      var editing=!!item,editor=el('section',null,'loja-editor'),head=el('header',null,'loja-editor-head');
+      head.append(el('h3',editing?'Editar tipo de atendimento':'Novo tipo de atendimento'));
+      var grid=el('div',null,'loja-form-grid'),name=el('input'),description=el('textarea'),enabled=el('input');
       name.maxLength=100;name.required=true;name.placeholder='Ex.: Orientação espiritual';name.value=item&&item.nome||'';
       description.maxLength=1000;description.placeholder='Descrição exibida na loja';description.value=item&&item.descricao||'';
-      order.type='number';order.min='1';order.step='1';order.value=item?String(item.ordem||10):'10';
       enabled.type='checkbox';enabled.checked=item?!!item.ativo:true;
-      function field(label,input,cls){var l=el('label',label,'loja-field'+(cls?' '+cls:''));l.append(input);return l}
-      grid.append(field('Nome do atendimento',name,'wide'),field('Ordem na loja',order),field('Descrição',description,'full'));
+      function field(label,input,cls){var f=el('label',label,'loja-field'+(cls?' '+cls:''));f.append(input);return f}
+      grid.append(field('Nome do atendimento',name,'wide'),field('Descrição',description,'full'));
       var activeLabel=el('label',null,'loja-consent');activeLabel.append(enabled,el('span','Mostrar na loja'));grid.append(activeLabel);
       var actions=el('div',null,'loja-editor-actions'),save=btn(editing?'Salvar alterações':'Salvar tipo',saveType,'member-btn'),cancel=btn('Cancelar',function(){editorSlot.replaceChildren()},'secondary');
-      actions.append(save,cancel);editor.append(head,grid,actions);editorSlot.append(editor);name.focus();
+      actions.append(save);
+      if(editing){var remove=btn(item.ativo?'Excluir tipo':'Reativar tipo',toggleType,'secondary');remove.title='Oculta ou reativa esta opção na vitrine.';actions.append(remove)}
+      actions.append(cancel);editor.append(head,grid,actions);editorSlot.append(editor);editor.scrollIntoView({behavior:'smooth',block:'nearest'});name.focus();
+      function payload(){return {id:item?String(item.id):'',nome:name.value.trim(),descricao:description.value.trim(),ordem:item?(Number(item.ordem)||10):10,ativo:enabled.checked}}
       function saveType(){
         if(name.value.trim().length<2){say('Informe o nome do tipo.','error');name.focus();return}
-        var payload={id:item?String(item.id):'',nome:name.value.trim(),descricao:description.value.trim(),ordem:Number(order.value)||10,ativo:enabled.checked};
-        save.disabled=true;cancel.disabled=true;save.textContent='Salvando…';say('Salvando o tipo de atendimento…');
-        invoke('salvarTipoAtendimentoLoja',[api.token(),JSON.stringify(payload)],function(out){
+        var data=payload();save.disabled=true;cancel.disabled=true;save.textContent='Salvando…';say('Salvando o tipo de atendimento…');
+        invoke('salvarTipoAtendimentoLoja',[api.token(),JSON.stringify(data)],function(out){
           if(!out.ok){save.disabled=false;cancel.disabled=false;save.textContent=editing?'Salvar alterações':'Salvar tipo';return}
           clearCatalogCache();say('Tipo de atendimento salvo.','success');editorSlot.replaceChildren();loadTypes()
+        })
+      }
+      function toggleType(){
+        var next=!item.ativo;
+        if(!next&&!window.confirm('Excluir “'+item.nome+'” da vitrine? O cadastro poderá ser reativado depois.'))return;
+        remove.disabled=true;remove.textContent=next?'Reativando…':'Excluindo…';say(next?'Reativando tipo de atendimento…':'Excluindo tipo de atendimento…');
+        var data={id:String(item.id),nome:item.nome,descricao:item.descricao||'',ordem:Number(item.ordem)||10,ativo:next};
+        invoke('salvarTipoAtendimentoLoja',[api.token(),JSON.stringify(data)],function(out){
+          if(!out.ok){remove.disabled=false;remove.textContent=next?'Reativar tipo':'Excluir tipo';return}
+          item.ativo=next;clearCatalogCache();say(next?'Tipo reativado na loja.':'Tipo excluído da vitrine.','success');editorSlot.replaceChildren();loadTypes()
         })
       }
     }
@@ -444,21 +473,14 @@
         if(!r.ok){listSlot.replaceChildren(loadError('Não foi possível carregar os atendimentos.',loadTypes));return}
         var items=r.tipos||[];
         if(!items.length){var empty=el('div',null,'loja-empty');empty.append(el('strong','Nenhum tipo cadastrado'),el('span','Adicione as opções que deseja mostrar na loja.','loja-muted'));listSlot.replaceChildren(empty);return}
-        var t=table(['Atendimento','Descrição','Ordem','Situação','Ações']);
-        items.forEach(function(x){
-          var tr=el('tr'),state=el('span',x.ativo?'Na loja':'Oculto','loja-status'),actions=el('div',null,'loja-row-actions');
-          var edit=btn('Editar',function(){openEditor(x)},'secondary');
-          var toggle=btn(x.ativo?'Excluir':'Reativar',function(){
-            if(x.ativo&&!window.confirm('Excluir “'+x.nome+'” da loja? O cadastro ficará oculto e poderá ser reativado depois.'))return;
-            toggle.disabled=true;toggle.textContent='Salvando…';
-            var payload={id:String(x.id),nome:x.nome,descricao:x.descricao||'',ordem:Number(x.ordem)||10,ativo:!x.ativo};
-            invoke('salvarTipoAtendimentoLoja',[api.token(),JSON.stringify(payload)],function(out){
-              if(!out.ok){toggle.disabled=false;toggle.textContent=x.ativo?'Excluir':'Reativar';return}
-              clearCatalogCache();say(x.ativo?'Tipo retirado da loja.':'Tipo reativado.','success');loadTypes()
-            })
-          },'secondary');
-          actions.append(edit,toggle);tr.append(el('td',x.nome),el('td',x.descricao||'—'),el('td',String(x.ordem||'')),el('td',state),el('td',actions));t.body.append(tr)
-        });listSlot.replaceChildren(t.wrap)
+        var t=table(['Atendimento','Descrição']);t.wrap.querySelector('table').classList.add('loja-table-types');
+        items.forEach(function(item){
+          var tr=el('tr');tr.className='loja-clickable-row';tr.tabIndex=0;tr.setAttribute('aria-label','Editar tipo de atendimento '+String(item.nome||''));
+          tr.addEventListener('click',function(){openEditor(item)});
+          tr.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openEditor(item)}});
+          tr.append(el('td',item.nome||'—'),el('td',item.descricao||'—'));t.body.append(tr)
+        });
+        listSlot.replaceChildren(t.wrap)
       })
     }
   }

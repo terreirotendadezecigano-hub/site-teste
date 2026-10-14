@@ -43,13 +43,13 @@
   .loja-price{color:var(--primary);font-size:20px;font-weight:850;white-space:nowrap}
   .loja-empty{display:grid;justify-items:center;gap:7px;padding:28px 18px;border:1px dashed var(--line);border-radius:16px;background:var(--surface);text-align:center}
   .loja-empty strong{color:var(--primary);font:700 20px Georgia,serif}
-  .loja-work-card{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:18px;padding:18px 20px;border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:16px;background:linear-gradient(115deg,var(--surface2),var(--surface));box-shadow:var(--shadow)}
+  .loja-work-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:14px}.loja-work-card{display:grid;grid-template-columns:minmax(0,1fr);align-items:stretch;gap:12px;padding:18px 20px;border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:16px;background:linear-gradient(115deg,var(--surface2),var(--surface));box-shadow:var(--shadow)}
   .loja-work-copy{display:grid;gap:7px;min-width:0}
   .loja-work-title{display:flex;align-items:center;gap:10px;min-width:0}
   .loja-work-mark{display:grid;place-items:center;flex:none;width:40px;height:40px;border-radius:50%;background:var(--gold-soft);color:var(--primary);font-size:20px}
   .loja-work-card h3{margin:0;color:var(--primary);font:700 19px/1.2 Georgia,serif}
   .loja-work-card p{max-width:62ch;margin:0;color:var(--muted);font-size:14px;line-height:1.5}
-  .loja-work-card .member-btn{min-height:46px;padding:10px 16px;white-space:nowrap}
+  .loja-work-card .member-btn{justify-self:start;max-width:100%;box-sizing:border-box;min-height:46px;padding:10px 16px;white-space:normal;text-align:center}
   .loja-management-tab{min-width:190px}
   @media(max-width:620px){.loja-work-card{grid-template-columns:minmax(0,1fr);gap:14px;padding:16px}.loja-work-card .member-btn{width:100%;box-sizing:border-box}.loja-work-card p{max-width:none}.loja-tabs:has(.loja-cart-tab[hidden]) .loja-management-tab{grid-column:1/-1;justify-self:center;width:min(100%,calc(50% - 5px))}}
   .loja-editor{display:grid;gap:16px;padding:20px;border:1px solid var(--line);border-top:4px solid var(--gold);border-radius:16px;background:var(--surface);box-shadow:var(--shadow)}
@@ -175,7 +175,7 @@
       });s.append(grid)
     }
     if(!types||!types.length)return;
-    var services=section('Agendamentos espirituais','Conte o que procura. O Pai e a Mãe de Santo avaliarão sua necessidade e entrarão em contato. Enviar a solicitação não confirma um agendamento.',host),gridTypes=el('div',null,'loja-products');
+    var services=section('Agendamentos espirituais','Conte o que procura. O Pai e a Mãe de Santo avaliarão sua necessidade e entrarão em contato. Enviar a solicitação não confirma um agendamento.',host),gridTypes=el('div',null,'loja-products loja-work-grid');
     types.forEach(function(item){
       var work=el('article',null,'loja-work-card'),mark=el('span','✦','loja-work-mark'),copy=el('div',null,'loja-work-copy'),title=el('div',null,'loja-work-title');
       title.append(mark,el('h3',item.nome));copy.append(title,el('p',item.descricao||'Solicite uma conversa para receber orientação individual.'));

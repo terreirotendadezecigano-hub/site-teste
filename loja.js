@@ -130,30 +130,39 @@
         var buy=el('div',null,'loja-product-buy'),orderButton=btn(cart.some(function(x){return String(x)===String(p.id)})?'No carrinho':'Adicionar ao carrinho',function(){addToCart(p.id)},'member-btn');orderButton.dataset.productId=String(p.id);
         buy.append(el('span',money(p.precoCentavos),'loja-price'),orderButton);body.append(buy);card.append(cover,body);grid.append(card)
       });s.append(grid)}
-      var services=section('Agendamentos espirituais','Solicite uma conversa. O Pai de Santo avaliará sua necessidade e retornará para orientar valores e horários; enviar o formulário não confirma um agendamento.');
-      var work=el('article',null,'loja-work-card'),mark=el('span','✦','loja-work-mark'),copy=el('div',null,'loja-work-copy'),title=el('div',null,'loja-work-title');title.append(mark,el('h3','Trabalhos espirituais sob orientação'));copy.append(title,el('p','Realizamos amarração e outros trabalhos espirituais. Conte o que busca para receber orientação individual. Não há preços fixos publicados.'));
-      var contact=btn('Solicitar atendimento',function(){showInquiryForm(services,work)},'member-btn');contact.setAttribute('aria-label','Abrir formulário para solicitar atendimento espiritual');work.append(copy,contact);services.append(work)
+      invoke('listarTiposAtendimentoLoja',[],function(t){
+        if(current!=='catalogo'||host!==content())return;
+        if(!t.ok){content().append(loadError('Não foi possível carregar os tipos de atendimento.',loadCatalog));return}
+        var types=t.tipos||[],services=section('Agendamentos espirituais','Conte o que procura. O Pai e a Mãe de Santo avaliarão sua necessidade e entrarão em contato para orientar os próximos passos. Enviar a solicitação não confirma um agendamento.');
+        if(!types.length){var emptyTypes=el('div',null,'loja-empty');emptyTypes.append(el('strong','Atendimentos em atualização'),el('span','Novas opções serão publicadas em breve.','loja-muted'));services.append(emptyTypes);return}
+        var gridTypes=el('div',null,'loja-products');
+        types.forEach(function(item){var work=el('article',null,'loja-work-card'),mark=el('span','✦','loja-work-mark'),copy=el('div',null,'loja-work-copy'),title=el('div',null,'loja-work-title');title.append(mark,el('h3',item.nome));copy.append(title,el('p',item.descricao||'Solicite uma conversa para receber orientação individual.'));
+          var contact=btn('Solicitar atendimento',function(){showInquiryForm(services,types,item.id)},'member-btn');contact.setAttribute('aria-label','Solicitar atendimento: '+item.nome);work.append(copy,contact);gridTypes.append(work)
+        });
+        services.append(gridTypes)
+      })
     })
   }
-  function showInquiryForm(services,work){
+  function showInquiryForm(services,types,selectedId){
     if(services.querySelector('.loja-inquiry'))return;
+    if(!types||!types.length){say('Não há tipos de atendimento disponíveis no momento.','warning');return}
     var form=el('form',null,'loja-editor loja-inquiry'),grid=el('div',null,'loja-form-grid'),name=el('input'),email=el('input'),phone=el('input'),type=el('select'),details=el('textarea'),consentWrap=el('label',null,'loja-consent'),consent=el('input'),status=el('p','','loja-status-line'),actions=el('div',null,'loja-editor-actions');
     name.type='text';name.autocomplete='name';name.maxLength=120;name.required=true;name.placeholder='Seu nome';
     email.type='email';email.autocomplete='email';email.maxLength=254;email.required=true;email.placeholder='voce@exemplo.com';
     phone.type='tel';phone.autocomplete='tel';phone.maxLength=30;phone.required=true;phone.placeholder='WhatsApp com DDD';
-    [['Quero conversar sobre uma amarração','Amarração'],['Quero conhecer outros trabalhos','Outros trabalhos espirituais'],['Ainda preciso de orientação','Preciso de orientação']].forEach(function(x){var o=el('option',x[0]);o.value=x[1];type.append(o)});
+    types.forEach(function(x){var o=el('option',x.nome);o.value=String(x.id);type.append(o)});if(selectedId)type.value=String(selectedId);
     details.maxLength=1500;details.required=true;details.placeholder='Conte, com suas palavras, o que você procura. Não envie dados de cartão, senhas ou documentos.';
-    consent.type='checkbox';consent.required=true;consentWrap.append(consent,el('span','Autorizo o envio destes dados e da descrição à Tenda de Zé Cigano para que a equipe entre em contato sobre meu atendimento.'));
+    consent.type='checkbox';consent.required=true;consentWrap.append(consent,el('span','Autorizo o envio destes dados e da descrição somente ao Pai e à Mãe de Santo da Tenda de Zé Cigano, para que entrem em contato sobre meu atendimento.'));
     function field(label,input,cls){var l=el('label',label,'loja-field'+(cls?' '+cls:''));l.append(input);return l}
     grid.append(field('Nome',name,'wide'),field('E-mail',email,'wide'),field('WhatsApp',phone,'wide'),field('Tipo de atendimento',type,'wide'),field('O que você procura?',details,'full'));
     status.setAttribute('role','status');status.setAttribute('aria-live','polite');
     var send=btn('Enviar solicitação',function(){},'member-btn'),cancel=btn('Cancelar',function(){form.remove()},'secondary');send.type='submit';actions.append(send,cancel);
     form.append(grid,consentWrap,status,actions);services.append(form);name.focus();
     form.addEventListener('submit',function(e){e.preventDefault();if(!consent.checked){status.textContent='Autorize o uso dos dados para que a solicitação seja enviada.';return}send.disabled=true;send.textContent='Enviando…';status.textContent='Enviando sua solicitação à equipe…';
-      invoke('solicitarAtendimentoLoja',[name.value.trim(),email.value.trim().toLowerCase(),phone.value.trim(),type.value,details.value.trim(),'true'],function(r){
+      invoke('solicitarAtendimentoLojaV02',[name.value.trim(),email.value.trim().toLowerCase(),phone.value.trim(),type.value,details.value.trim(),'true'],function(r){
         send.disabled=false;send.textContent='Enviar solicitação';
         if(!r.ok)return;
-        form.replaceChildren(el('strong','Solicitação recebida'),el('p','A equipe da Tenda entrará em contato para conversar sobre valores e horários. Nenhum agendamento foi confirmado.','loja-muted'));
+        form.replaceChildren(el('strong','Solicitação recebida'),el('p',r.mensagem||'O Pai e a Mãe de Santo entrarão em contato para orientar os próximos passos. Nenhum agendamento foi confirmado.','loja-muted'));
         say(r.mensagem||'Solicitação enviada à equipe.','success')
       })
     })
@@ -302,11 +311,11 @@
       editor.append(head,grid,actions);s.append(editor);
       var list=section('Produtos cadastrados','Produtos publicados aparecem na vitrine. Você pode pausar a publicação quando quiser.');
       var existing=r.produtos||[];
-      if(!existing.length){var empty=el('div',null,'loja-empty');empty.append(el('strong','Nenhum produto cadastrado'),el('span','Salve um PDF acima para ele aparecer automaticamente na Loja.','loja-muted'));list.append(empty);return}
+      if(!existing.length){var empty=el('div',null,'loja-empty');empty.append(el('strong','Nenhum produto cadastrado'),el('span','Salve um PDF acima para ele aparecer automaticamente na Loja.','loja-muted'));list.append(empty);loadTypeManagement(content());return}
       var t=table(['Produto','Categoria','Valor','Status','Ação']);
       existing.forEach(function(p){var tr=el('tr'),status=el('span',p.status||'Rascunho','loja-status'),toggle=btn(p.status==='Publicado'?'Pausar publicação':'Publicar',function(){toggle.disabled=true;toggle.textContent='Atualizando…';say('Atualizando a publicação…');invoke('publicarProdutoLoja',[api.token(),p.id,p.status!=='Publicado'?'true':'false'],function(out){if(out.ok){say(out.status==='Publicado'?'Produto publicado na Loja.':'Publicação pausada.','success');loadManagement()}else{toggle.disabled=false;toggle.textContent=p.status==='Publicado'?'Pausar publicação':'Publicar'}})},p.status==='Publicado'?'secondary':'member-btn');
         tr.append(el('td',p.nome),el('td',p.categoria||'—'),el('td',money(p.precoCentavos),'loja-price'),el('td',status),el('td',toggle));t.body.append(tr)});
-      list.append(t.wrap);
+      list.append(t.wrap);loadTypeManagement(content());
       function saveProduct(){
         var f=file.files&&file.files[0],cost=Number(price.value);
         if(name.value.trim().length<2){say('Informe o nome do produto.','error');name.focus();return}
@@ -327,6 +336,29 @@
         reader.readAsDataURL(f)
       }
     })
+  }
+  function loadTypeManagement(host){
+    var sectionTypes=section('Tipos de atendimento','Cadastre, edite, reordene ou retire opções do formulário público. As opções e descrições abaixo são editáveis.',host);
+    var form=el('section',null,'loja-editor'),head=el('header',null,'loja-editor-head');head.append(el('h3','Novo tipo de atendimento'),el('p','Não informe preços nem horários fixos aqui. A equipe combina isso no contato individual.','loja-muted'));
+    var grid=el('div',null,'loja-form-grid'),name=el('input'),description=el('textarea'),order=el('input'),enabled=el('input'),id='',status=el('p','','loja-status-line');
+    name.maxLength=100;name.required=true;name.placeholder='Ex.: Orientação espiritual';description.maxLength=1000;description.placeholder='Descrição apresentada na vitrine';order.type='number';order.min='1';order.step='1';order.value='10';enabled.type='checkbox';enabled.checked=true;
+    function field(label,input,cls){var l=el('label',label,'loja-field'+(cls?' '+cls:''));l.append(input);return l}
+    grid.append(field('Nome do atendimento',name,'wide'),field('Ordem de exibição',order),field('Descrição',description,'full'));
+    var activeLabel=el('label',null,'loja-consent');activeLabel.append(enabled,el('span','Publicado na Loja'));grid.append(activeLabel);
+    status.setAttribute('role','status');status.setAttribute('aria-live','polite');
+    var actions=el('div',null,'loja-editor-actions'),save=btn('Salvar tipo',saveType,'member-btn'),clear=btn('Limpar',resetType,'secondary');actions.append(save,clear);form.append(head,grid,status,actions);sectionTypes.append(form);
+    var listBox=el('div',null,'loja-muted');sectionTypes.append(listBox);loadTypes();
+    function resetType(){id='';name.value='';description.value='';order.value='10';enabled.checked=true;save.textContent='Salvar tipo';status.textContent='';}
+    function saveType(){if(name.value.trim().length<2){status.textContent='Informe o nome do tipo.';status.className='loja-error';name.focus();return}
+      var payload={id:id,nome:name.value.trim(),descricao:description.value.trim(),ordem:Number(order.value)||10,ativo:enabled.checked};
+      save.disabled=true;save.textContent='Salvando…';status.textContent='Salvando o tipo de atendimento…';status.className='loja-muted';
+      invoke('salvarTipoAtendimentoLoja',[api.token(),JSON.stringify(payload)],function(r){save.disabled=false;save.textContent='Salvar tipo';if(!r.ok)return;resetType();say('Tipo de atendimento salvo.','success');loadManagement()})
+    }
+    function loadTypes(){listBox.textContent='Carregando tipos…';invoke('listarTiposAtendimentoGestaoLoja',[api.token()],function(r){if(!r.ok){listBox.replaceWith(loadError('Não foi possível carregar os tipos de atendimento.',loadManagement));return}
+      var items=r.tipos||[];if(!items.length){listBox.textContent='Nenhum tipo cadastrado.';return}
+      var t=table(['Tipo','Descrição','Ordem','Status','Ações']);items.forEach(function(x){var tr=el('tr'),state=el('span',x.ativo?'Publicado':'Oculto','loja-status'),actionsCell=el('div'),edit=btn('Editar',function(){id=String(x.id);name.value=x.nome;description.value=x.descricao||'';order.value=String(x.ordem||10);enabled.checked=!!x.ativo;save.textContent='Salvar alterações';name.focus()},'secondary'),toggle=btn(x.ativo?'Excluir':'Reativar',function(){toggle.disabled=true;toggle.textContent='Salvando…';var p={id:String(x.id),nome:x.nome,descricao:x.descricao||'',ordem:Number(x.ordem)||10,ativo:!x.ativo};invoke('salvarTipoAtendimentoLoja',[api.token(),JSON.stringify(p)],function(out){if(!out.ok){toggle.disabled=false;toggle.textContent=x.ativo?'Excluir':'Reativar';return}loadManagement()})},'secondary');
+        actionsCell.append(edit,toggle);tr.append(el('td',x.nome),el('td',x.descricao||'—'),el('td',String(x.ordem||'')),el('td',state),el('td',actionsCell));t.body.append(tr)});listBox.replaceWith(t.wrap)
+    })}
   }
   function renderPendencias(host,status,items){api=window.TZCLojaAPI;if(!api)return;notice=status;host.replaceChildren();if(!items.length){host.append(el('p','A fila só recebe pedidos depois que o comprador envia o comprovante em Meus pedidos. Pedidos ainda aguardando pagamento não precisam de análise.','m04-note'));status.textContent='Nenhum comprovante da Loja aguardando conferência.';return}status.textContent=items.length+' pagamento(s) da Loja aguardando análise.';items.forEach(function(x){renderPendingItem(host,status,x)})}
   function renderPendingItem(host,status,x){api=window.TZCLojaAPI;notice=status;if(!api)return;var card=el('article',null,'myarea-review-card');card.dataset.pendingType='loja';card.append(el('span','Loja · aguardando conferência','pending-kind'),el('strong',x.nome||'Comprador'),el('span',(x.produtos||[]).join(', ')+' · Pedido '+(x.numeroPedido||x.pedidoId)+' · '+money(x.valorCentavos),'myarea-review-detail'),el('span','Pagamento em '+x.dataPagamento+' · '+(x.forma||'Forma não informada')+' · enviado '+x.enviadoEm,'myarea-review-detail'));var actions=el('div',null,'myarea-action-buttons'),view=btn('Conferir comprovante',function(){view.disabled=true;view.textContent='Abrindo…';invoke('obterComprovanteLoja',[api.token(),x.id],function(r){view.disabled=false;view.textContent='Conferir comprovante';if(!r.ok)return;var raw=atob(r.base64),bytes=new Uint8Array(raw.length);for(var i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);var blob=new Blob([bytes],{type:r.mimeType}),url=URL.createObjectURL(blob),box=el('div',null,'loja-proof');if(r.mimeType==='application/pdf'){var frame=el('iframe');frame.title='Comprovante de pagamento';frame.src=url;box.append(frame)}else{var img=el('img');img.alt='Comprovante de pagamento';img.src=url;box.append(img)}card.append(box)})},'secondary'),approve=btn('Aprovar pagamento',function(){decide('Aprovar','')},'member-btn'),reject=btn('Devolver para correção',function(){var reason=card.querySelector('.loja-reason');if(!reason){reason=el('input');reason.className='loja-reason';reason.maxLength=500;reason.placeholder='Informe o motivo da devolução';card.append(reason);reject.textContent='Confirmar devolução';return}decide('Recusar',reason.value)});actions.append(view,approve,reject);card.append(actions);host.append(card);function decide(action,reason){if(action==='Recusar'&&!reason.trim()){say('Informe o motivo para devolver o comprovante.','error');return}actions.querySelectorAll('button').forEach(function(b){b.disabled=true});approve.textContent=action==='Aprovar'?'Salvando…':approve.textContent;reject.textContent=action==='Recusar'?'Salvando…':reject.textContent;say('Salvando a análise do pedido…');invoke('decidirPagamentoLoja',[api.token(),x.id,action,reason],function(r){if(!r.ok){actions.querySelectorAll('button').forEach(function(b){b.disabled=false});return}card.replaceChildren(el('span',r.status+' · decisão registrada','pending-kind'));status.textContent=r.mensagem||'Análise salva.';setTimeout(function(){if(api&&api.refreshPendencias)api.refreshPendencias()},500)})}}

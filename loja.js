@@ -1,7 +1,7 @@
 /* TZC — Loja/Pedidos V01. UI isolada; depende da API estreita exposta pelo site. */
 (function(){
   'use strict';
-  var api, root, notice, current='catalogo', products=[], orders=[], cart=[], buyerToken='', buyerOrdersActive=false, buyerName='', buyerEmail='', pendingProductId='', pendingOrderId='', catalogTabButton=null, cartTabButton=null, ordersTabButton=null, afterCatalogMessage='';
+  var api, root, notice, current='catalogo', products=[], orders=[], cart=[], buyerToken='', buyerOrdersActive=false, buyerName='', buyerEmail='', pendingProductId='', pendingOrderId='', catalogTabButton=null, cartTabButton=null, ordersTabButton=null, afterCatalogMessage='', catalogLoadId=0;
   var styles=`
   .loja-wrap{display:grid;gap:6px;max-width:1180px;margin-inline:auto}
   .loja-wrap>.intro-title{margin:0;padding:0;color:var(--primary);font:700 clamp(22px,2vw,27px)/1.12 Georgia,serif}
@@ -106,8 +106,9 @@
   function ordersToken(){return buyerOrdersActive?buyerToken:activeToken()}
   function markCurrentTab(){[catalogTabButton,cartTabButton,ordersTabButton].filter(Boolean).forEach(function(b){b.setAttribute('aria-pressed',String((b===catalogTabButton&&current==='catalogo')||(b===cartTabButton&&(current==='carrinho'||current==='checkout'||current==='pix'))||(b===ordersTabButton&&current==='pedidos')))});updateCartTab()}
   function loadCatalog(){
-    if(!content())return;content().replaceChildren(el('p','Carregando produtos…','loja-muted'));say('Consultando produtos…');
+    if(!content())return;var requestId=++catalogLoadId,host=content();host.replaceChildren(el('p','Carregando produtos…','loja-muted'));say('Consultando produtos…');
     invoke('listarCatalogoLoja',[],function(r){
+      if(requestId!==catalogLoadId||current!=='catalogo'||host!==content())return;
       if(!r.ok){content().replaceChildren(loadError('Não foi possível carregar os produtos.',loadCatalog));return}
       products=r.produtos||[];content().replaceChildren();say(afterCatalogMessage||(products.length?'Materiais disponíveis para compra.':''));afterCatalogMessage='';
       var s=section('Livros e materiais digitais','');

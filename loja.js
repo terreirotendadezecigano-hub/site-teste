@@ -97,6 +97,17 @@
   @media(max-width:760px){.loja-hero{grid-template-columns:1fr;padding:12px 14px}.loja-hero-mark{display:none}.loja-field,.loja-field.wide{grid-column:span 6}.loja-field.full{grid-column:1/-1}}
   @media(max-width:520px){.loja-tabs{display:grid;grid-template-columns:1fr 1fr;width:100%}.loja-tabs button{padding:9px 10px}.loja-tabs button:last-child:nth-child(odd){grid-column:1/-1}.loja-hero{padding:12px}.loja-field,.loja-field.wide{grid-column:1/-1}.loja-editor{padding:15px}.loja-editor-actions{display:grid;grid-template-columns:1fr;width:100%}.loja-editor-actions button{width:100%}.loja-access-panel{padding:15px}.loja-access-email{align-items:flex-start}.loja-access-actions{display:grid;grid-template-columns:1fr;width:100%}.loja-access-actions button{width:100%}.loja-table{min-width:580px}.loja-cart-line{grid-template-columns:minmax(0,1fr) auto}.loja-cart-line .loja-remove{grid-column:2}.loja-pix-panel{padding:14px}.loja-pix-panel img{width:210px;height:210px}}
   @media(max-width:520px){.loja-card-cover{height:138px}.loja-book-mark{width:78px;height:92px;font-size:30px}.loja-product-body{gap:8px;padding:14px}.loja-product-body h3{font-size:18px}.loja-product-buy{gap:8px}.loja-price{font-size:18px}.loja-product-buy .member-btn{min-height:42px;padding:9px 12px}}
+  .loja-manage-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  .loja-manage-tabs button{min-height:42px;padding:9px 16px;border-radius:999px}
+  .loja-manage-pane{display:grid;gap:14px}
+  .loja-manage-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 0}
+  .loja-manage-toolbar>span{margin:0}
+  .loja-manage-toolbar button{min-height:42px;padding:9px 15px}
+  .loja-editor-slot{display:grid;gap:12px}
+  .loja-row-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .loja-row-actions button{min-height:38px;padding:7px 11px;white-space:nowrap}
+  .loja-manage-pane .loja-section{gap:8px}
+  @media(max-width:600px){.loja-manage-toolbar{align-items:stretch}.loja-manage-toolbar button{width:100%}.loja-row-actions{min-width:160px}}
   `;
   function el(tag, text, cls){var n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n}
   function btn(text,fn,cls){var b=el('button',text,cls||'secondary');b.type='button';b.addEventListener('click',fn);return b}
@@ -115,33 +126,54 @@
   function activeToken(){return api&&api.user()?api.token():buyerToken}
   function ordersToken(){return buyerOrdersActive?buyerToken:activeToken()}
   function markCurrentTab(){[catalogTabButton,cartTabButton,ordersTabButton].filter(Boolean).forEach(function(b){b.setAttribute('aria-pressed',String((b===catalogTabButton&&current==='catalogo')||(b===cartTabButton&&(current==='carrinho'||current==='checkout'||current==='pix'))||(b===ordersTabButton&&current==='pedidos')))});updateCartTab()}
+  function clearCatalogCache(){try{localStorage.removeItem('tzc-loja-catalogo-v1')}catch(ignore){}}
   function loadCatalog(){
-    if(!content())return;var requestId=++catalogLoadId,host=content();host.replaceChildren(el('p','Carregando produtos…','loja-muted'));say('Consultando produtos…');
+    if(!content())return;
+    var requestId=++catalogLoadId,host=content(),cached=null;
+    try{cached=JSON.parse(localStorage.getItem('tzc-loja-catalogo-v1')||'null')}catch(ignore){}
+    if(cached&&Array.isArray(cached.produtos)&&Array.isArray(cached.tipos)){
+      products=cached.produtos;renderCatalog(host,cached.produtos,cached.tipos);
+      say('Materiais disponíveis para compra. Atualizando catálogo…');
+    }else{host.replaceChildren(el('p','Carregando a Loja…','loja-muted'));say('Buscando materiais disponíveis…')}
     invoke('listarCatalogoLoja',[],function(r){
       if(requestId!==catalogLoadId||current!=='catalogo'||host!==content())return;
-      if(!r.ok){content().replaceChildren(loadError('Não foi possível carregar os produtos.',loadCatalog));return}
-      products=r.produtos||[];content().replaceChildren();say(afterCatalogMessage||(products.length?'Materiais disponíveis para compra.':''));afterCatalogMessage='';
-      var s=section('Livros e materiais digitais','');
-      if(!products.length){var empty=el('div',null,'loja-empty');empty.append(el('strong','Novidades chegando'),el('span','Os materiais digitais aparecerão aqui assim que forem cadastrados.','loja-muted'));s.append(empty)}
-      else{var grid=el('div',null,'loja-products');products.forEach(function(p){
-        var card=el('article',null,'loja-product-card'),cover=el('div',null,'loja-card-cover');
-        if(p.imagemUrl){var img=el('img');img.src=p.imagemUrl;img.alt='Capa de '+p.nome;img.loading='lazy';cover.append(img)}else{var mark=el('div',null,'loja-book-mark');mark.append(el('span','▤'),el('span','PDF DIGITAL'));cover.append(mark)}
-        var body=el('div',null,'loja-product-body');body.append(el('span',p.categoria||'Leitura digital','loja-product-category'),el('h3',p.nome),el('p',p.descricao||'Material digital em PDF.'));
-        var buy=el('div',null,'loja-product-buy'),orderButton=btn(cart.some(function(x){return String(x)===String(p.id)})?'No carrinho':'Adicionar ao carrinho',function(){addToCart(p.id)},'member-btn');orderButton.dataset.productId=String(p.id);
-        buy.append(el('span',money(p.precoCentavos),'loja-price'),orderButton);body.append(buy);card.append(cover,body);grid.append(card)
-      });s.append(grid)}
+      if(!r.ok){if(cached){say('Exibindo a última lista carregada. Tente atualizar em instantes.','warning');return}host.replaceChildren(loadError('Não foi possível carregar os produtos.',loadCatalog));return}
+      var freshProducts=r.produtos||[];
       invoke('listarTiposAtendimentoLoja',[],function(t){
-        if(current!=='catalogo'||host!==content())return;
-        if(!t.ok){content().append(loadError('Não foi possível carregar os tipos de atendimento.',loadCatalog));return}
-        var types=t.tipos||[],services=section('Agendamentos espirituais','Conte o que procura. O Pai e a Mãe de Santo avaliarão sua necessidade e entrarão em contato para orientar os próximos passos. Enviar a solicitação não confirma um agendamento.');
-        if(!types.length){var emptyTypes=el('div',null,'loja-empty');emptyTypes.append(el('strong','Atendimentos em atualização'),el('span','Novas opções serão publicadas em breve.','loja-muted'));services.append(emptyTypes);return}
-        var gridTypes=el('div',null,'loja-products');
-        types.forEach(function(item){var work=el('article',null,'loja-work-card'),mark=el('span','✦','loja-work-mark'),copy=el('div',null,'loja-work-copy'),title=el('div',null,'loja-work-title');title.append(mark,el('h3',item.nome));copy.append(title,el('p',item.descricao||'Solicite uma conversa para receber orientação individual.'));
-          var contact=btn('Solicitar atendimento',function(){showInquiryForm(services,types,item.id)},'member-btn');contact.setAttribute('aria-label','Solicitar atendimento: '+item.nome);work.append(copy,contact);gridTypes.append(work)
-        });
-        services.append(gridTypes)
+        if(requestId!==catalogLoadId||current!=='catalogo'||host!==content())return;
+        if(!t.ok){
+          if(cached){products=freshProducts;renderCatalog(host,freshProducts,cached.tipos);say('Produtos atualizados. As opções de atendimento serão atualizadas em instantes.','warning');return}
+          products=freshProducts;renderCatalog(host,freshProducts,[]);host.append(loadError('Não foi possível carregar os atendimentos.',loadCatalog));return
+        }
+        var freshTypes=t.tipos||[];products=freshProducts;
+        try{localStorage.setItem('tzc-loja-catalogo-v1',JSON.stringify({at:Date.now(),produtos:freshProducts,tipos:freshTypes}))}catch(ignore){}
+        renderCatalog(host,freshProducts,freshTypes);say(afterCatalogMessage||(freshProducts.length?'Materiais disponíveis para compra.':''));afterCatalogMessage=''
       })
     })
+  }
+  function renderCatalog(host,items,types){
+    if(host!==content())return;
+    products=items||[];host.replaceChildren();
+    var s=section('Livros e materiais digitais','',host);
+    if(!products.length){var empty=el('div',null,'loja-empty');empty.append(el('strong','Novidades chegando'),el('span','Os materiais digitais aparecerão aqui assim que forem cadastrados.','loja-muted'));s.append(empty)}
+    else{
+      var grid=el('div',null,'loja-products');
+      products.forEach(function(p){
+        var card=el('article',null,'loja-product-card'),cover=el('div',null,'loja-card-cover');
+        if(p.imagemUrl){var img=el('img');img.src=p.imagemUrl;img.alt='Capa de '+p.nome;img.loading='lazy';cover.append(img)}
+        else{var mark=el('div',null,'loja-book-mark');mark.append(el('span','▤'),el('span','PDF DIGITAL'));cover.append(mark)}
+        var body=el('div',null,'loja-product-body');body.append(el('span',p.categoria||'Leitura digital','loja-product-category'),el('h3',p.nome),el('p',p.descricao||'Material digital em PDF.'));
+        var buy=el('div',null,'loja-product-buy'),orderButton=btn(cart.some(function(x){return String(x)===String(p.id)})?'No carrinho':'Adicionar ao carrinho',function(){addToCart(p.id)},'member-btn');
+        orderButton.dataset.productId=String(p.id);buy.append(el('span',money(p.precoCentavos),'loja-price'),orderButton);body.append(buy);card.append(cover,body);grid.append(card)
+      });s.append(grid)
+    }
+    if(!types||!types.length)return;
+    var services=section('Agendamentos espirituais','Conte o que procura. O Pai e a Mãe de Santo avaliarão sua necessidade e entrarão em contato. Enviar a solicitação não confirma um agendamento.',host),gridTypes=el('div',null,'loja-products');
+    types.forEach(function(item){
+      var work=el('article',null,'loja-work-card'),mark=el('span','✦','loja-work-mark'),copy=el('div',null,'loja-work-copy'),title=el('div',null,'loja-work-title');
+      title.append(mark,el('h3',item.nome));copy.append(title,el('p',item.descricao||'Solicite uma conversa para receber orientação individual.'));
+      var contact=btn('Solicitar atendimento',function(){showInquiryForm(services,types,item.id)},'member-btn');contact.setAttribute('aria-label','Solicitar atendimento: '+item.nome);work.append(copy,contact);gridTypes.append(work)
+    });services.append(gridTypes)
   }
   function showInquiryForm(services,types,selectedId){
     if(services.querySelector('.loja-inquiry'))return;
@@ -290,75 +322,138 @@
   function downloadItem(id){invoke('baixarProdutoLoja',[ordersToken(),id],function(r){if(!r.ok)return;var raw=atob(r.base64),bytes=new Uint8Array(raw.length);for(var i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);var blob=new Blob([bytes],{type:r.mimeType||'application/pdf'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=r.nome||'material.pdf';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},1000);say('Download autorizado para este pedido.','success')})}
   function loadManagement(){
     if(!api.user()){api.login();return}
-    content().replaceChildren(el('p','Carregando produtos…','loja-muted'));say('Carregando a gestão da Loja…');
+    content().replaceChildren(el('p','Abrindo a gestão da Loja…','loja-muted'));say('Carregando seus produtos…');
     invoke('listarProdutosGestaoLoja',[api.token()],function(r){
-      if(!r.ok){content().replaceChildren(loadError('Não foi possível carregar a gestão da Loja.',loadManagement));return}
+      if(!r.ok){content().replaceChildren(loadError('Não foi possível abrir a gestão da Loja.',loadManagement));return}
       content().replaceChildren();say('');
-      var s=section('Gestão de produtos','Cadastre livros e materiais digitais em PDF. Depois, publique o produto para que apareça na Loja.');
-      var editor=el('section',null,'loja-editor'),head=el('header',null,'loja-editor-head');
-      head.append(el('h3','Novo produto digital'),el('p','O arquivo fica privado até a confirmação do pagamento.','loja-muted'));
-      var grid=el('div',null,'loja-form-grid'),name=el('input'),cat=el('input'),desc=el('textarea'),price=el('input'),file=el('input');
-      name.placeholder='Ex.: Livro de estudos da Umbanda';name.maxLength=120;name.required=true;
-      cat.placeholder='Ex.: Estudos';cat.maxLength=60;
-      desc.placeholder='Conte em poucas linhas o que a pessoa encontrará no material.';desc.maxLength=2000;
-      price.type='number';price.min='0.01';price.step='0.01';price.placeholder='0,00';price.required=true;
-      file.type='file';file.accept='.pdf,application/pdf';file.required=true;
-      function field(label,input,cls){var l=el('label',label,'loja-field'+(cls?' '+cls:''));l.append(input);return l}
-      grid.append(field('Nome do produto',name,'wide'),field('Categoria',cat),field('Preço (R$)',price));
-      grid.append(field('Descrição',desc,'full'));
-      var pdfField=field('Livro ou material em PDF',file,'full');pdfField.append(el('span','PDF de até 8 MB. O arquivo não fica público antes da confirmação do pagamento.','loja-file-note'));grid.append(pdfField);
-      var actions=el('div',null,'loja-editor-actions'),save=btn('Salvar produto',saveProduct,'member-btn');save.type='button';actions.append(save);
-      editor.append(head,grid,actions);s.append(editor);
-      var list=section('Produtos cadastrados','Produtos publicados aparecem na vitrine. Você pode pausar a publicação quando quiser.');
-      var existing=r.produtos||[];
-      if(!existing.length){var empty=el('div',null,'loja-empty');empty.append(el('strong','Nenhum produto cadastrado'),el('span','Salve um PDF acima para ele aparecer automaticamente na Loja.','loja-muted'));list.append(empty);loadTypeManagement(content());return}
-      var t=table(['Produto','Categoria','Valor','Status','Ação']);
-      existing.forEach(function(p){var tr=el('tr'),status=el('span',p.status||'Rascunho','loja-status'),toggle=btn(p.status==='Publicado'?'Pausar publicação':'Publicar',function(){toggle.disabled=true;toggle.textContent='Atualizando…';say('Atualizando a publicação…');invoke('publicarProdutoLoja',[api.token(),p.id,p.status!=='Publicado'?'true':'false'],function(out){if(out.ok){say(out.status==='Publicado'?'Produto publicado na Loja.':'Publicação pausada.','success');loadManagement()}else{toggle.disabled=false;toggle.textContent=p.status==='Publicado'?'Pausar publicação':'Publicar'}})},p.status==='Publicado'?'secondary':'member-btn');
-        tr.append(el('td',p.nome),el('td',p.categoria||'—'),el('td',money(p.precoCentavos),'loja-price'),el('td',status),el('td',toggle));t.body.append(tr)});
-      list.append(t.wrap);loadTypeManagement(content());
-      function saveProduct(){
-        var f=file.files&&file.files[0],cost=Number(price.value);
-        if(name.value.trim().length<2){say('Informe o nome do produto.','error');name.focus();return}
-        if(!Number.isFinite(cost)||cost<=0){say('Informe um preço válido.','error');price.focus();return}
-        if(!f){say('Selecione o PDF do livro antes de salvar.','error');file.focus();return}
-        if(f.size>8*1024*1024||f.type!=='application/pdf'){say('O material deve ser um PDF de até 8 MB.','error');return}
-        save.disabled=true;save.textContent='Lendo PDF…';say('Preparando o PDF para salvar…');
-        var data={nome:name.value.trim(),categoria:cat.value.trim(),descricao:desc.value.trim(),precoCentavos:Math.round(cost*100)};
-        var reader=new FileReader();
-        reader.onerror=function(){save.disabled=false;save.textContent='Salvar produto';say('Não foi possível ler o PDF. Selecione o arquivo novamente.','error')};
-        reader.onload=function(){
-          data.arquivoNome=f.name;data.arquivoMime=f.type;data.arquivoBase64=String(reader.result).split(',')[1]||'';
-          var json=JSON.stringify(data);
-          if(json.length>12000000){save.disabled=false;save.textContent='Salvar produto';say('Este arquivo ultrapassa o limite seguro de envio. Use um PDF menor que 8 MB.','error');return}
-          save.textContent='Salvando…';say('Salvando o livro e o PDF privado…');
-          invoke('salvarProdutoLoja',[api.token(),json],function(out){if(!out.ok){save.disabled=false;save.textContent='Salvar produto';return}save.textContent='Publicando na Loja…';say('PDF salvo. Publicando o produto na vitrine…');invoke('publicarProdutoLoja',[api.token(),out.id,'true'],function(pub){save.disabled=false;save.textContent='Salvar produto';if(!pub.ok){say('O PDF foi salvo, mas não foi publicado. Use “Publicar” na lista de produtos para concluir.','error');loadManagement();return}afterCatalogMessage='Produto salvo e publicado na Loja.';current='catalogo';if(catalogTabButton)catalogTabButton.click();else loadCatalog()})})
-        };
-        reader.readAsDataURL(f)
+      var page=section('Gestão da Loja','Organize os materiais e as opções de atendimento da vitrine.');
+      var tabs=el('div',null,'loja-manage-tabs'),pane=el('div',null,'loja-manage-pane');
+      var productsTab=btn('Produtos digitais',showProducts,'member-btn'),typesTab=btn('Atendimentos',showTypes,'secondary');
+      tabs.append(productsTab,typesTab);page.append(tabs,pane);
+      var existing=(r.produtos||[]).slice();
+      function selectTab(which){productsTab.className=which==='produtos'?'member-btn':'secondary';typesTab.className=which==='tipos'?'member-btn':'secondary';productsTab.setAttribute('aria-pressed',String(which==='produtos'));typesTab.setAttribute('aria-pressed',String(which==='tipos'))}
+      function showProducts(){selectTab('produtos');renderProducts()}
+      function showTypes(){selectTab('tipos');loadTypeManagement(pane)}
+      function renderProducts(){
+        pane.replaceChildren();
+        var sectionProducts=section('Produtos digitais','',pane);
+        var toolbar=el('div',null,'loja-manage-toolbar'),add=btn('＋ Novo produto',function(){openProductEditor(null)},'member-btn');
+        toolbar.append(el('span','Materiais exibidos na vitrine para compra.','loja-muted'),add);sectionProducts.append(toolbar);
+        var editorSlot=el('div',null,'loja-editor-slot');sectionProducts.append(editorSlot);
+        if(!existing.length){var empty=el('div',null,'loja-empty');empty.append(el('strong','Nenhum produto cadastrado'),el('span','Cadastre um PDF para publicar o primeiro material.','loja-muted'));sectionProducts.append(empty);return}
+        var t=table(['Produto','Categoria','Preço','Situação','Ações']);
+        existing.forEach(function(p){
+          var tr=el('tr'),state=el('span',p.status||'Rascunho','loja-status'),actions=el('div',null,'loja-row-actions');
+          var edit=btn('Editar',function(){openProductEditor(p)},'secondary'),published=p.status==='Publicado';
+          var toggle=btn(published?'Retirar da loja':'Publicar',function(){
+            toggle.disabled=true;toggle.textContent='Salvando…';say('Atualizando a publicação…');
+            invoke('publicarProdutoLoja',[api.token(),p.id,published?'false':'true'],function(out){
+              if(!out.ok){toggle.disabled=false;toggle.textContent=published?'Retirar da loja':'Publicar';return}
+              p.status=out.status;clearCatalogCache();say(published?'Produto retirado da loja.':'Produto publicado na loja.','success');renderProducts()
+            })
+          },published?'secondary':'member-btn');
+          actions.append(edit,toggle);tr.append(el('td',p.nome),el('td',p.categoria||'—'),el('td',money(p.precoCentavos),'loja-price'),el('td',state),el('td',actions));t.body.append(tr)
+        });sectionProducts.append(t.wrap);
+        function openProductEditor(item){
+          editorSlot.replaceChildren();
+          var editing=!!item,editor=el('section',null,'loja-editor'),head=el('header',null,'loja-editor-head');head.append(el('h3',editing?'Editar produto':'Novo produto digital'));
+          var grid=el('div',null,'loja-form-grid'),name=el('input'),cat=el('input'),desc=el('textarea'),price=el('input'),file=el('input');
+          name.placeholder='Ex.: Livro de estudos da Umbanda';name.maxLength=120;name.required=true;name.value=item&&item.nome||'';
+          cat.placeholder='Ex.: Estudos';cat.maxLength=60;cat.value=item&&item.categoria||'';
+          desc.placeholder='Descrição do material';desc.maxLength=2000;desc.value=item&&item.descricao||'';
+          price.type='number';price.min='0.01';price.step='0.01';price.placeholder='0,00';price.required=true;price.value=item?(Number(item.precoCentavos||0)/100).toFixed(2):'';
+          file.type='file';file.accept='.pdf,application/pdf';file.required=!editing;
+          function field(label,input,cls){var l=el('label',label,'loja-field'+(cls?' '+cls:''));l.append(input);return l}
+          grid.append(field('Nome do produto',name,'wide'),field('Categoria',cat),field('Preço (R$)',price),field('Descrição',desc,'full'));
+          var pdfField=field('Arquivo em PDF',file,'full');pdfField.append(el('span',editing?'Selecione outro PDF somente se quiser trocar o arquivo.':'Selecione o livro ou material em PDF.','loja-file-note'));grid.append(pdfField);
+          var actions=el('div',null,'loja-editor-actions'),save=btn(editing?'Salvar alterações':'Salvar e publicar',saveProduct,'member-btn'),cancel=btn('Cancelar',function(){editorSlot.replaceChildren()},'secondary');
+          actions.append(save,cancel);editor.append(head,grid,actions);editorSlot.append(editor);name.focus();
+          function saveProduct(){
+            var f=file.files&&file.files[0],cost=Number(price.value);
+            if(name.value.trim().length<2){say('Informe o nome do produto.','error');name.focus();return}
+            if(!Number.isFinite(cost)||cost<=0){say('Informe um preço válido.','error');price.focus();return}
+            if(!editing&&!f){say('Selecione o PDF antes de salvar.','error');file.focus();return}
+            if(f&&(f.size>8*1024*1024||f.type!=='application/pdf')){say('O arquivo deve ser um PDF de até 8 MB.','error');return}
+            var data={id:item?String(item.id):'',nome:name.value.trim(),categoria:cat.value.trim(),descricao:desc.value.trim(),precoCentavos:Math.round(cost*100)};
+            function persist(){
+              save.disabled=true;cancel.disabled=true;save.textContent='Salvando…';say('Salvando o produto…');
+              invoke('salvarProdutoLoja',[api.token(),JSON.stringify(data)],function(out){
+                if(!out.ok){save.disabled=false;cancel.disabled=false;save.textContent=editing?'Salvar alterações':'Salvar e publicar';return}
+                if(editing){item.nome=data.nome;item.categoria=data.categoria;item.descricao=data.descricao;item.precoCentavos=data.precoCentavos;clearCatalogCache();say('Produto atualizado.','success');renderProducts();return}
+                save.textContent='Publicando na loja…';say('Publicando o produto na vitrine…');
+                invoke('publicarProdutoLoja',[api.token(),out.id,'true'],function(pub){
+                  if(!pub.ok){save.disabled=false;cancel.disabled=false;save.textContent='Salvar e publicar';say('O produto foi salvo, mas não publicado. Tente “Publicar” na lista.','error');return}
+                  clearCatalogCache();afterCatalogMessage='Produto salvo e publicado na loja.';current='catalogo';if(catalogTabButton)catalogTabButton.click();else loadCatalog()
+                })
+              })
+            }
+            if(!f){persist();return}
+            save.disabled=true;save.textContent='Lendo PDF…';say('Preparando o arquivo…');
+            var reader=new FileReader();
+            reader.onerror=function(){save.disabled=false;cancel.disabled=false;save.textContent=editing?'Salvar alterações':'Salvar e publicar';say('Não foi possível ler o arquivo. Selecione o PDF novamente.','error')};
+            reader.onload=function(){
+              data.arquivoNome=f.name;data.arquivoMime=f.type;data.arquivoBase64=String(reader.result).split(',')[1]||'';
+              if(JSON.stringify(data).length>12000000){save.disabled=false;cancel.disabled=false;save.textContent=editing?'Salvar alterações':'Salvar e publicar';say('Este PDF ultrapassa o limite de envio. Escolha um arquivo menor.','error');return}
+              persist()
+            };reader.readAsDataURL(f)
+          }
+        }
       }
+      showProducts()
     })
   }
   function loadTypeManagement(host){
-    var sectionTypes=section('Tipos de atendimento','Cadastre, edite, reordene ou retire opções do formulário público. As opções e descrições abaixo são editáveis.',host);
-    var form=el('section',null,'loja-editor'),head=el('header',null,'loja-editor-head');head.append(el('h3','Novo tipo de atendimento'),el('p','Não informe preços nem horários fixos aqui. A equipe combina isso no contato individual.','loja-muted'));
-    var grid=el('div',null,'loja-form-grid'),name=el('input'),description=el('textarea'),order=el('input'),enabled=el('input'),id='',status=el('p','','loja-status-line');
-    name.maxLength=100;name.required=true;name.placeholder='Ex.: Orientação espiritual';description.maxLength=1000;description.placeholder='Descrição apresentada na vitrine';order.type='number';order.min='1';order.step='1';order.value='10';enabled.type='checkbox';enabled.checked=true;
-    function field(label,input,cls){var l=el('label',label,'loja-field'+(cls?' '+cls:''));l.append(input);return l}
-    grid.append(field('Nome do atendimento',name,'wide'),field('Ordem de exibição',order),field('Descrição',description,'full'));
-    var activeLabel=el('label',null,'loja-consent');activeLabel.append(enabled,el('span','Publicado na Loja'));grid.append(activeLabel);
-    status.setAttribute('role','status');status.setAttribute('aria-live','polite');
-    var actions=el('div',null,'loja-editor-actions'),save=btn('Salvar tipo',saveType,'member-btn'),clear=btn('Limpar',resetType,'secondary');actions.append(save,clear);form.append(head,grid,status,actions);sectionTypes.append(form);
-    var listBox=el('div',null,'loja-muted');sectionTypes.append(listBox);loadTypes();
-    function resetType(){id='';name.value='';description.value='';order.value='10';enabled.checked=true;save.textContent='Salvar tipo';status.textContent='';}
-    function saveType(){if(name.value.trim().length<2){status.textContent='Informe o nome do tipo.';status.className='loja-error';name.focus();return}
-      var payload={id:id,nome:name.value.trim(),descricao:description.value.trim(),ordem:Number(order.value)||10,ativo:enabled.checked};
-      save.disabled=true;save.textContent='Salvando…';status.textContent='Salvando o tipo de atendimento…';status.className='loja-muted';
-      invoke('salvarTipoAtendimentoLoja',[api.token(),JSON.stringify(payload)],function(r){save.disabled=false;save.textContent='Salvar tipo';if(!r.ok)return;resetType();say('Tipo de atendimento salvo.','success');loadManagement()})
+    host.replaceChildren();
+    var sectionTypes=section('Tipos de atendimento','Cadastre, edite ou retire as opções apresentadas na vitrine.',host);
+    var toolbar=el('div',null,'loja-manage-toolbar'),add=btn('＋ Novo tipo',function(){openEditor(null)},'member-btn');
+    toolbar.append(el('span','As alterações aparecem no formulário público.','loja-muted'),add);sectionTypes.append(toolbar);
+    var editorSlot=el('div',null,'loja-editor-slot'),listSlot=el('div',null);sectionTypes.append(editorSlot,listSlot);loadTypes();
+    function openEditor(item){
+      editorSlot.replaceChildren();
+      var editing=!!item,editor=el('section',null,'loja-editor'),head=el('header',null,'loja-editor-head');head.append(el('h3',editing?'Editar tipo de atendimento':'Novo tipo de atendimento'));
+      var grid=el('div',null,'loja-form-grid'),name=el('input'),description=el('textarea'),order=el('input'),enabled=el('input');
+      name.maxLength=100;name.required=true;name.placeholder='Ex.: Orientação espiritual';name.value=item&&item.nome||'';
+      description.maxLength=1000;description.placeholder='Descrição exibida na loja';description.value=item&&item.descricao||'';
+      order.type='number';order.min='1';order.step='1';order.value=item?String(item.ordem||10):'10';
+      enabled.type='checkbox';enabled.checked=item?!!item.ativo:true;
+      function field(label,input,cls){var l=el('label',label,'loja-field'+(cls?' '+cls:''));l.append(input);return l}
+      grid.append(field('Nome do atendimento',name,'wide'),field('Ordem na loja',order),field('Descrição',description,'full'));
+      var activeLabel=el('label',null,'loja-consent');activeLabel.append(enabled,el('span','Mostrar na loja'));grid.append(activeLabel);
+      var actions=el('div',null,'loja-editor-actions'),save=btn(editing?'Salvar alterações':'Salvar tipo',saveType,'member-btn'),cancel=btn('Cancelar',function(){editorSlot.replaceChildren()},'secondary');
+      actions.append(save,cancel);editor.append(head,grid,actions);editorSlot.append(editor);name.focus();
+      function saveType(){
+        if(name.value.trim().length<2){say('Informe o nome do tipo.','error');name.focus();return}
+        var payload={id:item?String(item.id):'',nome:name.value.trim(),descricao:description.value.trim(),ordem:Number(order.value)||10,ativo:enabled.checked};
+        save.disabled=true;cancel.disabled=true;save.textContent='Salvando…';say('Salvando o tipo de atendimento…');
+        invoke('salvarTipoAtendimentoLoja',[api.token(),JSON.stringify(payload)],function(out){
+          if(!out.ok){save.disabled=false;cancel.disabled=false;save.textContent=editing?'Salvar alterações':'Salvar tipo';return}
+          clearCatalogCache();say('Tipo de atendimento salvo.','success');editorSlot.replaceChildren();loadTypes()
+        })
+      }
     }
-    function loadTypes(){listBox.textContent='Carregando tipos…';invoke('listarTiposAtendimentoGestaoLoja',[api.token()],function(r){if(!r.ok){listBox.replaceWith(loadError('Não foi possível carregar os tipos de atendimento.',loadManagement));return}
-      var items=r.tipos||[];if(!items.length){listBox.textContent='Nenhum tipo cadastrado.';return}
-      var t=table(['Tipo','Descrição','Ordem','Status','Ações']);items.forEach(function(x){var tr=el('tr'),state=el('span',x.ativo?'Publicado':'Oculto','loja-status'),actionsCell=el('div'),edit=btn('Editar',function(){id=String(x.id);name.value=x.nome;description.value=x.descricao||'';order.value=String(x.ordem||10);enabled.checked=!!x.ativo;save.textContent='Salvar alterações';name.focus()},'secondary'),toggle=btn(x.ativo?'Excluir':'Reativar',function(){toggle.disabled=true;toggle.textContent='Salvando…';var p={id:String(x.id),nome:x.nome,descricao:x.descricao||'',ordem:Number(x.ordem)||10,ativo:!x.ativo};invoke('salvarTipoAtendimentoLoja',[api.token(),JSON.stringify(p)],function(out){if(!out.ok){toggle.disabled=false;toggle.textContent=x.ativo?'Excluir':'Reativar';return}loadManagement()})},'secondary');
-        actionsCell.append(edit,toggle);tr.append(el('td',x.nome),el('td',x.descricao||'—'),el('td',String(x.ordem||'')),el('td',state),el('td',actionsCell));t.body.append(tr)});listBox.replaceWith(t.wrap)
-    })}
+    function loadTypes(){
+      listSlot.replaceChildren(el('p','Carregando atendimentos…','loja-muted'));
+      invoke('listarTiposAtendimentoGestaoLoja',[api.token()],function(r){
+        if(!r.ok){listSlot.replaceChildren(loadError('Não foi possível carregar os atendimentos.',loadTypes));return}
+        var items=r.tipos||[];
+        if(!items.length){var empty=el('div',null,'loja-empty');empty.append(el('strong','Nenhum tipo cadastrado'),el('span','Adicione as opções que deseja mostrar na loja.','loja-muted'));listSlot.replaceChildren(empty);return}
+        var t=table(['Atendimento','Descrição','Ordem','Situação','Ações']);
+        items.forEach(function(x){
+          var tr=el('tr'),state=el('span',x.ativo?'Na loja':'Oculto','loja-status'),actions=el('div',null,'loja-row-actions');
+          var edit=btn('Editar',function(){openEditor(x)},'secondary');
+          var toggle=btn(x.ativo?'Excluir':'Reativar',function(){
+            if(x.ativo&&!window.confirm('Excluir “'+x.nome+'” da loja? O cadastro ficará oculto e poderá ser reativado depois.'))return;
+            toggle.disabled=true;toggle.textContent='Salvando…';
+            var payload={id:String(x.id),nome:x.nome,descricao:x.descricao||'',ordem:Number(x.ordem)||10,ativo:!x.ativo};
+            invoke('salvarTipoAtendimentoLoja',[api.token(),JSON.stringify(payload)],function(out){
+              if(!out.ok){toggle.disabled=false;toggle.textContent=x.ativo?'Excluir':'Reativar';return}
+              clearCatalogCache();say(x.ativo?'Tipo retirado da loja.':'Tipo reativado.','success');loadTypes()
+            })
+          },'secondary');
+          actions.append(edit,toggle);tr.append(el('td',x.nome),el('td',x.descricao||'—'),el('td',String(x.ordem||'')),el('td',state),el('td',actions));t.body.append(tr)
+        });listSlot.replaceChildren(t.wrap)
+      })
+    }
   }
   function renderPendencias(host,status,items){api=window.TZCLojaAPI;if(!api)return;notice=status;host.replaceChildren();if(!items.length){host.append(el('p','A fila só recebe pedidos depois que o comprador envia o comprovante em Meus pedidos. Pedidos ainda aguardando pagamento não precisam de análise.','m04-note'));status.textContent='Nenhum comprovante da Loja aguardando conferência.';return}status.textContent=items.length+' pagamento(s) da Loja aguardando análise.';items.forEach(function(x){renderPendingItem(host,status,x)})}
   function renderPendingItem(host,status,x){api=window.TZCLojaAPI;notice=status;if(!api)return;var card=el('article',null,'myarea-review-card');card.dataset.pendingType='loja';card.append(el('span','Loja · aguardando conferência','pending-kind'),el('strong',x.nome||'Comprador'),el('span',(x.produtos||[]).join(', ')+' · Pedido '+(x.numeroPedido||x.pedidoId)+' · '+money(x.valorCentavos),'myarea-review-detail'),el('span','Pagamento em '+x.dataPagamento+' · '+(x.forma||'Forma não informada')+' · enviado '+x.enviadoEm,'myarea-review-detail'));var actions=el('div',null,'myarea-action-buttons'),view=btn('Conferir comprovante',function(){view.disabled=true;view.textContent='Abrindo…';invoke('obterComprovanteLoja',[api.token(),x.id],function(r){view.disabled=false;view.textContent='Conferir comprovante';if(!r.ok)return;var raw=atob(r.base64),bytes=new Uint8Array(raw.length);for(var i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);var blob=new Blob([bytes],{type:r.mimeType}),url=URL.createObjectURL(blob),box=el('div',null,'loja-proof');if(r.mimeType==='application/pdf'){var frame=el('iframe');frame.title='Comprovante de pagamento';frame.src=url;box.append(frame)}else{var img=el('img');img.alt='Comprovante de pagamento';img.src=url;box.append(img)}card.append(box)})},'secondary'),approve=btn('Aprovar pagamento',function(){decide('Aprovar','')},'member-btn'),reject=btn('Devolver para correção',function(){var reason=card.querySelector('.loja-reason');if(!reason){reason=el('input');reason.className='loja-reason';reason.maxLength=500;reason.placeholder='Informe o motivo da devolução';card.append(reason);reject.textContent='Confirmar devolução';return}decide('Recusar',reason.value)});actions.append(view,approve,reject);card.append(actions);host.append(card);function decide(action,reason){if(action==='Recusar'&&!reason.trim()){say('Informe o motivo para devolver o comprovante.','error');return}actions.querySelectorAll('button').forEach(function(b){b.disabled=true});approve.textContent=action==='Aprovar'?'Salvando…':approve.textContent;reject.textContent=action==='Recusar'?'Salvando…':reject.textContent;say('Salvando a análise do pedido…');invoke('decidirPagamentoLoja',[api.token(),x.id,action,reason],function(r){if(!r.ok){actions.querySelectorAll('button').forEach(function(b){b.disabled=false});return}card.replaceChildren(el('span',r.status+' · decisão registrada','pending-kind'));status.textContent=r.mensagem||'Análise salva.';setTimeout(function(){if(api&&api.refreshPendencias)api.refreshPendencias()},500)})}}

@@ -4,7 +4,7 @@
   var api, root, notice, current='catalogo', products=[], orders=[], cart=[], buyerToken='', buyerOrdersActive=false, buyerName='', buyerEmail='', pendingProductId='', pendingOrderId='', catalogTabButton=null, cartTabButton=null, ordersTabButton=null, afterCatalogMessage='', catalogLoadId=0;
   var styles=`
   .loja-wrap{display:grid;gap:14px;max-width:1180px;margin:0 auto;padding:8px 0 30px}.loja-wrap>.intro-title{text-align:center}.loja-wrap>.intro-title+.m04-note{text-align:center;max-width:62ch;margin-inline:auto}
-  .loja-wrap>.intro-title{margin:0;padding:0;color:var(--primary);font:700 clamp(22px,2vw,27px)/1.12 Georgia,serif}
+  .loja-wrap>.intro-title{margin:0;padding:0;color:var(--primary);font:700 clamp(22px,2vw,27px)/1.12 Georgia,serif;text-align:center}.loja-wrap>.loja-muted{max-width:62ch;margin-inline:auto;text-align:center}
   .loja-wrap>.intro-title+.m04-note{margin:0;color:var(--muted);font-size:14px;line-height:1.35}
   .loja-muted{color:var(--muted);font-size:14px;line-height:1.5}
   .loja-error{color:#a22;font-weight:700}.loja-success{color:#176c43;font-weight:700}.loja-warning{color:#956500;font-weight:700}

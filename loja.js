@@ -175,16 +175,17 @@
     try{buyerEmail=buyerEmail||sessionStorage.getItem('tzc-loja-visitante-email')||'';pendingOrderId=pendingOrderId||sessionStorage.getItem('tzc-loja-pending-order-id')||''}catch(ignore){}
     if(!content())return;
     content().replaceChildren();say('');
-    var s=section('Acesse suas compras','Crie seu cadastro de comprador ou entre com e-mail e senha. Não enviamos código por e-mail.');
+    var s=section('Acesse suas compras','Crie seu cadastro ou entre com e-mail e senha. Para vincular um pedido, use o nome e o WhatsApp informados na compra.');
     var box=el('form',null,'loja-editor loja-access-panel');box.noValidate=true;
     var switcher=el('div',null,'loja-access-actions');
     var loginMode=true,registerBtn=btn('Criar cadastro',function(){setMode(false)},'secondary'),loginBtn=btn('Já tenho cadastro',function(){setMode(true)},'member-btn');
     switcher.append(loginBtn,registerBtn);
     var grid=el('div',null,'loja-form-grid'),name=el('input'),email=el('input'),phone=el('input'),password=el('input'),confirm=el('input');
     function field(label,input,cls){var l=el('label',label,'loja-field'+(cls?' '+cls:''));l.append(input);return l}
-    name.autocomplete='name';name.maxLength=120;name.placeholder='Seu nome completo';
-    email.type='email';email.autocomplete='email';email.maxLength=254;email.required=true;email.placeholder='voce@exemplo.com';email.value=buyerEmail;
-    phone.type='tel';phone.autocomplete='tel';phone.maxLength=30;phone.placeholder='WhatsApp com DDD';
+    var checkoutDraft={};try{checkoutDraft=JSON.parse(sessionStorage.getItem('tzc-loja-checkout')||'{}')}catch(ignore){}
+    name.autocomplete='name';name.maxLength=120;name.placeholder='Seu nome completo';name.value=buyerName||checkoutDraft.nome||'';
+    email.type='email';email.autocomplete='email';email.maxLength=254;email.required=true;email.placeholder='voce@exemplo.com';email.value=buyerEmail||checkoutDraft.email||'';
+    phone.type='tel';phone.autocomplete='tel';phone.maxLength=30;phone.placeholder='WhatsApp com DDD';phone.value=checkoutDraft.telefone||'';
     password.type='password';password.inputMode='numeric';password.pattern='[0-9]{4}';password.autocomplete='current-password';password.minLength=4;password.maxLength=4;password.required=true;password.placeholder='PIN de 4 dígitos';
     confirm.type='password';confirm.inputMode='numeric';confirm.pattern='[0-9]{4}';confirm.autocomplete='new-password';confirm.minLength=4;confirm.maxLength=4;confirm.placeholder='Repita o PIN de 4 dígitos';
     var nameField=field('Nome completo',name,'wide'),emailField=field('E-mail',email,'wide'),phoneField=field('WhatsApp com DDD',phone,'wide'),passField=field('Senha',password,'wide'),confirmField=field('Confirme a senha',confirm,'wide');

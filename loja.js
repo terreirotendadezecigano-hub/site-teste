@@ -184,15 +184,15 @@
     name.autocomplete='name';name.maxLength=120;name.placeholder='Seu nome completo';
     email.type='email';email.autocomplete='email';email.maxLength=254;email.required=true;email.placeholder='voce@exemplo.com';email.value=buyerEmail;
     phone.type='tel';phone.autocomplete='tel';phone.maxLength=30;phone.placeholder='WhatsApp com DDD';
-    password.type='password';password.autocomplete='current-password';password.minLength=10;password.maxLength=128;password.required=true;password.placeholder='Senha (mínimo 10 caracteres)';
-    confirm.type='password';confirm.autocomplete='new-password';confirm.minLength=10;confirm.maxLength=128;confirm.placeholder='Repita a senha';
+    password.type='password';password.inputMode='numeric';password.pattern='[0-9]{4}';password.autocomplete='current-password';password.minLength=4;password.maxLength=4;password.required=true;password.placeholder='PIN de 4 dígitos';
+    confirm.type='password';confirm.inputMode='numeric';confirm.pattern='[0-9]{4}';confirm.autocomplete='new-password';confirm.minLength=4;confirm.maxLength=4;confirm.placeholder='Repita o PIN de 4 dígitos';
     var nameField=field('Nome completo',name,'wide'),emailField=field('E-mail',email,'wide'),phoneField=field('WhatsApp com DDD',phone,'wide'),passField=field('Senha',password,'wide'),confirmField=field('Confirme a senha',confirm,'wide');
     grid.append(nameField,emailField,phoneField,passField,confirmField);
     var status=el('p',accessMessage||'Use o mesmo e-mail informado na compra.','loja-status-line');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
     var submit=btn('Entrar',function(){},'member-btn');submit.type='submit';
     var member=btn('Entrar como membro',function(){api.login(email.value.trim())},'secondary');member.hidden=true;
     box.append(switcher,grid,status,submit,member);s.append(box);
-    function setMode(isLogin){loginMode=!!isLogin;loginBtn.className=loginMode?'member-btn':'secondary';registerBtn.className=loginMode?'secondary':'member-btn';nameField.hidden=loginMode;phoneField.hidden=loginMode;confirmField.hidden=loginMode;password.autocomplete=loginMode?'current-password':'new-password';submit.textContent=loginMode?'Entrar':'Criar cadastro';status.textContent=loginMode?'Informe seu e-mail e senha para consultar as compras.':'Informe seus dados e crie uma senha para acessar suas compras.';member.hidden=true}
+    function setMode(isLogin){loginMode=!!isLogin;loginBtn.className=loginMode?'member-btn':'secondary';registerBtn.className=loginMode?'secondary':'member-btn';nameField.hidden=loginMode;phoneField.hidden=loginMode;confirmField.hidden=loginMode;password.autocomplete=loginMode?'current-password':'new-password';submit.textContent=loginMode?'Entrar':'Criar cadastro';status.textContent=loginMode?'Informe seu e-mail e PIN para consultar as compras.':'Informe seus dados e crie um PIN de 4 números para acessar suas compras.';member.hidden=true}
     function finishAccess(r,mail){
       if(!r||!r.ok){submit.disabled=false;submit.textContent=loginMode?'Entrar':'Criar cadastro';status.textContent=r&&r.mensagem||'Não foi possível concluir o acesso.';if(r&&r.codigo==='MEMBRO'){member.hidden=false;status.textContent=r.mensagem||'Este e-mail pertence a um membro. Entre pela conta de membro.'}return}
       if(!r.token){submit.disabled=false;submit.textContent=loginMode?'Entrar':'Criar cadastro';status.textContent='O acesso não foi concluído. Tente novamente.';return}
@@ -209,12 +209,12 @@
       e.preventDefault();member.hidden=true;
       var mail=email.value.trim().toLowerCase();
       if(!email.checkValidity()){email.focus();status.textContent='Informe um e-mail válido.';return}
-      if(password.value.length<10){password.focus();status.textContent='Crie uma senha com pelo menos 10 caracteres.';return}
+      if(!/^[0-9]{4}$/.test(password.value)){password.focus();status.textContent='Informe um PIN com exatamente 4 números.';return}
       if(!window.crypto||!crypto.subtle){status.textContent='Este navegador não oferece criptografia segura. Atualize o navegador ou tente outro.';return}
-      submit.disabled=true;submit.textContent=loginMode?'Verificando…':'Criando cadastro…';status.textContent=loginMode?'Verificando seu acesso…':'Protegendo sua senha e criando seu cadastro…';
+      submit.disabled=true;submit.textContent=loginMode?'Verificando…':'Criando cadastro…';status.textContent=loginMode?'Verificando seu acesso…':'Protegendo seu PIN e criando seu cadastro…';
       if(!loginMode){
         if(name.value.trim().length<2||phone.value.replace(/\D/g,'').length<8){submit.disabled=false;submit.textContent='Criar cadastro';status.textContent='Informe nome completo e WhatsApp com DDD.';return}
-        if(password.value!==confirm.value){submit.disabled=false;submit.textContent='Criar cadastro';status.textContent='As senhas não coincidem.';confirm.focus();return}
+        if(password.value!==confirm.value){submit.disabled=false;submit.textContent='Criar cadastro';status.textContent='Os PINs não coincidem.';confirm.focus();return}
         var salt=makeSalt(),iterations=120000;
         derive(password.value,salt,iterations).then(function(keyBytes){var verifier=bytesToB64(keyBytes);invoke('criarAcessoCompradorLoja',[mail,name.value.trim(),phone.value.trim(),salt,verifier],function(r){finishAccess(r,mail)})}).catch(function(){submit.disabled=false;submit.textContent='Criar cadastro';status.textContent='Não foi possível preparar a senha neste navegador. Tente novamente.'});
         return

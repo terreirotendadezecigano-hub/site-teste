@@ -135,21 +135,28 @@
       products=cached.produtos;renderCatalog(host,cached.produtos,cached.tipos);
       say('Materiais disponíveis para compra. Atualizando catálogo…');
     }else{host.replaceChildren(el('p','Carregando a Loja…','loja-muted'));say('Buscando materiais disponíveis…')}
+    var result={products:null,types:null,productError:false,typeError:false},remaining=2;
+    function finishCatalogLoad(){
+      if(remaining>0||requestId!==catalogLoadId||current!=='catalogo'||host!==content())return;
+      if(result.productError){
+        if(cached){say('Exibindo a última lista carregada. Tente atualizar em instantes.','warning');return}
+        host.replaceChildren(loadError('Não foi possível carregar os produtos.',loadCatalog));return
+      }
+      var freshProducts=result.products||[];
+      if(result.typeError){
+        if(cached){products=freshProducts;renderCatalog(host,freshProducts,cached.tipos);say('Produtos atualizados. As opções de atendimento serão atualizadas em instantes.','warning');return}
+        products=freshProducts;renderCatalog(host,freshProducts,[]);host.append(loadError('Não foi possível carregar os atendimentos.',loadCatalog));return
+      }
+      var freshTypes=result.types||[];
+      try{localStorage.setItem('tzc-loja-catalogo-v1',JSON.stringify({at:Date.now(),produtos:freshProducts,tipos:freshTypes}))}catch(ignore){}
+      renderCatalog(host,freshProducts,freshTypes);say(afterCatalogMessage||(freshProducts.length?'Materiais disponíveis para compra.':''));afterCatalogMessage=''
+    }
     invoke('listarCatalogoLoja',[],function(r){
-      if(requestId!==catalogLoadId||current!=='catalogo'||host!==content())return;
-      if(!r.ok){if(cached){say('Exibindo a última lista carregada. Tente atualizar em instantes.','warning');return}host.replaceChildren(loadError('Não foi possível carregar os produtos.',loadCatalog));return}
-      var freshProducts=r.produtos||[];
-      invoke('listarTiposAtendimentoLoja',[],function(t){
-        if(requestId!==catalogLoadId||current!=='catalogo'||host!==content())return;
-        if(!t.ok){
-          if(cached){products=freshProducts;renderCatalog(host,freshProducts,cached.tipos);say('Produtos atualizados. As opções de atendimento serão atualizadas em instantes.','warning');return}
-          products=freshProducts;renderCatalog(host,freshProducts,[]);host.append(loadError('Não foi possível carregar os atendimentos.',loadCatalog));return
-        }
-        var freshTypes=t.tipos||[];products=freshProducts;
-        try{localStorage.setItem('tzc-loja-catalogo-v1',JSON.stringify({at:Date.now(),produtos:freshProducts,tipos:freshTypes}))}catch(ignore){}
-        renderCatalog(host,freshProducts,freshTypes);say(afterCatalogMessage||(freshProducts.length?'Materiais disponíveis para compra.':''));afterCatalogMessage=''
-      })
-    })
+      result.productError=!r||!r.ok;result.products=r&&r.produtos||[];remaining--;finishCatalogLoad()
+    });
+    invoke('listarTiposAtendimentoLoja',[],function(t){
+      result.typeError=!t||!t.ok;result.types=t&&t.tipos||[];remaining--;finishCatalogLoad()
+    });
   }
   function renderCatalog(host,items,types){
     if(host!==content())return;

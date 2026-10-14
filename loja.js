@@ -118,17 +118,40 @@
       if(!r.ok){content().replaceChildren(loadError('Não foi possível carregar os produtos.',loadCatalog));return}
       products=r.produtos||[];content().replaceChildren();say(afterCatalogMessage||(products.length?'Materiais disponíveis para compra.':''));afterCatalogMessage='';
       var s=section('Livros e materiais digitais','');
-      if(!products.length){var empty=el('div',null,'loja-empty');empty.append(el('strong','Novidades chegando'),el('span','Os materiais digitais aparecerão aqui assim que forem cadastrados.','loja-muted'));s.append(empty);return}
-      var grid=el('div',null,'loja-products');products.forEach(function(p){
+      if(!products.length){var empty=el('div',null,'loja-empty');empty.append(el('strong','Novidades chegando'),el('span','Os materiais digitais aparecerão aqui assim que forem cadastrados.','loja-muted'));s.append(empty)}
+      else{var grid=el('div',null,'loja-products');products.forEach(function(p){
         var card=el('article',null,'loja-product-card'),cover=el('div',null,'loja-card-cover');
         if(p.imagemUrl){var img=el('img');img.src=p.imagemUrl;img.alt='Capa de '+p.nome;img.loading='lazy';cover.append(img)}else{var mark=el('div',null,'loja-book-mark');mark.append(el('span','▤'),el('span','PDF DIGITAL'));cover.append(mark)}
         var body=el('div',null,'loja-product-body');body.append(el('span',p.categoria||'Leitura digital','loja-product-category'),el('h3',p.nome),el('p',p.descricao||'Material digital em PDF.'));
         var buy=el('div',null,'loja-product-buy'),orderButton=btn(cart.some(function(x){return String(x)===String(p.id)})?'No carrinho':'Adicionar ao carrinho',function(){addToCart(p.id)},'member-btn');orderButton.dataset.productId=String(p.id);
         buy.append(el('span',money(p.precoCentavos),'loja-price'),orderButton);body.append(buy);card.append(cover,body);grid.append(card)
-      });s.append(grid);
-      var services=section('Atendimentos espirituais','Cada situação é acolhida individualmente. O Pai de Santo conversa com você e orienta o atendimento adequado; não há preço fixo publicado.');
-      var work=el('article',null,'loja-work-card'),mark=el('span','✦','loja-work-mark'),copy=el('div');copy.append(el('h3','Trabalhos sob orientação'),el('p','Conte brevemente o que precisa. A equipe fará contato para uma conversa reservada e humanizada antes de qualquer agendamento.'));
-      var contact=el('a','Solicitar contato');contact.href='mailto:terreirotendadozecigano@gmail.com?subject=Solicita%C3%A7%C3%A3o%20de%20atendimento%20espiritual';contact.setAttribute('aria-label','Solicitar contato reservado sobre atendimento espiritual');work.append(mark,copy,contact);services.append(work)
+      });s.append(grid)}
+      var services=section('Agendamentos espirituais','Solicite uma conversa. O Pai de Santo avaliará sua necessidade e retornará para orientar valores e horários; enviar o formulário não confirma um agendamento.');
+      var work=el('article',null,'loja-work-card'),mark=el('span','✦','loja-work-mark'),copy=el('div');copy.append(el('h3','Trabalhos espirituais sob orientação'),el('p','Realizamos amarração e outros trabalhos espirituais. Conte o que busca para receber orientação individual. Não há preços fixos publicados.'));
+      var contact=btn('Solicitar atendimento',function(){showInquiryForm(services,work)},'member-btn');contact.setAttribute('aria-label','Abrir formulário para solicitar atendimento espiritual');work.append(mark,copy,contact);services.append(work)
+    })
+  }
+  function showInquiryForm(services,work){
+    if(services.querySelector('.loja-inquiry'))return;
+    var form=el('form',null,'loja-editor loja-inquiry'),grid=el('div',null,'loja-form-grid'),name=el('input'),email=el('input'),phone=el('input'),type=el('select'),details=el('textarea'),consentWrap=el('label',null,'loja-consent'),consent=el('input'),status=el('p','','loja-status-line'),actions=el('div',null,'loja-editor-actions');
+    name.type='text';name.autocomplete='name';name.maxLength=120;name.required=true;name.placeholder='Seu nome';
+    email.type='email';email.autocomplete='email';email.maxLength=254;email.required=true;email.placeholder='voce@exemplo.com';
+    phone.type='tel';phone.autocomplete='tel';phone.maxLength=30;phone.required=true;phone.placeholder='WhatsApp com DDD';
+    [['Quero conversar sobre uma amarração','Amarração'],['Quero conhecer outros trabalhos','Outros trabalhos espirituais'],['Ainda preciso de orientação','Preciso de orientação']].forEach(function(x){var o=el('option',x[0]);o.value=x[1];type.append(o)});
+    details.maxLength=1500;details.required=true;details.placeholder='Conte, com suas palavras, o que você procura. Não envie dados de cartão, senhas ou documentos.';
+    consent.type='checkbox';consent.required=true;consentWrap.append(consent,el('span','Autorizo o envio destes dados e da descrição à Tenda de Zé Cigano para que a equipe entre em contato sobre meu atendimento.'));
+    function field(label,input,cls){var l=el('label',label,'loja-field'+(cls?' '+cls:''));l.append(input);return l}
+    grid.append(field('Nome',name,'wide'),field('E-mail',email,'wide'),field('WhatsApp',phone,'wide'),field('Tipo de atendimento',type,'wide'),field('O que você procura?',details,'full'));
+    status.setAttribute('role','status');status.setAttribute('aria-live','polite');
+    var send=btn('Enviar solicitação',function(){},'member-btn'),cancel=btn('Cancelar',function(){form.remove()},'secondary');send.type='submit';actions.append(send,cancel);
+    form.append(grid,consentWrap,status,actions);services.append(form);name.focus();
+    form.addEventListener('submit',function(e){e.preventDefault();if(!consent.checked){status.textContent='Autorize o uso dos dados para que a solicitação seja enviada.';return}send.disabled=true;send.textContent='Enviando…';status.textContent='Enviando sua solicitação à equipe…';
+      invoke('solicitarAtendimentoLoja',[name.value.trim(),email.value.trim().toLowerCase(),phone.value.trim(),type.value,details.value.trim(),'true'],function(r){
+        send.disabled=false;send.textContent='Enviar solicitação';
+        if(!r.ok)return;
+        form.replaceChildren(el('strong','Solicitação recebida'),el('p','A equipe da Tenda entrará em contato para conversar sobre valores e horários. Nenhum agendamento foi confirmado.','loja-muted'));
+        say(r.mensagem||'Solicitação enviada à equipe.','success')
+      })
     })
   }
   function persistCart(){try{sessionStorage.setItem('tzc-loja-carrinho',JSON.stringify(cart))}catch(ignore){}updateCartTab()}
@@ -163,7 +186,7 @@
   function showPixOrder(order){
     current='pix';markCurrentTab();content().replaceChildren();say('');
     var status=String(order.status||'Aguardando pagamento'),canAttach=status!=='Pago'&&status!=='Em conferência';
-    var s=section(order.jaExistia?'Pagamento do pedido':'Pedido criado','Pedido '+String(order.id||'')+' · '+status+'. Pague pelo Pix e envie o comprovante nesta tela. A liberação depende da conferência de outra pessoa autorizada.',content()),panel=el('div',null,'loja-pix-panel');
+    var s=section(order.jaExistia?'Pagamento do pedido':'Pedido criado',(order.numeroPedido?'Pedido '+order.numeroPedido:'Pedido '+String(order.id||''))+' · '+status+'. Pague pelo Pix e envie o comprovante nesta tela. A liberação depende da conferência de outra pessoa autorizada.',content()),panel=el('div',null,'loja-pix-panel');
     panel.append(el('strong','Total: '+money(order.valorCentavos),'loja-price'));
     if(order.pixCopiaECola){var qr=el('div',null);qr.setAttribute('aria-label','QR Code Pix do pedido');panel.append(qr);renderPixQr(qr,order.pixCopiaECola);var label=el('label','Pix copia e cola','loja-field full'),code=el('textarea',order.pixCopiaECola,'loja-pix-code');code.readOnly=true;label.append(code);panel.append(label,btn('Copiar código Pix',function(){copyText(order.pixCopiaECola,'Código Pix copiado. Abra o aplicativo do banco e escolha Pix copia e cola.')},'member-btn'))}
     else panel.append(el('p',order.pixMensagem||'A chave Pix da loja ainda não está configurada. Peça os dados ao responsável antes de pagar.','loja-error'));

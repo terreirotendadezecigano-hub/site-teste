@@ -423,7 +423,7 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
 (function(){
   'use strict';
   var dados=null, paginas=[], paginaAtual='inicio', chavePix='', timerToast=null, authCodeRequested=false, authEmailVerificado=false, authRestaurando=true, authRestauracaoErro=false, authToken='', authUser=null, authCallbacks=Object.create(null), authRequestSeq=0, podeConfig=false, configAtual=null, primeiraVisitaEtapas=[], primeiraVisitaIndice=0, m04PdfBlob=null, m04ReportData=null, m04GestaoCarregando=false, m04GestaoCarregada=false, m04GestaoCarregadaEm=0;
-  var APP_WEB_URL='https://script.google.com/macros/s/AKfycbz8hvZmShcv6LG4cb9ZjDYU5d7n4RpYIpLBtur83msv1qPev2Dh0JlYb4jiTVPQ-13khA/exec';
+  var APP_WEB_URL='https://script.google.com/macros/s/AKfycbz6MD98hSCrTzjRLQvy2ZfAy2zz3UsjNRgKc2RdcHopDxAHXNO3t9Spl7itgQa277fYsg/exec';
   var MESSAGE_ADMIN_URL='https://script.google.com/macros/s/AKfycbyWyJXzWRoz09e6dMD3uMGuLk7Gxp-TFG9k3akQ7WJ5e1yQAt2RSxZ9V2Lk-vcOMMlI9w/exec?admin=1';
   function el(id){return document.getElementById(id)}
   function classe(node,nome,ativo){if(!node)return;var c=(' '+(node.className||'')+' ').replace(/\s+/g,' '),has=c.indexOf(' '+nome+' ')>=0;if(ativo&&!has)node.className=(node.className?node.className+' ':'')+nome;if(!ativo&&has)node.className=c.replace(' '+nome+' ',' ').trim()}

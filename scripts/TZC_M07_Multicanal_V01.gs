@@ -2,7 +2,7 @@
  * Segredos somente em ScriptProperties; Midias_Sociais contém referências.
  * Não altera o projeto final e nunca publica nas redes sem seleção explícita.
  */
-const TZC_MC={DB:'1WGlSF_Z9zxQ1zO52wWmiLOlkegJEczsgTJEtj8GvlhM',REDE:'Midias_Sociais',POST:'Publicacoes',FILA:'Publicacoes_Disparos',LOG:'Publicacoes_Disparos_Log'};
+const TZC_MC={EXTERNO_HABILITADO:false,DB:'1WGlSF_Z9zxQ1zO52wWmiLOlkegJEczsgTJEtj8GvlhM',REDE:'Midias_Sociais',POST:'Publicacoes',FILA:'Publicacoes_Disparos',LOG:'Publicacoes_Disparos_Log'};
 function tzcMc_auth_(token,config){
   const s=tzcM02_sessaoV03_(String(token||''));if(!s)throw Error('Entre novamente para continuar.');
   const u=tzcM02_buscarUsuarioV03_(s.email);if(!u||u.status!=='ativo')throw Error('Acesso inativo.');
@@ -19,7 +19,7 @@ function tzcMc_setup_(){
   tzcMc_sheet_(TZC_MC.POST,['ID_Publicacao','Tipo','Titulo','Conteudo','Resumo','Status','Data_Publicacao','Acesso_Publico','Imagem_URL','Video_URL','MC_Request','MC_Hash','MC_Autor','MC_Redes','MC_Pronto','MC_Link']);
   tzcMc_sheet_(TZC_MC.FILA,['ID_Disparo','ID_Publicacao','ID_Midia','Nome_Rede','Plataforma','Modo','Secret_Ref','Status','Checkpoint','ID_Externo','Codigo','Criado_Em','Atualizado_Em','Proxima_Em']);
   tzcMc_sheet_(TZC_MC.LOG,['ID_Disparo','Status','Codigo','Data']);
-  if(!ScriptApp.getProjectTriggers().some(t=>t.getHandlerFunction()==='tzcMc_worker_'))ScriptApp.newTrigger('tzcMc_worker_').timeBased().everyMinutes(1).create();
+  if(TZC_MC.EXTERNO_HABILITADO&&!ScriptApp.getProjectTriggers().some(t=>t.getHandlerFunction()==='tzcMc_worker_'))ScriptApp.newTrigger('tzcMc_worker_').timeBased().everyMinutes(1).create();
 }
 function tzcMc_catalog_(){
   const field=(key,label,optional)=>({key:key,label:label,optional:!!optional});
@@ -34,8 +34,8 @@ function tzcMc_https_(v){const s=String(v||'').trim();if(!s)return '';if(!/^http
 function tzcMc_validate_(platform,mode,c){const p=tzcMc_catalog_().find(x=>x.key===platform),fs=p&&(mode==='direct'?p.direct:mode==='webhook'?p.webhook:null);if(!fs)throw Error('Integração não suportada.');Object.keys(c).forEach(k=>{if(!fs.some(f=>f.key===k)||typeof c[k]!=='string'||c[k].length>6000)throw Error('Credencial inválida.')});fs.forEach(f=>{if(!f.optional&&!c[f.key])throw Error('Preencha '+f.label+'.')});if(mode==='webhook'){tzcMc_https_(c.webhook_url);if(c.webhook_secret.length<32||c.callback_secret.length<32)throw Error('Use segredos de pelo menos 32 caracteres.')}if(mode==='direct'&&platform==='telegram'&&!/^\d+:[A-Za-z0-9_-]+$/.test(c.bot_token))throw Error('Token Telegram inválido.');if(mode==='direct'&&platform==='instagram'&&(!/^\d+$/.test(c.ig_user_id)||!/^v\d+\.\d+$/.test(c.graph_version)))throw Error('Confira o ID e a versão Graph.');if(JSON.stringify(c).length>7000)throw Error('Credenciais muito extensas.')}
 function tzcMc_error_(e){return{ok:false,mensagem:e&&e.mcSafe?e.message:'Não foi possível concluir. Confira seu acesso e os campos ou tente novamente.'}}
 function tzcMc_safe_(fn){try{return fn()}catch(e){return{ok:false,mensagem:String(e.message||'Não foi possível concluir.').slice(0,250)}}}
-function TZC_MC_obterPainel(token){return tzcMc_safe_(()=>{tzcMc_auth_(token);tzcMc_lock_(tzcMc_setup_);return{ok:true,catalog:tzcMc_catalog_(),redes:tzcMc_rows_(TZC_MC.REDE).map(tzcMc_social_),publicacoes:tzcMc_list_()}})}
-function TZC_MC_salvarRede(token,json){return tzcMc_safe_(()=>{tzcMc_auth_(token,true);const p=JSON.parse(json);return tzcMc_lock_(()=>{
+function TZC_MC_obterPainel(token){return tzcMc_safe_(()=>{tzcMc_auth_(token);tzcMc_lock_(tzcMc_setup_);return{ok:true,catalog:tzcMc_catalog_(),redes:tzcMc_rows_(TZC_MC.REDE).map(tzcMc_social_),publicacoes:tzcMc_list_(),external_ready:TZC_MC.EXTERNO_HABILITADO}})}
+function TZC_MC_salvarRede(token,json){return tzcMc_safe_(()=>{tzcMc_auth_(token,true);const p=JSON.parse(json);if(p.active&&!TZC_MC.EXTERNO_HABILITADO)throw Error('A ativação depende da autorização de chamadas externas do Google.');return tzcMc_lock_(()=>{
   tzcMc_setup_();const rows=tzcMc_rows_(TZC_MC.REDE),old=rows.find(x=>String(x.ID_Midia)===String(p.id||''));if(p.id&&!old)throw Error('Rede não encontrada.');
   if(!p.name||p.name.length>120||!/^[a-z0-9_-]{1,80}$/.test(p.slug))throw Error('Confira nome e identificador.');if(rows.some(x=>x!==old&&x.MC_Slug===p.slug))throw Error('Identificador já cadastrado.');
   if(old&&old.MC_Plataforma&&(old.MC_Plataforma!==p.platform||old.MC_Modo!==p.mode))throw Error('Crie outra conta para mudar o tipo de integração.');
@@ -60,7 +60,7 @@ function tzcMc_list_(){const jobs=tzcMc_rows_(TZC_MC.FILA);return tzcMc_rows_(TZ
 function TZC_MC_listar(token){return tzcMc_safe_(()=>{tzcMc_auth_(token);return{ok:true,publicacoes:tzcMc_list_()}})}
 function tzcMc_finish_(j,status,code,extra){const now=new Date();tzcMc_write_(TZC_MC.FILA,j._row,Object.assign({Status:status,Codigo:code||'',Atualizado_Em:now},extra||{}));tzcMc_write_(TZC_MC.LOG,null,{ID_Disparo:j.ID_Disparo,Status:status,Codigo:code||'',Data:now});if(['Publicado','Falhou'].includes(status)&&j.Modo!=='webhook')PropertiesService.getScriptProperties().deleteProperty(j.Secret_Ref)}
 function tzcMc_http_(url,method,payload,headers){let r;try{r=UrlFetchApp.fetch(url,{method:method||'post',contentType:'application/json',headers:headers||{},payload:payload==null?undefined:JSON.stringify(payload),muteHttpExceptions:true,followRedirects:false})}catch(e){throw{mcCode:'SEM_CONFIRMACAO',uncertain:true}}const status=r.getResponseCode();if(status<200||status>=300)throw{mcCode:'HTTP_'+status,uncertain:status>=500||status===408||(status>=300&&status<400)};let data;try{data=JSON.parse(r.getContentText())}catch(e){throw{mcCode:'RESPOSTA_INVALIDA',uncertain:true}}return data}
-function tzcMc_worker_(e){if(!e||!e.triggerUid)return;const start=Date.now();for(let n=0;n<3&&Date.now()-start<45000;n++){
+function tzcMc_worker_(e){if(!TZC_MC.EXTERNO_HABILITADO||!e||!e.triggerUid)return;const start=Date.now();for(let n=0;n<3&&Date.now()-start<45000;n++){
   const work=tzcMc_lock_(()=>{const posts=tzcMc_rows_(TZC_MC.POST),jobs=tzcMc_rows_(TZC_MC.FILA);jobs.filter(j=>j.Status==='Processando'&&Date.now()-new Date(j.Atualizado_Em).getTime()>600000).forEach(j=>tzcMc_finish_(j,'Resultado incerto','EXECUCAO_INTERROMPIDA'));jobs.filter(j=>j.Modo==='webhook'&&['Publicado','Falhou'].includes(j.Status)&&Date.now()-new Date(j.Atualizado_Em).getTime()>604800000).forEach(j=>PropertiesService.getScriptProperties().deleteProperty(j.Secret_Ref));const j=jobs.find(x=>['Na fila','Aguardando'].includes(x.Status)&&new Date(x.Proxima_Em).getTime()<=Date.now()&&posts.some(p=>p.ID_Publicacao===x.ID_Publicacao&&p.MC_Pronto==='Sim'));if(!j)return null;if(Date.now()-new Date(j.Criado_Em).getTime()>86400000){tzcMc_finish_(j,'Resultado incerto','PRAZO_EXCEDIDO');return null}const p=posts.find(p=>p.ID_Publicacao===j.ID_Publicacao);tzcMc_finish_(j,'Processando','');return{j:j,p:p}});if(!work)break;
   const j=work.j,p0=work.p,p={title:String(p0.Titulo),body:String(p0.Conteudo),link:String(p0.MC_Link||''),media_url:String(p0.Imagem_URL||p0.Video_URL||''),media_type:p0.Video_URL?'video':p0.Imagem_URL?'image':''};let out;
   try{const c=JSON.parse(PropertiesService.getScriptProperties().getProperty(j.Secret_Ref)||'{}'),cp=JSON.parse(j.Checkpoint||'{}'),network=tzcMc_rows_(TZC_MC.REDE).find(x=>x.ID_Midia===j.ID_Midia);if(!Object.keys(cp).length&&(!network||!tzcMc_yes_(network.MC_Ativa)))throw{mcCode:'REDE_DESATIVADA'};

@@ -2,7 +2,7 @@
  * Segredos somente em ScriptProperties; Midias_Sociais contém referências.
  * Não altera o projeto final e nunca publica nas redes sem seleção explícita.
  */
-const TZC_MC={EXTERNO_HABILITADO:false,DB:'1WGlSF_Z9zxQ1zO52wWmiLOlkegJEczsgTJEtj8GvlhM',REDE:'Midias_Sociais',POST:'Publicacoes',FILA:'Publicacoes_Disparos',LOG:'Publicacoes_Disparos_Log'};
+const TZC_MC={EXTERNO_HABILITADO:true,DB:'1WGlSF_Z9zxQ1zO52wWmiLOlkegJEczsgTJEtj8GvlhM',REDE:'Midias_Sociais',POST:'Publicacoes',FILA:'Publicacoes_Disparos',LOG:'Publicacoes_Disparos_Log'};
 function tzcMc_auth_(token,config){
   const s=tzcM02_sessaoV03_(String(token||''));if(!s)throw Error('Entre novamente para continuar.');
   const u=tzcM02_buscarUsuarioV03_(s.email);if(!u||u.status!=='ativo')throw Error('Acesso inativo.');
@@ -12,7 +12,13 @@ function tzcMc_auth_(token,config){
 }
 function tzcMc_lock_(fn){const l=LockService.getScriptLock();l.waitLock(15000);try{return fn()}finally{l.releaseLock()}}
 function tzcMc_sheet_(name,columns){const ss=SpreadsheetApp.openById(TZC_MC.DB);let a=ss.getSheetByName(name);if(!a)a=ss.insertSheet(name);const h=a.getLastColumn()?a.getRange(1,1,1,a.getLastColumn()).getDisplayValues()[0]:[];columns.forEach(c=>{if(h.indexOf(c)<0)h.push(c)});if(h.length)a.getRange(1,1,1,h.length).setValues([h]);return a}
-function tzcMc_rows_(name){const a=SpreadsheetApp.openById(TZC_MC.DB).getSheetByName(name);if(!a||a.getLastRow()<2)return[];const v=a.getDataRange().getValues(),h=v.shift();return v.map((r,i)=>{const o={_row:i+2};h.forEach((k,j)=>{if(k)o[k]=r[j]});return o})}
+function tzcMc_rows_(name){
+  const a=SpreadsheetApp.openById(TZC_MC.DB).getSheetByName(name);if(!a||a.getLastRow()<2)return[];
+  if(name!==TZC_MC.POST){const v=a.getDataRange().getValues(),h=v.shift();return v.map((r,i)=>{const o={_row:i+2};h.forEach((k,j)=>{if(k)o[k]=r[j]});return o})}
+  // A tabela atual pode conter imagens base64; não as carregar no painel ou worker.
+  const h=a.getRange(1,1,1,a.getLastColumn()).getDisplayValues()[0],wanted=['ID_Publicacao','Tipo','Titulo','Conteudo','Resumo','Status','Data_Publicacao','Acesso_Publico','Imagem_URL','Video_URL','MC_Request','MC_Hash','MC_Autor','MC_Redes','MC_Pronto','MC_Link'],rows=Array.from({length:a.getLastRow()-1},(_,i)=>({_row:i+2}));
+  for(let start=0;start<h.length;){if(!wanted.includes(h[start])){start++;continue}let end=start+1;while(end<h.length&&wanted.includes(h[end]))end++;const v=a.getRange(2,start+1,rows.length,end-start).getValues();v.forEach((r,i)=>r.forEach((value,j)=>{rows[i][h[start+j]]=value}));start=end}return rows;
+}
 function tzcMc_write_(name,row,fields){const a=SpreadsheetApp.openById(TZC_MC.DB).getSheetByName(name),h=a.getRange(1,1,1,a.getLastColumn()).getDisplayValues()[0],v=row?a.getRange(row,1,1,h.length).getValues()[0]:h.map(()=> '');Object.keys(fields).forEach(k=>{const i=h.indexOf(k);if(i<0)throw Error('Coluna não encontrada: '+k);let x=fields[k];if(typeof x==='string'&&/^[=+@\-]/.test(x))x="'"+x;v[i]=x});if(row)a.getRange(row,1,1,h.length).setValues([v]);else a.appendRow(v)}
 function tzcMc_setup_(){
   tzcMc_sheet_(TZC_MC.REDE,['ID_Midia','Rede','Nome_Exibicao','URL','Ativo','Ordem','MC_Slug','MC_Plataforma','MC_Modo','MC_Ativa','MC_Credentials']);

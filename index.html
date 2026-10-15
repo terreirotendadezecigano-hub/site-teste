@@ -776,82 +776,61 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
     if(!dados)return;
     paginaAtual='__banhos';el('settingsView').hidden=true;el('homeView').hidden=true;
     var area=el('dynamicPage');area.hidden=false;area.replaceChildren();
-    var lista=Array.isArray(dados.banhosPublicos)?dados.banhosPublicos:[];
-    var podeCarregarBanhosDeMembros=!!(authToken&&authUser),falhaBanhosDeMembros=false;
+    var dirigente=/^dirigente$/i.test(String(authUser&&authUser.perfil||'').trim());
+    var membro=!!(authToken&&authUser),lista=Array.isArray(dados.banhosPublicos)?dados.banhosPublicos.slice():[],erro='';
     var arte=imagemPadraoBanhos_(dados.identidade&&dados.identidade.imagemBanho);
-    var hero=document.createElement('section');hero.className='bath-hero';
-    var copy=document.createElement('div');copy.className='bath-hero-copy';
-    copy.appendChild(texto('span','Biblioteca da casa','bath-eyebrow'));
-    copy.appendChild(texto('h1','Banhos da tradição','bath-title'));
-    copy.appendChild(texto('p','Preparos e orientações compartilhados com cuidado e respeito à tradição da nossa casa.','bath-lead'));
-    var tags=document.createElement('div');tags.className='bath-tags';
-    ['Conhecimento da casa','Leitura simples','Conteúdo revisado'].forEach(function(t){tags.appendChild(texto('span',t,'bath-tag'))});
-    copy.appendChild(tags);hero.appendChild(copy);
-    if(arte){var img=document.createElement('img');img.className='bath-hero-art';img.src=arte;img.alt='Arte padrão da biblioteca de banhos';img.loading='eager';img.onerror=function(){this.hidden=true};hero.appendChild(img)}
-    area.appendChild(hero);
-    var heading=document.createElement('div');heading.className='section-heading bath-section-heading';
-    var headingCopy=document.createElement('div');headingCopy.appendChild(texto('h2','Conheça os banhos',''));
-    headingCopy.appendChild(texto('p','Escolha um preparo para consultar ingredientes e orientações.',''));
-    heading.appendChild(headingCopy);area.appendChild(heading);
-    if(!lista.length&&!podeCarregarBanhosDeMembros){
-      var vazio=document.createElement('section');vazio.className='bath-empty';
-      var mark=document.createElement('span');mark.className='bath-empty-mark';mark.textContent='✦';
-      vazio.append(mark,texto('h3','Estamos preparando esta biblioteca',''),texto('p','Os conteúdos aparecerão aqui quando forem liberados para publicação pela casa.',''));
-      area.appendChild(vazio);return;
+    var hero=document.createElement('section');hero.className='bath-hero bath-hero-compact';
+    var copy=document.createElement('div');copy.className='bath-hero-copy';copy.append(texto('span','Biblioteca da casa','bath-eyebrow'),texto('h1','Banhos da tradição','bath-title'),texto('p','Preparos e orientações da nossa casa.','bath-lead'));hero.appendChild(copy);area.appendChild(hero);
+    var head=document.createElement('div');head.className='section-heading bath-section-heading';var hc=document.createElement('div');hc.append(texto('h2','Conheça os banhos',''),texto('p',dirigente?'Selecione uma linha para editar.':'Selecione um banho para consultar o preparo.',''));head.appendChild(hc);
+    if(dirigente){var add=texto('button','Cadastrar banho','primary');add.type='button';add.addEventListener('click',function(){editar(null)});head.appendChild(add)}area.appendChild(head);
+    var tools=document.createElement('div');tools.className='bath-tools';var label=document.createElement('label');label.className='bath-search-label';label.htmlFor='bathSearch';label.textContent='Buscar banho';
+    var search=document.createElement('input');search.id='bathSearch';search.type='search';search.placeholder='Nome, categoria ou finalidade';search.setAttribute('aria-label','Buscar banho');
+    var sw=document.createElement('div');sw.className='bath-search';sw.append(label,search);tools.appendChild(sw);area.appendChild(tools);
+    var status=texto('p','Carregando banhos…','bath-no-results');status.setAttribute('role','status');area.appendChild(status);
+    var wrap=document.createElement('div');wrap.className='bath-table-wrap';wrap.hidden=true;
+    var table=document.createElement('table');table.className='bath-table'+(dirigente?' bath-table-admin':'');table.innerHTML='<caption>Banhos cadastrados</caption>';
+    var trh=document.createElement('tr');(dirigente?['Banho','Categoria','Acesso','Publicação','Revisão']:['Banho','Categoria','Finalidade']).forEach(function(t){var th=document.createElement('th');th.scope='col';th.textContent=t;trh.appendChild(th)});
+    var thead=document.createElement('thead');thead.appendChild(trh);var tbody=document.createElement('tbody');table.append(thead,tbody);wrap.appendChild(table);area.appendChild(wrap);
+    function v(b,k){return String(b&&b[k]||'').trim()}
+    function render(){var q=String(search.value||'').trim().toLocaleLowerCase('pt-BR');var rows=lista.filter(function(b){return [b.titulo,b.categoria,b.finalidade].join(' ').toLocaleLowerCase('pt-BR').indexOf(q)>=0});tbody.replaceChildren();
+      if(!rows.length){wrap.hidden=true;status.hidden=false;status.textContent=erro||(lista.length?'Nenhum banho encontrado.':'Nenhum banho disponível no momento.');return}
+      status.hidden=true;wrap.hidden=false;rows.forEach(function(b){var row=document.createElement('tr');row.tabIndex=0;row.setAttribute('role','button');row.setAttribute('aria-label',(dirigente?'Editar: ':'Consultar: ')+(b.titulo||'banho'));
+        row.appendChild(texto('td',b.titulo||'Banho','bath-row-title'));row.appendChild(texto('td',b.categoria||'—',''));
+        if(dirigente){row.appendChild(texto('td',String(b.acessoPublico||'').toLowerCase()==='sim'?'Todos':'Somente membros',''));row.appendChild(texto('td',b.status||'Rascunho',''));row.appendChild(texto('td',b.revisaoSeguranca||'Pendente',''))}
+        else row.appendChild(texto('td',b.finalidade||'—',''));
+        function open(){dirigente?editar(b):detalhe(b)}row.addEventListener('click',open);row.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}});tbody.appendChild(row)});
     }
-    var toolsBox=document.createElement('div');toolsBox.className='bath-tools';
-    var label=document.createElement('label');label.className='bath-search-label';label.htmlFor='bathSearch';label.textContent='Buscar banho';
-    var search=document.createElement('input');search.id='bathSearch';search.type='search';search.placeholder='Digite um nome ou finalidade';search.setAttribute('aria-label','Buscar banho por nome ou finalidade');
-    var searchWrap=document.createElement('div');searchWrap.className='bath-search';searchWrap.append(label,search);toolsBox.appendChild(searchWrap);
-    var grid=document.createElement('div');grid.className='bath-grid';area.append(toolsBox,grid);
-    function render(){
-      var q=String(search.value||'').trim().toLowerCase();grid.replaceChildren();
-      if(!lista.length){
-        grid.appendChild(texto('p',falhaBanhosDeMembros?'Não foi possível carregar a biblioteca. Atualize a página e tente novamente.':'Carregando os banhos da casa…','bath-no-results'));return;
-      }
-      var filtrada=lista.filter(function(b){return [b.titulo,b.categoria,b.finalidade].join(' ').toLowerCase().indexOf(q)>=0});
-      if(!filtrada.length){grid.appendChild(texto('p','Nenhum banho encontrado com esse termo.','bath-no-results'));return}
-      filtrada.forEach(function(b){
-        var card=document.createElement('article');card.className='bath-card';
-        if(arte){var cover=document.createElement('div');cover.className='bath-card-cover';var ci=document.createElement('img');ci.src=arte;ci.alt='';ci.loading='lazy';ci.onerror=function(){cover.hidden=true};cover.appendChild(ci);card.appendChild(cover)}
-        var body=document.createElement('div');body.className='bath-card-body';
-        body.appendChild(texto('span',b.categoria||'Banho','bath-category'));
-        body.appendChild(texto('h3',b.titulo||'Banho',''));
-        body.appendChild(texto('p',b.finalidade||'Conheça este preparo da tradição da casa.','bath-purpose'));
-        var btn=document.createElement('button');btn.type='button';btn.className='bath-open';btn.textContent='Ver preparo';btn.setAttribute('aria-label','Ver preparo: '+(b.titulo||'banho'));
-        btn.addEventListener('click',function(){abrirDetalhe(b)});
-        body.appendChild(btn);card.appendChild(body);grid.appendChild(card);
-      });
-    }
-    function abrirDetalhe(b){
-      var dlg=document.createElement('dialog');dlg.className='bath-dialog';
-      var top=document.createElement('div');top.className='bath-dialog-head';
-      var tit=document.createElement('div');tit.appendChild(texto('span',b.categoria||'Banho','bath-category'));tit.appendChild(texto('h2',b.titulo||'Banho',''));
-      var x=document.createElement('button');x.type='button';x.className='bath-close';x.setAttribute('aria-label','Fechar');x.textContent='×';x.addEventListener('click',function(){dlg.close()});
-      top.append(tit,x);var content=document.createElement('div');content.className='bath-dialog-content';
-      function sec(title,value,asList){var box=document.createElement('section');box.className='bath-detail-section';box.appendChild(texto('h3',title,''));if(asList){var ul=document.createElement('ul');String(value||'').split(/;|\\n/).map(function(x){return x.replace(/^[-•▪️\\s]+/,'').trim()}).filter(Boolean).forEach(function(x){ul.appendChild(texto('li',x,''))});if(!ul.childNodes.length)ul.appendChild(texto('li','Consulte a orientação da casa.',''));box.appendChild(ul)}else{String(value||'Consulte a orientação da casa.').split(/\\n+/).map(function(x){return x.trim()}).filter(Boolean).forEach(function(x){box.appendChild(texto('p',x,''))})}content.appendChild(box)}
-      if(arte){var banner=document.createElement('img');banner.className='bath-dialog-art';banner.src=arte;banner.alt='Arte padrão da biblioteca de banhos';banner.onerror=function(){this.hidden=true};content.appendChild(banner)}
+    function detalhe(b){var dlg=document.createElement('dialog');dlg.className='bath-dialog';var top=document.createElement('div');top.className='bath-dialog-head';var title=document.createElement('div');title.append(texto('span',b.categoria||'Banho','bath-category'),texto('h2',b.titulo||'Banho',''));
+      var x=texto('button','×','bath-close');x.type='button';x.setAttribute('aria-label','Fechar');x.onclick=function(){dlg.close()};top.append(title,x);
+      var content=document.createElement('div');content.className='bath-dialog-content';if(arte){var im=document.createElement('img');im.className='bath-dialog-art';im.src=arte;im.alt='';im.onerror=function(){im.hidden=true};content.appendChild(im)}
       if(b.finalidade)content.appendChild(texto('p',b.finalidade,'bath-detail-purpose'));
-      sec('Ingredientes',b.ingredientes,true);sec('Como preparar',b.modoPreparo,false);sec('Quando fazer',b.orientacoes,false);
-      content.appendChild(texto('p','Prática de tradição espiritual. Não substitui orientação profissional de saúde. Confira a segurança e a sensibilidade aos ingredientes antes de qualquer uso.','bath-disclaimer'));
-      var actions=document.createElement('div');actions.className='bath-dialog-actions';var close=document.createElement('button');close.type='button';close.className='secondary';close.textContent='Fechar';close.addEventListener('click',function(){dlg.close()});actions.appendChild(close);
-      dlg.append(top,content,actions);dlg.addEventListener('click',function(e){if(e.target===dlg)dlg.close()});dlg.addEventListener('close',function(){dlg.remove()});area.appendChild(dlg);dlg.showModal();
-    }
-    search.addEventListener('input',render);render();
-    if(podeCarregarBanhosDeMembros){
-      authRpc('listarBanhosMembros',[authToken],function(r){
-        if(paginaAtual!=='__banhos')return;
-        if(!r||!r.ok){falhaBanhosDeMembros=true;render();return}
-        var mapa=Object.create(null);
-        lista.concat(Array.isArray(r.banhos)?r.banhos:[]).forEach(function(b){
-          var chave=String(b&&b.id||b&&b.titulo||'');if(chave&&!mapa[chave])mapa[chave]=b;
-        });
-        lista=Object.keys(mapa).map(function(chave){return mapa[chave]});
-        render();
-      });
-    }
+      function sec(name,value,list){var box=document.createElement('section');box.className='bath-detail-section';box.appendChild(texto('h3',name,''));var lines=String(value||'').split(/[;\\n]/).map(function(x){return x.replace(/^[-•▪️\\s]+/,'').trim()}).filter(Boolean);if(list){var ul=document.createElement('ul');lines.forEach(function(x){ul.appendChild(texto('li',x,''))});box.appendChild(ul)}else lines.forEach(function(x){box.appendChild(texto('p',x,''))});if(!lines.length)box.appendChild(texto('p','Orientação não informada.',''));content.appendChild(box)}
+      sec('Ingredientes',b.ingredientes,true);sec('Como preparar',b.modoPreparo,false);sec('Quando fazer',b.orientacoes,false);if(b.cuidados)sec('Cuidados',b.cuidados,false);
+      var actions=document.createElement('div');actions.className='bath-dialog-actions';var close=texto('button','Fechar','secondary');close.type='button';close.onclick=function(){dlg.close()};actions.appendChild(close);dlg.append(top,content,actions);dlg.addEventListener('click',function(e){if(e.target===dlg)dlg.close()});dlg.addEventListener('close',function(){dlg.remove()});area.appendChild(dlg);dlg.showModal()}
+    function editar(b){if(!dirigente){aviso('Seu perfil não pode editar banhos.');return}
+      var dlg=document.createElement('dialog');dlg.className='bath-dialog bath-edit-dialog';var top=document.createElement('div');top.className='bath-dialog-head';top.appendChild(texto('h2',b?'Editar banho':'Cadastrar banho',''));var x=texto('button','×','bath-close');x.type='button';x.setAttribute('aria-label','Fechar');x.onclick=function(){dlg.close()};top.appendChild(x);
+      var form=document.createElement('form');form.className='bath-edit-form';var grid=document.createElement('div');grid.className='bath-edit-grid';var f={};
+      function field(label,key,value,wide,type,opts){var l=document.createElement('label');l.className='bath-field'+(wide?' bath-field-wide':'');l.appendChild(texto('span',label,''));var input;
+        if(type==='select'){input=document.createElement('select');opts.forEach(function(o){var z=document.createElement('option');z.value=o[0];z.textContent=o[1];input.appendChild(z)})}
+        else if(type==='textarea'){input=document.createElement('textarea');input.rows=key==='ingredientes'?4:5}
+        else{input=document.createElement('input');input.type='text'}
+        input.name=key;input.value=value||'';l.appendChild(input);grid.appendChild(l);return input}
+      f.titulo=field('Nome do banho','titulo',v(b,'titulo'),false);f.categoria=field('Categoria','categoria',v(b,'categoria'),false);
+      f.finalidade=field('Finalidade','finalidade',v(b,'finalidade'),true,'textarea');f.ingredientes=field('Ingredientes','ingredientes',v(b,'ingredientes'),true,'textarea');
+      f.modoPreparo=field('Como preparar','modoPreparo',v(b,'modoPreparo'),true,'textarea');f.orientacoes=field('Quando fazer / orientações','orientacoes',v(b,'orientacoes'),true,'textarea');f.cuidados=field('Cuidados','cuidados',v(b,'cuidados'),true,'textarea');
+      f.acessoPublico=field('Quem pode ver','acessoPublico',v(b,'acessoPublico')||'Não',false,'select',[['Não','Somente membros'],['Sim','Todos']]);
+      f.status=field('Publicação','status',v(b,'status')||'Rascunho',false,'select',[['Rascunho','Rascunho'],['Publicado','Publicado']]);
+      f.revisaoSeguranca=field('Revisão','revisaoSeguranca',v(b,'revisaoSeguranca')||'Pendente',false,'select',[['Pendente','Pendente'],['Aprovado','Aprovado']]);
+      form.appendChild(grid);var actions=document.createElement('div');actions.className='bath-dialog-actions bath-edit-actions';var save=texto('button','Salvar','primary');save.type='submit';var cancel=texto('button','Cancelar','secondary');cancel.type='button';cancel.onclick=function(){dlg.close()};actions.append(save,cancel);
+      if(b){var del=texto('button','Excluir','bath-delete');del.type='button';del.onclick=function(){if(!window.confirm('Excluir este banho? Esta ação não pode ser desfeita.'))return;del.disabled=true;del.textContent='Excluindo…';authRpc('excluirBanho',[authToken,String(b.id||'')],function(r){if(!r||!r.ok){del.disabled=false;del.textContent='Excluir';aviso(r&&r.mensagem||'Não foi possível excluir.');return}dlg.close();aviso('Banho excluído.');carregar()})};actions.appendChild(del)}
+      form.appendChild(actions);form.onsubmit=function(e){e.preventDefault();if(!f.titulo.value.trim()){f.titulo.focus();aviso('Informe o nome do banho.');return}save.disabled=true;save.textContent='Salvando…';
+        var data={id:b&&b.id||'',titulo:f.titulo.value.trim(),categoria:f.categoria.value.trim(),finalidade:f.finalidade.value.trim(),ingredientes:f.ingredientes.value.trim(),modoPreparo:f.modoPreparo.value.trim(),orientacoes:f.orientacoes.value.trim(),cuidados:f.cuidados.value.trim(),acessoPublico:f.acessoPublico.value,status:f.status.value,revisaoSeguranca:f.revisaoSeguranca.value};
+        authRpc('salvarBanho',[authToken,JSON.stringify(data)],function(r){if(!r||!r.ok){save.disabled=false;save.textContent='Salvar';aviso(r&&r.mensagem||'Não foi possível salvar.');return}dlg.close();aviso('Banho salvo.');carregar()})};
+      dlg.append(top,form);dlg.addEventListener('click',function(e){if(e.target===dlg)dlg.close()});dlg.addEventListener('close',function(){dlg.remove()});area.appendChild(dlg);dlg.showModal()}
+    function carregar(){if(dirigente)authRpc('gerenciarBanhosMembros',[authToken],done);else if(membro)authRpc('listarBanhosMembros',[authToken],done);else render();
+      function done(r){if(paginaAtual!=='__banhos')return;if(r&&r.ok&&Array.isArray(r.banhos)){if(dirigente)lista=r.banhos;else{var map=Object.create(null);lista.concat(r.banhos).forEach(function(b){var k=String(b.id||b.titulo||'');if(k&&!map[k])map[k]=b});lista=Object.keys(map).map(function(k){return map[k]})}erro=''}else erro=r&&r.mensagem||'Não foi possível carregar os banhos. Tente atualizar.';render()}}
+    search.addEventListener('input',render);carregar();
   }
-
   function abrirPagina(id){if(id==='__banhos'){abrirPaginaBanhos();return}if(id==='__loja'){if(window.TZCLojaUI)window.TZCLojaUI.abrir();else aviso('A Loja está carregando. Tente novamente.');return}if(id==='__eventos'){abrirPaginaEventos();return}if(id==='__minha_area'){m04AbrirMinhaArea();return}if(id==='__pendencias'){abrirPaginaPendencias();return}if(id==='__membros'){m05Abrir();return}if(id==='__config'){configAbrir();return}if(id==='__eventos_presencas'){abrirPaginaPresencas();return}if(!dados)return;paginaAtual=id
 ;el('settingsView').hidden=true;var home=id==='inicio';el('homeView').hidden=!home;var area=el('dynamicPage');area.hidden=home;area.replaceChildren();var p=paginas.filter(function(x){return x.id===id})[0];if(!home&&p){area.appendChild(texto('h1',p.titulo||p.nomeMenu,'intro-title'));if(p.subtitulo)area.appendChild(texto('p',p.subtitulo));(p.blocos||[]).forEach(function(b){if(blocoTipo(b)==='PROXIMO_EVENTO'){(dados.proximosEventos||[]).filter(function(e){return !m04InicioEventoPassou_(e.data)}).sort(function(a,b){return m04DataOrdem_(a.data)-m04DataOrdem_(b.data)}).forEach(function(e){area.appendChild(criarCard({titulo:e.titulo,tipo:e.tipo,resumo:[e.data,e.local,e.descricao].filter(Boolean).join(' · ')}))});return}if(blocoTipo(b)==='GRADE_CONTEUDO'||String(b.fonteDados||'').toUpperCase()==='PUBLICACOES'){(dados.publicacoesRecentes||[]).forEach(function(x){area.appendChild(criarCard(x))});return}if(b.titulo||b.subtitulo||b.texto){var card=document.createElement('article');card.className='card';if(b.titulo)card.appendChild(texto('h2',b.titulo));if(b.subtitulo)card.appendChild(texto('p',b.subtitulo));if(b.texto)card.appendChild(texto('p',b.texto));if(b.imagemUrl){var im=document.createElement('img');im.src=seguroLink(b.imagemUrl);im.alt=b.titulo||'';im.loading='lazy';im.style.cssText='max-width:100%;height:auto;border-radius:14px';card.appendChild(im)}area.appendChild(card)}});if(!area.children.length)area.appendChild(texto('p','Este conteúdo será publicado em breve.','callout'))}document.querySelectorAll('#nav button').forEach(function(b){classe(b,'active',b.getAttribute('data-page-id')===id)});closeMenu();window.scrollTo({top:0,behavior:'smooth'})}
   function menuOpen(open){var side=el('sidebar'),back=el('menuBackdrop'),button=el('menuToggle');if(!side||!back||!button)return;classe(side,'open',open);classe(back,'open',open);side.setAttribute('aria-hidden',open?'false':'true');back.setAttribute('aria-hidden',open?'false':'true');button.setAttribute('aria-expanded',open?'true':'false')}
@@ -1557,4 +1536,10 @@ html[data-theme="escuro"] .bath-open{color:#241a1a}
 @media(max-width:650px){.bath-hero{grid-template-columns:1fr;gap:18px;margin:22px 0 20px;padding:23px 20px;border-radius:20px}.bath-title{font-size:32px}.bath-lead{font-size:15px}.bath-tags{gap:6px;margin-top:15px}.bath-tag{font-size:11px}.bath-hero-art{width:min(100%,160px);height:160px}.bath-grid{grid-template-columns:1fr;gap:13px}.bath-card{display:grid;grid-template-columns:112px minmax(0,1fr)}.bath-card-cover{height:100%;min-height:180px}.bath-card-body{padding:14px}.bath-card h3{font-size:18px;margin:8px 0 5px}.bath-purpose{-webkit-line-clamp:3;font-size:13px}.bath-open{width:100%;padding:7px}.bath-empty{padding:24px 16px}.bath-dialog-head{padding:14px 15px 11px}.bath-dialog-head h2{font-size:21px}.bath-dialog-content{padding:13px 15px}.bath-dialog-actions{padding:9px 15px 13px}}
 @media(prefers-reduced-motion:reduce){.bath-card{transition:none}.bath-card:hover{transform:none}}
 </style>
-</body></html>
+<style id="tzc-v108-banhos-tabela">
+.bath-hero-compact{min-height:0;padding:21px 25px;margin-bottom:20px}.bath-hero-compact .bath-hero-copy{max-width:100%}.bath-hero-compact .bath-title{font-size:clamp(25px,3vw,34px);margin:0 0 5px}.bath-hero-compact .bath-lead{font-size:16px;margin:0}
+.bath-section-heading{align-items:end;margin:20px 0 12px}.bath-section-heading h2{font-size:22px}.bath-section-heading p{font-size:15px}.bath-section-heading .primary{min-height:42px;padding:9px 16px}
+.bath-table-wrap{width:100%;max-width:100%;margin:12px 0 30px;overflow:hidden;border:1px solid var(--line);border-radius:13px;background:var(--surface);box-shadow:var(--shadow)}.bath-table{width:100%;table-layout:fixed;border-collapse:collapse;color:var(--text);font-size:15px}.bath-table caption{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.bath-table th,.bath-table td{padding:13px 15px;text-align:left;vertical-align:middle;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.bath-table th{background:var(--surface2);color:var(--primary);font-size:14px;font-weight:750}.bath-table tbody tr:nth-child(even){background:color-mix(in srgb,var(--surface2) 35%,var(--surface))}.bath-table tbody tr{cursor:pointer}.bath-table tbody tr:hover,.bath-table tbody tr:focus-visible{background:color-mix(in srgb,var(--gold-soft) 42%,var(--surface));outline:none}.bath-table tbody tr:last-child td{border-bottom:0}.bath-row-title{font-size:16px;font-weight:700}
+.bath-edit-dialog{width:min(760px,calc(100vw - 28px));max-height:min(88vh,850px)}.bath-edit-form{overflow:auto}.bath-edit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;padding:4px 18px 16px}.bath-field{display:grid;gap:6px;color:var(--text);font-size:14px;font-weight:650}.bath-field-wide{grid-column:1/-1}.bath-field input,.bath-field textarea,.bath-field select{box-sizing:border-box;width:100%;min-height:42px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface);color:var(--text);font:inherit;font-weight:400}.bath-field textarea{min-height:90px;resize:vertical;line-height:1.5}.bath-edit-actions{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line)}.bath-delete{border:1px solid #b64242;border-radius:10px;background:transparent;color:#b64242;font:inherit;font-weight:700;padding:9px 14px;cursor:pointer}.bath-no-results{font-size:16px}
+@media(max-width:700px){.bath-hero-compact{padding:17px 18px}.bath-section-heading{align-items:stretch;gap:10px}.bath-table-wrap{overflow:visible;border:0;background:transparent;box-shadow:none}.bath-table,.bath-table tbody{display:block;width:100%}.bath-table thead{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.bath-table tbody{display:grid;gap:10px}.bath-table tr{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;padding:10px 13px;border:1px solid var(--line);border-radius:12px;background:var(--surface)!important;box-shadow:var(--shadow)}.bath-table td{display:grid;gap:3px;padding:7px 2px;border:0;font-size:14px}.bath-table td:first-child{grid-column:1/-1;font-size:16px}.bath-table td:not(:first-child)::before{font-size:11px;line-height:1.2;color:var(--muted);font-weight:700}.bath-table-admin td:nth-child(2)::before{content:'Categoria'}.bath-table-admin td:nth-child(3)::before{content:'Acesso'}.bath-table-admin td:nth-child(4)::before{content:'Publicação'}.bath-table-admin td:nth-child(5)::before{content:'Revisão'}.bath-table:not(.bath-table-admin) td:nth-child(2)::before{content:'Categoria'}.bath-table:not(.bath-table-admin) td:nth-child(3)::before{content:'Finalidade'}.bath-edit-grid{grid-template-columns:1fr;padding:4px 14px 14px}.bath-field-wide{grid-column:auto}.bath-edit-actions{flex-wrap:wrap}}
+</style></body></html>

@@ -284,6 +284,13 @@ html[data-theme="escuro"] #dynamicPage .bath-edit-actions .secondary{background:
 #dynamicPage button.danger,#dynamicPage button.bath-delete,#dynamicPage button.delete,#dynamicPage button.dangerous,#settingsView button.danger,#settingsView button.bath-delete,#settingsView button.delete,#settingsView button.dangerous{background:#7b2934!important;border-color:#7b2934!important;color:#fff!important}
 #dynamicPage button.close,#dynamicPage button.bath-close,#dynamicPage button.icon-button,#dynamicPage button[aria-label="Fechar"],#settingsView button.close,#settingsView button.bath-close,#settingsView button.icon-button,#settingsView button[aria-label="Fechar"]{min-height:36px!important;padding:6px 10px!important}
 #dynamicPage .data-page-actions button{min-height:42px!important;font-size:15px!important}
+</style><style id="tzc-v113-menu-header-tones">
+/* O item ativo fica claro sem virar mais um bloco dourado no tema escuro. */
+.nav button.active,.nav button.active:hover{background:var(--surface2)!important;color:var(--text)!important;box-shadow:inset 3px 0 #641d29!important}
+.nav button.active .ico,.nav button.active:hover .ico{color:inherit!important}
+html[data-theme="escuro"] .nav button.active,html[data-theme="escuro"] .nav button.active:hover{background:#302426!important;color:#f1e9e2!important;box-shadow:inset 3px 0 #7b2934!important}
+html[data-theme="escuro"] .nav button.active .ico,html[data-theme="escuro"] .nav button.active:hover .ico{color:inherit!important}
+#memberButton{background:#641d29!important;border-color:#641d29!important;color:#fff!important;border-radius:10px!important;font-family:inherit!important;font-size:15px!important;font-weight:700!important;min-height:42px!important;box-shadow:none!important}
 </style></head>
 <body>
 <div id="loadingScreen" hidden role="status" aria-live="polite"><div class="loading-card"><div class="loading-mark" aria-hidden="true"></div><h1>Preparando o site</h1><p id="loadingMessage">Carregando as informações da casa…</p><button class="theme-toggle" id="retryLoad" type="button" hidden>Tentar novamente</button></div></div>

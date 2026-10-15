@@ -1,0 +1,5 @@
+ACRESCENTAR ao objeto "rotas" da Ponte Externa V09, junto às rotas de conteúdo:
+  listarPontosCantados:{funcao:'TZC_M01_listarPontosCantadosPublicos',limites:[]},
+
+INSTALAR o arquivo TZC_M01_PontosCantados_Publico_V1.gs no projeto Apps Script do Código.gs V295.
+A página chama authRpc('listarPontosCantados', [], ...) uma vez por abertura; busca e filtro são locais.

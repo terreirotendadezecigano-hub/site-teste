@@ -1649,4 +1649,10 @@ html:not([data-theme="escuro"]) #settingsView button:not(.danger):not(.bath-dele
  #dynamicPage .events-archive-controls button{min-width:0;white-space:normal}
 }
 </style>
-</body></html>
+<style id="tzc-v115-busca-banhos-largura-total">
+/* A busca de Banhos usa toda a área útil e mantém o texto de orientação legível. */
+#dynamicPage .data-page-search.bath-public-search{width:100%!important;max-width:none!important;min-width:0}
+#dynamicPage .data-page-search.bath-public-search #bathSearch{width:100%!important;min-width:0}
+#dynamicPage #bathSearch::placeholder{font-size:15px}
+@media(max-width:600px){#dynamicPage #bathSearch::placeholder{font-size:14px}}
+</style></body></html>

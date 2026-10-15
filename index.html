@@ -241,7 +241,7 @@ body:not(.dados-carregados) .app{visibility:visible}
 .bath-table th:nth-child(1),.bath-table td:nth-child(1){width:16%}.bath-table th:nth-child(2),.bath-table td:nth-child(2){width:22%}.bath-table th:nth-child(3),.bath-table td:nth-child(3){width:29%}.bath-table th:nth-child(4),.bath-table td:nth-child(4){width:33%}
 .bath-table-copy{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;line-height:1.4}
 .bath-edit-dialog{width:min(660px,calc(100vw - 28px));max-height:min(84dvh,720px)}.bath-edit-dialog .bath-dialog-head{padding:13px 16px 10px}.bath-edit-dialog .bath-dialog-head h2{font-size:22px;margin:4px 0 0}.bath-edit-form{max-height:calc(min(84dvh,720px) - 66px);overflow:auto}.bath-edit-grid{gap:8px;padding:10px 16px 12px}.bath-field{gap:4px;font-size:13px}.bath-field input,.bath-field textarea,.bath-field select{min-height:38px;padding:8px 10px;border-radius:9px}.bath-field textarea{min-height:62px;padding:7px 9px;line-height:1.4}.bath-edit-actions{align-items:center;gap:8px;padding:10px 16px 13px}.bath-edit-actions .bath-share{margin-right:auto}.bath-edit-actions button{min-height:40px;padding:8px 14px;border-radius:10px;font-family:inherit;font-size:14px;font-weight:750;line-height:1.2}.bath-edit-actions .primary,.bath-section-heading .primary{border:1px solid var(--primary);background:var(--primary);color:var(--surface);font-family:inherit;font-size:15px;font-weight:750}.bath-edit-actions .secondary{border:1px solid var(--line);background:var(--surface);color:var(--text)}.bath-edit-actions .bath-delete{font-family:inherit;font-size:14px;font-weight:750;line-height:1.2}
-@media(max-width:700px){.bath-table th:nth-child(n),.bath-table td:nth-child(n){width:auto}.bath-table tr{grid-template-columns:1fr}.bath-table td:first-child{grid-column:1/-1}.bath-table td:nth-child(2)::before{content:'Finalidade'}.bath-table td:nth-child(3)::before{content:'Ingredientes'}.bath-table td:nth-child(4)::before{content:'Modo_Preparo'}.bath-edit-dialog{width:calc(100vw - 18px);max-height:90dvh}.bath-edit-form{max-height:calc(90dvh - 62px)}.bath-edit-grid{grid-template-columns:1fr;padding:9px 12px 12px}.bath-field-wide{grid-column:auto}.bath-edit-actions{position:sticky;bottom:0;flex-wrap:wrap;padding:9px 12px 12px}.bath-edit-actions .bath-share{margin-right:auto}}
+@media(max-width:700px){.bath-table th:nth-child(n),.bath-table td:nth-child(n){width:auto}.bath-table tr{grid-template-columns:1fr}.bath-table td:first-child{grid-column:1/-1}.bath-table td:nth-child(2)::before{content:'Finalidade'}.bath-table td:nth-child(3)::before{content:'Ingredientes'}.bath-table td:nth-child(4)::before{content:'Modo Preparo'}.bath-edit-dialog{width:calc(100vw - 18px);max-height:90dvh}.bath-edit-form{max-height:calc(90dvh - 62px)}.bath-edit-grid{grid-template-columns:1fr;padding:9px 12px 12px}.bath-field-wide{grid-column:auto}.bath-edit-actions{position:sticky;bottom:0;flex-wrap:wrap;padding:9px 12px 12px}.bath-edit-actions .bath-share{margin-right:auto}}
 </style>
 <style id="tzc-v109-paginas-padronizadas">
 /* Cabeçalhos e busca alinhados nas páginas internas. Home e Configurações ficam fora deste escopo. */
@@ -813,7 +813,7 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
     var searchWrap=document.createElement('label');searchWrap.className='events-archive-query';searchWrap.textContent='Buscar evento';var search=document.createElement('input');search.type='search';search.placeholder='Título, local ou descrição';search.setAttribute('aria-label','Buscar eventos por título, local ou descrição');searchWrap.appendChild(search);
     var fromWrap=document.createElement('label');fromWrap.textContent='Data inicial';var from=document.createElement('input');from.type='date';from.setAttribute('aria-label','Data inicial');fromWrap.appendChild(from);
     var toWrap=document.createElement('label');toWrap.textContent='Data final';var to=document.createElement('input');to.type='date';to.setAttribute('aria-label','Data final');toWrap.appendChild(to);
-    var clear=document.createElement('button');clear.type='button';clear.className='secondary';clear.textContent='Limpar filtro';controls.append(searchWrap,fromWrap,toWrap,clear);box.appendChild(controls);
+    var clear=document.createElement('button');clear.type='button';clear.className='secondary';clear.textContent='Limpar filtro';var retryButton=document.createElement('button');retryButton.type='button';retryButton.className='secondary';retryButton.textContent='Tentar novamente';retryButton.hidden=true;retryButton.addEventListener('click',function(){retryButton.hidden=true;carregar_(true)});controls.append(searchWrap,fromWrap,toWrap,clear,retryButton);box.appendChild(controls);
     var status=texto('p','Carregando eventos…','events-archive-status');status.setAttribute('role','status');status.setAttribute('aria-live','polite');box.appendChild(status);
     var tableHost=document.createElement('div');box.appendChild(tableHost);area.appendChild(box);
     var nivel=authToken&&authUser?'membro':'publico';
@@ -834,7 +834,7 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
     }
     search.addEventListener('input',renderTable_);from.addEventListener('change',renderTable_);to.addEventListener('change',renderTable_);clear.addEventListener('click',function(){search.value='';from.value='';to.value='';renderTable_()});
     function carregar_(retry){if(m04ArquivoEventosCache&&m04ArquivoEventosNivel===nivel){renderTable_();return}if(m04ArquivoEventosRequest&&!retry){status.textContent='Carregando eventos…';return}var req=++m04ArquivoEventosRequisicao;m04ArquivoEventosRequest=true;status.textContent='Carregando eventos…';
-      authRpc('listarArquivoEventos',[String(authToken||'')],function(r){if(req!==m04ArquivoEventosRequisicao)return;m04ArquivoEventosRequest=false;if(paginaAtual!=='__eventos')return;if((authToken&&authUser?'membro':'publico')!==nivel)return;if(!r||!r.ok){status.textContent=r&&r.mensagem||'Não foi possível carregar os eventos.';var retryButton=document.createElement('button');retryButton.type='button';retryButton.className='secondary';retryButton.textContent='Tentar novamente';retryButton.addEventListener('click',function(){carregar_(true)});tableHost.replaceChildren(retryButton);return}m04ArquivoEventosCache=Array.isArray(r.eventos)?r.eventos:[];m04ArquivoEventosNivel=nivel;renderTable_()})
+      authRpc('listarArquivoEventos',[String(authToken||'')],function(r){if(req!==m04ArquivoEventosRequisicao)return;m04ArquivoEventosRequest=false;if(paginaAtual!=='__eventos')return;if((authToken&&authUser?'membro':'publico')!==nivel)return;if(!r||!r.ok){status.textContent=r&&r.mensagem||'Não foi possível carregar os eventos.';retryButton.hidden=false;tableHost.replaceChildren();return}retryButton.hidden=true;m04ArquivoEventosCache=Array.isArray(r.eventos)?r.eventos:[];m04ArquivoEventosNivel=nivel;renderTable_()})
     }
     carregar_(false);atualizarMenuAtivo(paginaAtual);closeMenu();window.scrollTo({top:0,behavior:'smooth'});
   }
@@ -862,7 +862,7 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
     var status=texto('p','Carregando banhos…','bath-no-results');status.setAttribute('role','status');area.appendChild(status);
     var wrap=document.createElement('div');wrap.className='bath-table-wrap';wrap.hidden=true;
     var table=document.createElement('table');table.className='bath-table'+(dirigente?' bath-table-admin':'');table.innerHTML='<caption>Banhos cadastrados</caption>';
-    var trh=document.createElement('tr');['Título','Finalidade','Ingredientes','Modo_Preparo'].forEach(function(t){var th=document.createElement('th');th.scope='col';th.textContent=t;trh.appendChild(th)});
+    var trh=document.createElement('tr');['Título','Finalidade','Ingredientes','Modo Preparo'].forEach(function(t){var th=document.createElement('th');th.scope='col';th.textContent=t;trh.appendChild(th)});
     var thead=document.createElement('thead');thead.appendChild(trh);var tbody=document.createElement('tbody');table.append(thead,tbody);wrap.appendChild(table);area.appendChild(wrap);
     function v(b,k){return String(b&&b[k]||'').trim()}
     function render(){var q=String(search.value||'').trim().toLocaleLowerCase('pt-BR');var rows=lista.filter(function(b){return [b.titulo,b.finalidade,b.ingredientes,b.modoPreparo].join(' ').toLocaleLowerCase('pt-BR').indexOf(q)>=0});tbody.replaceChildren();
@@ -889,7 +889,7 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
         input.name=key;input.value=value||'';l.appendChild(input);grid.appendChild(l);return input}
       f.titulo=field('Nome do banho','titulo',v(b,'titulo'),false);f.categoria=field('Categoria','categoria',v(b,'categoria'),false);
       f.finalidade=field('Finalidade','finalidade',v(b,'finalidade'),true,'textarea');f.ingredientes=field('Ingredientes','ingredientes',v(b,'ingredientes'),false,'textarea');
-      f.modoPreparo=field('Modo_Preparo','modoPreparo',v(b,'modoPreparo'),false,'textarea');f.orientacoes=field('Quando fazer / orientações','orientacoes',v(b,'orientacoes'),false,'textarea');f.cuidados=field('Cuidados','cuidados',v(b,'cuidados'),false,'textarea');
+      f.modoPreparo=field('Modo Preparo','modoPreparo',v(b,'modoPreparo'),false,'textarea');f.orientacoes=field('Quando fazer / orientações','orientacoes',v(b,'orientacoes'),false,'textarea');f.cuidados=field('Cuidados','cuidados',v(b,'cuidados'),false,'textarea');
       f.acessoPublico=field('Quem pode ver','acessoPublico',v(b,'acessoPublico')||'Não',false,'select',[['Não','Somente membros'],['Sim','Todos']]);
       f.status=field('Publicação','status',v(b,'status')||'Rascunho',false,'select',[['Rascunho','Rascunho'],['Publicado','Publicado']]);
       f.revisaoSeguranca=field('Revisão','revisaoSeguranca',v(b,'revisaoSeguranca')||'Pendente',false,'select',[['Pendente','Pendente'],['Aprovado','Aprovado']]);
@@ -1615,4 +1615,37 @@ html[data-theme="escuro"] .bath-open{color:#241a1a}
 .bath-table-wrap{width:100%;max-width:100%;margin:12px 0 30px;overflow:hidden;border:1px solid var(--line);border-radius:13px;background:var(--surface);box-shadow:var(--shadow)}.bath-table{width:100%;table-layout:fixed;border-collapse:collapse;color:var(--text);font-size:15px}.bath-table caption{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.bath-table th,.bath-table td{padding:13px 15px;text-align:left;vertical-align:middle;border-bottom:1px solid var(--line);overflow-wrap:anywhere}.bath-table th{background:var(--surface2);color:var(--primary);font-size:14px;font-weight:750}.bath-table tbody tr:nth-child(even){background:color-mix(in srgb,var(--surface2) 35%,var(--surface))}.bath-table tbody tr{cursor:pointer}.bath-table tbody tr:hover,.bath-table tbody tr:focus-visible{background:color-mix(in srgb,var(--gold-soft) 42%,var(--surface));outline:none}.bath-table tbody tr:last-child td{border-bottom:0}.bath-row-title{font-size:16px;font-weight:700}
 .bath-edit-dialog{width:min(760px,calc(100vw - 28px));max-height:min(88vh,850px)}.bath-edit-form{overflow:auto}.bath-edit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;padding:4px 18px 16px}.bath-field{display:grid;gap:6px;color:var(--text);font-size:14px;font-weight:650}.bath-field-wide{grid-column:1/-1}.bath-field input,.bath-field textarea,.bath-field select{box-sizing:border-box;width:100%;min-height:42px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface);color:var(--text);font:inherit;font-weight:400}.bath-field textarea{min-height:90px;resize:vertical;line-height:1.5}.bath-edit-actions{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line)}.bath-delete{border:1px solid #b64242;border-radius:10px;background:transparent;color:#b64242;font:inherit;font-weight:700;padding:9px 14px;cursor:pointer}.bath-no-results{font-size:16px}
 @media(max-width:700px){.bath-hero-compact{padding:17px 18px}.bath-section-heading{align-items:stretch;gap:10px}.bath-table-wrap{overflow:visible;border:0;background:transparent;box-shadow:none}.bath-table,.bath-table tbody{display:block;width:100%}.bath-table thead{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.bath-table tbody{display:grid;gap:10px}.bath-table tr{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;padding:10px 13px;border:1px solid var(--line);border-radius:12px;background:var(--surface)!important;box-shadow:var(--shadow)}.bath-table td{display:grid;gap:3px;padding:7px 2px;border:0;font-size:14px}.bath-table td:first-child{grid-column:1/-1;font-size:16px}.bath-table td:not(:first-child)::before{font-size:11px;line-height:1.2;color:var(--muted);font-weight:700}.bath-table-admin td:nth-child(2)::before{content:'Categoria'}.bath-table-admin td:nth-child(3)::before{content:'Acesso'}.bath-table-admin td:nth-child(4)::before{content:'Publicação'}.bath-table-admin td:nth-child(5)::before{content:'Revisão'}.bath-table:not(.bath-table-admin) td:nth-child(2)::before{content:'Categoria'}.bath-table:not(.bath-table-admin) td:nth-child(3)::before{content:'Finalidade'}.bath-edit-grid{grid-template-columns:1fr;padding:4px 14px 14px}.bath-field-wide{grid-column:auto}.bath-edit-actions{flex-wrap:wrap}}
-</style></body></html>
+</style>
+<style id="tzc-v114-padrao-visual-paginas">
+/* Referência de título e introdução da Configuração da Casa, aplicada às páginas internas. */
+#dynamicPage .data-page-heading{padding:12px 0 7px!important;text-align:center!important}
+#dynamicPage .data-page-heading h1{margin:0 auto 5px!important;color:var(--primary)!important;font:700 clamp(28px,3vw,38px)/1.2 Georgia,serif!important}
+#dynamicPage .data-page-heading p{max-width:760px;margin:8px auto 20px!important;color:var(--muted)!important;font:400 17px/1.5 "Segoe UI",Arial,sans-serif!important}
+#dynamicPage .data-page-toolbar{margin:8px auto 16px!important}
+#dynamicPage .data-page-search:has(#bathSearch){width:min(100%,760px)!important;max-width:760px!important}
+#dynamicPage #bathSearch{min-height:46px!important;padding:10px 13px!important;font-size:16px!important}
+#dynamicPage table thead th,#dynamicPage table thead tr th{text-align:center!important}
+#dynamicPage .events-archive-controls{display:grid!important;grid-template-columns:minmax(230px,400px) minmax(135px,160px) minmax(135px,160px) auto auto!important;justify-content:center!important;align-items:end!important;gap:10px!important;max-width:1000px!important;margin:0 auto 12px!important}
+#dynamicPage .events-archive-controls label{min-width:0!important}
+#dynamicPage .events-archive-controls .events-archive-query{grid-column:auto!important;flex:none!important;max-width:none!important}
+#dynamicPage .events-archive-controls .events-archive-query input{width:100%!important}
+#dynamicPage .events-archive-controls button{white-space:nowrap}
+html:not([data-theme="escuro"]) #dynamicPage button:not(.danger):not(.bath-delete):not(.delete):not(.dangerous):not(.close):not(.bath-close):not(.icon-button):not(.loja-link-button):not([aria-label="Fechar"]):not([data-action^="close"]):not([hidden]),
+html:not([data-theme="escuro"]) #settingsView button:not(.danger):not(.bath-delete):not(.delete):not(.dangerous):not(.close):not(.bath-close):not(.icon-button):not(.loja-link-button):not([aria-label="Fechar"]):not([data-action^="close"]):not([hidden]){
+  background:#641d29!important;border:1px solid #641d29!important;color:#fff!important
+}
+@media(max-width:850px){
+ #dynamicPage .events-archive-controls{grid-template-columns:repeat(2,minmax(0,1fr))!important;max-width:640px!important}
+ #dynamicPage .events-archive-controls .events-archive-query{grid-column:1/-1!important}
+ #dynamicPage .events-archive-controls button{width:100%}
+}
+@media(max-width:600px){
+ #dynamicPage .data-page-heading{padding:10px 0 6px!important}
+ #dynamicPage .data-page-heading p{font-size:16px!important;margin:7px auto 16px!important}
+ #dynamicPage .data-page-search:has(#bathSearch){width:100%!important}
+ #dynamicPage .events-archive-controls{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #dynamicPage .events-archive-controls .events-archive-query{grid-column:1/-1!important}
+ #dynamicPage .events-archive-controls button{min-width:0;white-space:normal}
+}
+</style>
+</body></html>

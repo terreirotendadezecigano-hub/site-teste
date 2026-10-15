@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head><base target="_top"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -30,73 +29,9 @@
       gerarPrevisaoEvento:{funcao:'TZC_M04_gerarPrevisaoEvento',tamanhos:[100,100]},
       confirmarCheckin:{funcao:'TZC_M04_confirmarCheckin',tamanhos:[100,100,30]},
       listarMembrosAtivos:{funcao:'TZC_M04_listarMembrosAtivos',tamanhos:[100]},
-      definirResponsavel:{funcao:'TZC_M04_definirResponsavel',tamanhos:[100,100,100,10]},
-
-    msgObter:{funcao:'TZC_MSG_adminObterSite',tamanhos:[100]},
-    msgSalvarConfiguracao:{funcao:'TZC_MSG_adminSalvarConfiguracaoSite',tamanhos:[100,16000]},
-    msgSalvarMensagem:{funcao:'TZC_MSG_adminSalvarMensagemSite',tamanhos:[100,16000]},
-    msgUploadImagem:{funcao:'TZC_MSG_adminUploadImagemSite',tamanhos:[100,7200000]},
- listarArquivoEventos:{funcao:'TZC_M04_listarArquivoEventos',tamanhos:[100]},
- salvarEvento:{funcao:'TZC_M04_salvarEvento',tamanhos:[100,12000]},
- excluirEvento:{funcao:'TZC_M04_excluirEvento',tamanhos:[100,100]},
-    enviarArquivoPonto:{funcao:"TZC_M01_pontosEnviarArquivo",tamanhos:[100,14000000]},
-    obterArquivoPonto:{funcao:"TZC_M01_pontosObterArquivo",tamanhos:[100,100,10]},
-    mcObterPainel:{funcao:"TZC_MC_obterPainel",tamanhos:[100]},
-    mcSalvarRede:{funcao:"TZC_MC_salvarRede",tamanhos:[100,16000]},
-    mcDesativarRede:{funcao:"TZC_MC_desativarRede",tamanhos:[100,100]},
-    mcSalvarPublicacao:{funcao:"TZC_MC_salvarPublicacao",tamanhos:[100,24000]},
-    mcListar:{funcao:"TZC_MC_listar",tamanhos:[100]},
-    podeConfig:{funcao:'TZC_M02_pode',tamanhos:[100,40,20]},
-    obterConfig:{funcao:'TZC_CFG_obter',tamanhos:[100]},
-    salvarConfig:{funcao:'TZC_CFG_salvar',tamanhos:[100,20000]},
-    obterMinhaArea:{funcao:'TZC_M04_PAG_obterMinhaArea',tamanhos:[100]},
-    enviarComprovante:{funcao:'TZC_M04_PAG_enviarComprovante',tamanhos:[100,4500000]},
-    listarComprovantesMensalidade:{funcao:'TZC_M04_PAG_listarPendentes',tamanhos:[100]},
-    obterComprovanteMensalidade:{funcao:'TZC_M04_PAG_obterComprovante',tamanhos:[100,100]},
-    decidirComprovanteMensalidade:{funcao:'TZC_M04_PAG_decidir',tamanhos:[100,100,10,500]},
-    registrarVisitantesPresentes:{funcao:'TZC_M04_registrarVisitantesPresentes',tamanhos:[100,100,5,300]},
-    listarMembros:{funcao:'TZC_M05_listarMembros',tamanhos:[100]},
-    salvarMembro:{funcao:'TZC_M05_salvarMembro',tamanhos:[100,20000]},
-    alterarStatusMembro:{funcao:'TZC_M05_alterarStatus',tamanhos:[100,100,20]},
-    listarMembrosV02:{funcao:'TZC_M05_listarMembrosV02',tamanhos:[100]},
-    salvarMembroV02:{funcao:'TZC_M05_salvarMembroV02',tamanhos:[100,20000]},
-    alterarStatusV02:{funcao:'TZC_M05_alterarStatusV02',tamanhos:[100,100,20]},
-    criarConviteV02:{funcao:'TZC_M05_criarConviteV02',tamanhos:[100]},
-    listarPendentesV02:{funcao:'TZC_M05_listarPendentesV02',tamanhos:[100]},
-    enviarCadastroPublico:{funcao:'TZC_M05_enviarCadastroPublicoV02',tamanhos:[200,20000]},
-    listarCatalogoLoja:{funcao:'TZC_M06_LOJA_listarCatalogoV01',tamanhos:[]},
-    solicitarAtendimentoLoja:{funcao:'TZC_M06_LOJA_solicitarAtendimentoV02',tamanhos:[120,254,30,100,1500,5]},
-    solicitarAtendimentoLojaV02:{funcao:'TZC_M06_LOJA_solicitarAtendimentoV02',tamanhos:[120,254,30,100,1500,5]},
-    listarTiposAtendimentoLoja:{funcao:'TZC_M06_LOJA_listarTiposAtendimentoV01',tamanhos:[]},
-    listarTiposAtendimentoGestaoLoja:{funcao:'TZC_M06_LOJA_listarTiposAtendimentoGestaoV01',tamanhos:[100]},
-    salvarTipoAtendimentoLoja:{funcao:'TZC_M06_LOJA_salvarTipoAtendimentoV01',tamanhos:[100,2500]},
-    excluirTipoAtendimentoLoja:{funcao:'TZC_M06_LOJA_excluirTipoAtendimentoV01',tamanhos:[100,100]},
-    listarProdutosGestaoLoja:{funcao:'TZC_M06_LOJA_listarProdutosGestaoV01',tamanhos:[100]},
-    desafioAcessoCompradorLoja:{funcao:'TZC_M06_LOJA_desafioAcessoCompradorV01',tamanhos:[254]},
-    criarAcessoCompradorLoja:{funcao:'TZC_M06_LOJA_criarAcessoCompradorV01',tamanhos:[254,120,30,64,64]},
-    entrarCompradorLoja:{funcao:'TZC_M06_LOJA_entrarCompradorV01',tamanhos:[254,64,64]},
-    salvarProdutoLoja:{funcao:'TZC_M06_LOJA_salvarProdutoV01',tamanhos:[100,12000000]},
-    publicarProdutoLoja:{funcao:'TZC_M06_LOJA_publicarProdutoV01',tamanhos:[100,100,5]},
-    criarPedidoLoja:{funcao:'TZC_M06_LOJA_criarPedidoV01',tamanhos:[100,100]},
-    criarPedidoVisitanteLoja:{funcao:'TZC_M06_LOJA_criarPedidoVisitanteV02',tamanhos:[120,254,30,5,5,5000]},
-    criarPedidoCarrinhoLoja:{funcao:'TZC_M06_LOJA_criarPedidoCarrinhoV02',tamanhos:[100,5000]},
-    listarMeusPedidosLoja:{funcao:'TZC_M06_LOJA_listarMeusPedidosV02',tamanhos:[100]},
-    enviarComprovanteLoja:{funcao:'TZC_M06_LOJA_enviarComprovanteV01',tamanhos:[100,100,10,40,100,160,3000000]},
-    listarPendenciasLoja:{funcao:'TZC_M06_LOJA_listarPendenciasV01',tamanhos:[100]},
-    obterComprovanteLoja:{funcao:'TZC_M06_LOJA_obterComprovanteV01',tamanhos:[100,100]},
-    decidirPagamentoLoja:{funcao:'TZC_M06_LOJA_decidirPagamentoV01',tamanhos:[100,100,10,500]},
-    baixarProdutoLoja:{funcao:'TZC_M06_LOJA_baixarProdutoV01',tamanhos:[100,100]},
-      listarPontosCantados:{funcao:'TZC_M01_listarPontosCantadosPublicos',tamanhos:[]},
-      gerenciarPontosCantados:{funcao:'TZC_M01_gerenciarPontosCantados',tamanhos:[100]},
-      salvarPontoCantado:{funcao:'TZC_M01_salvarPontoCantado',tamanhos:[100,22000]},
-      excluirPontoCantado:{funcao:'TZC_M01_excluirPontoCantado',tamanhos:[100,100]},
-      listarBanhosMembros:{funcao:'TZC_M01_listarBanhosMembrosAutenticados',tamanhos:[100]},
-      gerenciarBanhosMembros:{funcao:'TZC_M01_gerenciarBanhosAutenticado',tamanhos:[100]},
-      salvarBanho:{funcao:'TZC_M01_salvarBanhoAutenticado',tamanhos:[100,22000]},
-      excluirBanho:{funcao:'TZC_M01_excluirBanhoAutenticado',tamanhos:[100,100]}
+      definirResponsavel:{funcao:'TZC_M04_definirResponsavel',tamanhos:[100,100,100,10]}
     };
     function responder(id,resultado){if(site&&site.contentWindow)site.contentWindow.postMessage({tipo:'TZC_M02_RESULT',id:id,resultado:resultado},origemPermitida)}
-    site.addEventListener('load',function(){if(site.contentWindow)site.contentWindow.postMessage({tipo:'TZC_PONTE_PRONTA'},origemPermitida)});
     window.addEventListener('message',function(evento){
       if(evento.origin!==origemPermitida||!site||evento.source!==site.contentWindow)return;
       var msg=evento.data;
@@ -111,4 +46,3 @@
   })();
   </script>
 </body></html>
-Explicar

@@ -855,7 +855,7 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
     heading.appendChild(texto('h1','Banhos','intro-title'));
     heading.appendChild(texto('p','Preparos e orientações tradicionais da nossa casa. Selecione um banho para consultar os detalhes.','m04-note'));area.appendChild(heading);
     var toolbar=document.createElement('div');toolbar.className='data-page-toolbar';
-    var searchControls=document.createElement('div');searchControls.className='data-page-search';
+    var searchControls=document.createElement('div');searchControls.className='data-page-search bath-public-search';
     var search=document.createElement('input');search.id='bathSearch';search.type='search';search.placeholder='Buscar por nome, categoria ou finalidade';search.setAttribute('aria-label','Buscar banho');
     searchControls.appendChild(search);toolbar.appendChild(searchControls);
     if(dirigente){var actions=document.createElement('div');actions.className='data-page-actions';var add=texto('button','Cadastrar banho','primary');add.type='button';add.addEventListener('click',function(){editar(null)});actions.appendChild(add);toolbar.appendChild(actions)}area.appendChild(toolbar);
@@ -1622,8 +1622,8 @@ html[data-theme="escuro"] .bath-open{color:#241a1a}
 #dynamicPage .data-page-heading h1{margin:0 auto 5px!important;color:var(--primary)!important;font:700 clamp(28px,3vw,38px)/1.2 Georgia,serif!important}
 #dynamicPage .data-page-heading p{max-width:760px;margin:8px auto 20px!important;color:var(--muted)!important;font:400 17px/1.5 "Segoe UI",Arial,sans-serif!important}
 #dynamicPage .data-page-toolbar{margin:8px auto 16px!important}
-#dynamicPage .data-page-search:has(#bathSearch){width:min(100%,760px)!important;max-width:760px!important}
-#dynamicPage #bathSearch{min-height:46px!important;padding:10px 13px!important;font-size:16px!important}
+#dynamicPage .data-page-search.bath-public-search{width:min(100%,920px)!important;max-width:920px!important}
+#dynamicPage #bathSearch{min-height:48px!important;padding:11px 15px!important;font-size:17px!important}
 #dynamicPage table thead th,#dynamicPage table thead tr th{text-align:center!important}
 #dynamicPage .events-archive-controls{display:grid!important;grid-template-columns:minmax(230px,400px) minmax(135px,160px) minmax(135px,160px) auto auto!important;justify-content:center!important;align-items:end!important;gap:10px!important;max-width:1000px!important;margin:0 auto 12px!important}
 #dynamicPage .events-archive-controls label{min-width:0!important}
@@ -1642,7 +1642,8 @@ html:not([data-theme="escuro"]) #settingsView button:not(.danger):not(.bath-dele
 @media(max-width:600px){
  #dynamicPage .data-page-heading{padding:10px 0 6px!important}
  #dynamicPage .data-page-heading p{font-size:16px!important;margin:7px auto 16px!important}
- #dynamicPage .data-page-search:has(#bathSearch){width:100%!important}
+ #dynamicPage .data-page-search.bath-public-search{width:100%!important}
+ #dynamicPage #bathSearch{font-size:16px!important}
  #dynamicPage .events-archive-controls{grid-template-columns:repeat(2,minmax(0,1fr))!important}
  #dynamicPage .events-archive-controls .events-archive-query{grid-column:1/-1!important}
  #dynamicPage .events-archive-controls button{min-width:0;white-space:normal}

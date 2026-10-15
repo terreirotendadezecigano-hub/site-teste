@@ -306,6 +306,7 @@ html[data-theme="escuro"] .pontos-table th{background:#211a1b;color:#d6b56f}
 .pontos-table tbody tr:hover,.pontos-table tbody tr:focus-visible{background:color-mix(in srgb,var(--gold-soft) 34%,var(--surface));outline:none}
 .pontos-table tbody tr:last-child td{border-bottom:0}
 .pontos-title-cell{font-weight:700;color:var(--primary)}
+.pontos-row-actions{display:flex;align-items:center;justify-content:center;gap:7px}.pontos-row-actions button{min-height:38px;padding:6px 10px;white-space:nowrap}.pontos-edit-dialog{width:min(760px,calc(100vw - 20px))}
 .pontos-status{text-align:center;margin:6px 0 14px;color:var(--muted)}
 .pontos-detail-dialog{width:min(780px,calc(100vw - 24px));max-width:none;max-height:min(88dvh,850px);overflow:auto}
 .pontos-detail-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:17px 20px 12px;border-bottom:1px solid var(--line)}
@@ -941,6 +942,7 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
     if(!dados)return;
     paginaAtual='__pontos_cantados';atualizarMenuAtivo(paginaAtual);el('settingsView').hidden=true;el('homeView').hidden=true;
     var area=el('dynamicPage');area.hidden=false;area.replaceChildren();
+    var dirigente=String(authUser&&authUser.perfil||'').trim().toLowerCase()==='dirigente';
     var heading=document.createElement('header');heading.className='data-page-heading';
     heading.appendChild(texto('h1','Pontos Cantados','intro-title'));
     heading.appendChild(texto('p','Encontre pontos cantados da casa por linha ou entidade. Abra um ponto para ouvir ou assistir à mídia e acompanhar a letra.','m04-note'));area.appendChild(heading);
@@ -954,9 +956,9 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
     var wrap=document.createElement('div');wrap.className='pontos-table-wrap';wrap.hidden=true;
     var table=document.createElement('table');table.className='pontos-table';table.innerHTML='<caption>Pontos cantados, na ordem de cadastro</caption>';
     var thead=document.createElement('thead'),head=document.createElement('tr');
-    ['Ponto','Linha / entidade','Tipo'].forEach(function(label){var th=document.createElement('th');th.scope='col';th.textContent=label;head.appendChild(th)});
+    ['Ponto','Linha / entidade','Tipo'].concat(dirigente?['Ações']:[]).forEach(function(label){var th=document.createElement('th');th.scope='col';th.textContent=label;head.appendChild(th)});
     thead.appendChild(head);var tbody=document.createElement('tbody');table.append(thead,tbody);wrap.appendChild(table);area.appendChild(wrap);
-    var retry=document.createElement('button');retry.type='button';retry.className='secondary';retry.textContent='Tentar novamente';retry.hidden=true;retry.addEventListener('click',function(){retry.hidden=true;loadPoints(true)});var actions=document.createElement('div');actions.className='data-page-actions';actions.appendChild(retry);area.appendChild(actions);
+    var retry=document.createElement('button');retry.type='button';retry.className='secondary';retry.textContent='Tentar novamente';retry.hidden=true;retry.addEventListener('click',function(){retry.hidden=true;loadPoints(true)});var actions=document.createElement('div');actions.className='data-page-actions';if(dirigente){var createPoint=document.createElement('button');createPoint.type='button';createPoint.className='primary';createPoint.textContent='Cadastrar ponto';createPoint.addEventListener('click',function(){openPointEditor(null)});actions.appendChild(createPoint)}actions.appendChild(retry);area.appendChild(actions);
     var logo=(dados.identidade&&(dados.identidade.logoUrl||dados.identidade.logo||dados.identidade.Logo_URL||dados.identidade.logo_url))||'';
     logo=seguroLink(logo)||'';
     function value(record,key){return String(record&&record[key]||'').trim()}
@@ -989,13 +991,31 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
       var actions=document.createElement('div');actions.className='pontos-detail-actions';var share=texto('button','Compartilhar','secondary');share.type='button';share.onclick=function(){var title=value(record,'Titulo_Ponto')||'Ponto cantado',content=[title,caption,value(record,'Letra_Ponto'),video||audio].filter(Boolean).join('\n');if(navigator.share){navigator.share({title:title,text:content,url:window.location.href}).catch(function(e){if(!e||e.name!=='AbortError')aviso('Não foi possível compartilhar agora.')});return}if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(content+'\n'+window.location.href).then(function(){aviso('Conteúdo copiado para compartilhar.')},function(){aviso('Não foi possível copiar o conteúdo.')});else aviso('Compartilhamento não disponível neste navegador.')};
       var close=texto('button','Fechar','secondary');close.type='button';close.onclick=function(){dlg.close()};actions.append(share,close);dlg.append(top,body,actions);dlg.addEventListener('click',function(e){if(e.target===dlg)dlg.close()});dlg.addEventListener('close',function(){dlg.remove()});area.appendChild(dlg);dlg.showModal()
     }
+    function openPointEditor(point){
+      if(!dirigente){aviso('A gestão deste conteúdo é restrita.');return}
+      var p=point||{},dlg=document.createElement('dialog');dlg.className='bath-edit-dialog pontos-edit-dialog';dlg.setAttribute('aria-labelledby','pontosEditTitle');
+      var top=document.createElement('header');top.className='bath-dialog-head';var h=document.createElement('h2');h.id='pontosEditTitle';h.textContent=p.ID_Ponto?'Editar ponto cantado':'Cadastrar ponto cantado';var close=document.createElement('button');close.type='button';close.className='bath-close';close.setAttribute('aria-label','Fechar');close.textContent='×';close.onclick=function(){dlg.close()};top.append(h,close);
+      var form=document.createElement('form');form.className='bath-edit-form';var save;
+      var fields=[{key:'Titulo_Ponto',label:'Nome do ponto',wide:true},{key:'Linha_Entidade',label:'Linha / entidade'},{key:'Tipo_Ponto',label:'Tipo de ponto'},{key:'Letra_Ponto',label:'Letra',wide:true,area:true},{key:'Audio_Ponto',label:'Link de áudio',wide:true},{key:'Video_Ponto',label:'Link de vídeo',wide:true},{key:'Oga_Responsavel',label:'Responsável'},{key:'Cantora_Responsavel',label:'Cantora'},{key:'Acesso_Publico',label:'Acesso',select:true}];
+      var grid=document.createElement('div');grid.className='bath-edit-grid';
+      fields.forEach(function(f){var wrap=document.createElement('label');wrap.className='bath-field'+(f.wide?' bath-field-wide':'');var caption=document.createElement('span');caption.textContent=f.label;var control;if(f.area){control=document.createElement('textarea');control.rows=5}else if(f.select){control=document.createElement('select');[['Sim','Público'],['Não','Somente membros']].forEach(function(o){var option=document.createElement('option');option.value=o[0];option.textContent=o[1];control.appendChild(option)})}else{control=document.createElement('input');control.type=/(Audio|Video)_Ponto/.test(f.key)?'url':'text';if(control.type==='url')control.placeholder='https://'}control.name=f.key;control.value=String(p[f.key]|| (f.key==='Acesso_Publico'?'Sim':''));wrap.append(caption,control);grid.appendChild(wrap)});
+      var footer=document.createElement('div');footer.className='bath-edit-actions';if(p.ID_Ponto){var del=document.createElement('button');del.type='button';del.className='bath-delete';del.textContent='Excluir ponto';del.addEventListener('click',function(){dlg.close();deletePoint(p)});footer.appendChild(del)}
+      var cancel=document.createElement('button');cancel.type='button';cancel.className='secondary';cancel.textContent='Cancelar';cancel.onclick=function(){dlg.close()};save=document.createElement('button');save.type='submit';save.className='primary';save.textContent='Salvar ponto';footer.append(cancel,save);form.append(grid,footer);
+      form.addEventListener('submit',function(e){e.preventDefault();save.disabled=true;save.textContent='Salvando…';var data={ID_Ponto:String(p.ID_Ponto||'')};fields.forEach(function(f){data[f.key]=form.elements.namedItem(f.key).value});authRpc('salvarPontoCantado',[String(authToken||''),JSON.stringify(data)],function(r){save.disabled=false;save.textContent='Salvar ponto';if(!r||!r.ok){aviso(r&&r.mensagem||'Não foi possível salvar o ponto.');return}dlg.close();aviso(r.mensagem||'Ponto salvo.');loadPoints(true)})});
+      dlg.append(top,form);dlg.addEventListener('click',function(e){if(e.target===dlg)dlg.close()});dlg.addEventListener('close',function(){dlg.remove()});area.appendChild(dlg);dlg.showModal()
+    }
+    function deletePoint(point){
+      if(!dirigente||!point||!point.ID_Ponto)return;
+      if(!window.confirm('Mover “'+String(point.Titulo_Ponto||'este ponto')+'” para a Lixeira?'))return;
+      authRpc('excluirPontoCantado',[String(authToken||''),String(point.ID_Ponto)],function(r){if(!r||!r.ok){aviso(r&&r.mensagem||'Não foi possível excluir o ponto.');return}aviso(r.mensagem||'Ponto movido para a Lixeira.');loadPoints(true)})
+    }
     function render(){
       var q=normalize(search.value),line=lineFilter.value,rows=(tzcPontosCantadosCache||[]).filter(function(p){var all=[p.Titulo_Ponto,p.Linha_Entidade,p.Tipo_Ponto,p.Letra_Ponto].join(' ');return(!q||normalize(all).indexOf(q)>=0)&&(!line||p.Linha_Entidade===line)});
       tbody.replaceChildren();
       if(!rows.length){wrap.hidden=true;status.hidden=false;status.textContent=tzcPontosCantadosCache&&tzcPontosCantadosCache.length?'Nenhum ponto corresponde a este filtro.':'Nenhum ponto cantado disponível no momento.';return}
       status.hidden=true;wrap.hidden=false;rows.forEach(function(p){var row=document.createElement('tr');row.tabIndex=0;row.setAttribute('role','button');row.setAttribute('aria-label','Abrir ponto '+(p.Titulo_Ponto||'cantado'));
         [p.Titulo_Ponto||'Ponto sem título',p.Linha_Entidade||'—',p.Tipo_Ponto||'—'].forEach(function(text,index){var td=document.createElement('td');td.textContent=text;if(index===0)td.className='pontos-title-cell';row.appendChild(td)});
-        row.addEventListener('click',function(){openDetail(p)});row.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openDetail(p)}});
+        if(dirigente){row.removeAttribute('role');row.tabIndex=-1;var cell=document.createElement('td');cell.className='pontos-row-actions';var edit=document.createElement('button');edit.type='button';edit.className='secondary';edit.textContent='Editar';edit.addEventListener('click',function(e){e.stopPropagation();openPointEditor(p)});var del=document.createElement('button');del.type='button';del.className='bath-delete';del.textContent='Excluir';del.addEventListener('click',function(e){e.stopPropagation();deletePoint(p)});cell.append(edit,del);row.appendChild(cell);row.addEventListener('click',function(){openPointEditor(p)})}else{row.addEventListener('click',function(){openDetail(p)});row.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openDetail(p)}})}
         tbody.appendChild(row)
       })
     }
@@ -1004,13 +1024,13 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
       if(!r||!r.ok||!Array.isArray(r.pontos)){status.hidden=false;status.textContent=r&&r.mensagem||'Não foi possível carregar os pontos cantados.';retry.hidden=false;wrap.hidden=true;return}
       tzcPontosCantadosCache=r.pontos.map(function(p,index){return Object.assign({_ordem:index},p)});
       tzcPontosCantadosCache.sort(function(a,b){var da=dateValue(a.Data_Criacao),db=dateValue(b.Data_Criacao);return da!==null&&db!==null?da-db:a._ordem-b._ordem});
-      var lines=Array.from(new Set(tzcPontosCantadosCache.map(function(p){return value(p,'Linha_Entidade')}).filter(Boolean))).sort(function(a,b){return a.localeCompare(b,'pt-BR')});
+      lineFilter.replaceChildren(new Option('Todas as linhas / entidades',''));var lines=Array.from(new Set(tzcPontosCantadosCache.map(function(p){return value(p,'Linha_Entidade')}).filter(Boolean))).sort(function(a,b){return a.localeCompare(b,'pt-BR')});
       lines.forEach(function(name){lineFilter.add(new Option(name,name))});render()
     }
     function loadPoints(force){
       if(force){tzcPontosCantadosCache=null;tzcPontosCantadosPromise=null}
       if(tzcPontosCantadosCache){applyResponse({ok:true,pontos:tzcPontosCantadosCache});return}
-      if(!tzcPontosCantadosPromise){tzcPontosCantadosPromise=new Promise(function(resolve){authRpc('listarPontosCantados',[],resolve)}).then(function(r){if(r&&r.ok&&Array.isArray(r.pontos))tzcPontosCantadosCache=r.pontos;else tzcPontosCantadosPromise=null;return r})}
+      if(!tzcPontosCantadosPromise){tzcPontosCantadosPromise=new Promise(function(resolve){authRpc(dirigente?'gerenciarPontosCantados':'listarPontosCantados',dirigente?[String(authToken||'')]:[],resolve)}).then(function(r){if(r&&r.ok&&Array.isArray(r.pontos))tzcPontosCantadosCache=r.pontos;else tzcPontosCantadosPromise=null;return r})}
       tzcPontosCantadosPromise.then(applyResponse)
     }
     search.addEventListener('input',render);lineFilter.addEventListener('change',render);loadPoints(false)

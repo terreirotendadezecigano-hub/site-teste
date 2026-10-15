@@ -537,7 +537,7 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
   }
   /* Cada item renderizado na home vem de uma linha ativa de Blocos_Pagina. */
   function montarAgendaHome(d,agenda){
-    var eventos=(d.proximosEventos||[]).filter(function(e){return !m04InicioEventoPassou_(e.data)}).sort(function(a,b){return m04DataOrdem_(a.data)-m04DataOrdem_(b.data)}),card=el('eventsCard'),rows=el('eventRows');rows.replaceChildren();
+    var eventos=(d.proximosEventos||[]).filter(function(e){return !m04InicioEventoPassou_(e.data)}).sort(function(a,b){return m04DataOrdem_(a.data)-m04DataOrdem_(b.data)}),card=el('eventsCard'),rows=el('eventRows');if(!card||!rows){console.warn('[TZC] Agenda da home sem contêiner; seção ignorada.');return null;}rows.replaceChildren();
     var exibirVazio=!!agenda&&(agenda.exibirSeVazio===true||/^(sim|true|1|yes)$/i.test(String(agenda.exibirSeVazio||''))||!!agenda.texto);
     card.hidden=!(agenda&&(eventos.length||exibirVazio));if(!agenda)return card;
     el('eventsTitle').textContent=agenda.titulo||'Agenda próxima';el('eventsSubtitle').textContent=agenda.subtitulo||'';

@@ -1,13 +1,35 @@
+/* Integração TZC: as quatro rotas abaixo validam a sessão no servidor.
+   Nunca disponibilize diretamente as funções internas TZC_MSG_admin* na ponte. */
+function TZC_MSG_autorizar_(token){
+ var sessao=TZC_M02_validarSessao(String(token||''));
+ if(!sessao||!sessao.ok||!sessao.usuario)throw Error('Sessão inválida. Entre novamente.');
+ var p=String(sessao.usuario.perfil||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+ if(p!=='dirigente'&&p!=='administrador')throw Error('Acesso reservado ao Dirigente ou Administrador.');
+ return sessao.usuario.email;
+}
+function TZC_MSG_admin(){if(!TZC_MSG_CTX_EMAIL)throw Error('Acesso negado.');return TZC_MSG_CTX_EMAIL}
+var TZC_MSG_CTX_EMAIL='';
+function TZC_MSG_execAutenticado_(token,fn){
+ var email=TZC_MSG_autorizar_(token);
+ // Contexto global não é utilizado para autorizar: as rotas revalidam o token.
+ TZC_MSG_CTX_EMAIL=email;
+ try{return fn()}catch(e){return{ok:false,mensagem:e.message||'Erro na Mensagem do Dia.'}}finally{TZC_MSG_CTX_EMAIL=''}
+}
+function TZC_MSG_adminObterSite(token){return TZC_MSG_execAutenticado_(token,function(){return TZC_MSG_adminObter()})}
+function TZC_MSG_adminSalvarConfiguracaoSite(token,json){return TZC_MSG_execAutenticado_(token,function(){return TZC_MSG_adminSalvarConfiguracao(JSON.parse(json||'{}'))})}
+function TZC_MSG_adminSalvarMensagemSite(token,json){return TZC_MSG_execAutenticado_(token,function(){return TZC_MSG_adminSalvarMensagem(JSON.parse(json||'{}'))})}
+function TZC_MSG_adminUploadImagemSite(token,json){return TZC_MSG_execAutenticado_(token,function(){return TZC_MSG_adminUploadImagem(JSON.parse(json||'{}'))})}
+
 /** Módulo Mensagem do Dia e Destaques globais — somente base de teste TZC. */
 var TZC_MSG={ID:'',TZ:'America/Sao_Paulo',CFG:'Config_Mensagem_Dia'};
-function TZC_MSG_ss(){var id=PropertiesService.getScriptProperties().getProperty('TZC_PLANILHA_ID');if(!id)throw Error('Configure TZC_PLANILHA_ID no projeto principal antes de ativar a Mensagem do Dia.');return SpreadsheetApp.openById(id)}
+function TZC_MSG_ss(){return SpreadsheetApp.openById(TZC_M02_CFG_V03.PLANILHA_ID)}
 function TZC_MSG_date(){return Utilities.formatDate(new Date(),TZC_MSG.TZ,'dd/MM/yyyy')}
 function TZC_MSG_min(){var p=Utilities.formatDate(new Date(),TZC_MSG.TZ,'HH:mm').split(':');return +p[0]*60 + +p[1]}
 function TZC_MSG_cfg(){var s=TZC_MSG_ss().getSheetByName(TZC_MSG.CFG);if(!s){s=TZC_MSG_ss().insertSheet(TZC_MSG.CFG);s.appendRow(['Chave','Valor','Atualizado_Em']);[['horario_envio','08:30'],['horario_limite_manual','10:00'],['imagem_padrao_url',''],['canal','email'],['ativo','Sim'],['ultima_data_processada','']].forEach(function(x){s.appendRow([x[0],x[1],new Date()])});s.setFrozenRows(1)}var a=s.getLastRow()>1?s.getRange(2,1,s.getLastRow()-1,2).getDisplayValues():[],o={};a.forEach(function(r){o[r[0]]=r[1]});return{send:o.horario_envio||'08:30',cutoff:o.horario_limite_manual||'10:00',image:TZC_MSG_generalImage_()||TZC_MSG_https(o.imagem_padrao_url),channel:o.canal||'email',active:String(o.ativo||'Sim').toLowerCase()!=='não'}}
 function TZC_MSG_generalImage_(){var s=TZC_MSG_ss().getSheetByName('Geral');if(!s||s.getLastRow()<2)return'';var h=s.getRange(1,1,1,s.getLastColumn()).getDisplayValues()[0].map(function(x){return String(x||'').trim()});var i=h.indexOf('Imagem_Mensagem_Dia_Padrao_URL');return i<0?'':TZC_MSG_https(s.getRange(2,i+1).getDisplayValue())}
 function TZC_MSG_setGeneralImage_(url){var s=TZC_MSG_ss().getSheetByName('Geral');if(!s)throw Error('A guia Geral não existe.');var h=s.getRange(1,1,1,s.getLastColumn()).getDisplayValues()[0].map(function(x){return String(x||'').trim()});var i=h.indexOf('Imagem_Mensagem_Dia_Padrao_URL');if(i<0)throw Error('Campo Imagem_Mensagem_Dia_Padrao_URL não encontrado na guia Geral.');s.getRange(2,i+1).setValue(url)}
 function TZC_MSG_https(v){v=String(v||'').trim();if(v.toLowerCase().indexOf('https://')!==0)return'';if(v.toLowerCase().indexOf('https://drive.google.com/')===0){var p=v.indexOf('/file/d/'),id='';if(p>=0)id=v.substring(p+8).split('/')[0];if(!id){p=v.indexOf('id=');if(p>=0)id=v.substring(p+3).split('&')[0]}if(id)return'https://drive.google.com/thumbnail?id='+id+'&sz=w1200'}return v}
-function TZC_MSG_admin(){var email='';try{email=String(Session.getActiveUser().getEmail()||'').toLowerCase().trim()}catch(e){}if(!email)throw Error('Abra a página administrativa privada com sua conta Google.');var u=TZC_MSG_rows('Usuarios_Acesso'),ok=u.some(function(x){return String(x.Email||'').toLowerCase().trim()===email&&/^(ativo|ativa)$/i.test(x.Status||'')&&/^(dirigente|administrador)$/i.test(x.Perfil||'')});if(!ok)throw Error('Acesso somente para dirigente ou administrador ativo.');return email}
+
 function TZC_MSG_adminObter(){TZC_MSG_admin();var d=TZC_MSG_date(),cfg=TZC_MSG_cfg(),rows=TZC_MSG_rows('Publicacoes'),m=rows.find(function(x){return /mensagem/i.test(x.Tipo||'')&&TZC_MSG_key(x.Data_Publicacao||x.Data_Criacao)===TZC_MSG_key(d)});return{ok:true,data:d,configuracao:{horarioEnvio:cfg.send,horarioLimiteManual:cfg.cutoff,imagemPadraoUrl:cfg.image,canal:cfg.channel},mensagemHoje:m?{titulo:m.Titulo,texto:m.Conteudo||m.Resumo,imagem:TZC_MSG_https(m.Imagem_URL||cfg.image)}:null}}
 function TZC_MSG_adminUploadImagem(x){TZC_MSG_admin();x=x||{};var mime=String(x.mime||'').toLowerCase(),name=String(x.name||'imagem-mensagem');if(!/^image\/(png|jpeg|webp|gif)$/.test(mime))throw Error('Escolha uma imagem PNG, JPG, WEBP ou GIF.');var raw=String(x.base64||'');if(!raw||raw.length>7000000)throw Error('A imagem deve ter até 5 MB.');var bytes=Utilities.base64Decode(raw),blob=Utilities.newBlob(bytes,mime,name),file=DriveApp.createFile(blob);file.setSharing(DriveApp.Access.ANYONE_WITH_LINK,DriveApp.Permission.VIEW);var url='https://drive.google.com/uc?export=view&id='+file.getId();TZC_MSG_setGeneralImage_(url);var s=TZC_MSG_ss().getSheetByName(TZC_MSG.CFG);if(s){var a=s.getRange(1,1,s.getLastRow(),2).getDisplayValues();for(var i=1;i<a.length;i++)if(a[i][0]==='imagem_padrao_url')s.getRange(i+1,2).setValue(url)}return{ok:true,url:url,mensagem:'Imagem enviada e vinculada à guia Geral.'}}
 function TZC_MSG_adminSalvarConfiguracao(x){TZC_MSG_admin();x=x||{};var send=String(x.horarioEnvio||'08:30'),cut=String(x.horarioLimiteManual||'10:00'),img=String(x.imagemPadraoUrl||'').trim();if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(send)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(cut))throw Error('Informe horários válidos no formato HH:MM.');if(img&&!TZC_MSG_https(img))throw Error('A imagem precisa usar HTTPS.');var channel=String(x.canal||'email').toLowerCase();if(['email','whatsapp'].indexOf(channel)<0)throw Error('Selecione e-mail ou WhatsApp.');var s=TZC_MSG_ss().getSheetByName(TZC_MSG.CFG)||TZC_MSG_ss().insertSheet(TZC_MSG.CFG);if(!s.getLastRow())s.appendRow(['Chave','Valor','Atualizado_Em']);var map={};if(s.getLastRow()>1)s.getRange(2,1,s.getLastRow()-1,2).getDisplayValues().forEach(function(r,i){map[r[0]]=i+2});TZC_MSG_setGeneralImage_(img);[['horario_envio',send],['horario_limite_manual',cut],['imagem_padrao_url',img],['canal',channel],['ativo','Sim']].forEach(function(r){var n=map[r[0]]||s.getLastRow()+1;s.getRange(n,1,1,3).setValues([[r[0],r[1],new Date()]])});ScriptApp.getProjectTriggers().filter(function(t){return t.getHandlerFunction()==='TZC_MSG_processarAgendamento'}).forEach(function(t){ScriptApp.deleteTrigger(t)});ScriptApp.newTrigger('TZC_MSG_processarAgendamento').timeBased().everyMinutes(5).create();return{ok:true,mensagem:'Configuração salva. Verificação automática ativa a cada 5 minutos.'}}

@@ -880,7 +880,7 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
     if(!dados)return;
     paginaAtual='__banhos';atualizarMenuAtivo(paginaAtual);el('settingsView').hidden=true;el('homeView').hidden=true;
     var area=el('dynamicPage');area.hidden=false;area.replaceChildren();
-    var dirigente=/^dirigente$/i.test(String(authUser&&authUser.perfil||'').trim());
+    var dirigente=/^(dirigente|administrador)$/i.test(String(authUser&&authUser.perfil||'').trim());
     var padroesBanho={status:'Rascunho',revisao:'Pendente'},padroesBanhoCarregados=false;
     function abrirEditorBanho(item){if(padroesBanhoCarregados){editar(item);return}if(!authToken){editar(item);return}authRpc('obterConfig',[authToken],function(r){if(r&&r.ok&&r.valores){padroesBanho.status=r.valores.BANHOS_STATUS_PADRAO||'Rascunho';padroesBanho.revisao=r.valores.BANHOS_REVISAO_PADRAO||'Pendente'}padroesBanhoCarregados=true;editar(item)})}
     var membro=!!(authToken&&authUser),lista=Array.isArray(dados.banhosPublicos)?dados.banhosPublicos.slice():[],erro='';
@@ -944,7 +944,7 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
     if(!dados)return;
     paginaAtual='__pontos_cantados';atualizarMenuAtivo(paginaAtual);el('settingsView').hidden=true;el('homeView').hidden=true;
     var area=el('dynamicPage');area.hidden=false;area.replaceChildren();
-    var dirigente=/^dirigente$/i.test(String(authUser&&authUser.perfil||'').trim());
+    var dirigente=/^(dirigente|administrador)$/i.test(String(authUser&&authUser.perfil||'').trim());
     var heading=document.createElement('header');heading.className='data-page-heading';
     heading.appendChild(texto('h1','Pontos Cantados','intro-title'));
     heading.appendChild(texto('p','Encontre pontos cantados da casa por linha ou entidade. Abra um ponto para ouvir ou assistir à mídia e acompanhar a letra.','m04-note'));area.appendChild(heading);

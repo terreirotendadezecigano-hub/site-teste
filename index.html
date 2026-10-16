@@ -1324,14 +1324,61 @@ function abrirPaginaErvas(){
     m04AreaReportData={nome:String(authUser&&authUser.nome||r.usuario&&r.usuario.nome||''),mensalidades:dues.slice(),mensalidadesImportadas:imports.slice(),emitidoEm:new Date()};m04AreaPdfBlob=null;el('myAreaPdfPaper').hidden=true;el('myAreaPdfStatus').textContent='';var reportButton=el('myAreaPdfToggle');if(reportButton)reportButton.disabled=false;status.textContent=''
   }
   function m04AreaModal_(title){var d=document.createElement('dialog');d.className='myarea-action-dialog';d.setAttribute('aria-label',title);var head=document.createElement('header');head.className='myarea-action-head';head.appendChild(texto('h2',title));var close=texto('button','Fechar','secondary');close.type='button';close.addEventListener('click',function(){if(d.close)d.close();d.remove()});head.appendChild(close);d.appendChild(head);return d}
-  function m04AreaAbrirEnvio_(competencias,done){var envioEmAndamento=false,envioConcluido=false,d=m04AreaModal_('Enviar comprovante de mensalidade'),form=document.createElement('form');form.className='myarea-action-body';var selectedRows=(m04AreaReportData&&m04AreaReportData.mensalidades||[]).filter(function(x){return competencias.indexOf(String(x.competenciaISO||''))>=0});var selectedText=selectedRows.map(function(x){return x.competencia}).join(', ');form.appendChild(texto('p','Competências selecionadas: '+selectedText,'m04-note'));
-    var dateWrap=document.createElement('label');dateWrap.className='myarea-field';dateWrap.appendChild(texto('span','Data do pagamento'));var date=document.createElement('input');date.type='date';date.required=true;var hojeLocal=new Date();date.value=hojeLocal.getFullYear()+'-'+('0'+(hojeLocal.getMonth()+1)).slice(-2)+'-'+('0'+hojeLocal.getDate()).slice(-2);dateWrap.appendChild(date);form.appendChild(dateWrap);
-    var formWrap=document.createElement('label');formWrap.className='myarea-field';formWrap.appendChild(texto('span','Como foi pago?'));var method=document.createElement('select');['Pix','Transferência','Dinheiro','Outro'].forEach(function(x){method.add(new Option(x,x))});formWrap.appendChild(method);form.appendChild(formWrap);
-    var cameraWrap=document.createElement('label');cameraWrap.className='myarea-field';cameraWrap.appendChild(texto('span','Tirar foto do comprovante'));var camera=document.createElement('input');camera.type='file';camera.accept='image/jpeg,image/png';camera.setAttribute('capture','environment');cameraWrap.appendChild(camera);form.appendChild(cameraWrap);
-    var fileWrap=document.createElement('label');fileWrap.className='myarea-field';fileWrap.appendChild(texto('span','Ou anexar foto / PDF'));var file=document.createElement('input');file.type='file';file.accept='image/jpeg,image/png,application/pdf';fileWrap.appendChild(file);form.appendChild(fileWrap);
-    var hint=texto('p','A mensalidade só muda para paga depois que um responsável conferir o documento.','m04-note');form.appendChild(hint);var status=texto('p','','m04-status');status.setAttribute('role','status');form.appendChild(status);var actions=document.createElement('div');actions.className='myarea-action-buttons';var submit=texto('button','Enviar para conferência','member-btn');submit.type='submit';var cancel=texto('button','Cancelar','secondary');cancel.type='button';cancel.addEventListener('click',function(){d.close();d.remove()});actions.append(submit,cancel);form.appendChild(actions);d.appendChild(form);document.body.appendChild(d);
-    function useFile(input){input.addEventListener('change',function(){if(input.files&&input.files[0]){var other=input===camera?file:camera;try{other.value=''}catch(ignore){};hint.textContent=input.files[0].name+' · '+(input.files[0].size/1024/1024).toFixed(1)+' MB'}})}useFile(camera);useFile(file);
-    form.addEventListener('submit',function(e){e.preventDefault();if(envioEmAndamento||envioConcluido)return;var chosen=(camera.files&&camera.files[0])||(file.files&&file.files[0]);if(!chosen){status.textContent='Tire uma foto ou escolha o arquivo do comprovante.';return}if(chosen.size>3*1024*1024){status.textContent='O arquivo deve ter até 3 MB. Reduza a imagem ou escolha um arquivo menor.';return}envioEmAndamento=true;submit.disabled=true;cancel.disabled=true;status.textContent='Enviando com segurança…';var reader=new FileReader();reader.onload=function(){var data=String(reader.result||''),payload={competencias:competencias.map(function(k){return k}),dataPagamento:date.value,forma:method.value,mimeType:chosen.type||'application/octet-stream',nomeArquivo:chosen.name,base64:data};authRpc('enviarComprovante',[authToken,JSON.stringify(payload)],function(r){if(!r||!r.ok){envioEmAndamento=false;submit.disabled=false;cancel.disabled=false;status.textContent=r&&r.mensagem||'Não foi possível enviar. Confira sua conexão e tente novamente.';return}envioConcluido=true;status.className='m04-status success';d.close();d.remove();if(done)done()})};reader.onerror=function(){envioEmAndamento=false;submit.disabled=false;cancel.disabled=false;status.textContent='Não foi possível ler este arquivo.'};reader.readAsDataURL(chosen)});d.addEventListener('cancel',function(e){if(envioEmAndamento)e.preventDefault()});d.addEventListener('click',function(e){if(e.target===d&&!envioEmAndamento){d.close();d.remove()}});if(d.showModal)d.showModal();else d.setAttribute('open','open')
+  function m04AreaStatusOperacao_(title,message){
+    var d=m04AreaModal_(title),body=document.createElement('div');body.className='myarea-action-body';
+    var status=texto('p',message,'m04-status');status.setAttribute('role','status');status.setAttribute('aria-live','polite');body.appendChild(status);
+    d.appendChild(body);document.body.appendChild(d);if(d.showModal)d.showModal();else d.setAttribute('open','open');
+    return{dialog:d,status:status}
+  }
+  function m04AreaAbrirEnvio_(competencias,done){
+    var envioEmAndamento=false,envioConcluido=false,processando=null,d=m04AreaModal_('Enviar comprovante de mensalidade'),form=document.createElement('form');
+    form.className='myarea-action-body';
+    var selectedRows=(m04AreaReportData&&m04AreaReportData.mensalidades||[]).filter(function(x){return competencias.indexOf(String(x.competenciaISO||''))>=0});
+    var selectedText=selectedRows.map(function(x){return x.competencia}).join(', ');
+    form.appendChild(texto('p','Competências selecionadas: '+selectedText,'m04-note'));
+    var dateWrap=document.createElement('label');dateWrap.className='myarea-field';dateWrap.appendChild(texto('span','Data do pagamento'));
+    var date=document.createElement('input');date.type='date';date.required=true;var hojeLocal=new Date();
+    date.value=hojeLocal.getFullYear()+'-'+('0'+(hojeLocal.getMonth()+1)).slice(-2)+'-'+('0'+hojeLocal.getDate()).slice(-2);dateWrap.appendChild(date);form.appendChild(dateWrap);
+    var formWrap=document.createElement('label');formWrap.className='myarea-field';formWrap.appendChild(texto('span','Como foi pago?'));
+    var method=document.createElement('select');['Pix','Transferência','Dinheiro','Outro'].forEach(function(x){method.add(new Option(x,x))});formWrap.appendChild(method);form.appendChild(formWrap);
+    var cameraWrap=document.createElement('label');cameraWrap.className='myarea-field';cameraWrap.appendChild(texto('span','Tirar foto do comprovante'));
+    var camera=document.createElement('input');camera.type='file';camera.accept='image/jpeg,image/png';camera.setAttribute('capture','environment');cameraWrap.appendChild(camera);form.appendChild(cameraWrap);
+    var fileWrap=document.createElement('label');fileWrap.className='myarea-field';fileWrap.appendChild(texto('span','Ou anexar foto / PDF'));
+    var file=document.createElement('input');file.type='file';file.accept='image/jpeg,image/png,application/pdf';fileWrap.appendChild(file);form.appendChild(fileWrap);
+    var hint=texto('p','A mensalidade só muda para paga depois que um responsável conferir o documento.','m04-note');form.appendChild(hint);
+    var status=texto('p','','m04-status');status.setAttribute('role','status');status.setAttribute('aria-live','polite');form.appendChild(status);
+    var actions=document.createElement('div');actions.className='myarea-action-buttons';var submit=texto('button','Enviar para conferência','member-btn');submit.type='submit';
+    var cancel=texto('button','Cancelar','secondary');cancel.type='button';cancel.addEventListener('click',function(){d.close();d.remove()});
+    actions.append(submit,cancel);form.appendChild(actions);d.appendChild(form);document.body.appendChild(d);
+    function useFile(input){input.addEventListener('change',function(){if(input.files&&input.files[0]){var other=input===camera?file:camera;try{other.value=''}catch(ignore){}hint.textContent=input.files[0].name+' · '+(input.files[0].size/1024/1024).toFixed(1)+' MB'}})}
+    useFile(camera);useFile(file);
+    function returnToForm_(message){
+      if(processando&&processando.dialog.open){processando.dialog.close();processando.dialog.remove()}
+      processando=null;envioEmAndamento=false;submit.disabled=false;cancel.disabled=false;status.textContent=message||'Não foi possível enviar. Confira o arquivo e tente novamente.';
+      if(d.showModal)d.showModal();else d.setAttribute('open','open')
+    }
+    form.addEventListener('submit',function(e){
+      e.preventDefault();if(envioEmAndamento||envioConcluido)return;
+      var chosen=(camera.files&&camera.files[0])||(file.files&&file.files[0]);
+      if(!chosen){status.textContent='Tire uma foto ou escolha o arquivo do comprovante.';return}
+      if(chosen.size>3*1024*1024){status.textContent='O arquivo deve ter até 3 MB. Reduza a imagem ou escolha um arquivo menor.';return}
+      envioEmAndamento=true;submit.disabled=true;cancel.disabled=true;d.close();
+      processando=m04AreaStatusOperacao_('Enviando comprovante','Enviando o comprovante para aprovação. Aguarde…');
+      var reader=new FileReader();
+      reader.onload=function(){
+        var data=String(reader.result||''),payload={competencias:competencias.map(function(k){return k}),dataPagamento:date.value,forma:method.value,mimeType:chosen.type||'application/octet-stream',nomeArquivo:chosen.name,base64:data};
+        authRpc('enviarComprovante',[authToken,JSON.stringify(payload)],function(r){
+          if(!r||!r.ok){returnToForm_(r&&r.mensagem||'Não foi possível enviar. Confira sua conexão e tente novamente.');return}
+          envioConcluido=true;d.remove();processando.status.className='m04-status success';processando.status.textContent='Comprovante enviado para aprovação.';
+          if(done)done();
+        })
+      };
+      reader.onerror=function(){returnToForm_('Não foi possível ler este arquivo. Tente novamente.')};
+      reader.readAsDataURL(chosen)
+    });
+    d.addEventListener('cancel',function(e){if(envioEmAndamento)e.preventDefault()});
+    d.addEventListener('click',function(e){if(e.target===d&&!envioEmAndamento){d.close();d.remove()}});
+    if(d.showModal)d.showModal();else d.setAttribute('open','open')
   }
   var m04PendenciasCache=null,m04PendenciasCacheAt=0,m04PendenciasCentralCache=null,m04PendenciasCentralCacheAt=0,m04PendenciasCount=null,m04GestaoCallbacks=[];
   function m04PendenciasBuscar_(done,force){if(!authToken||!m04AreaResponsavel_()){done({ok:false,mensagem:'Seu perfil não tem acesso a esta fila.'});return}if(!force&&m04PendenciasCache&&Date.now()-m04PendenciasCacheAt<30000){done({ok:true,solicitacoes:m04PendenciasCache});return}authRpc('listarComprovantesMensalidade',[authToken],function(r){if(r&&r.ok){m04PendenciasCache=Array.isArray(r.solicitacoes)?r.solicitacoes:[];m04PendenciasCacheAt=Date.now()}done(r||{ok:false,mensagem:'Não foi possível carregar as pendências.'})})}
@@ -1449,9 +1496,18 @@ function abrirPaginaErvas(){
     function submit_(reason,button){
       if(decision==='Recusar'&&!reason.trim()){var field=card.querySelector('.myarea-decision textarea');if(field)field.focus();return}
       button.disabled=true;
+      var processing=null;
+      if(decision==='Aprovar'){
+        if(dialog){if(dialog.open)dialog.close();dialog.remove();dialog=null}
+        processing=m04AreaStatusOperacao_('Aprovando pagamento','Salvando a aprovação do pagamento. Aguarde…');
+      }
       authRpc('decidirComprovanteMensalidade',[authToken,item.id,decision,reason],function(r){
-        if(r&&r.ok){m04AreaPagamentoConcluido_(item,host,dialog,card);return}
+        if(r&&r.ok){
+          if(processing){processing.status.className='m04-status success';processing.status.textContent='Pagamento aprovado e salvo.'}
+          m04AreaPagamentoConcluido_(item,host,dialog,card);return
+        }
         button.disabled=false;
+        if(processing){processing.status.className='myarea-error-note';processing.status.textContent=r&&r.mensagem||'Não foi possível salvar a aprovação. Feche este aviso e tente novamente.';return}
         var box=card.querySelector('.myarea-decision')||card;
         box.insertBefore(texto('p',r&&r.mensagem||'Não foi possível concluir.','myarea-error-note'),box.querySelector('.myarea-action-buttons')||null);
       })

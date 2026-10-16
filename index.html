@@ -1480,7 +1480,7 @@ function abrirPaginaErvas(){
       }
       authRpc('decidirComprovanteMensalidade',[authToken,item.id,decision,reason],function(r){
         if(r&&r.ok){
-          if(processing){processing.status.className='m04-status success';processing.status.textContent='Pagamento aprovado e salvo.'}
+          if(processing){processing.status.className='m04-status success';processing.status.textContent='Pagamento aprovado e salvo.';window.setTimeout(function(){if(processing.dialog&&processing.dialog.open){processing.dialog.close();processing.dialog.remove()}},1000)}
           m04AreaPagamentoConcluido_(item,host,dialog,card);return
         }
         button.disabled=false;

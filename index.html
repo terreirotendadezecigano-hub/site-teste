@@ -1366,7 +1366,7 @@ function abrirPaginaErvas(){
     if(!m04PendenciasCentralCache||Date.now()-m04PendenciasCentralCacheAt>=30000){
       if(el('pendingAttentionText'))el('pendingAttentionText').textContent='Conferindo pagamentos, presenças e Loja…';m04AtualizarAvisoPendenciasLogin_('Conferindo pagamentos, presenças e Loja…',false);
       if(badge){badge.textContent='…';badge.setAttribute('aria-label','Contagem de pendências carregando');}
-      m04PendenciasCentraisBuscar_(function(){m04PendenciasAtualizarSinal_()},false);return;
+      m04PendenciasCentraisBuscar_(function(r){if(r&&r.stale)return;m04PendenciasAtualizarSinal_()},false);return;
     }
     var data=m04PendenciasCentralCache||{},n=Number(m04PendenciasCount||0),issues=[];
     if(data.erroPagamento)issues.push('pagamentos');if(data.erroPresenca)issues.push('presenças');if(data.erroLoja)issues.push('Loja');

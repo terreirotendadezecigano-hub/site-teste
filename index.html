@@ -995,7 +995,7 @@ function abrirPaginaErvas(){
   var root=document.createElement('section');root.className='tzc-ervas';
   var head=document.createElement('header');head.className='ev-head';head.appendChild(texto('h1','Ervas','intro-title'));
   head.appendChild(texto('p','Consulte informações do acervo de ervas da casa. Selecione uma erva para ver os detalhes.','m04-note'));
-  head.appendChild(texto('p','Informações tradicionais do acervo, não são orientação médica. Algumas plantas podem ser tóxicas; confirme a identificação e os cuidados antes de qualquer uso.','ev-note'));root.appendChild(head);
+  var avisoUso=texto('p','Informações tradicionais do acervo, não são orientação médica. Algumas plantas podem ser tóxicas; confirme a identificação e os cuidados antes de qualquer uso.','ev-disclaimer');avisoUso.style.cssText='margin:10px auto 0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:var(--muted)!important;max-width:820px;font-size:.9rem;line-height:1.5';head.appendChild(avisoUso);root.appendChild(head);
   var tools=document.createElement('div');tools.className='ev-tools';
   var search=document.createElement('input');search.type='search';search.className='ev-search';search.placeholder='Buscar por erva, nome científico ou finalidade…';search.setAttribute('aria-label','Buscar ervas');
   var select=document.createElement('select');select.className='ev-select';select.setAttribute('aria-label','Filtrar por categoria');

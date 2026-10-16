@@ -341,7 +341,8 @@ html:not([data-theme="escuro"]) #dynamicPage .pontos-row-actions .tzc-icon-actio
 html:not([data-theme="escuro"]) .m05-row-actions .tzc-icon-action:hover{background:#7b2934!important;border-color:#7b2934!important;color:#fff!important}
 .m05-row-actions{display:flex;align-items:center;gap:7px;flex-wrap:nowrap;min-width:104px}
 .m05-row-actions .tzc-icon-action{flex:0 0 40px!important;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important}
-</style></head>
+</style>  <style id="tzc-v111-mensalidade-form-compacto">.myarea-payment-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}.myarea-payment-fields .myarea-field{min-width:0}@media(max-width:560px){.myarea-payment-fields{grid-template-columns:1fr;gap:9px}}</style>
+</head>
 <body>
 <div id="loadingScreen" hidden role="status" aria-live="polite"><div class="loading-card"><div class="loading-mark" aria-hidden="true"></div><h1>Preparando o site</h1><p id="loadingMessage">Carregando as informações da casa…</p><button class="theme-toggle" id="retryLoad" type="button" hidden>Tentar novamente</button></div></div>
 <div class="app">
@@ -1338,20 +1339,18 @@ function abrirPaginaErvas(){
     form.appendChild(texto('p','Competências selecionadas: '+selectedText,'m04-note'));
     var dateWrap=document.createElement('label');dateWrap.className='myarea-field';dateWrap.appendChild(texto('span','Data do pagamento'));
     var date=document.createElement('input');date.type='date';date.required=true;var hojeLocal=new Date();
-    date.value=hojeLocal.getFullYear()+'-'+('0'+(hojeLocal.getMonth()+1)).slice(-2)+'-'+('0'+hojeLocal.getDate()).slice(-2);dateWrap.appendChild(date);form.appendChild(dateWrap);
+    date.value=hojeLocal.getFullYear()+'-'+('0'+(hojeLocal.getMonth()+1)).slice(-2)+'-'+('0'+hojeLocal.getDate()).slice(-2);dateWrap.appendChild(date);
     var formWrap=document.createElement('label');formWrap.className='myarea-field';formWrap.appendChild(texto('span','Como foi pago?'));
-    var method=document.createElement('select');['Pix','Transferência','Dinheiro','Outro'].forEach(function(x){method.add(new Option(x,x))});formWrap.appendChild(method);form.appendChild(formWrap);
-    var cameraWrap=document.createElement('label');cameraWrap.className='myarea-field';cameraWrap.appendChild(texto('span','Tirar foto do comprovante'));
-    var camera=document.createElement('input');camera.type='file';camera.accept='image/jpeg,image/png';camera.setAttribute('capture','environment');cameraWrap.appendChild(camera);form.appendChild(cameraWrap);
-    var fileWrap=document.createElement('label');fileWrap.className='myarea-field';fileWrap.appendChild(texto('span','Ou anexar foto / PDF'));
+    var method=document.createElement('select');['Pix','Transferência','Dinheiro','Outro'].forEach(function(x){method.add(new Option(x,x))});formWrap.appendChild(method);
+    var paymentFields=document.createElement('div');paymentFields.className='myarea-payment-fields';paymentFields.append(dateWrap,formWrap);form.appendChild(paymentFields);
+    var fileWrap=document.createElement('label');fileWrap.className='myarea-field';fileWrap.appendChild(texto('span','Foto ou PDF do comprovante'));
     var file=document.createElement('input');file.type='file';file.accept='image/jpeg,image/png,application/pdf';fileWrap.appendChild(file);form.appendChild(fileWrap);
-    var hint=texto('p','A mensalidade só muda para paga depois que um responsável conferir o documento.','m04-note');form.appendChild(hint);
+    var hint=texto('p','No celular, escolha a câmera, a galeria ou os arquivos.','m04-note');form.appendChild(hint);
     var status=texto('p','','m04-status');status.setAttribute('role','status');status.setAttribute('aria-live','polite');form.appendChild(status);
     var actions=document.createElement('div');actions.className='myarea-action-buttons';var submit=texto('button','Enviar para conferência','member-btn');submit.type='submit';
     var cancel=texto('button','Cancelar','secondary');cancel.type='button';cancel.addEventListener('click',function(){d.close();d.remove()});
     actions.append(submit,cancel);form.appendChild(actions);d.appendChild(form);document.body.appendChild(d);
-    function useFile(input){input.addEventListener('change',function(){if(input.files&&input.files[0]){var other=input===camera?file:camera;try{other.value=''}catch(ignore){}hint.textContent=input.files[0].name+' · '+(input.files[0].size/1024/1024).toFixed(1)+' MB'}})}
-    useFile(camera);useFile(file);
+    file.addEventListener('change',function(){if(file.files&&file.files[0])hint.textContent=file.files[0].name+' · '+(file.files[0].size/1024/1024).toFixed(1)+' MB'});
     function returnToForm_(message){
       if(processando&&processando.dialog.open){processando.dialog.close();processando.dialog.remove()}
       processando=null;envioEmAndamento=false;submit.disabled=false;cancel.disabled=false;status.textContent=message||'Não foi possível enviar. Confira o arquivo e tente novamente.';
@@ -1359,7 +1358,7 @@ function abrirPaginaErvas(){
     }
     form.addEventListener('submit',function(e){
       e.preventDefault();if(envioEmAndamento||envioConcluido)return;
-      var chosen=(camera.files&&camera.files[0])||(file.files&&file.files[0]);
+      var chosen=file.files&&file.files[0];
       if(!chosen){status.textContent='Tire uma foto ou escolha o arquivo do comprovante.';return}
       if(chosen.size>3*1024*1024){status.textContent='O arquivo deve ter até 3 MB. Reduza a imagem ou escolha um arquivo menor.';return}
       envioEmAndamento=true;submit.disabled=true;cancel.disabled=true;d.close();

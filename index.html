@@ -1012,7 +1012,7 @@ function abrirPaginaErvas(){
   var result=document.createElement('div');root.appendChild(result);area.appendChild(root);
   function makeButton(label,cls,fn){var b=document.createElement('button');b.type='button';b.className=cls;b.textContent=label;b.addEventListener('click',function(e){e.stopPropagation();fn(e)});return b}
   function isPublic(value){return !/^(nao|não|false|0|privado|restrito|membros|somente membros)$/i.test(String(value||'').trim())}
-  function image(src,cls){var im=document.createElement('img');im.className=cls;im.alt='';im.loading='lazy';im.src=imagemPadraoBanhos_(src)||'';im.onerror=function(){im.remove()};return im}
+  function image(src,cls){var im=document.createElement('img');im.className=cls;im.alt='';im.loading='lazy';var fallback=dados&&dados.identidade&&dados.identidade.imagemBanho||'';im.src=imagemPadraoBanhos_(src||fallback)||'';im.onerror=function(){im.remove()};return im}
   function textField(label,value,wide){if(value==null||String(value).trim()==='')return null;var box=document.createElement('section');box.className='ev-detail'+(wide?' ev-wide':'');var b=document.createElement('b');b.textContent=label;var p=document.createElement('p');p.textContent=String(value);box.append(b,p);return box}
   function dateLabel(value){if(!value)return '—';var s=String(value).trim(),m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return m[3]+'/'+m[2]+'/'+m[1].slice(-2);m=s.match(/^(\d{2})\/(\d{2})\/(\d{2}|\d{4})$/);if(m)return m[1]+'/'+m[2]+'/'+m[3].slice(-2);return s}
   function norm(value){return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()}

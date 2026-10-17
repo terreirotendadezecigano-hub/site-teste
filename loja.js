@@ -391,6 +391,23 @@
       else viaFileReader()
     }catch(e){viaFileReader()}
   }
+  function prepararComprovante(arquivo,pronto){
+    function original(){pronto({blob:arquivo,tipo:arquivo.type,nome:arquivo.name})}
+    if(!arquivo||arquivo.type.indexOf('image/')!==0||arquivo.size<600*1024||typeof window.createImageBitmap!=='function'){original();return}
+    window.createImageBitmap(arquivo).then(function(img){
+      try{
+        var limite=1600,escala=Math.min(1,limite/Math.max(img.width,img.height)),canvas=document.createElement('canvas');
+        canvas.width=Math.max(1,Math.round(img.width*escala));canvas.height=Math.max(1,Math.round(img.height*escala));
+        var ctx=canvas.getContext('2d');if(!ctx){if(img.close)img.close();original();return}
+        ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        canvas.toBlob(function(blob){
+          if(img.close)img.close();
+          if(!blob||blob.size>=arquivo.size){original();return}
+          pronto({blob:blob,tipo:'image/jpeg',nome:String(arquivo.name||'comprovante').replace(/\.[^.]+$/,'')+'.jpg'})
+        },'image/jpeg',0.84)
+      }catch(e){if(img.close)img.close();original()}
+    }).catch(original)
+  }
   function paymentForm(o,token,afterDone){
     var wrap=el('div',null,'loja-form-row'),dateLabel=el('label','Data do pagamento'),date=el('input'),formLabel=el('label','Forma'),form=el('select'),fileLabel=el('label','Comprovante (PDF, PNG ou JPG · até 2 MB)'),file=el('input'),submit=btn('Enviar comprovante',submitProof,'member-btn'),status=el('p','Selecione o comprovante e toque em “Enviar comprovante”.','loja-status-line');
     date.type='date';date.required=true;var hoje=new Date();date.value=hoje.getFullYear()+'-'+('0'+(hoje.getMonth()+1)).slice(-2)+'-'+('0'+hoje.getDate()).slice(-2);dateLabel.append(date);
@@ -411,8 +428,11 @@
       busy(true);feedback('Enviando para o sistema. Aguarde aqui; o pedido só será enviado uma vez.');say('Enviando comprovante com segurança…');
       var timer=window.setTimeout(function(){feedback('O envio ainda está sendo processado. Não toque novamente; confira se o pedido muda para “Em conferência”.','')},12000);
       function finish(){window.clearTimeout(timer);busy(false)}
-      arquivoParaBase64(f,function(b64){
-        invoke('enviarComprovanteLoja',[proofToken,o.id,date.value,form.value,f.type,f.name,b64],function(r){
+      feedback('Preparando o comprovante…');
+      prepararComprovante(f,function(arquivoPronto){
+      arquivoParaBase64(arquivoPronto.blob,function(b64){
+        feedback('Enviando comprovante. Aguarde aqui; o pedido só será enviado uma vez.');
+        invoke('enviarComprovanteLoja',[proofToken,o.id,date.value,form.value,arquivoPronto.tipo,arquivoPronto.nome,b64],function(r){
           finish();
           if(!r||!r.ok){var message=r&&r.mensagem||'Não foi possível enviar o comprovante. Confira se o pedido mudou para “Em conferência” antes de tentar novamente.';feedback('Não foi enviado: '+message,'loja-error');say(message,'error');return}
           var message=r.mensagem||'Comprovante enviado. O pedido aguarda validação.';
@@ -420,6 +440,7 @@
           if(afterDone)afterDone();else loadOrders(message)
         })
       },function(){finish();feedback('Não foi possível ler o arquivo. Selecione o comprovante novamente.','loja-error');say('Não foi possível ler o arquivo. Selecione o comprovante novamente.','error')})
+      })
     }
     return wrap
   }
@@ -574,7 +595,19 @@
     }
   }
   function renderPendencias(host,status,items){api=window.TZCLojaAPI;if(!api)return;notice=status;host.replaceChildren();if(!items.length){host.append(el('p','A fila só recebe pedidos depois que o comprador envia o comprovante em Meus pedidos. Pedidos ainda aguardando pagamento não precisam de análise.','m04-note'));status.textContent='Nenhum comprovante da Loja aguardando conferência.';return}status.textContent=items.length+' pagamento(s) da Loja aguardando análise.';items.forEach(function(x){renderPendingItem(host,status,x)})}
-  function renderPendingItem(host,status,x){api=window.TZCLojaAPI;notice=status;if(!api)return;var card=el('article',null,'myarea-review-card');card.dataset.pendingType='loja';card.append(el('span','Loja · aguardando conferência','pending-kind'),el('strong',x.nome||'Comprador'),el('span',(x.produtos||[]).join(', ')+' · Pedido '+(x.numeroPedido||x.pedidoId)+' · '+money(x.valorCentavos),'myarea-review-detail'),el('span','Pagamento em '+x.dataPagamento+' · '+(x.forma||'Forma não informada')+' · enviado '+x.enviadoEm,'myarea-review-detail'));var actions=el('div',null,'myarea-action-buttons'),view=btn('Conferir comprovante',function(){view.disabled=true;view.textContent='Abrindo…';invoke('obterComprovanteLoja',[api.token(),x.id],function(r){view.disabled=false;view.textContent='Conferir comprovante';if(!r.ok)return;var raw=atob(r.base64),bytes=new Uint8Array(raw.length);for(var i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);var blob=new Blob([bytes],{type:r.mimeType}),url=URL.createObjectURL(blob),dialog=el('dialog',null,'loja-proof-dialog'),head=el('div',null,'loja-proof-dialog-head'),title=el('h2','Comprovante de pagamento'),close=el('button','×','close'),box=el('div',null,'loja-proof');close.type='button';close.setAttribute('aria-label','Fechar comprovante');close.addEventListener('click',function(){dialog.close()});head.append(title,close);if(r.mimeType==='application/pdf'){var frame=el('iframe');frame.title='Comprovante de pagamento';frame.src=url;box.append(frame)}else{var img=el('img');img.alt='Comprovante de pagamento';img.src=url;box.append(img)}dialog.append(head,box);document.body.append(dialog);dialog.addEventListener('click',function(e){if(e.target===dialog)dialog.close()});dialog.addEventListener('close',function(){URL.revokeObjectURL(url);dialog.remove()},{once:true});dialog.showModal()})},'secondary'),approve=btn('Aprovar pagamento',function(){decide('Aprovar','')},'member-btn'),reject=btn('Devolver para correção',function(){var reason=card.querySelector('.loja-reason');if(!reason){reason=el('input');reason.className='loja-reason';reason.maxLength=500;reason.placeholder='Informe o motivo da devolução';card.append(reason);reject.textContent='Confirmar devolução';return}decide('Recusar',reason.value)});actions.append(view,approve,reject);card.append(actions);host.append(card);function decide(action,reason){if(action==='Recusar'&&!reason.trim()){say('Informe o motivo para devolver o comprovante.','error');return}actions.querySelectorAll('button').forEach(function(b){b.disabled=true});approve.textContent=action==='Aprovar'?'Salvando…':approve.textContent;reject.textContent=action==='Recusar'?'Salvando…':reject.textContent;say('Salvando a análise do pedido…');invoke('decidirPagamentoLoja',[api.token(),x.id,action,reason],function(r){if(!r.ok){actions.querySelectorAll('button').forEach(function(b){b.disabled=false});return}card.replaceChildren(el('span',r.status+' · decisão registrada','pending-kind'));status.textContent=r.mensagem||'Análise salva.';setTimeout(function(){if(api&&api.refreshPendencias)api.refreshPendencias()},500)})}}
+  function dataLegivelBR(valor,comHora){
+    var s=String(valor||'').trim();if(!s)return '';
+    var br=s.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+    if(br)return br[1]+'/'+br[2]+'/'+br[3]+(comHora&&br[4]&&!(br[4]==='00'&&br[5]==='00')?' '+('0'+br[4]).slice(-2)+':'+br[5]:'');
+    var iso=s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{1,2}):(\d{2}))?/);
+    if(iso)return iso[3]+'/'+iso[2]+'/'+iso[1]+(comHora&&iso[4]&&!(iso[4]==='0'||iso[4]==='00')||comHora&&iso[5]&&iso[5]!=='00'?' '+('0'+(iso[4]||'0')).slice(-2)+':'+(iso[5]||'00'):'');
+    var d=new Date(s);if(isNaN(d.getTime()))return '';
+    var parts=new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(d),out={};
+    parts.forEach(function(p){out[p.type]=p.value});
+    var data=(out.day||'')+'/'+(out.month||'')+'/'+(out.year||''),temHora=/[T ]\d{1,2}:\d{2}/.test(s)&&!/(?:T|\s)00:00(?::00)?(?:\.|\s|$)/.test(s);
+    return data+(comHora&&temHora?' '+out.hour+':'+out.minute:'')
+  }
+  function renderPendingItem(host,status,x){api=window.TZCLojaAPI;notice=status;if(!api)return;var card=el('article',null,'myarea-review-card');card.dataset.pendingType='loja';var pagamentoBR=dataLegivelBR(x.dataPagamento,false)||'—',enviadoBR=dataLegivelBR(x.enviadoEm,true),linhaPagamento='Pagamento em '+pagamentoBR+' · '+(x.forma||'Forma não informada')+(enviadoBR?' · enviado '+enviadoBR:'');card.append(el('span','Loja · aguardando conferência','pending-kind'),el('strong',x.nome||'Comprador'),el('span',(x.produtos||[]).join(', ')+' · Pedido '+(x.numeroPedido||x.pedidoId)+' · '+money(x.valorCentavos),'myarea-review-detail'),el('span',linhaPagamento,'myarea-review-detail'));var actions=el('div',null,'myarea-action-buttons'),view=btn('Conferir comprovante',function(){view.disabled=true;view.textContent='Abrindo…';invoke('obterComprovanteLoja',[api.token(),x.id],function(r){view.disabled=false;view.textContent='Conferir comprovante';if(!r.ok)return;var raw=atob(r.base64),bytes=new Uint8Array(raw.length);for(var i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);var blob=new Blob([bytes],{type:r.mimeType}),url=URL.createObjectURL(blob),dialog=el('dialog',null,'loja-proof-dialog'),head=el('div',null,'loja-proof-dialog-head'),title=el('h2','Comprovante de pagamento'),close=el('button','×','close'),box=el('div',null,'loja-proof');close.type='button';close.setAttribute('aria-label','Fechar comprovante');close.addEventListener('click',function(){dialog.close()});head.append(title,close);if(r.mimeType==='application/pdf'){var frame=el('iframe');frame.title='Comprovante de pagamento';frame.src=url;box.append(frame)}else{var img=el('img');img.alt='Comprovante de pagamento';img.src=url;box.append(img)}dialog.append(head,box);document.body.append(dialog);dialog.addEventListener('click',function(e){if(e.target===dialog)dialog.close()});dialog.addEventListener('close',function(){URL.revokeObjectURL(url);dialog.remove()},{once:true});dialog.showModal()})},'secondary'),approve=btn('Aprovar pagamento',function(){decide('Aprovar','')},'member-btn'),reject=btn('Devolver para correção',function(){var reason=card.querySelector('.loja-reason');if(!reason){reason=el('input');reason.className='loja-reason';reason.maxLength=500;reason.placeholder='Informe o motivo da devolução';card.append(reason);reject.textContent='Confirmar devolução';return}decide('Recusar',reason.value)});actions.append(view,approve,reject);card.append(actions);host.append(card);function decide(action,reason){if(action==='Recusar'&&!reason.trim()){say('Informe o motivo para devolver o comprovante.','error');return}actions.querySelectorAll('button').forEach(function(b){b.disabled=true});approve.textContent=action==='Aprovar'?'Salvando…':approve.textContent;reject.textContent=action==='Recusar'?'Salvando…':reject.textContent;say('Salvando a análise do pedido…');invoke('decidirPagamentoLoja',[api.token(),x.id,action,reason],function(r){if(!r.ok){actions.querySelectorAll('button').forEach(function(b){b.disabled=false});return}card.replaceChildren(el('span',r.status+' · decisão registrada','pending-kind'));status.textContent=r.mensagem||'Análise salva.';setTimeout(function(){if(api&&api.refreshPendencias)api.refreshPendencias()},500)})}}
   window.TZCLojaUI={abrir:init,renderPendencias:renderPendencias,renderPendingItem:renderPendingItem};
 })();
 

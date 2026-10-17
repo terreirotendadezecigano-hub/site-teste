@@ -1334,9 +1334,19 @@ function abrirPaginaErvas(){
     return{dialog:d,status:status}
   }
   function m04ComprovantePreparar_(arquivo,progresso,done){
-    if(!/^image\/(jpeg|png)$/i.test(String(arquivo.type||''))||arquivo.size<700*1024||!window.createImageBitmap){done(arquivo,arquivo.name,false);return}
-    progresso('Otimizando a imagem para agilizar o envio…');
-    window.createImageBitmap(arquivo).then(function(bitmap){var maior=Math.max(bitmap.width,bitmap.height),escala=Math.min(1,1800/maior);if(escala===1&&arquivo.size<1200*1024){bitmap.close&&bitmap.close();done(arquivo,arquivo.name,false);return}var canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*escala));canvas.height=Math.max(1,Math.round(bitmap.height*escala));var contexto=canvas.getContext('2d');if(!contexto){bitmap.close&&bitmap.close();done(arquivo,arquivo.name,false);return}contexto.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close&&bitmap.close();canvas.toBlob(function(blob){if(!blob||blob.size>=arquivo.size){done(arquivo,arquivo.name,false);return}var nome=String(arquivo.name||'comprovante').replace(/\.[^.]+$/,'')+'.jpg';done(blob,nome,true)},'image/jpeg',0.86)}).catch(function(){done(arquivo,arquivo.name,false)})
+    /* Otimiza fotos de celular antes do RPC: base64 aumenta o tamanho em ~33%. */
+    if(!/^image\/(jpeg|png)$/i.test(String(arquivo.type||''))||arquivo.size<250*1024||!window.createImageBitmap){done(arquivo,arquivo.name,false);return}
+    progresso('Reduzindo o tamanho da foto para agilizar o envio…');
+    window.createImageBitmap(arquivo).then(function(bitmap){
+      var maior=Math.max(bitmap.width,bitmap.height),escala=Math.min(1,1500/maior);
+      if(escala===1&&arquivo.size<500*1024){bitmap.close&&bitmap.close();done(arquivo,arquivo.name,false);return}
+      var canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*escala));canvas.height=Math.max(1,Math.round(bitmap.height*escala));
+      var contexto=canvas.getContext('2d');if(!contexto){bitmap.close&&bitmap.close();done(arquivo,arquivo.name,false);return}
+      contexto.drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close&&bitmap.close();
+      canvas.toBlob(function(blob){if(!blob||blob.size>=arquivo.size){done(arquivo,arquivo.name,false);return}
+        var nome=String(arquivo.name||'comprovante').replace(/\.[^.]+$/,'')+'.jpg';done(blob,nome,true)
+      },'image/jpeg',0.78)
+    }).catch(function(){done(arquivo,arquivo.name,false)})
   }
   function m04AreaAbrirEnvio_(competencias,done){
     var envioEmAndamento=false,envioConcluido=false,d=m04AreaModal_('Enviar comprovante de mensalidade'),form=document.createElement('form'),formClose=d.querySelector('.myarea-action-head button');form.className='myarea-action-body';
@@ -1351,7 +1361,7 @@ function abrirPaginaErvas(){
       var progress=m04AreaModal_('Enviando comprovante'),progressBody=document.createElement('div');progressBody.className='myarea-upload-progress';progressBody.setAttribute('role','status');progressBody.setAttribute('aria-live','polite');var spinner=document.createElement('div');spinner.className='loading-mark';var progressText=texto('p','Preparando o comprovante…','');progressBody.append(spinner,progressText);progress.appendChild(progressBody);var closeProgress=progress.querySelector('.myarea-action-head button');if(closeProgress)closeProgress.remove();document.body.appendChild(progress);if(d.open)d.close();if(progress.showModal)progress.showModal();else progress.setAttribute('open','open');
       function updateProgress(message){progressText.textContent=message}
       function fail(message){envioEmAndamento=false;submit.disabled=false;cancel.disabled=false;if(formClose)formClose.disabled=false;if(progress.open&&progress.close)progress.close();progress.remove();status.textContent=message;if(d.showModal)d.showModal();else d.setAttribute('open','open')}
-      m04ComprovantePreparar_(chosen,updateProgress,function(uploadFile,fileName,compressed){var reader=new FileReader();updateProgress(compressed?'Imagem otimizada de '+(chosen.size/1024/1024).toFixed(1)+' MB para '+(uploadFile.size/1024/1024).toFixed(1)+' MB. Enviando…':'Enviando arquivo de '+(uploadFile.size/1024/1024).toFixed(1)+' MB…');reader.onload=function(){var data=String(reader.result||''),payload={competencias:competencias.map(function(k){return k}),dataPagamento:date.value,forma:method.value,mimeType:uploadFile.type||chosen.type||'application/octet-stream',nomeArquivo:fileName,base64:data};updateProgress('Enviando com segurança para conferência. Aguarde…');authRpc('enviarComprovante',[authToken,JSON.stringify(payload)],function(r){if(!r||!r.ok){fail(r&&r.mensagem||'Não foi possível enviar. Confira sua conexão e tente novamente.');return}envioConcluido=true;updateProgress('Comprovante enviado. Atualizando suas mensalidades…');if(progress.close)progress.close();progress.remove();d.remove();if(done)done()})};reader.onerror=function(){fail('Não foi possível ler este arquivo. Tente novamente.')};reader.readAsDataURL(uploadFile)})
+      m04ComprovantePreparar_(chosen,updateProgress,function(uploadFile,fileName,compressed){var reader=new FileReader();updateProgress(compressed?'Imagem otimizada de '+(chosen.size/1024/1024).toFixed(1)+' MB para '+(uploadFile.size/1024/1024).toFixed(1)+' MB. Enviando…':'Enviando arquivo de '+(uploadFile.size/1024/1024).toFixed(1)+' MB…');reader.onload=function(){var data=String(reader.result||''),payload={competencias:competencias.map(function(k){return k}),dataPagamento:date.value,forma:method.value,mimeType:uploadFile.type||chosen.type||'application/octet-stream',nomeArquivo:fileName,base64:data};updateProgress('Enviando com segurança para conferência. Aguarde…');authRpc('enviarComprovante',[authToken,JSON.stringify(payload)],function(r){if(!r||!r.ok){fail(r&&r.mensagem||'Não foi possível enviar. Confira sua conexão e tente novamente.');return}envioConcluido=true;updateProgress('Comprovante enviado. Atualizando suas mensalidades…');if(progress.close)progress.close();progress.remove();d.remove();if(done)done();m04PendenciasAtualizarAposEnvio_()})};reader.onerror=function(){fail('Não foi possível ler este arquivo. Tente novamente.')};reader.readAsDataURL(uploadFile)})
     });
     d.addEventListener('cancel',function(e){if(envioEmAndamento)e.preventDefault()});d.addEventListener('click',function(e){if(e.target===d&&!envioEmAndamento){d.close();d.remove()}});if(d.showModal)d.showModal();else d.setAttribute('open','open')
   }
@@ -1359,6 +1369,30 @@ function abrirPaginaErvas(){
   function m04PagamentoEhProprio_(item){var emailAtual=String(authUser&&authUser.email||authEmailSalvo_()||'').trim().toLowerCase(),emailEnvio=String(item&&item.email||'').trim().toLowerCase();return !!emailAtual&&!!emailEnvio&&emailAtual===emailEnvio}
   function m04PagamentosDeOutrasPessoas_(items){return(Array.isArray(items)?items:[]).filter(function(item){return !m04PagamentoEhProprio_(item)})}
   function m04PendenciasBuscar_(done,force){if(!authToken||!m04AreaResponsavel_()){done({ok:false,mensagem:'Seu perfil não tem acesso a esta fila.'});return}if(!force&&m04PendenciasCache&&Date.now()-m04PendenciasCacheAt<30000){done({ok:true,solicitacoes:m04PagamentosDeOutrasPessoas_(m04PendenciasCache)});return}authRpc('listarComprovantesMensalidade',[authToken],function(r){if(r&&r.ok){m04PendenciasCache=Array.isArray(r.solicitacoes)?r.solicitacoes:[];m04PendenciasCacheAt=Date.now();r=Object.assign({},r,{solicitacoes:m04PagamentosDeOutrasPessoas_(m04PendenciasCache)})}done(r||{ok:false,mensagem:'Não foi possível carregar as pendências.'})})}
+  function m04PendenciasAtualizarAposEnvio_(){
+    m04PendenciasCache=null;m04PendenciasCacheAt=0;
+    if(!authToken||!authUser||!m04AreaResponsavel_())return;
+    var anterior=m04PendenciasCentralCache;
+    m04PendenciasCentralCache=null;m04PendenciasCentralCacheAt=0;m04PendenciasCount=null;
+    var badge=el('pendingMenuCount');if(badge){badge.textContent='…';badge.setAttribute('aria-label','Atualizando pendências de pagamento')}
+    authRpc('listarComprovantesMensalidade',[authToken],function(r){
+      if(!r||!r.ok){m04PendenciasAtualizarSinal_();return}
+      m04PendenciasCache=Array.isArray(r.solicitacoes)?r.solicitacoes:[];
+      m04PendenciasCacheAt=Date.now();
+      var dados={
+        pagamentos:m04PagamentosDeOutrasPessoas_(m04PendenciasCache),
+        presencas:anterior&&Array.isArray(anterior.presencas)?anterior.presencas:[],
+        loja:anterior&&Array.isArray(anterior.loja)?anterior.loja:[],
+        erroPresenca:anterior?!!anterior.erroPresenca:true,
+        erroLoja:anterior?!!anterior.erroLoja:true
+      };
+      m04PendenciasCentralCache=dados;m04PendenciasCentralCacheAt=Date.now();
+      m04PendenciasCount=dados.pagamentos.length+dados.presencas.length+dados.loja.length;
+      m04PendenciasAtualizarSinal_();
+      /* Atualiza em segundo plano os outros tipos, sem atrasar a fila de mensalidades. */
+      m04PendenciasCentraisBuscar_(function(){m04PendenciasAtualizarSinal_()},true);
+    })
+  }
   function m04AtualizarAvisoPendenciasLogin_(mensagem,mostrarBotao){var notice=el('authPendingNotice'),button=el('authOpenPendencias');if(!notice||!authToken||!m04AreaResponsavel_())return;notice.textContent=mensagem||'';notice.hidden=!mensagem;if(button)button.hidden=!mostrarBotao;}
   function m04PendenciasAtualizarSinal_(){
     var card=el('pendingAttention'),badge=el('pendingMenuCount');

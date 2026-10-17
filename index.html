@@ -1365,7 +1365,7 @@ function abrirPaginaErvas(){
     });
     d.addEventListener('cancel',function(e){if(envioEmAndamento)e.preventDefault()});d.addEventListener('click',function(e){if(e.target===d&&!envioEmAndamento){d.close();d.remove()}});if(d.showModal)d.showModal();else d.setAttribute('open','open')
   }
-  var m04PendenciasCache=null,m04PendenciasCacheAt=0,m04PendenciasCentralCache=null,m04PendenciasCentralCacheAt=0,m04PendenciasCount=null,m04PendenciasCentralRequest=0,m04PendenciasRenderRequest=0,m04GestaoCallbacks=[];
+  var m04PendenciasCache=null,m04PendenciasCacheAt=0,m04PendenciasCentralCache=null,m04PendenciasCentralCacheAt=0,m04PendenciasCount=null,m04PendenciasCentralRequest=0,m04PendenciasCentralFlight=null,m04PendenciasRenderRequest=0,m04GestaoCallbacks=[];
   function m04PagamentoEhProprio_(item){var emailAtual=String(authUser&&authUser.email||authEmailSalvo_()||'').trim().toLowerCase(),emailEnvio=String(item&&item.email||'').trim().toLowerCase();return !!emailAtual&&!!emailEnvio&&emailAtual===emailEnvio}
   function m04PagamentosDeOutrasPessoas_(items){return(Array.isArray(items)?items:[]).filter(function(item){return !m04PagamentoEhProprio_(item)})}
   function m04PendenciasBuscar_(done,force){if(!authToken||!m04AreaResponsavel_()){done({ok:false,mensagem:'Seu perfil não tem acesso a esta fila.'});return}if(!force&&m04PendenciasCache&&Date.now()-m04PendenciasCacheAt<30000){done({ok:true,solicitacoes:m04PagamentosDeOutrasPessoas_(m04PendenciasCache)});return}authRpc('listarComprovantesMensalidade',[authToken],function(r){if(r&&r.ok){m04PendenciasCache=Array.isArray(r.solicitacoes)?r.solicitacoes:[];m04PendenciasCacheAt=Date.now();r=Object.assign({},r,{solicitacoes:m04PagamentosDeOutrasPessoas_(m04PendenciasCache)})}done(r||{ok:false,mensagem:'Não foi possível carregar as pendências.'})})}
@@ -1407,7 +1407,7 @@ function abrirPaginaErvas(){
     var txt=data.erroPagamento?'Não foi possível atualizar as pendências. Tente novamente em instantes.':!n?'Não há solicitações aguardando análise no momento.':n===1?'Há 1 pendência aguardando sua conferência.':'Há '+n+' pendências aguardando sua conferência.';
     if(issues.length&&!data.erroPagamento)txt+=' A contagem pode estar incompleta: não foi possível consultar '+issues.join(' e ')+'.';
     if(el('pendingAttentionText'))el('pendingAttentionText').textContent=txt;var resumo=n===1?'Há 1 pendência aguardando sua conferência.':'Há '+n+' pendências aguardando sua conferência.';if(data.erroPagamento)resumo='Não foi possível carregar as pendências agora. Você pode abrir a fila e tentar novamente.';else if(!n&&!issues.length)resumo='Não há pendências em aberto no momento.';else if(issues.length)resumo='Há pendências, mas a contagem pode estar incompleta. Abra a fila para conferir.';m04AtualizarAvisoPendenciasLogin_(resumo,!!n||!!issues.length||!!data.erroPagamento);
-    if(badge){badge.textContent=issues.length?'?':String(n);badge.setAttribute('aria-label',issues.length?'Não foi possível conferir todas as filas de pendências':n===1?'1 pendência aguardando conferência':n+' pendências aguardando conferência');badge.title=issues.length?'A contagem está incompleta. Abra Pendências e atualize.':'';}
+    if(badge){badge.textContent=data.parcial?(n?String(n)+'+':'…'):issues.length?'?':String(n);badge.setAttribute('aria-label',data.parcial?(n?'Pelo menos '+n+' pendência(s); conferindo os demais itens':'Conferindo as filas de pendências'):issues.length?'Não foi possível conferir todas as filas de pendências':n===1?'1 pendência aguardando conferência':n+' pendências aguardando conferência');badge.title=data.parcial?'Contagem parcial; atualizando presenças e Loja.':issues.length?'A contagem está incompleta. Abra Pendências e atualize.':'';}
   }
   function m04PendenciasPresencasBuscar_(done){
     var profile=String(authUser&&authUser.perfil||'').toLowerCase();
@@ -1447,15 +1447,49 @@ function abrirPaginaErvas(){
   function m04PendenciasCentraisBuscar_(done,force){
     if(!authToken||!m04AreaResponsavel_()){done({ok:false,mensagem:'Seu perfil não tem acesso a esta fila.'});return}
     if(!force&&m04PendenciasCentralCache&&Date.now()-m04PendenciasCentralCacheAt<30000){done({ok:!m04PendenciasCentralCache.erroPagamento,dados:m04PendenciasCentralCache,mensagem:m04PendenciasCentralCache.erroPagamento?'Não foi possível carregar as pendências. Tente novamente.':''});return}
-    var requestId=++m04PendenciasCentralRequest,pagamentos=null,presencas=null,loja=null,erroPagamento=false,erroPresenca=false,erroLoja=false,restantes=3;
-    function finish_(){if(--restantes)return;if(requestId!==m04PendenciasCentralRequest)return;if(erroPagamento){var failed={pagamentos:[],presencas:[],loja:[],erroPresenca:false,erroPagamento:true,erroLoja:erroLoja};m04PendenciasCentralCache=failed;m04PendenciasCentralCacheAt=Date.now();m04PendenciasCount=0;done({ok:false,dados:failed,mensagem:'Não foi possível carregar as pendências. Tente novamente.'});return}
-      var data={pagamentos:pagamentos||[],presencas:presencas||[],loja:loja||[],erroPresenca:erroPresenca,erroLoja:erroLoja};
-      m04PendenciasCentralCache=data;m04PendenciasCentralCacheAt=Date.now();m04PendenciasCount=data.pagamentos.length+data.presencas.length+data.loja.length;
-      done({ok:true,dados:data});
+    if(m04PendenciasCentralFlight){if(typeof done==='function')m04PendenciasCentralFlight.callbacks.push(done);return}
+    var requestId=++m04PendenciasCentralRequest,callbacks=[];
+    if(typeof done==='function')callbacks.push(done);
+    var flight={id:requestId,callbacks:callbacks};m04PendenciasCentralFlight=flight;
+    var anterior=m04PendenciasCentralCache,pagamentos=null,presencas=null,loja=null,erroPagamento=false,erroPresenca=false,erroLoja=false,restantes=3;
+    function publicarParcial_(){
+      if(pagamentos===null&&presencas===null&&loja===null)return;
+      var dados={
+        pagamentos:pagamentos!==null?pagamentos:(anterior&&anterior.pagamentos||[]),
+        presencas:presencas!==null?presencas:(anterior&&anterior.presencas||[]),
+        loja:loja!==null?loja:(anterior&&anterior.loja||[]),
+        erroPagamento:pagamentos===null?!!(anterior&&anterior.erroPagamento):erroPagamento,
+        erroPresenca:presencas===null?true:erroPresenca,
+        erroLoja:loja===null?true:erroLoja,
+        parcial:true
+      };
+      m04PendenciasCentralCache=dados;m04PendenciasCentralCacheAt=Date.now();
+      m04PendenciasCount=dados.pagamentos.length+dados.presencas.length+dados.loja.length;
+      m04PendenciasAtualizarSinal_();
     }
-    m04PendenciasBuscar_(function(r){if(r&&r.ok)pagamentos=Array.isArray(r.solicitacoes)?r.solicitacoes:[];else erroPagamento=true;finish_()},!!force);
-    m04PendenciasPresencasBuscar_(function(r){if(r&&r.ok){presencas=Array.isArray(r.solicitacoes)?r.solicitacoes:[];erroPresenca=!!r.erro}else erroPresenca=true;finish_()});
-    authRpc('listarPendenciasLoja',[authToken],function(r){if(r&&r.ok)loja=Array.isArray(r.solicitacoes)?r.solicitacoes:[];else erroLoja=true;finish_()});
+    function concluir_(result){
+      if(requestId!==m04PendenciasCentralRequest||m04PendenciasCentralFlight!==flight)return;
+      m04PendenciasCentralFlight=null;
+      var aguardando=flight.callbacks.splice(0);
+      aguardando.forEach(function(cb){try{cb(result)}catch(e){console.error('M04 sinal de pendências: '+e.message)}})
+    }
+    function finish_(){
+      if(--restantes)return;
+      if(erroPagamento){
+        var failed={pagamentos:pagamentos||[],presencas:presencas||[],loja:loja||[],erroPresenca:erroPresenca,erroPagamento:true,erroLoja:erroLoja};
+        m04PendenciasCentralCache=failed;m04PendenciasCentralCacheAt=Date.now();
+        m04PendenciasCount=failed.pagamentos.length+failed.presencas.length+failed.loja.length;
+        concluir_({ok:false,dados:failed,mensagem:'Não foi possível carregar as pendências. Tente novamente.'});return
+      }
+      var data={pagamentos:pagamentos||[],presencas:presencas||[],loja:loja||[],erroPresenca:erroPresenca,erroLoja:erroLoja};
+      m04PendenciasCentralCache=data;m04PendenciasCentralCacheAt=Date.now();
+      m04PendenciasCount=data.pagamentos.length+data.presencas.length+data.loja.length;
+      concluir_({ok:true,dados:data});
+      m04PendenciasAtualizarSinal_();
+    }
+    m04PendenciasBuscar_(function(r){if(r&&r.ok)pagamentos=Array.isArray(r.solicitacoes)?r.solicitacoes:[];else erroPagamento=true;publicarParcial_();finish_()},!!force);
+    m04PendenciasPresencasBuscar_(function(r){if(r&&r.ok){presencas=Array.isArray(r.solicitacoes)?r.solicitacoes:[];erroPresenca=!!r.erro}else erroPresenca=true;publicarParcial_();finish_()});
+    authRpc('listarPendenciasLoja',[authToken],function(r){if(r&&r.ok)loja=Array.isArray(r.solicitacoes)?r.solicitacoes:[];else erroLoja=true;publicarParcial_();finish_()});
   }
   function lixeiraPerfilPermitido_(){var p=String(authUser&&authUser.perfil||'').toLowerCase().trim();return p==='dirigente'||p==='administrador'}
 function lixeiraFormatarData_(value){var d=value instanceof Date?value:new Date(value);if(isNaN(d.getTime()))return String(value||'');return new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short'}).format(d)}

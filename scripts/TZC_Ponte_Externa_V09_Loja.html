@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><base target="_top"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ponte segura — TZC</title></head>
+<body>
+<script>
+/* TZC — PONTE EXTERNA V09 — cadastro de comprador com senha; mantém rotas isoladas da Loja
+ * Só aceita chamadas do site-teste e nomes de função desta lista fechada.
+ * Minha Área integra o fluxo V07 de comprovantes; a fila só atualiza parcelas após conferência.
+ */
+(function(){
+  'use strict';
+  var origem='https://terreirotendadezecigano-hub.github.io';
+  var rotas={
+    msgObter:{funcao:'TZC_MSG_adminObterSite',limites:[100]},
+    msgSalvarConfiguracao:{funcao:'TZC_MSG_adminSalvarConfiguracaoSite',limites:[100,16000]},
+    msgSalvarMensagem:{funcao:'TZC_MSG_adminSalvarMensagemSite',limites:[100,16000]},
+    msgUploadImagem:{funcao:'TZC_MSG_adminUploadImagemSite',limites:[100,7200000]},
+ listarArquivoEventos:{funcao:'TZC_M04_listarArquivoEventos',limites:[100]},
+ salvarEvento:{funcao:'TZC_M04_salvarEvento',limites:[100,12000]},
+ qrEventoObter:{funcao:'TZC_M04_qrEventoObter',limites:[100,100]},
+ registrarCheckinQR:{funcao:'TZC_M04_registrarCheckinQR',limites:[100,100,100]},
+ excluirEvento:{funcao:'TZC_M04_excluirEvento',limites:[100,100]},
+ lixeiraListar:{funcao:'TZC_LIXEIRA_listar',limites:[100]},
+ lixeiraRestaurar:{funcao:'TZC_LIXEIRA_restaurar',limites:[100,100]},
+    enviarArquivoPonto:{funcao:"TZC_M01_pontosEnviarArquivo",limites:[100,14000000]},
+    obterArquivoPonto:{funcao:"TZC_M01_pontosObterArquivo",limites:[100,100,10]},
+    mcObterPainel:{funcao:"TZC_MC_obterPainel",limites:[100]},
+    mcSalvarRede:{funcao:"TZC_MC_salvarRede",limites:[100,16000]},
+    mcDesativarRede:{funcao:"TZC_MC_desativarRede",limites:[100,100]},
+    mcSalvarPublicacao:{funcao:"TZC_MC_salvarPublicacao",limites:[100,24000]},
+    mcListar:{funcao:"TZC_MC_listar",limites:[100]},
+    verificarEmail:{funcao:'TZC_M02_verificarEmailV06',limites:[254]},
+    solicitarCodigo:{funcao:'TZC_M02_solicitarCodigoV06',limites:[254]},
+    validarCodigo:{funcao:'TZC_M02_validarCodigo',limites:[254,6]},
+    validarSessao:{funcao:'TZC_M02_validarSessao',limites:[100]},
+    encerrarSessao:{funcao:'TZC_M02_encerrarSessao',limites:[100]},
+    podeConfig:{funcao:'TZC_M02_pode',limites:[100,40,20]},
+    obterConfig:{funcao:'TZC_CFG_obter',limites:[100]},
+    salvarConfig:{funcao:'TZC_CFG_salvar',limites:[100,20000]},
+    listarAgendaPublica:{funcao:'TZC_M04_listarAgendaPublica',limites:[]},
+    responderEvento:{funcao:'TZC_M04_responderEvento',limites:[4000]},
+    obterMinhaArea:{funcao:'TZC_M04_PAG_obterMinhaArea',limites:[100]},
+    enviarComprovante:{funcao:'TZC_M04_PAG_enviarComprovante',limites:[100,4500000]},
+    listarComprovantesMensalidade:{funcao:'TZC_M04_PAG_listarPendentes',limites:[100]},
+    obterComprovanteMensalidade:{funcao:'TZC_M04_PAG_obterComprovante',limites:[100,100]},
+    decidirComprovanteMensalidade:{funcao:'TZC_M04_PAG_decidir',limites:[100,100,10,500]},
+    registrarVisitantesPresentes:{funcao:'TZC_M04_registrarVisitantesPresentes',limites:[100,100,5,300]},
+    registrarCheckin:{funcao:'TZC_M04_registrarCheckin',limites:[100,100,30]},
+    obterCheckinsPendentes:{funcao:'TZC_M04_obterCheckinsPendentes',limites:[100]},
+    listarEventosGestao:{funcao:'TZC_M04_listarEventosGestao',limites:[100]},
+    listarPendencias:{funcao:'TZC_M04_listarPendencias',limites:[100,100]},
+    listarEventosRelatorio:{funcao:'TZC_M04_listarEventosRelatorio',limites:[100]},
+    gerarPrevisaoEvento:{funcao:'TZC_M04_gerarPrevisaoEvento',limites:[100,100]},
+    confirmarCheckin:{funcao:'TZC_M04_confirmarCheckin',limites:[100,100,30]},
+    listarMembrosAtivos:{funcao:'TZC_M04_listarMembrosAtivos',limites:[100]},
+    definirResponsavel:{funcao:'TZC_M04_definirResponsavel',limites:[100,100,100,10]},
+    listarMembros:{funcao:'TZC_M05_listarMembros',limites:[100]},
+    salvarMembro:{funcao:'TZC_M05_salvarMembro',limites:[100,20000]},
+    alterarStatusMembro:{funcao:'TZC_M05_alterarStatus',limites:[100,100,20]},
+    listarMembrosV02:{funcao:'TZC_M05_listarMembrosV02',limites:[100]},
+    salvarMembroV02:{funcao:'TZC_M05_salvarMembroV02',limites:[100,20000]},
+    alterarStatusV02:{funcao:'TZC_M05_alterarStatusV02',limites:[100,100,20]},
+    criarConviteV02:{funcao:'TZC_M05_criarConviteV02',limites:[100]},
+    listarPendentesV02:{funcao:'TZC_M05_listarPendentesV02',limites:[100]},
+    enviarCadastroPublico:{funcao:'TZC_M05_enviarCadastroPublicoV02',limites:[200,20000]},
+    listarCatalogoLoja:{funcao:'TZC_M06_LOJA_listarCatalogoV01',limites:[]},
+    solicitarAtendimentoLoja:{funcao:'TZC_M06_LOJA_solicitarAtendimentoV02',limites:[120,254,30,100,1500,5]},
+    solicitarAtendimentoLojaV02:{funcao:'TZC_M06_LOJA_solicitarAtendimentoV02',limites:[120,254,30,100,1500,5]},
+    listarTiposAtendimentoLoja:{funcao:'TZC_M06_LOJA_listarTiposAtendimentoV01',limites:[]},
+    listarTiposAtendimentoGestaoLoja:{funcao:'TZC_M06_LOJA_listarTiposAtendimentoGestaoV01',limites:[100]},
+    salvarTipoAtendimentoLoja:{funcao:'TZC_M06_LOJA_salvarTipoAtendimentoV01',limites:[100,2500]},
+    excluirTipoAtendimentoLoja:{funcao:'TZC_M06_LOJA_excluirTipoAtendimentoV01',limites:[100,100]},
+    listarProdutosGestaoLoja:{funcao:'TZC_M06_LOJA_listarProdutosGestaoV01',limites:[100]},
+    desafioAcessoCompradorLoja:{funcao:'TZC_M06_LOJA_desafioAcessoCompradorV01',limites:[254]},
+    criarAcessoCompradorLoja:{funcao:'TZC_M06_LOJA_criarAcessoCompradorV01',limites:[254,120,30,64,64]},
+    entrarCompradorLoja:{funcao:'TZC_M06_LOJA_entrarCompradorV01',limites:[254,64,64]},
+    salvarProdutoLoja:{funcao:'TZC_M06_LOJA_salvarProdutoV01',limites:[100,12000000]},
+    publicarProdutoLoja:{funcao:'TZC_M06_LOJA_publicarProdutoV01',limites:[100,100,5]},
+    criarPedidoLoja:{funcao:'TZC_M06_LOJA_criarPedidoV01',limites:[100,100]},
+    criarPedidoVisitanteLoja:{funcao:'TZC_M06_LOJA_criarPedidoVisitanteV02',limites:[120,254,30,5,5,5000]},
+    criarPedidoCarrinhoLoja:{funcao:'TZC_M06_LOJA_criarPedidoCarrinhoV02',limites:[100,5000]},
+    listarMeusPedidosLoja:{funcao:'TZC_M06_LOJA_listarMeusPedidosV02',limites:[100]},
+    enviarComprovanteLoja:{funcao:'TZC_M06_LOJA_enviarComprovanteV01',limites:[100,100,10,40,100,160,3000000]},
+    listarPendenciasLoja:{funcao:'TZC_M06_LOJA_listarPendenciasV01',limites:[100]},
+    obterComprovanteLoja:{funcao:'TZC_M06_LOJA_obterComprovanteV01',limites:[100,100]},
+    decidirPagamentoLoja:{funcao:'TZC_M06_LOJA_decidirPagamentoV01',limites:[100,100,10,500]},
+    baixarProdutoLoja:{funcao:'TZC_M06_LOJA_baixarProdutoV01',limites:[100,100]},
+      listarPontosCantados:{funcao:'TZC_M01_listarPontosCantadosPublicos',limites:[]},
+      gerenciarPontosCantados:{funcao:'TZC_M01_gerenciarPontosCantados',limites:[100]},
+      salvarPontoCantado:{funcao:'TZC_M01_salvarPontoCantado',limites:[100,22000]},
+      excluirPontoCantado:{funcao:'TZC_M01_excluirPontoCantado',limites:[100,100]},
+      listarErvasPublicas:{funcao:'TZC_M01_listarErvasPublicas',limites:[]},
+      gerenciarErvas:{funcao:'TZC_M01_gerenciarErvas',limites:[100]},
+      salvarErva:{funcao:'TZC_M01_salvarErva',limites:[100,22000]},
+      excluirErva:{funcao:'TZC_M01_excluirErva',limites:[100,100,20]},
+      uploadImagemErvas:{funcao:'TZC_M01_ervasUploadImagem',limites:[100,7200000]},
+      listarBanhosMembros:{funcao:'TZC_M01_listarBanhosMembrosAutenticados',limites:[100]},
+      gerenciarBanhosMembros:{funcao:'TZC_M01_gerenciarBanhosAutenticado',limites:[100]},
+      salvarBanho:{funcao:'TZC_M01_salvarBanhoAutenticado',limites:[100,22000]},
+      excluirBanho:{funcao:'TZC_M01_excluirBanhoAutenticado',limites:[100,100]}
+  };
+  function responder(id,resultado){window.top.postMessage({tipo:'TZC_M02_RESULT',id:id,resultado:resultado},origem)}
+  window.addEventListener('message',function(evento){
+    if(evento.origin!==origem||evento.source!==window.top)return;
+    var msg=evento.data;if(!msg||msg.tipo!=='TZC_M02_RPC'||typeof msg.id!=='string'||!/^tzc_m02_[0-9]+_[0-9]+$/.test(msg.id))return;
+    var rota=rotas[msg.acao],args=msg.args;
+    if(!rota||!Array.isArray(args)||args.length!==rota.limites.length||args.some(function(v,i){return typeof v!=='string'||v.length>rota.limites[i]})){
+      responder(msg.id,{ok:false,mensagem:'Solicitação inválida.'});return;
+    }
+    var runner=google.script.run.withSuccessHandler(function(r){responder(msg.id,r)}).withFailureHandler(function(){responder(msg.id,{ok:false,mensagem:'Não foi possível concluir a solicitação agora.'})});
+    runner[rota.funcao].apply(runner,args);
+  });
+  window.top.postMessage({tipo:'TZC_PONTE_PRONTA'},origem);
+})();
+</script>
+</body>
+</html>

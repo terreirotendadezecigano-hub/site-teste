@@ -393,7 +393,7 @@
   }
   function paymentForm(o,token,afterDone){
     var wrap=el('div',null,'loja-form-row'),dateLabel=el('label','Data do pagamento'),date=el('input'),formLabel=el('label','Forma'),form=el('select'),fileLabel=el('label','Comprovante (PDF, PNG ou JPG · até 2 MB)'),file=el('input'),submit=btn('Enviar comprovante',submitProof,'member-btn'),status=el('p','Selecione o comprovante e toque em “Enviar comprovante”.','loja-status-line');
-    date.type='date';date.required=true;dateLabel.append(date);
+    date.type='date';date.required=true;var hoje=new Date();date.value=hoje.getFullYear()+'-'+('0'+(hoje.getMonth()+1)).slice(-2)+'-'+('0'+hoje.getDate()).slice(-2);dateLabel.append(date);
     [['Pix','Pix'],['Transferência','Transferência'],['Dinheiro','Dinheiro']].forEach(function(x){var op=el('option',x[0]);op.value=x[1];form.append(op)});
     formLabel.append(form);file.type='file';file.accept='.pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg';fileLabel.append(file);
     status.setAttribute('role','status');status.setAttribute('aria-live','polite');

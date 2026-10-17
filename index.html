@@ -343,6 +343,37 @@ html:not([data-theme="escuro"]) .m05-row-actions .tzc-icon-action:hover{backgrou
 .m05-row-actions .tzc-icon-action{flex:0 0 40px!important;width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important}
 </style>  <style id="tzc-v111-mensalidade-form-compacto">.myarea-payment-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}.myarea-payment-fields .myarea-field{min-width:0}@media(max-width:560px){.myarea-payment-fields{grid-template-columns:1fr;gap:9px}}</style>
   <style id="tzc-v112-cabecalho-desktop-centralizado">@media(min-width:651px){.topbar{display:grid;grid-template-columns:minmax(110px,1fr) auto minmax(110px,1fr);align-items:center;gap:18px}.topbar>.mobile-menu{justify-self:start}.topbar>.brand{justify-self:center;gap:14px}.topbar>.top-actions{justify-self:end}.topbar .logo{width:62px;height:62px}.topbar .brand-text>span{font-size:22px;letter-spacing:.06em}.topbar .brand-text small{font-size:12px;letter-spacing:.15em}}</style>
+<style id="tzc-v116-legibilidade-escuro">
+/* Contraste unificado para tabelas em telas escuras; mantém folhas de impressão em branco. */
+html[data-theme="escuro"]{
+  --text:#fff8f2;
+  --muted:#d4c7bf;
+  --line:#625055;
+  --surface:#241b1d;
+  --surface2:#302326;
+}
+html[data-theme="escuro"] body :is(#dynamicPage,#settingsView,#myAreaView) table:not(.m04-report-paper table):not(.myarea-report-paper table):not(.m05-member-report table):not(#m04PrintRoot table):not(#m05ReportPaper table){
+  color:#fff8f2!important;border-color:#625055!important
+}
+html[data-theme="escuro"] body :is(#dynamicPage,#settingsView,#myAreaView) table:not(.m04-report-paper table):not(.myarea-report-paper table):not(.m05-member-report table):not(#m04PrintRoot table):not(#m05ReportPaper table) thead th{
+  background:#5b2430!important;color:#fff!important;border-color:#95636d!important;text-shadow:none!important
+}
+html[data-theme="escuro"] body :is(#dynamicPage,#settingsView,#myAreaView) table:not(.m04-report-paper table):not(.myarea-report-paper table):not(.m05-member-report table):not(#m04PrintRoot table):not(#m05ReportPaper table) tbody :is(td,th){
+  color:#fff8f2!important;border-color:#59464a!important
+}
+html[data-theme="escuro"] body :is(#dynamicPage,#settingsView,#myAreaView) table:not(.m04-report-paper table):not(.myarea-report-paper table):not(.m05-member-report table):not(#m04PrintRoot table):not(#m05ReportPaper table) tbody tr:nth-child(even){
+  background-color:#2b2022!important
+}
+html[data-theme="escuro"] body :is(#dynamicPage,#settingsView,#myAreaView) table:not(.m04-report-paper table):not(.myarea-report-paper table):not(.m05-member-report table):not(#m04PrintRoot table):not(#m05ReportPaper table) tbody tr:hover{
+  background-color:#3b2a2e!important
+}
+html[data-theme="escuro"] body #dynamicPage :is(.bath-detail-section,.bath-dialog-content,.pontos-detail-content) :is(p,li){
+  color:#fff8f2
+}
+html[data-theme="escuro"] body #dynamicPage :is(input,textarea,select)::placeholder{color:#d4c7bf;opacity:1}
+.bath-detail-section ol{display:grid;gap:8px;margin:0;padding-left:25px}
+.bath-detail-section li::marker{color:var(--gold);font-weight:800}
+</style>
 </head>
 <body>
 <div id="loadingScreen" hidden role="status" aria-live="polite"><div class="loading-card"><div class="loading-mark" aria-hidden="true"></div><h1>Preparando o site</h1><p id="loadingMessage">Carregando as informações da casa…</p><button class="theme-toggle" id="retryLoad" type="button" hidden>Tentar novamente</button></div></div>
@@ -929,8 +960,8 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
       var x=texto('button','×','bath-close');x.type='button';x.setAttribute('aria-label','Fechar');x.style.cssText='background:var(--primary);color:#fff;border-color:var(--primary)';x.onclick=function(){dlg.close()};top.append(title,x);
       var content=document.createElement('div');content.className='bath-dialog-content';var fotoSource=String(b.imagemUrl||b.Imagem_URL||b.Foto_URL||'').trim(),fotoBanho=/^data:image\/(jpeg|png|webp);base64,[a-zA-Z0-9+/=]+$/.test(fotoSource)?fotoSource:seguroLink(fotoSource);if(fotoBanho){var im=document.createElement('img');im.className='bath-dialog-photo';im.src=fotoBanho;im.alt='Foto de '+(b.titulo||'banho');im.onerror=function(){im.hidden=true};content.appendChild(im)}else if(arte){var im=document.createElement('img');im.className='bath-dialog-art';im.src=arte;im.alt='';im.onerror=function(){im.hidden=true};content.appendChild(im)}
       if(b.finalidade)content.appendChild(texto('p',b.finalidade,'bath-detail-purpose'));
-      function sec(name,value,list){var box=document.createElement('section');box.className='bath-detail-section';box.appendChild(texto('h3',name,''));var lines=String(value||'').split(/[;\\n]/).map(function(x){return x.replace(/^[-•▪️\\s]+/,'').trim()}).filter(Boolean);if(list){var ul=document.createElement('ul');lines.forEach(function(x){ul.appendChild(texto('li',x,''))});box.appendChild(ul)}else lines.forEach(function(x){box.appendChild(texto('p',x,''))});if(!lines.length)box.appendChild(texto('p','Orientação não informada.',''));content.appendChild(box)}
-      sec('Ingredientes',b.ingredientes,true);sec('Como preparar',b.modoPreparo,false);sec('Quando fazer',b.orientacoes,false);if(b.cuidados)sec('Cuidados',b.cuidados,false);
+      function sec(name,value,list,steps){var box=document.createElement('section');box.className='bath-detail-section';box.appendChild(texto('h3',name,''));var raw=String(value||'').replace(/\r\n?/g,'\n').replace(/<br\s*\/?>/gi,'\n').replace(/<\/p\s*>/gi,'\n').replace(/&nbsp;/gi,' ').replace(/<[^>]*>/g,' ');var lines=raw.split(/\n+/).flatMap(function(part){return part.split(/;\s*/)}).map(function(x){return x.replace(/^(?:[-•▪️]|\d+[.)])\s*/,'').trim()}).filter(Boolean);if(steps&&lines.length===1){var sentences=lines[0].split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ])/);if(sentences.length>1)lines=sentences}if(list||(steps&&lines.length>1)){var ul=list?document.createElement('ul'):document.createElement('ol');lines.forEach(function(x){ul.appendChild(texto('li',x,''))});box.appendChild(ul)}else if(lines.length){lines.forEach(function(x){box.appendChild(texto('p',x,''))})}else box.appendChild(texto('p','Orientação não informada.',''));content.appendChild(box)}
+      sec('Ingredientes',b.ingredientes,true);sec('Como preparar',b.modoPreparo,false,true);sec('Quando fazer',b.orientacoes,false);if(b.cuidados)sec('Cuidados',b.cuidados,false);
       var actions=document.createElement('div');actions.className='bath-dialog-actions';var share=texto('button','Compartilhar','member-btn');share.type='button';share.onclick=function(){compartilharBanho(b)};if(dirigente){var edit=texto('button','Editar','member-btn');edit.type='button';edit.onclick=function(){dlg.close();editar(b)};actions.appendChild(edit)}var close=texto('button','Fechar','member-btn');close.type='button';close.onclick=function(){dlg.close()};actions.append(share,close);dlg.append(top,content,actions);dlg.addEventListener('click',function(e){if(e.target===dlg)dlg.close()});dlg.addEventListener('close',function(){dlg.remove()});area.appendChild(dlg);dlg.showModal()}
     function editar(b){if(!dirigente){aviso('Seu perfil não pode editar banhos.');return}
       var dlg=document.createElement('dialog');dlg.className='bath-dialog bath-edit-dialog';var top=document.createElement('div');top.className='bath-dialog-head';top.appendChild(texto('h2',b?'Editar banho':'Cadastrar banho',''));var x=texto('button','×','bath-close');x.type='button';x.setAttribute('aria-label','Fechar');x.style.cssText='background:var(--primary);color:#fff;border-color:var(--primary)';x.onclick=function(){dlg.close()};top.appendChild(x);

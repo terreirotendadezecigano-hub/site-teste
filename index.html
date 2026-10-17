@@ -2705,6 +2705,21 @@ html[data-theme="escuro"] #dynamicPage .bath-table tbody tr:nth-child(odd){backg
  .loja-wrap .loja-products{grid-template-columns:repeat(auto-fit,minmax(min(100%,235px),1fr))}
 }
 </style>
+<style id="tzc-v119-button-specificity">
+/* Vinho tem precedência sobre as regras antigas de botões secundários. */
+html body :is(#dynamicPage,#settingsView,#myAreaView,dialog) button:not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not([disabled]){
+ background:#641d29!important;border-color:#641d29!important;color:#fff!important;box-shadow:none!important
+}
+html body :is(#dynamicPage,#settingsView,#myAreaView,dialog) button:not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not([disabled]):hover{
+ background:#7b2934!important;border-color:#7b2934!important;color:#fff!important
+}
+html[data-theme="escuro"] body :is(#dynamicPage,#settingsView,#myAreaView,dialog) button:not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not([disabled]){
+ background:#641d29!important;border-color:#8b4a55!important;color:#fff!important
+}
+html[data-theme="escuro"] body :is(#dynamicPage,#settingsView,#myAreaView,dialog) button:not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not(.tzc-final-neutral):not([disabled]):hover{
+ background:#7b2934!important;border-color:#a35a66!important;color:#fff!important
+}
+</style>
 </body></html>
 
 <style id="tzc-fin-caixa-print">

@@ -1404,7 +1404,7 @@ function abrirPaginaErvas(){
     }
     var data=m04PendenciasCentralCache||{},n=Number(m04PendenciasCount||0),issues=[];
     if(data.erroPagamento)issues.push('pagamentos');if(data.erroPresenca)issues.push('presenças');if(data.erroLoja)issues.push('Loja');
-    var txt=data.erroPagamento&&!data.parcial?'Não foi possível atualizar as pendências. Tente novamente em instantes.':data.parcial?(n?'Há pelo menos '+n+' pendência(s); verificando os demais itens…':'Conferindo pagamentos, presenças e Loja…'):!n?'Não há solicitações aguardando análise no momento.':n===1?'Há 1 pendência aguardando sua conferência.':'Há '+n+' pendências aguardando sua conferência.';
+    var txt=data.parcial?(n?'Há pelo menos '+n+' pendência(s); verificando os demais itens…':'Conferindo pagamentos, presenças e Loja…'):data.erroPagamento?'Não foi possível atualizar as pendências. Tente novamente em instantes.':!n?'Não há solicitações aguardando análise no momento.':n===1?'Há 1 pendência aguardando sua conferência.':'Há '+n+' pendências aguardando sua conferência.';
     if(issues.length&&!data.erroPagamento)txt+=' A contagem pode estar incompleta: não foi possível consultar '+issues.join(' e ')+'.';
     if(el('pendingAttentionText'))el('pendingAttentionText').textContent=txt;var resumo=data.parcial?(n?'Há pelo menos '+n+' pendência(s); conferindo as demais filas.':'Conferindo pagamentos, presenças e Loja…'):n===1?'Há 1 pendência aguardando sua conferência.':n+' pendências aguardando sua conferência.';if(data.erroPagamento&&!data.parcial)resumo='Não foi possível carregar as pendências agora. Você pode abrir a fila e tentar novamente.';else if(!data.parcial&&!n&&!issues.length)resumo='Não há pendências em aberto no momento.';else if(!data.parcial&&issues.length)resumo='Há pendências, mas a contagem pode estar incompleta. Abra a fila para conferir.';m04AtualizarAvisoPendenciasLogin_(resumo,!!n||!!issues.length||!!data.erroPagamento);
     if(badge){badge.textContent=data.parcial?(n?String(n)+'+':'…'):issues.length?'?':String(n);badge.setAttribute('aria-label',data.parcial?(n?'Pelo menos '+n+' pendência(s); conferindo os demais itens':'Conferindo as filas de pendências'):issues.length?'Não foi possível conferir todas as filas de pendências':n===1?'1 pendência aguardando conferência':n+' pendências aguardando conferência');badge.title=data.parcial?'Contagem parcial; atualizando presenças e Loja.':issues.length?'A contagem está incompleta. Abra Pendências e atualize.':'';}
@@ -1457,6 +1457,7 @@ function abrirPaginaErvas(){
     var flight={id:requestId,callbacks:callbacks};m04PendenciasCentralFlight=flight;
     var anterior=m04PendenciasCentralCache,pagamentos=null,presencas=null,loja=null,erroPagamento=false,erroPresenca=false,erroLoja=false,restantes=3;
     function publicarParcial_(){
+      if(m04PendenciasCentralFlight!==flight)return;
       if(pagamentos===null&&presencas===null&&loja===null)return;
       var dados={
         pagamentos:pagamentos!==null?pagamentos:(anterior&&anterior.pagamentos||[]),
@@ -1478,6 +1479,7 @@ function abrirPaginaErvas(){
       aguardando.forEach(function(cb){try{cb(result)}catch(e){console.error('M04 sinal de pendências: '+e.message)}})
     }
     function finish_(){
+      if(requestId!==m04PendenciasCentralRequest||m04PendenciasCentralFlight!==flight)return;
       if(--restantes)return;
       if(erroPagamento){
         var failed={pagamentos:pagamentos||[],presencas:presencas||[],loja:loja||[],erroPresenca:erroPresenca,erroPagamento:true,erroLoja:erroLoja};

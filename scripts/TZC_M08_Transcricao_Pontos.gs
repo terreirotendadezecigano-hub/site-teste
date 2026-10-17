@@ -39,7 +39,7 @@ function TZC_M08_transcreverPontoCantado(token, payloadJson) {
   }
 
   var name = String(payload.name || 'ponto-audio').replace(/[\\/\\?%*:|"<>]/g, '_').slice(0, 180);
-  var extension = (name.match(/\\.([a-z0-9]+)$/i) || [,''])[1].toLowerCase();
+  var extension = String(name.split('.').pop() || '').toLowerCase();
   var allowedExtensions = ['mp3','wav','ogg','m4a','flac','mp4','webm','mpeg','mpga'];
   if (allowedExtensions.indexOf(extension) < 0) {
     return { ok: false, mensagem: 'Formato não aceito. Use MP3, WAV, M4A, OGG, FLAC, MP4 ou WEBM.' };

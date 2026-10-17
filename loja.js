@@ -161,7 +161,24 @@
   function table(headers){var wrap=el('div',null,'loja-table-wrap'),t=el('table',null,'loja-table'),thead=el('thead'),tr=el('tr');headers.forEach(function(x){tr.append(el('th',x))});thead.append(tr);t.append(thead,el('tbody'));wrap.append(t);return {wrap:wrap,body:t.tBodies[0]}}
   function invoke(route,args,done){var finished=false,timer=setTimeout(function(){if(finished)return;finished=true;var r={ok:false,mensagem:'A solicitação demorou mais que o esperado. Confira o resultado antes de tentar novamente.'};say(r.mensagem,'error');if(done)done(r)},60000);api.rpc(route,args,function(r){if(finished)return;finished=true;clearTimeout(timer);if(!r||!r.ok){say(r&&r.mensagem||'Não foi possível concluir a solicitação.','error');if(done)done(r||{ok:false});return}if(done)done(r)})}
   function init(){api=window.TZCLojaAPI;if(!api||!api.host){return}root=api.host();if(!root)return;root.replaceChildren();api.prepare('Loja da Casa','Confira os produtos da casa, faça seu pedido e acompanhe seus pedidos por aqui.');root=api.host();root.className='dynamic-page loja-wrap';try{buyerToken=sessionStorage.getItem('tzc-loja-visitante-token')||'';buyerOrdersActive=sessionStorage.getItem('tzc-loja-visitor-orders-active')==='true';buyerEmail=sessionStorage.getItem('tzc-loja-visitante-email')||'';pendingOrderId=sessionStorage.getItem('tzc-loja-pending-order-id')||'';cart=JSON.parse(sessionStorage.getItem('tzc-loja-carrinho')||'[]');if(!Array.isArray(cart))cart=[]}catch(ignore){cart=[]}
-    var style=document.getElementById('tzc-loja-style');if(!style){style=document.createElement('style');style.id='tzc-loja-style';style.textContent=styles+'\n/* Cabeçalho mais próximo do catálogo: elimina a faixa vazia entre introdução e materiais. */\n.loja-wrap{gap:7px!important;padding-top:8px!important}.loja-wrap>.intro-title+.m04-note{margin:3px auto 4px!important}.loja-status-line{min-height:0!important;line-height:1.25!important;margin:0!important}.loja-tabs{margin:3px 0 6px!important}.loja-section-heading{margin:8px 0 9px!important}';document.head.append(style)}
+    var style=document.getElementById('tzc-loja-style');if(!style){style=document.createElement('style');style.id='tzc-loja-style';style.textContent=styles+'\n/* Cabeçalho mais próximo do catálogo: elimina a faixa vazia entre introdução e materiais. */\n.loja-wrap{gap:7px!important;padding-top:8px!important}.loja-wrap>.intro-title+.m04-note{margin:3px auto 4px!important}.loja-status-line{min-height:0!important;line-height:1.25!important;margin:0!important}.loja-tabs{margin:3px 0 6px!important}.loja-section-heading{margin:8px 0 9px!important;
+.loja-catalog-hero{display:grid;justify-items:center;text-align:center;gap:5px;margin:7px auto 10px;padding:20px 18px;max-width:980px;border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:18px;background:linear-gradient(125deg,var(--surface2),var(--surface));box-shadow:var(--shadow)}
+.loja-catalog-eyebrow{color:var(--gold);font-size:11px;font-weight:850;letter-spacing:.15em}
+.loja-catalog-title{margin:0;color:var(--primary);font:700 clamp(23px,2.4vw,30px)/1.2 Georgia,serif}
+.loja-catalog-copy{margin:0;color:var(--muted);max-width:62ch}
+.loja-catalog-switcher{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-width:880px;margin:0 auto 12px}
+.loja-catalog-choice{min-height:54px!important;padding:12px 16px!important;border:1px solid var(--line)!important;border-radius:13px!important;background:var(--surface)!important;color:var(--text)!important;font-weight:750}
+.loja-catalog-choice[aria-pressed=true]{background:#641d29!important;border-color:#641d29!important;color:#fff!important;box-shadow:inset 0 -3px #bd8b38!important}
+html[data-theme="escuro"] .loja-catalog-choice[aria-pressed=true]{background:#641d29!important;border-color:#8b4a55!important;color:#fff!important}
+.loja-catalog-pane{min-height:160px}
+.loja-catalog-search{display:flex;align-items:center;gap:10px;max-width:760px;margin:0 auto 14px;font-weight:700;color:var(--muted)}
+.loja-catalog-search input{flex:1;min-width:0;min-height:44px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font:inherit}
+.loja-material-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),320px));justify-content:center}
+.loja-work-card{min-height:185px;padding:19px 21px}
+.loja-section-heading h2{margin:0;color:var(--primary);font:700 24px/1.2 Georgia,serif}
+.loja-section-heading p{margin:5px auto 0;max-width:66ch;color:var(--muted);text-align:center}
+@media(max-width:620px){.loja-catalog-hero{padding:16px 13px}.loja-catalog-switcher{grid-template-columns:1fr;gap:7px}.loja-catalog-choice{min-height:46px!important}.loja-catalog-search{display:grid;gap:5px}.loja-section-heading h2{font-size:21px}.loja-work-card{padding:15px;min-height:0}}
+';document.head.append(style)}
     notice=el('p','Carregando…','loja-status-line loja-muted');notice.setAttribute('role','status');notice.setAttribute('aria-live','polite');root.append(notice);
     var tabs=el('div',null,'loja-tabs'),catalogTab=btn('Produtos',function(){current='catalogo';setTab();loadCatalog()}),cartTab=btn('Carrinho',function(){current='carrinho';setTab();showCart()}),ordersTab=btn('Meus pedidos',function(){current='pedidos';setTab();if(buyerOrdersActive||activeToken())loadOrders();else showBuyerAccess()});catalogTabButton=catalogTab;cartTabButton=cartTab;cartTab.classList.add('loja-cart-tab');ordersTabButton=ordersTab;tabs.append(catalogTab,cartTab,ordersTab);var u=api.user(),managementTab=null;if(u&&/administrador|dirigente|pai de santo|mãe de santo|responsável financeiro/i.test(String(u.perfil||''))){managementTab=btn('Gestão da Loja',function(){current='gestao';setTab();loadManagement()});managementTab.classList.add('loja-management-tab');tabs.append(managementTab)}root.append(tabs);var panel=el('div');panel.id='lojaContent';root.append(panel);function setTab(){[catalogTab,cartTab,ordersTab,managementTab].filter(Boolean).forEach(function(b){b.setAttribute('aria-pressed',String((b===catalogTab&&current==='catalogo')||(b===cartTab&&current==='carrinho')||(b===ordersTab&&current==='pedidos')||(b===managementTab&&current==='gestao')))});}setTab();updateCartTab();if(pendingOrderId){current='pedidos';setTab();if(buyerOrdersActive||activeToken())loadOrderForProof(pendingOrderId);else showBuyerAccess('Retomando seu pedido. Confirme o e-mail usado na compra para anexar o comprovante.')}else loadCatalog();
   }
@@ -203,29 +220,51 @@
   }
   function renderCatalog(host,items,types){
     if(host!==content())return;
-    products=items||[];host.replaceChildren();
-    /* Atendimento aparece antes do catálogo para continuar acessível mesmo com muitos produtos. */
-    if(types&&types.length){
-      var services=section('Atendimentos espirituais','Conte o que procura. A equipe avaliará sua necessidade e entrará em contato. Enviar uma solicitação não confirma agendamento.',host),serviceGrid=el('div',null,'loja-products loja-work-grid');
-      types.forEach(function(item){
-        var work=el('article',null,'loja-work-card'),mark=el('span','✦','loja-work-mark'),copy=el('div',null,'loja-work-copy'),title=el('div',null,'loja-work-title');
-        title.append(mark,el('h3',item.nome));copy.append(title,el('p',item.descricao||'Solicite uma conversa para receber orientação individual.'));
-        var contact=btn('Solicitar atendimento',function(){showInquiryForm(services,types,item.id)},'member-btn');contact.setAttribute('aria-label','Solicitar atendimento: '+item.nome);work.append(copy,contact);serviceGrid.append(work)
-      });services.append(serviceGrid)
+    products=items||[];types=types||[];host.replaceChildren();
+    var mode=products.length?'materiais':'atendimentos';
+    var hero=el('section',null,'loja-catalog-hero');
+    hero.append(el('span','ACERVO DA CASA','loja-catalog-eyebrow'),el('h2','Encontre o que procura','loja-catalog-title'),el('p','Peça uma orientação ou escolha um material digital para acompanhar sua caminhada.','loja-catalog-copy'));
+    host.append(hero);
+    var switcher=el('nav',null,'loja-catalog-switcher');switcher.setAttribute('aria-label','Escolher seção da Loja');
+    var serviceButton=btn('Atendimentos espirituais'+(types.length?' · '+types.length:''),function(){mode='atendimentos';paint()},'loja-catalog-choice');
+    var materialButton=btn('Livros e materiais digitais'+(products.length?' · '+products.length:''),function(){mode='materiais';paint()},'loja-catalog-choice');
+    serviceButton.type=materialButton.type='button';switcher.append(serviceButton,materialButton);host.append(switcher);
+    var pane=el('div',null,'loja-catalog-pane');host.append(pane);
+    function paint(){
+      if(host!==content())return;
+      serviceButton.setAttribute('aria-pressed',String(mode==='atendimentos'));
+      materialButton.setAttribute('aria-pressed',String(mode==='materiais'));
+      pane.replaceChildren();
+      if(mode==='atendimentos'){
+        var services=section('Atendimentos espirituais','Escolha um tipo de atendimento para enviar sua solicitação. A equipe entrará em contato para orientar os próximos passos.',pane);
+        if(!types.length){var noServices=el('div',null,'loja-empty');noServices.append(el('strong','Atendimentos indisponíveis'),el('span','Novas opções serão divulgadas por aqui.','loja-muted'));services.append(noServices);return}
+        var serviceGrid=el('div',null,'loja-products loja-work-grid');
+        types.forEach(function(item){
+          var work=el('article',null,'loja-work-card'),mark=el('span','✦','loja-work-mark'),copy=el('div',null,'loja-work-copy'),title=el('div',null,'loja-work-title');
+          title.append(mark,el('h3',item.nome));copy.append(title,el('p',item.descricao||'Solicite uma conversa para receber orientação individual.'));
+          var contact=btn('Solicitar atendimento',function(){showInquiryForm(services,types,item.id)},'member-btn');contact.setAttribute('aria-label','Solicitar atendimento: '+item.nome);work.append(copy,contact);serviceGrid.append(work)
+        });services.append(serviceGrid);return
+      }
+      var catalog=section('Livros e materiais digitais','Veja a descrição, confira o valor e adicione o material escolhido ao carrinho.',pane);
+      if(!products.length){var empty=el('div',null,'loja-empty');empty.append(el('strong','Novidades chegando'),el('span','Os materiais digitais aparecerão aqui assim que forem cadastrados.','loja-muted'));catalog.append(empty);return}
+      var searchWrap=el('label','Buscar material','loja-catalog-search'),search=el('input');search.type='search';search.placeholder='Digite o nome ou assunto do material';search.setAttribute('aria-label','Buscar materiais digitais');searchWrap.append(search);catalog.append(searchWrap);
+      var grid=el('div',null,'loja-products loja-material-grid');
+      function drawProducts(){
+        var query=String(search.value||'').trim().toLocaleLowerCase('pt-BR'),shown=products.filter(function(p){return !query||[p.nome,p.categoria,p.descricao].join(' ').toLocaleLowerCase('pt-BR').includes(query)});
+        grid.replaceChildren();
+        if(!shown.length){grid.append(el('p','Nenhum material corresponde à busca.','loja-empty'));return}
+        shown.forEach(function(p){
+          var card=el('article',null,'loja-product-card'),cover=el('div',null,'loja-card-cover');
+          if(p.imagemUrl){var img=el('img');img.src=p.imagemUrl;img.alt='Capa de '+p.nome;img.loading='lazy';cover.append(img)}
+          else{var mark=el('div',null,'loja-book-mark');mark.append(el('span','▤'),el('span','PDF DIGITAL'));cover.append(mark)}
+          var body=el('div',null,'loja-product-body');body.append(el('span',p.categoria||'Leitura digital','loja-product-category'),el('h3',p.nome),el('p',p.descricao||'Material digital em PDF.'));
+          var buy=el('div',null,'loja-product-buy'),orderButton=btn(cart.some(function(x){return String(x)===String(p.id)})?'No carrinho':'Adicionar ao carrinho',function(){addToCart(p.id)},'member-btn');
+          orderButton.dataset.productId=String(p.id);buy.append(el('span',money(p.precoCentavos),'loja-price'),orderButton);body.append(buy);card.append(cover,body);grid.append(card)
+        })
+      }
+      search.addEventListener('input',drawProducts);catalog.append(grid);drawProducts()
     }
-    var catalog=section('Livros e materiais digitais','Escolha um material para conhecer e adicionar ao carrinho.',host);
-    if(!products.length){var empty=el('div',null,'loja-empty');empty.append(el('strong','Novidades chegando'),el('span','Os materiais digitais aparecerão aqui assim que forem cadastrados.','loja-muted'));catalog.append(empty)}
-    else{
-      var grid=el('div',null,'loja-products');
-      products.forEach(function(p){
-        var card=el('article',null,'loja-product-card'),cover=el('div',null,'loja-card-cover');
-        if(p.imagemUrl){var img=el('img');img.src=p.imagemUrl;img.alt='Capa de '+p.nome;img.loading='lazy';cover.append(img)}
-        else{var mark=el('div',null,'loja-book-mark');mark.append(el('span','▤'),el('span','PDF DIGITAL'));cover.append(mark)}
-        var body=el('div',null,'loja-product-body');body.append(el('span',p.categoria||'Leitura digital','loja-product-category'),el('h3',p.nome),el('p',p.descricao||'Material digital em PDF.'));
-        var buy=el('div',null,'loja-product-buy'),orderButton=btn(cart.some(function(x){return String(x)===String(p.id)})?'No carrinho':'Adicionar ao carrinho',function(){addToCart(p.id)},'member-btn');
-        orderButton.dataset.productId=String(p.id);buy.append(el('span',money(p.precoCentavos),'loja-price'),orderButton);body.append(buy);card.append(cover,body);grid.append(card)
-      });catalog.append(grid)
-    }
+    paint()
   }
   function showInquiryForm(services,types,selectedId){
     if(services.querySelector('.loja-inquiry'))return;

@@ -2587,6 +2587,8 @@ html[data-theme="claro"] .myarea-payment-actions button:hover:not(:disabled){bac
 }
 
 
+/* No tema escuro, todos os cabeçalhos de tabela mantêm contraste branco. */
+html[data-theme="escuro"] body table thead th{color:#fff!important}
 /* Ajustes finais de legibilidade e estrutura dos modais de banho */
 html .bath-dialog[open]{display:flex;flex-direction:column;box-sizing:border-box;width:min(700px,calc(100vw - 24px));max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);margin:auto;overflow:hidden}
 html .bath-dialog .bath-dialog-head{flex:none;min-width:0;align-items:center}

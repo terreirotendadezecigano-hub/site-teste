@@ -1447,8 +1447,12 @@ function abrirPaginaErvas(){
   function m04PendenciasCentraisBuscar_(done,force){
     if(!authToken||!m04AreaResponsavel_()){done({ok:false,mensagem:'Seu perfil não tem acesso a esta fila.'});return}
     if(!force&&m04PendenciasCentralCache&&Date.now()-m04PendenciasCentralCacheAt<30000){done({ok:!m04PendenciasCentralCache.erroPagamento,dados:m04PendenciasCentralCache,mensagem:m04PendenciasCentralCache.erroPagamento?'Não foi possível carregar as pendências. Tente novamente.':''});return}
-    if(m04PendenciasCentralFlight){if(typeof done==='function')m04PendenciasCentralFlight.callbacks.push(done);return}
-    var requestId=++m04PendenciasCentralRequest,callbacks=[];
+    var callbacks=[];
+    if(m04PendenciasCentralFlight){
+      if(!force){if(typeof done==='function')m04PendenciasCentralFlight.callbacks.push(done);return}
+      callbacks=m04PendenciasCentralFlight.callbacks.splice(0);m04PendenciasCentralFlight=null
+    }
+    var requestId=++m04PendenciasCentralRequest;
     if(typeof done==='function')callbacks.push(done);
     var flight={id:requestId,callbacks:callbacks};m04PendenciasCentralFlight=flight;
     var anterior=m04PendenciasCentralCache,pagamentos=null,presencas=null,loja=null,erroPagamento=false,erroPresenca=false,erroLoja=false,restantes=3;

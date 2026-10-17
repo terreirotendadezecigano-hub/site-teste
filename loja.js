@@ -204,8 +204,17 @@
   function renderCatalog(host,items,types){
     if(host!==content())return;
     products=items||[];host.replaceChildren();
-    var s=section('Livros e materiais digitais','',host);
-    if(!products.length){var empty=el('div',null,'loja-empty');empty.append(el('strong','Novidades chegando'),el('span','Os materiais digitais aparecerão aqui assim que forem cadastrados.','loja-muted'));s.append(empty)}
+    /* Atendimento aparece antes do catálogo para continuar acessível mesmo com muitos produtos. */
+    if(types&&types.length){
+      var services=section('Atendimentos espirituais','Conte o que procura. A equipe avaliará sua necessidade e entrará em contato. Enviar uma solicitação não confirma agendamento.',host),serviceGrid=el('div',null,'loja-products loja-work-grid');
+      types.forEach(function(item){
+        var work=el('article',null,'loja-work-card'),mark=el('span','✦','loja-work-mark'),copy=el('div',null,'loja-work-copy'),title=el('div',null,'loja-work-title');
+        title.append(mark,el('h3',item.nome));copy.append(title,el('p',item.descricao||'Solicite uma conversa para receber orientação individual.'));
+        var contact=btn('Solicitar atendimento',function(){showInquiryForm(services,types,item.id)},'member-btn');contact.setAttribute('aria-label','Solicitar atendimento: '+item.nome);work.append(copy,contact);serviceGrid.append(work)
+      });services.append(serviceGrid)
+    }
+    var catalog=section('Livros e materiais digitais','Escolha um material para conhecer e adicionar ao carrinho.',host);
+    if(!products.length){var empty=el('div',null,'loja-empty');empty.append(el('strong','Novidades chegando'),el('span','Os materiais digitais aparecerão aqui assim que forem cadastrados.','loja-muted'));catalog.append(empty)}
     else{
       var grid=el('div',null,'loja-products');
       products.forEach(function(p){
@@ -215,15 +224,8 @@
         var body=el('div',null,'loja-product-body');body.append(el('span',p.categoria||'Leitura digital','loja-product-category'),el('h3',p.nome),el('p',p.descricao||'Material digital em PDF.'));
         var buy=el('div',null,'loja-product-buy'),orderButton=btn(cart.some(function(x){return String(x)===String(p.id)})?'No carrinho':'Adicionar ao carrinho',function(){addToCart(p.id)},'member-btn');
         orderButton.dataset.productId=String(p.id);buy.append(el('span',money(p.precoCentavos),'loja-price'),orderButton);body.append(buy);card.append(cover,body);grid.append(card)
-      });s.append(grid)
+      });catalog.append(grid)
     }
-    if(!types||!types.length)return;
-    var services=section('Agendamentos espirituais','Conte o que procura. O Pai e a Mãe de Santo avaliarão sua necessidade e entrarão em contato. Enviar a solicitação não confirma um agendamento.',host),gridTypes=el('div',null,'loja-products loja-work-grid');
-    types.forEach(function(item){
-      var work=el('article',null,'loja-work-card'),mark=el('span','✦','loja-work-mark'),copy=el('div',null,'loja-work-copy'),title=el('div',null,'loja-work-title');
-      title.append(mark,el('h3',item.nome));copy.append(title,el('p',item.descricao||'Solicite uma conversa para receber orientação individual.'));
-      var contact=btn('Solicitar atendimento',function(){showInquiryForm(services,types,item.id)},'member-btn');contact.setAttribute('aria-label','Solicitar atendimento: '+item.nome);work.append(copy,contact);gridTypes.append(work)
-    });services.append(gridTypes)
   }
   function showInquiryForm(services,types,selectedId){
     if(services.querySelector('.loja-inquiry'))return;

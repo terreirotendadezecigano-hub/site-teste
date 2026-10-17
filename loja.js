@@ -367,7 +367,30 @@
   }
   function loadOrders(){var token=activeToken();if(!token){showBuyerAccess(pendingProductId?buyerCheckoutMessage(pendingProductId):'Acesse com seu e-mail para acompanhar os pedidos.');return}content().replaceChildren(el('p','Carregando pedidos…','loja-muted'));say('Consultando pedidos…');invoke('listarMeusPedidosLoja',[token],function(r){if(!r.ok){var failure=String(r.mensagem||'');if(/expir|sess[aã]o|token|acesso.*(nov|novamente)|entr(e|ar).*novamente|não encontrado/i.test(failure)&&!api.user()){buyerToken='';try{sessionStorage.removeItem('tzc-loja-visitante-token')}catch(ignore){}showBuyerAccess(pendingProductId?buyerCheckoutMessage(pendingProductId):'Seu acesso às compras expirou. Entre novamente com seu e-mail e senha para continuar.');return}content().replaceChildren(loadError(failure||'Não foi possível carregar seus pedidos.',loadOrders));return}orders=r.pedidos||[];content().replaceChildren();say(orders.length?'Pedidos carregados.':'Você ainda não tem pedidos.');var s=section('Meus pedidos','O comprovante será analisado por outro responsável.');if(!orders.length){s.append(el('p','Seus pedidos aparecerão aqui.','loja-muted'));return}var t=table(['Pedido','Produto(s)','Valor','Situação','Pagamento / entrega']);t.wrap.classList.add('loja-orders-table-wrap');orders.forEach(function(o){var tr=el('tr'),items=(o.itens||[]),names=items.map(function(i){return i.nome}).join(', ')||'—',st=el('span',o.status,'loja-status'),actions=el('div',null,'loja-order-actions');if(o.pixCopiaECola)actions.append(btn('Ver QR Pix',function(){showPixOrder(o)},'secondary'));if(o.status!=='Pago'&&o.status!=='Em conferência'){var form=paymentForm(o);actions.append(form)}else if(o.status==='Em conferência')actions.append(el('span','Aguardando validação de outra pessoa.','loja-muted'));items.forEach(function(i){if(i.podeBaixar)actions.append(btn('Baixar '+i.nome,function(){downloadItem(i.id)},'member-btn'))});if(o.pagamento&&o.pagamento.status==='Pagamento recusado')actions.append(el('p','Comprovante devolvido: '+(o.pagamento.motivo||'revise e envie novamente.'),'loja-error'));var idCell=el('td',o.numeroPedido?'Pedido '+o.numeroPedido:o.id),namesCell=el('td',names),valueCell=el('td',money(o.valorCentavos),'loja-price'),statusCell=el('td'),actionsCell=el('td');statusCell.append(st);actionsCell.append(actions);tr.append(idCell,namesCell,valueCell,statusCell,actionsCell);t.body.append(tr)});s.append(t.wrap)})
   }
-  function paymentForm(o,token,afterDone){var wrap=el('div',null,'loja-form-row'),dateLabel=el('label','Data do pagamento'),date=el('input'),formLabel=el('label','Forma'),form=el('select'),fileLabel=el('label','Comprovante (PDF, PNG ou JPG · até 2 MB)'),file=el('input'),submit=btn('Enviar comprovante',submitProof,'member-btn');date.type='date';date.required=true;dateLabel.append(date);[['Pix','Pix'],['Transferência','Transferência'],['Dinheiro','Dinheiro']].forEach(function(x){var op=el('option',x[0]);op.value=x[1];form.append(op)});formLabel.append(form);file.type='file';file.accept='.pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg';fileLabel.append(file);wrap.append(dateLabel,formLabel,fileLabel,submit);function submitProof(){var f=file.files&&file.files[0];if(!date.value||!f){say('Informe a data e selecione o comprovante.','error');return}if(f.size>2*1024*1024||['application/pdf','image/png','image/jpeg'].indexOf(f.type)<0){say('O comprovante deve ser PDF, PNG ou JPG de até 2 MB.','error');return}var proofToken=token||activeToken();if(!proofToken){say('Confirme o e-mail do comprador antes de enviar o comprovante.','error');return}submit.disabled=true;submit.textContent='Enviando…';say('Enviando comprovante com segurança…');var reader=new FileReader();reader.onerror=function(){submit.disabled=false;submit.textContent='Enviar comprovante';say('Não foi possível ler o arquivo.','error')};reader.onload=function(){var b64=String(reader.result).split(',')[1]||'';invoke('enviarComprovanteLoja',[proofToken,o.id,date.value,form.value,f.type,f.name,b64],function(r){submit.disabled=false;submit.textContent='Enviar comprovante';if(r.ok){say(r.mensagem||'Comprovante enviado. O pedido aguarda validação.',r.avisoResponsaveis==='Falhou'?'warning':'success');if(afterDone)afterDone();else loadOrders()}})};reader.readAsDataURL(f)}return wrap}
+  function arquivoParaBase64(arquivo, concluido, falhou){
+    var finalizado=false;
+    function erro(){if(!finalizado){finalizado=true;falhou()}}
+    function converter(buffer){
+      try{
+        var bytes=new Uint8Array(buffer),binario='',bloco=32768;
+        for(var i=0;i<bytes.length;i+=bloco)binario+=String.fromCharCode.apply(null,bytes.subarray(i,Math.min(i+bloco,bytes.length)));
+        if(!finalizado){finalizado=true;concluido(btoa(binario))}
+      }catch(e){erro()}
+    }
+    function viaFileReader(){
+      try{
+        var leitor=new FileReader();
+        leitor.onerror=erro;
+        leitor.onload=function(){if(leitor.result instanceof ArrayBuffer)converter(leitor.result);else erro()};
+        leitor.readAsArrayBuffer(arquivo)
+      }catch(e){erro()}
+    }
+    try{
+      if(arquivo&&typeof arquivo.arrayBuffer==='function')arquivo.arrayBuffer().then(converter,viaFileReader);
+      else viaFileReader()
+    }catch(e){viaFileReader()}
+  }
+  function paymentForm(o,token,afterDone){var wrap=el('div',null,'loja-form-row'),dateLabel=el('label','Data do pagamento'),date=el('input'),formLabel=el('label','Forma'),form=el('select'),fileLabel=el('label','Comprovante (PDF, PNG ou JPG · até 2 MB)'),file=el('input'),submit=btn('Enviar comprovante',submitProof,'member-btn');date.type='date';date.required=true;dateLabel.append(date);[['Pix','Pix'],['Transferência','Transferência'],['Dinheiro','Dinheiro']].forEach(function(x){var op=el('option',x[0]);op.value=x[1];form.append(op)});formLabel.append(form);file.type='file';file.accept='.pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg';fileLabel.append(file);wrap.append(dateLabel,formLabel,fileLabel,submit);function submitProof(){var f=file.files&&file.files[0];if(!date.value||!f){say('Informe a data e selecione o comprovante.','error');return}if(f.size>2*1024*1024||['application/pdf','image/png','image/jpeg'].indexOf(f.type)<0){say('O comprovante deve ser PDF, PNG ou JPG de até 2 MB.','error');return}var proofToken=token||activeToken();if(!proofToken){say('Confirme o e-mail do comprador antes de enviar o comprovante.','error');return}submit.disabled=true;submit.textContent='Enviando…';say('Enviando comprovante com segurança…');arquivoParaBase64(f,function(b64){invoke('enviarComprovanteLoja',[proofToken,o.id,date.value,form.value,f.type,f.name,b64],function(r){submit.disabled=false;submit.textContent='Enviar comprovante';if(r.ok){say(r.mensagem||'Comprovante enviado. O pedido aguarda validação.',r.avisoResponsaveis==='Falhou'?'warning':'success');if(afterDone)afterDone();else loadOrders()}else say(r.mensagem||'Não foi possível enviar o comprovante.','error')})},function(){submit.disabled=false;submit.textContent='Enviar comprovante';say('Não foi possível ler o arquivo. Selecione o comprovante novamente.','error')})}return wrap}
   function downloadItem(id){invoke('baixarProdutoLoja',[ordersToken(),id],function(r){if(!r.ok)return;var raw=atob(r.base64),bytes=new Uint8Array(raw.length);for(var i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);var blob=new Blob([bytes],{type:r.mimeType||'application/pdf'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=r.nome||'material.pdf';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},1000);say('Download autorizado para este pedido.','success')})}
   function loadManagement(){
     if(!api.user()){api.login();return}
@@ -449,13 +472,11 @@
             }
             if(!f){persist();return}
             save.disabled=true;save.textContent='Lendo PDF…';say('Preparando o arquivo…');
-            var reader=new FileReader();
-            reader.onerror=function(){save.disabled=false;cancel.disabled=false;save.textContent=editing?'Salvar alterações':'Salvar e publicar';say('Não foi possível ler o arquivo. Selecione o PDF novamente.','error')};
-            reader.onload=function(){
-              data.arquivoNome=f.name;data.arquivoMime=f.type;data.arquivoBase64=String(reader.result).split(',')[1]||'';
+            arquivoParaBase64(f,function(b64){
+              data.arquivoNome=f.name;data.arquivoMime=f.type;data.arquivoBase64=b64;
               if(JSON.stringify(data).length>12000000){save.disabled=false;cancel.disabled=false;save.textContent=editing?'Salvar alterações':'Salvar e publicar';say('Este PDF ultrapassa o limite de envio. Escolha um arquivo menor.','error');return}
               persist()
-            };reader.readAsDataURL(f)
+            },function(){save.disabled=false;cancel.disabled=false;save.textContent=editing?'Salvar alterações':'Salvar e publicar';say('Não foi possível ler o PDF. Selecione o arquivo novamente.','error')})
           }
         }
       }

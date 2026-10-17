@@ -2536,12 +2536,38 @@ html[data-theme="claro"] .myarea-payment-actions button:hover:not(:disabled){bac
  body.fin-caixa-printing .fin-caixa-report-table td:last-child{text-align:right!important;font-weight:750!important;color:var(--brand-wine)!important}
 }
 
-/* Padrão único dos cabeçalhos das tabelas — telas do site-teste */
+
+/* Tipografia global: interface limpa, títulos com identidade e leitura consistente */
+:root {
+  --tzc-font-interface: "Segoe UI", Arial, sans-serif;
+  --tzc-font-display: Georgia, serif;
+  --tzc-font-brand: "Arial Black", Arial, sans-serif;
+  --tzc-type-caption: 12px;
+  --tzc-type-label: 14px;
+  --tzc-type-body: 16px;
+  --tzc-type-emphasis: 18px;
+  --tzc-type-section: 23px;
+}
 @media screen {
+  html body {
+    font-family: var(--tzc-font-interface);
+    font-size: var(--tzc-type-body);
+  }
+  body :is(button, input, select, textarea) {
+    font-family: var(--tzc-font-interface);
+  }
+  body :is(h1, h2) {
+    font-family: var(--tzc-font-display);
+  }
+  body .topbar .brand-text {
+    font-family: var(--tzc-font-brand);
+  }
+  /* Cabeçalhos de todas as tabelas, incluindo Meus pedidos */
   body table thead th {
     box-sizing: border-box !important;
     padding: 11px 10px !important;
-    font-size: clamp(12px, calc(1vw + 4px), 14px) !important;
+    font-family: var(--tzc-font-interface) !important;
+    font-size: clamp(var(--tzc-type-caption), calc(1vw + 4px), var(--tzc-type-label)) !important;
     line-height: 1.25 !important;
     font-weight: 750 !important;
     letter-spacing: .01em !important;
@@ -2553,7 +2579,7 @@ html[data-theme="claro"] .myarea-payment-actions button:hover:not(:disabled){bac
   @media (max-width: 640px) {
     body table thead th {
       padding: 8px 7px !important;
-      font-size: 12px !important;
+      font-size: var(--tzc-type-caption) !important;
       line-height: 1.2 !important;
       letter-spacing: 0 !important;
     }

@@ -8,7 +8,7 @@
     b.dataset.tzcAction=label;var text=document.createElement('span');text.textContent=label;
     if(kind==='Cadastrar'){b.classList.add('tzc-create-action');b.replaceChildren(svg(kind),text);return}
     var row=b.closest('tr'),name=row&&row.cells[0]?row.cells[0].textContent.trim():'';
-    b.classList.add('tzc-icon-action');b.classList.toggle('tzc-action-delete',kind==='Excluir');b.setAttribute('aria-label',label+(name?' — '+name:''));b.title=label+(name?' — '+name:'');text.className='tzc-action-label';b.replaceChildren(svg(kind),text);
+    b.classList.add('tzc-icon-action');b.classList.toggle('tzc-action-delete',kind==='Excluir');b.setAttribute('aria-label',label+(name?' — '+name:''));b.title=label;text.className='tzc-action-label';b.replaceChildren(svg(kind),text);
   }
   function scan(scope){if(scope.nodeType!==1)return;if(scope.matches('button'))format(scope);scope.querySelectorAll('button').forEach(format)}
   function start(){scan(document.body);var pending=new Set(),scheduled=false;new MutationObserver(function(records){records.forEach(function(r){var target=r.target.nodeType===1?r.target:r.target.parentElement;var b=target&&target.closest('button');if(b)pending.add(b);r.addedNodes.forEach(function(n){if(n.nodeType===1)pending.add(n)})});if(scheduled||!pending.size)return;scheduled=true;queueMicrotask(function(){scheduled=false;var nodes=Array.from(pending);pending.clear();nodes.forEach(function(n){if(n.isConnected)scan(n)})})}).observe(document.body,{childList:true,subtree:true,characterData:true})}

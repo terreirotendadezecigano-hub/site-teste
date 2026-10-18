@@ -1,8 +1,4 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head><base target="_top"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ponte segura — TZC</title></head>
-<body>
-<script>
+
 /* TZC — PONTE EXTERNA V09 — cadastro de comprador com senha; mantém rotas isoladas da Loja
  * Só aceita chamadas do site-teste e nomes de função desta lista fechada.
  * Minha Área integra o fluxo V07 de comprovantes; a fila só atualiza parcelas após conferência.
@@ -101,7 +97,19 @@
       listarBanhosMembros:{funcao:'TZC_M01_listarBanhosMembrosAutenticados',limites:[100]},
       gerenciarBanhosMembros:{funcao:'TZC_M01_gerenciarBanhosAutenticado',limites:[100]},
       salvarBanho:{funcao:'TZC_M01_salvarBanhoAutenticado',limites:[100,22000]},
-      excluirBanho:{funcao:'TZC_M01_excluirBanhoAutenticado',limites:[100,100]}
+      excluirBanho:{funcao:'TZC_M01_excluirBanhoAutenticado',limites:[100,100]},
+    m08CriarPedidoOracao:{funcao:'TZC_M08_criarPedidoOracao',limites:[3000]},
+    m08ListarPedidosOracao:{funcao:'TZC_M08_listarPedidosOracao',limites:[100]},
+    m08AtualizarPedidoOracao:{funcao:'TZC_M08_atualizarPedidoOracao',limites:[100,100,30]},
+    m08ListarEstoque:{funcao:'TZC_M08_listarEstoque',limites:[100,5]},
+    m08SalvarEstoque:{funcao:'TZC_M08_salvarEstoque',limites:[100,3000]},
+    m08ExcluirEstoque:{funcao:'TZC_M08_excluirEstoque',limites:[100,100]},
+    m08RestaurarEstoque:{funcao:'TZC_M08_restaurarEstoque',limites:[100,100]},
+    m08RegistrarDoacao:{funcao:'TZC_M08_registrarDoacao',limites:[100,3000]},
+    m08ListarAuditoria:{funcao:'TZC_M08_listarAuditoria',limites:[100,5]},
+    m08InstalarGatilhoEmail:{funcao:'TZC_M08_instalarGatilhoEmail',limites:[100]},
+    m08CadastrarAssinante:{funcao:'TZC_M08_cadastrarAssinantePublico',limites:[1000]},
+    m08EnfileirarAviso:{funcao:'TZC_M08_enfileirarAviso',limites:[100,120,600,5]},
   };
   function responder(id,resultado){window.top.postMessage({tipo:'TZC_M02_RESULT',id:id,resultado:resultado},origem)}
   window.addEventListener('message',function(evento){
@@ -116,6 +124,4 @@
   });
   window.top.postMessage({tipo:'TZC_PONTE_PRONTA'},origem);
 })();
-</script>
-</body>
-</html>
+

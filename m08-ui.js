@@ -5,9 +5,11 @@
   'use strict';
   var $=function(id){return document.getElementById(id)};
   var text=function(tag,value,cls){var n=document.createElement(tag);n.textContent=value;if(cls)n.className=cls;return n};
-  var role=function(){return String(window.authUser&&window.authUser.perfil||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase()};
+  var currentUser=function(){return window.TZCLojaAPI&&typeof window.TZCLojaAPI.user==='function'?window.TZCLojaAPI.user():(window.authUser||null)};
+  var currentToken=function(){return window.TZCLojaAPI&&typeof window.TZCLojaAPI.token==='function'?window.TZCLojaAPI.token():(window.authToken||'')};
+  var role=function(){var u=currentUser();return String(u&&u.perfil||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase()};
   var formatDate=function(v){var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?m[3]+'/'+m[2]+'/'+m[1]:String(v||'')};
-  var hasSession=function(){return !!(window.authToken&&window.authUser)};
+  var hasSession=function(){return !!(currentToken()&&currentUser())};
   var norm=function(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase()};
   var canPrayer=function(){return ['pai de santo','mae de santo'].indexOf(role())>=0};
   var canManage=function(){return ['dirigente','administrador'].indexOf(role())>=0};
@@ -52,7 +54,9 @@
     input.id='m08-'+name;input.name=name;if(type!=='textarea')input.type=type;if(required)input.required=true;
     wrap.append(l,input);return {wrap:wrap,input:input};
   }
-  function rpc(action,args,done){if(typeof window.authRpc!=='function'){done({ok:false,mensagem:'A conexão de teste não está disponível.'});return}window.authRpc(action,args,done)}
+  function notify(message){if(typeof window.aviso==='function')window.aviso(message);else window.alert(message)}
+  function openLogin(){if(window.TZCLojaAPI&&typeof window.TZCLojaAPI.login==='function')window.TZCLojaAPI.login();else if(typeof window.memberOpen==='function')window.memberOpen()}
+  function rpc(action,args,done){var send=window.TZCLojaAPI&&window.TZCLojaAPI.rpc||window.authRpc;if(typeof send!=='function'){done({ok:false,mensagem:'A conexão de teste não está disponível.'});return}send(action,args,done)}
   function openPrayer(){
     var root=page('__m08_oracao','Pedido de Oração','Envie seu pedido com carinho. A consulta é restrita à direção espiritual autorizada.');
     if(!root)return;
@@ -78,22 +82,22 @@
     card.appendChild(form);root.appendChild(card);
   }
   function openPrayerInbox(){
-    if(!hasSession()){if(typeof window.memberOpen==='function')window.memberOpen();return}
-    if(!canPrayer()){if(typeof window.aviso==='function')window.aviso('A consulta é restrita a Pai de Santo e Mãe de Santo.');return}
+    if(!hasSession()){openLogin();return}
+    if(!canPrayer()){notify('A consulta é restrita a Pai de Santo e Mãe de Santo.');return}
     var root=page('__m08_oracoes_recebidas','Pedidos de Oração','Lista reservada à direção espiritual autorizada.');
     var card=document.createElement('section');card.className='tzc-m08-card';var msg=text('p','Carregando pedidos…','tzc-m08-status');msg.setAttribute('role','status');card.appendChild(msg);root.appendChild(card);
-    rpc('m08ListarPedidosOracao',[window.authToken],function(r){card.replaceChildren();if(!r||!r.ok){card.append(text('p',r&&r.mensagem||'Não foi possível carregar os pedidos.','tzc-m08-status'));return}
+    rpc('m08ListarPedidosOracao',[currentToken()],function(r){card.replaceChildren();if(!r||!r.ok){card.append(text('p',r&&r.mensagem||'Não foi possível carregar os pedidos.','tzc-m08-status'));return}
       if(!r.pedidos||!r.pedidos.length){card.append(text('p','Nenhum pedido recebido.','tzc-m08-status'));return}
       var wrap=document.createElement('div');wrap.className='tzc-m08-table-wrap';var table=document.createElement('table');table.className='tzc-m08-table';var thead=document.createElement('thead'),tr=document.createElement('tr');
       ['Nome','Nascimento','Motivo da oração','Data','Hora','Status'].forEach(function(x){tr.appendChild(text('th',x))});thead.appendChild(tr);table.appendChild(thead);var body=document.createElement('tbody');
       r.pedidos.forEach(function(x){var row=document.createElement('tr');[x.nome,formatDate(x.dataNascimento),x.motivo,formatDate(x.data),x.hora||'—'].forEach(function(v){row.appendChild(text('td',v||'—'))});
-        var cell=document.createElement('td'),sel=document.createElement('select');['Recebido','Em oração','Concluído'].forEach(function(v){var o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o)});sel.value=x.status||'Recebido';sel.addEventListener('change',function(){sel.disabled=true;rpc('m08AtualizarPedidoOracao',[window.authToken,x.id,sel.value],function(z){sel.disabled=false;if(!z||!z.ok){if(typeof window.aviso==='function')window.aviso(z&&z.mensagem||'Não foi possível atualizar o pedido.')} })});cell.appendChild(sel);row.appendChild(cell);body.appendChild(row)});
+        var cell=document.createElement('td'),sel=document.createElement('select');['Recebido','Em oração','Concluído'].forEach(function(v){var o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o)});sel.value=x.status||'Recebido';sel.addEventListener('change',function(){sel.disabled=true;rpc('m08AtualizarPedidoOracao',[currentToken(),x.id,sel.value],function(z){sel.disabled=false;if(!z||!z.ok)notify(z&&z.mensagem||'Não foi possível atualizar o pedido.')})});cell.appendChild(sel);row.appendChild(cell);body.appendChild(row)});
       table.appendChild(body);wrap.appendChild(table);card.appendChild(wrap);
     });
   }
   function openStock(){
-    if(!hasSession()){if(typeof window.memberOpen==='function')window.memberOpen();return}
-    if(!canManage()){if(typeof window.aviso==='function')window.aviso('A gestão do estoque é restrita à direção e administração.');return}
+    if(!hasSession()){openLogin();return}
+    if(!canManage()){notify('A gestão do estoque é restrita à direção e administração.');return}
     var root=page('__m08_estoque','Estoque e Doações','Acompanhe insumos, mínimos e doações recebidas.');
     var editingId='';var card=document.createElement('section');card.className='tzc-m08-card';var form=document.createElement('form');form.className='tzc-m08-form';
     var name=field('Nome do insumo','text','item',true,false),category=field('Categoria','text','categoria',false,false),unit=field('Unidade','text','unidade',true,false),quantity=field('Quantidade atual','number','quantidade',true,false),minimum=field('Quantidade mínima','number','minimo',true,false),note=field('Observação','textarea','observacao',false,true);
@@ -101,19 +105,19 @@
     form.append(name.wrap,category.wrap,unit.wrap,quantity.wrap,minimum.wrap,note.wrap);
     var actions=document.createElement('div');actions.className='tzc-m08-actions';var save=text('button','Salvar item');save.type='submit';actions.appendChild(save);form.appendChild(actions);
     var msg=text('p','Preencha os campos para cadastrar um insumo.','tzc-m08-status');form.appendChild(msg);
-    form.addEventListener('submit',function(ev){ev.preventDefault();if(save.disabled)return;save.disabled=true;save.textContent='Salvando…';rpc('m08SalvarEstoque',[window.authToken,JSON.stringify({id:editingId,nome:name.input.value,categoria:category.input.value,unidade:unit.input.value,quantidade:quantity.input.value,minimo:minimum.input.value,observacao:note.input.value})],function(r){save.disabled=false;save.textContent='Salvar item';msg.textContent=r&&r.mensagem||'Não foi possível salvar.';if(r&&r.ok){form.reset();editingId='';save.textContent='Salvar item';loadStock()}})});
+    form.addEventListener('submit',function(ev){ev.preventDefault();if(save.disabled)return;save.disabled=true;save.textContent='Salvando…';rpc('m08SalvarEstoque',[currentToken(),JSON.stringify({id:editingId,nome:name.input.value,categoria:category.input.value,unidade:unit.input.value,quantidade:quantity.input.value,minimo:minimum.input.value,observacao:note.input.value})],function(r){save.disabled=false;save.textContent='Salvar item';msg.textContent=r&&r.mensagem||'Não foi possível salvar.';if(r&&r.ok){form.reset();editingId='';save.textContent='Salvar item';loadStock()}})});
     root.appendChild(card);card.appendChild(form);
     var donationCard=document.createElement('section');donationCard.className='tzc-m08-card';var donationForm=document.createElement('form');donationForm.className='tzc-m08-form';
     var dItemWrap=document.createElement('div');dItemWrap.className='tzc-m08-field';var dItemLabel=text('label','Insumo recebido');dItemLabel.htmlFor='m08-doacao-item';var dItem=document.createElement('select');dItem.id='m08-doacao-item';dItem.required=true;dItem.add(new Option('Selecione um insumo',''));dItemWrap.append(dItemLabel,dItem);var dQty=field('Quantidade recebida','number','doacaoQuantidade',true,false),donor=field('Doador (opcional)','text','doador',false,false),dNote=field('Observação','textarea','doacaoObservacao',false,true);
     dQty.input.min='0.01';dQty.input.step='any';donationForm.append(dItemWrap,dQty.wrap,donor.wrap,dNote.wrap);
     var dActions=document.createElement('div');dActions.className='tzc-m08-actions';var dSave=text('button','Registrar doação');dSave.type='submit';dActions.appendChild(dSave);donationForm.appendChild(dActions);
     var dStatus=text('p','Doações ficam registradas para conferência.','tzc-m08-status');dStatus.setAttribute('role','status');donationForm.appendChild(dStatus);
-    donationForm.addEventListener('submit',function(ev){ev.preventDefault();if(dSave.disabled)return;dSave.disabled=true;dSave.textContent='Registrando…';rpc('m08RegistrarDoacao',[window.authToken,JSON.stringify({idItem:dItem.value,quantidade:dQty.input.value,doador:donor.input.value,observacao:dNote.input.value})],function(r){dSave.disabled=false;dSave.textContent='Registrar doação';dStatus.textContent=r&&r.mensagem||'Não foi possível registrar a doação.';if(r&&r.ok){donationForm.reset();loadStock()}})});
+    donationForm.addEventListener('submit',function(ev){ev.preventDefault();if(dSave.disabled)return;dSave.disabled=true;dSave.textContent='Registrando…';rpc('m08RegistrarDoacao',[currentToken(),JSON.stringify({idItem:dItem.value,quantidade:dQty.input.value,doador:donor.input.value,observacao:dNote.input.value})],function(r){dSave.disabled=false;dSave.textContent='Registrar doação';dStatus.textContent=r&&r.mensagem||'Não foi possível registrar a doação.';if(r&&r.ok){donationForm.reset();loadStock()}})});
     donationCard.appendChild(donationForm);root.appendChild(donationCard);
     var list=text('p','Carregando estoque…','tzc-m08-status');var listCard=document.createElement('section');listCard.className='tzc-m08-card';listCard.appendChild(list);root.appendChild(listCard);
-    function loadStock(){rpc('m08ListarEstoque',[window.authToken,'false'],function(r){listCard.replaceChildren();if(!r||!r.ok){listCard.append(text('p',r&&r.mensagem||'Não foi possível carregar o estoque.','tzc-m08-status'));return}dItem.replaceChildren(new Option('Selecione um insumo',''));(r.itens||[]).forEach(function(item){dItem.add(new Option(item.nome+' — '+item.quantidade+' '+item.unidade,item.id))});if(!r.itens||!r.itens.length){listCard.append(text('p','Nenhum insumo cadastrado.','tzc-m08-status'));return}
+    function loadStock(){rpc('m08ListarEstoque',[currentToken(),'false'],function(r){listCard.replaceChildren();if(!r||!r.ok){listCard.append(text('p',r&&r.mensagem||'Não foi possível carregar o estoque.','tzc-m08-status'));return}dItem.replaceChildren(new Option('Selecione um insumo',''));(r.itens||[]).forEach(function(item){dItem.add(new Option(item.nome+' — '+item.quantidade+' '+item.unidade,item.id))});if(!r.itens||!r.itens.length){listCard.append(text('p','Nenhum insumo cadastrado.','tzc-m08-status'));return}
       var wrap=document.createElement('div');wrap.className='tzc-m08-table-wrap';var table=document.createElement('table');table.className='tzc-m08-table';var hd=document.createElement('thead'),hr=document.createElement('tr');['Insumo','Categoria','Quantidade','Mínimo','Ação'].forEach(function(x){hr.appendChild(text('th',x))});hd.appendChild(hr);table.appendChild(hd);var body=document.createElement('tbody');
-      r.itens.forEach(function(item){var tr=document.createElement('tr');[item.nome,item.categoria,item.quantidade+' '+item.unidade,item.minimo+' '+item.unidade].forEach(function(v){tr.appendChild(text('td',v||'—'))});if(item.quantidade<=item.minimo)tr.className='tzc-m08-low';var td=document.createElement('td'),view=text('button','Visualizar'),edit=text('button','Editar'),del=text('button','Mover para lixeira');view.type=edit.type=del.type='button';view.className='secondary';view.addEventListener('click',function(){var info='Insumo: '+item.nome+'\\nCategoria: '+item.categoria+'\\nQuantidade: '+item.quantidade+' '+item.unidade+'\\nMínimo: '+item.minimo+' '+item.unidade+'\\nObservação: '+(item.observacao||'—');if(navigator.share)navigator.share({title:item.nome,text:info}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(info).then(function(){if(typeof window.aviso==='function')window.aviso('Dados copiados para compartilhar.')})});edit.className='secondary';edit.addEventListener('click',function(){editingId=item.id;name.input.value=item.nome;category.input.value=item.categoria;unit.input.value=item.unidade;quantity.input.value=item.quantidade;minimum.input.value=item.minimo;note.input.value=item.observacao||'';save.textContent='Salvar alterações';window.scrollTo({top:card.offsetTop,behavior:'smooth'});msg.textContent='Editando: '+item.nome});del.addEventListener('click',function(){if(!window.confirm('Mover este insumo para a lixeira?'))return;del.disabled=true;rpc('m08ExcluirEstoque',[window.authToken,item.id],function(z){if(!z||!z.ok){del.disabled=false;if(typeof window.aviso==='function')window.aviso(z&&z.mensagem||'Não foi possível excluir.');return}loadStock()})});td.append(view,edit,del);tr.appendChild(td);body.appendChild(tr)});
+      r.itens.forEach(function(item){var tr=document.createElement('tr');[item.nome,item.categoria,item.quantidade+' '+item.unidade,item.minimo+' '+item.unidade].forEach(function(v){tr.appendChild(text('td',v||'—'))});if(item.quantidade<=item.minimo)tr.className='tzc-m08-low';var td=document.createElement('td'),view=text('button','Visualizar'),edit=text('button','Editar'),del=text('button','Mover para lixeira');view.type=edit.type=del.type='button';view.className='secondary';view.addEventListener('click',function(){var info='Insumo: '+item.nome+'\\nCategoria: '+item.categoria+'\\nQuantidade: '+item.quantidade+' '+item.unidade+'\\nMínimo: '+item.minimo+' '+item.unidade+'\\nObservação: '+(item.observacao||'—');if(navigator.share)navigator.share({title:item.nome,text:info}).catch(function(){});else if(navigator.clipboard)navigator.clipboard.writeText(info).then(function(){notify('Dados copiados para compartilhar.')})});edit.className='secondary';edit.addEventListener('click',function(){editingId=item.id;name.input.value=item.nome;category.input.value=item.categoria;unit.input.value=item.unidade;quantity.input.value=item.quantidade;minimum.input.value=item.minimo;note.input.value=item.observacao||'';save.textContent='Salvar alterações';window.scrollTo({top:card.offsetTop,behavior:'smooth'});msg.textContent='Editando: '+item.nome});del.addEventListener('click',function(){if(!window.confirm('Mover este insumo para a lixeira?'))return;del.disabled=true;rpc('m08ExcluirEstoque',[currentToken(),item.id],function(z){if(!z||!z.ok){del.disabled=false;notify(z&&z.mensagem||'Não foi possível excluir.');return}loadStock()})});td.append(view,edit,del);tr.appendChild(td);body.appendChild(tr)});
       table.appendChild(body);wrap.appendChild(table);listCard.appendChild(wrap)
     })}
     loadStock();
@@ -134,5 +138,6 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',syncMenu);else syncMenu();
   if(window.MutationObserver&&$('nav'))new MutationObserver(syncMenu).observe($('nav'),{childList:true});
   window.addEventListener('tzc-auth-change',syncMenu);
+  window.setInterval(syncMenu,1500);
 })();
 

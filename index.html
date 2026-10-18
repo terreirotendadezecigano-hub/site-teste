@@ -6,7 +6,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <script>try{var raizTema=document.documentElement,temaSalvo=localStorage.getItem('tenda-tema');if(temaSalvo==='claro'||temaSalvo==='escuro')raizTema.setAttribute('data-theme',temaSalvo);var paletaSalva=JSON.parse(localStorage.getItem('tzc-paleta-visual-v1')||'null'),hexValido=/^#[0-9a-f]{6}$/i;if(paletaSalva){[['--brand-wine',paletaSalva.vinho],['--cor-principal',paletaSalva.vinho],['--brand-wine2',paletaSalva.vinhoSecundario],['--cor-secundaria',paletaSalva.vinhoSecundario],['--brand-gold',paletaSalva.dourado],['--cor-destaque',paletaSalva.dourado],['--gold',paletaSalva.dourado]].forEach(function(par){if(hexValido.test(String(par[1]||'')))raizTema.style.setProperty(par[0],par[1])})}}catch(e){}</script>
 <meta name="theme-color" content="#f7f3eb">
-<title>Tenda de Zé Cigano — Teste V118</title>
+<title>Tenda de Zé Cigano — Teste V119</title>
 <style>
 /* BASE VISUAL V01 — estilos claros e escuros derivados do dourado e vinho da logo. */
 :root{--cor-principal:#641d29;--cor-secundaria:#7b2934;--cor-destaque:#bd8b38;--cor-fundo-claro:#f7f3eb;--cor-superficie-clara:#fffdf8;--cor-fundo-escuro:#1a1412;--cor-superficie-escura:#2c2220;--fonte-interface:"Segoe UI",Arial,sans-serif;--fonte-titulo:Georgia,serif;--brand-wine:var(--cor-principal);--brand-gold:var(--cor-destaque);--brand-gold-soft:#f3e4c5;--brand-wine2:var(--cor-secundaria);font-family:var(--fonte-interface);color-scheme:light;--bg:var(--cor-fundo-claro);--surface:var(--cor-superficie-clara);--surface2:#efe8dc;--text:#30231f;--muted:#6f625a;--line:#e5d9c9;--primary:var(--cor-principal);--primary2:var(--cor-secundaria);--gold:var(--cor-destaque);--gold-soft:#f3e4c5;--shadow:0 12px 34px #3c20140d;--radius:18px}
@@ -431,12 +431,16 @@ h1,h2,h3,dialog .dialog-head h2{font-family:var(--fonte-titulo,Georgia,serif)}
 /* Agenda print: reset all global page heights/margins so the print sheet starts at page one. */
 @page agenda-page{size:A4 portrait;margin:8mm}
 @media print{html,body{display:block!important;width:auto!important;height:auto!important;min-height:0!important;max-height:none!important;margin:0!important;padding:0!important;overflow:visible!important;background:#fff!important}body.m04-printing{position:static!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;margin:0!important;padding:0!important}body.m04-printing>*:not(#m04PrintRoot){display:none!important}body.m04-printing>#m04PrintRoot.agenda-print-sheet{display:block!important;position:static!important;inset:auto!important;width:auto!important;max-width:none!important;height:auto!important;min-height:0!important;max-height:none!important;box-sizing:border-box!important;margin:0!important;padding:0!important;overflow:visible!important;break-before:avoid-page!important;page-break-before:avoid!important;break-after:auto!important;page-break-after:auto!important;page:agenda-page;background:#fff!important;color:#332823!important}}
-</style><style id="tzc-v118-agenda-modal-footer">
+</style><style id="tzc-v119-agenda-modal-footer">
 .agenda-detail-dialog .dialog-actions{display:flex!important;justify-content:space-between!important;align-items:center!important;flex-wrap:wrap!important;gap:8px!important}
-.agenda-detail-dialog .dialog-actions>button:first-child{background:var(--surface,#fffdf8)!important;color:var(--brand-wine,#641d29)!important;border:2px solid var(--brand-wine,#641d29)!important}
-.agenda-detail-dialog .dialog-actions>button:first-child:hover{background:var(--gold-soft,#f3e4c5)!important}
-@media(min-width:761px){.agenda-detail-dialog .dialog-actions{flex-wrap:nowrap!important}}
-@media(max-width:760px){.agenda-detail-dialog .dialog-actions{justify-content:flex-start!important}.agenda-detail-dialog .dialog-actions>button{flex:1 1 auto;min-width:105px}}
+.agenda-detail-dialog .dialog-actions>.agenda-footer-left,.agenda-detail-dialog .dialog-actions>.agenda-footer-support,.agenda-detail-dialog .dialog-actions>.agenda-footer-right{display:flex;align-items:center;gap:8px;min-width:0}
+.agenda-detail-dialog .dialog-actions>.agenda-footer-left{margin-right:auto}
+.agenda-detail-dialog .dialog-actions>.agenda-footer-support{justify-content:center}
+.agenda-detail-dialog .dialog-actions>.agenda-footer-right{margin-left:auto;justify-content:flex-end}
+.agenda-detail-dialog .agenda-footer-left [data-tzc-role="close"]{background:var(--surface,#fffdf8)!important;color:var(--brand-wine,#641d29)!important;border:2px solid var(--brand-wine,#641d29)!important}
+.agenda-detail-dialog .agenda-footer-left [data-tzc-role="close"]:hover{background:var(--gold-soft,#f3e4c5)!important}
+@media(min-width:761px){.agenda-detail-dialog .dialog-actions{flex-wrap:nowrap!important}.agenda-detail-dialog .agenda-footer-support,.agenda-detail-dialog .agenda-footer-right{flex-wrap:nowrap}}
+@media(max-width:760px){.agenda-detail-dialog .dialog-actions{justify-content:flex-start!important}.agenda-detail-dialog .dialog-actions>.agenda-footer-left{flex:0 0 auto}.agenda-detail-dialog .dialog-actions>.agenda-footer-support,.agenda-detail-dialog .dialog-actions>.agenda-footer-right{flex:1 1 100%;flex-wrap:wrap}.agenda-detail-dialog .agenda-footer-support button,.agenda-detail-dialog .agenda-footer-right button{flex:1 1 120px;min-width:105px}}
 </style></head>
 <body>
 <div id="loadingScreen" hidden role="status" aria-live="polite"><div class="loading-card"><div class="loading-mark" aria-hidden="true"></div><h1>Preparando o site</h1><p id="loadingMessage">Carregando as informações da casa…</p><button class="theme-toggle" id="retryLoad" type="button" hidden>Tentar novamente</button></div></div>

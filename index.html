@@ -2458,6 +2458,14 @@ html[data-theme="escuro"] #dynamicPage .tzc-ervas dialog .ev-dialog-actions butt
 .agenda-print-sheet{display:none;page:agenda-page}
 .agenda-print-mark{display:none}
 @page agenda-page{size:A4 portrait;margin:12mm}
+/* Contraste reforçado no tema escuro para detalhes e ações do evento. */
+.agenda-day-card .agenda-detail-date,.agenda-day-card .agenda-detail-time,.agenda-day-card .agenda-detail-place{color:var(--text)!important;font-weight:600}
+.agenda-day-card .agenda-detail-date::first-letter,.agenda-day-card .agenda-detail-time::first-letter{color:var(--brand-gold,#bd8b38)}
+.agenda-day-card .agenda-detail-description{color:var(--text)}
+[data-theme="escuro"] .agenda-day-card{background:var(--surface2);border-color:var(--line);color:var(--text)}
+[data-theme="escuro"] .agenda-day-card .agenda-detail-date,[data-theme="escuro"] .agenda-day-card .agenda-detail-time,[data-theme="escuro"] .agenda-day-card .agenda-detail-place{color:#fff!important}
+[data-theme="escuro"] .agenda-day-actions .agenda-action-secondary,[data-theme="escuro"] .agenda-detail-dialog .agenda-action-secondary{background:var(--brand-wine,#641d29)!important;border-color:var(--brand-wine,#641d29)!important;color:#fff!important}
+[data-theme="escuro"] .agenda-day-actions .agenda-action,[data-theme="escuro"] .agenda-detail-dialog .agenda-action{box-shadow:0 1px 2px #0006}
 @media(max-width:760px){
  .agenda-filter-bar .events-archive-controls{grid-template-columns:1fr 1fr}
  .agenda-filter-bar .events-archive-controls .events-archive-query{grid-column:1/-1}

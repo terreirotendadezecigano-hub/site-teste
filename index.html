@@ -949,7 +949,7 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
       if(inicio&&fim&&inicio>fim){status.textContent='A data final precisa ser igual ou posterior à data inicial.';return}
       var filtered=all.filter(function(ev){var day=String(ev.data||'').slice(0,10),text=[ev.titulo,ev.local,ev.tipo,ev.descricao].join(' ').toLocaleLowerCase('pt-BR');return(!inicio||day>=inicio)&&(!fim||day<=fim)&&(!query||text.indexOf(query)>=0)}),now=agoraBrasilia_();
       filtered.sort(function(a,b){var ta=dataEvento_(a),tb=dataEvento_(b);if(ta===Number.MAX_SAFE_INTEGER)return tb===Number.MAX_SAFE_INTEGER?0:1;if(tb===Number.MAX_SAFE_INTEGER)return -1;return tb-ta});
-      status.textContent=filtered.length+' eventos';
+      status.textContent='';
       if(!filtered.length){tableHost.appendChild(texto('p','Nenhum evento encontrado para este período.','callout'));return}
       var wrap=document.createElement('div');wrap.className='events-archive-table-wrap';var table=document.createElement('table');table.className='events-archive-table';
       var caption=document.createElement('caption');caption.textContent='Histórico da Agenda';table.appendChild(caption);

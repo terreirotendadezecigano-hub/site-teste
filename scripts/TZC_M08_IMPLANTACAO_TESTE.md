@@ -1,33 +1,37 @@
 # M08 — implementação e validação no SITE-TESTE
 
-Branch isolada: `codex/bloco-autonomo-20261018`, criada a partir da revisão da Agenda. Não houve alteração em `main), site final, planilha ou implantação Apps Script V16.
+Branch isolada: `codex/bloco-autonomo-20261018`, criada a partir da revisão da Agenda. Nenhuma alteração foi feita no site definitivo, na planilha ou na implantação Apps Script V16.
 
 ## Arquivos nesta branch
 
-- `index.html`: corrige a posição dos estilos da revisão da Agenda, consolida variáveis globais de identidade visual, incorpora estilos A4 e carrega o frontend M08.
-- `m08-ui.js`: formulários e listagens responsivos de Pedido de Oração, Pedidos Recebidos, Estoque e Doações.
+- `index.html`: corrige a posição dos estilos da Agenda, mantém as variáveis CSS de identidade visual com fallback e inclui os estilos A4 reutilizáveis; carrega o frontend M08.
+- `m08-ui.js`: formulário público de oração, caixa restrita de pedidos recebidos e telas de estoque/doações em itens.
 - `scripts/TZC_M08_Pedidos_Oracao_Estoque_Auditoria.gs`: backend para as abas e operações M08.
-- `scripts/TZC_M08_IMPLANTACAO_TESTE.md`: roteiro de instalação, permissões e testes.
+- `scripts/TZC_Ponte_Externa_V10_M08.html`: allowlist M08 preparada a partir da ponte V09 versionada no repositório.
+- `scripts/TZC_M08_IMPLANTACAO_TESTE.md`: este roteiro de instalação e teste.
 
 ## Pedido de Oração
 
-- `TZC_M08_criarPedidoOracao(json)` recebe motivo, nome completo e nascimento; o envio é público e a consulta não.
+- `TZC_M08_criarPedidoOracao(json)` recebe motivo, nome completo e nascimento; não oferece leitura pública.
 - `TZC_M08_listarPedidosOracao(token)` e `TZC_M08_atualizarPedidoOracao(token,id,status)` autorizam somente perfis normalizados exatamente como **Pai de Santo** ou **Mãe de Santo**.
-- A auditoria registra criação e alteração sem duplicar o motivo da oração.
-- Para a privacidade alcançar também a planilha, o acesso direto ao arquivo deve ficar restrito a responsáveis confiáveis; um editor do Google Sheets consegue ler as células fora do site.
+- A auditoria registra criação/alteração sem copiar o motivo para o histórico.
+- Para limitar também a leitura direta da planilha, o compartilhamento do Google Sheets precisa ficar restrito a responsáveis confiáveis; um editor consegue ler as células fora do site.
 
 ## Estoque, doações e auditoria
 
-- `TZC_M08_setup()` cria cabeçalhos por nome de coluna, sem limpar dados existentes.
-- O estoque inclui quantidade, unidade, mínimo e exclusão lógica recuperável.
-- Doação em item seleciona um insumo existente; sob trava do Apps Script, registra a doação e atualiza o saldo do estoque. O financeiro em dinheiro não é lançado no Caixa por esta versão.
-- A auditoria registra as ações do M08 com data e hora em campos separados. Os módulos antigos ainda precisam instrumentar suas operações para a auditoria se tornar universal.
-- Os alertas entram em fila somente quando o conteúdo é público. Visitantes só entram na lista de destinatários se existir a coluna `Acesso_Publico` e ela tiver valor afirmativo; membros ativos com e-mail válido recebem os avisos enfileirados.
-- O gatilho de cinco minutos é criado somente ao chamar `TZC_M08_instalarGatilhoEmail` no Apps Script; nenhum gatilho ou autorização externa foi executado.
+- `TZC_M08_setup()` cria as abas/cabeçalhos sem limpar dados existentes.
+- O estoque guarda quantidade, unidade, mínimo e exclusão lógica recuperável.
+- Doação em item seleciona um insumo existente; uma trava do Apps Script registra a doação e atualiza o saldo do estoque na mesma operação.
+- Esta versão não lança doação financeira no Caixa porque o esquema de lançamento e aprovação da tabela Caixa não está mapeado.
+- A auditoria registra operações M08 com data e hora em campos separados. Os módulos antigos ainda precisam chamar o logger para a auditoria se tornar universal.
+- Alertas entram na fila apenas quando o conteúdo é público. Visitantes só recebem e-mail se a tabela tiver a coluna `Acesso_Publico` e um valor afirmativo; membros ativos com e-mail válido recebem os avisos enfileirados.
+- O gatilho de cinco minutos só é criado quando `TZC_M08_instalarGatilhoEmail` for executada no Apps Script. Ele não foi instalado nesta branch.
 
-## Rotas que precisam ser habilitadas na ponte ativa
+## Rotas M08
 
-| Ação RPC | Função Apps Script | Limites por argumento |
+A ponte V10 inclui as rotas abaixo e mantém a validação existente de origem, envelope RPC e limite de argumentos.
+
+| Ação RPC | Função Apps Script | Limites |
 |---|---|---|
 | `m08CriarPedidoOracao` | `TZC_M08_criarPedidoOracao` | 3000 |
 | `m08ListarPedidosOracao` | `TZC_M08_listarPedidosOracao` | 100 |
@@ -41,25 +45,25 @@ Branch isolada: `codex/bloco-autonomo-20261018`, criada a partir da revisão da 
 | `m08InstalarGatilhoEmail` | `TZC_M08_instalarGatilhoEmail` | 100 |
 | `m08EnfileirarAviso` | `TZC_M08_enfileirarAviso` | 100, 120, 600, 5 |
 
-O frontend já chama essas ações. A allowlist ativa está no projeto Apps Script V16, cuja fonte não consta neste repositório; a página de teste deve ser validada só depois de incluir as funções M08 nesse backend e criar uma nova implantação de teste. O arquivo `scripts/TZC-Ponte-Externa-V03.txt` é uma referência versionada e não comprova qual ponte está ativa.
-
 ## Testes realizados no código local
 
-- Sintaxe JavaScript do backend M08 e do frontend: passou.
-- Controle de acesso por perfil: Pai de Santo e Mãe de Santo permitidos; Dirigente, Administrador, usuário inativo e token inválido negados para leitura do Pedido de Oração.
-- Estrutura do HTML: um único fechamento de `body/html`, estilos antes do fechamento, sem conteúdo solto após o documento.
-- Verificadas as regras de impressão A4 e a ordem Calendário → Lista no CSS móvel da Agenda.
+- Sintaxe JavaScript do backend M08, frontend e ponte V10: aprovada.
+- Matriz simulada do acesso a pedidos: Pai/Mãe de Santo permitidos; Dirigente, Administrador, conta inativa e token inválido negados.
+- Estrutura HTML: um fechamento de `body/html`, estilos dentro do documento e sem conteúdo após o fechamento.
+- Verificadas as regras A4, fallback de cores e ordem móvel Calendário → Lista da Agenda.
 
-## Instalação e aceite ponta a ponta
+## Integração ainda necessária no Apps Script
 
-1. Adicionar o arquivo GS no Apps Script de teste como arquivo novo, sem substituir `Código.gs`.
-2. Executar `TZC_M08_setup()`; conferir que as abas foram criadas sem apagar registros.
-3. Copiar as rotas M08 para a allowlist ativa, preservando validação de origem e limites; criar uma nova implantação **de teste**.
-4. Testar envio público fictício e leitura por Pai/Mãe de Santo; testar negação para os outros perfis.
-5. Testar criar/editar item, registrar doação vinculada, atualizar saldo, mover para lixeira e restaurar.
-6. Testar e-mail com endereço controlado e somente conteúdo público.
-7. Instalar o gatilho após revisar a autorização do serviço de e-mail no próprio Apps Script.
+O código da implantação V16 em execução não está neste repositório. A ponte V10 é uma proposta baseada no HTML V09 versionado; antes de copiá-la, é necessário conferir qual arquivo HTML a função `doGet` realmente carrega. Depois:
 
-## Escopo ainda não concluído
+1. Adicionar o GS M08 como arquivo novo no Apps Script de teste, sem substituir `Código.gs).
+2. Executar `TZC_M08_setup()` e conferir as abas sem linhas antigas removidas.
+3. Atualizar a fonte HTML Service ativa com o conteúdo da ponte V10, preservando a função carregada por `doGet`, as rotas atuais e a validação de origem.
+4. Criar uma nova implantação **de teste** do Apps Script.
+5. Testar pedido público fictício; Pai/Mãe de Santo devem conseguir ler/atualizar; os demais perfis e sessões inválidas devem receber negação.
+6. Testar cadastrar/editar item, registrar doação vinculada, conferir saldo, mover para lixeira e restaurar.
+7. Testar e-mail com endereço controlado. Instalar o gatilho somente depois de revisar a autorização do serviço de e-mail no Apps Script.
 
-A aba de configuração de pagamento e o modal de Cloudflare foram mantidos para configuração futura e não receberam segredos. A aplicação do Template Mestre ainda precisa ser migrada e validada em cada função de impressão dos módulos. Banhos, Ervas, Caixa, Mensagem do Dia e Loja ainda não foram normalizados por completo para todos os botões, modais, carregamento e impressão. Os módulos M08 estão preparados em branch, mas ainda dependem das funções e rotas no Apps Script de teste para funcionar de ponta a ponta. Não publicar esta branch no site final.
+## Escopo pendente desta entrega
+
+O modal de Cloudflare e os campos do gateway de pagamento foram mantidos para configuração futura, sem inserir credenciais. O Template Mestre foi adicionado como base reutilizável e a impressão da Agenda mantém A4; ainda é necessário migrar cada função de impressão para o template e validar cada PDF. Banhos, Ervas, Caixa, Mensagem do Dia e Loja não foram totalmente normalizados para todos os botões, modais e estados de carregamento. O M08 está em branch e precisa da instalação Apps Script para passar pelo teste ponta a ponta. Não mesclar ao site final.

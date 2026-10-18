@@ -354,6 +354,7 @@ html:not([data-theme="escuro"]) .m05-row-actions .tzc-icon-action:hover{backgrou
 </style>
 <style id="tzc-agenda-a4-mobile-final">
 /* Tokens institucionais: usados pela Agenda e impressão e persistidos a partir da paleta da casa. */
+h1,h2,h3,dialog .dialog-head h2{font-family:var(--fonte-titulo,Georgia,serif)}
 .agenda-filter-bar,.agenda-calendar-layout{min-width:0;max-width:100%;overflow-x:hidden}
 .agenda-calendar-layout>*{min-width:0}
 .tzc-event-qr-dialog{width:min(480px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto}
@@ -1366,7 +1367,7 @@ function abrirPaginaErvas(){
   function menuOpen(open){var side=el('sidebar'),back=el('menuBackdrop'),button=el('menuToggle');if(!side||!back||!button)return;classe(side,'open',open);classe(back,'open',open);side.setAttribute('aria-hidden',open?'false':'true');back.setAttribute('aria-hidden',open?'false':'true');button.setAttribute('aria-expanded',open?'true':'false')}
   function closeMenu(){menuOpen(false)}
   function outside(event){if(!el('sidebar').classList.contains('open'))return;if(el('sidebar').contains(event.target)||el('menuToggle').contains(event.target))return;closeMenu()}
-  function themeSet(value){document.documentElement.setAttribute('data-theme',value);try{localStorage.setItem('tenda-tema',value)}catch(e){}var dark=value==='escuro';if(tzcCoresAtivas)atualizarCores(tzcCoresAtivas);el('themeLabel').textContent=dark?'Tema claro':'Tema escuro';el('themeIcon').textContent=dark?'☀':'☾';document.querySelector('meta[name="theme-color"]').content=dark?'#191315':'#f7f3eb'}
+  function themeSet(value){document.documentElement.setAttribute('data-theme',value);try{localStorage.setItem('tenda-tema',value)}catch(e){}var dark=value==='escuro';if(tzcCoresAtivas)atualizarCores(tzcCoresAtivas);el('themeLabel').textContent=dark?'Tema claro':'Tema escuro';el('themeIcon').textContent=dark?'☀':'☾';document.querySelector('meta[name="theme-color"]').content=dark?'#1a1412':'#f7f3eb'}
   function themeToggle(){themeSet(document.documentElement.getAttribute('data-theme')==='escuro'?'claro':'escuro')}
   function copiarPix(){if(!chavePix){aviso('A chave Pix não foi cadastrada.');return}if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(chavePix).then(function(){aviso('Chave Pix copiada.')},function(){aviso('Não foi possível copiar a chave Pix.')});else aviso('Copie a chave Pix nas configurações da casa.')}
   function cfgElemento(tag, texto, classe){var n=document.createElement(tag);if(texto)n.textContent=texto;if(classe)n.className=classe;return n}

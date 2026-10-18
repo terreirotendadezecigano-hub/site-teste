@@ -15,7 +15,7 @@ const TZC_M08 = {
 const TZC_M08_HEADERS = {
   Pedidos_Oracao: ['ID_Pedido','Motivo_Oracao','Nome_Completo','Data_Nascimento','Status','Data_Criacao','Hora_Criacao','Data_Atualizacao','Hora_Atualizacao','Excluido'],
   Estoque_Insumos: ['ID_Item','Nome_Item','Categoria','Unidade','Quantidade_Atual','Quantidade_Minima','Observacao','Data_Criacao','Hora_Criacao','Data_Atualizacao','Hora_Atualizacao','Excluido'],
-  Doacoes_Insumos: ['ID_Doacao','ID_Item','Nome_Item','Quantidade','Unidade','Nome_Doador','Observacao','Status_Caixa','Data_Criacao','Hora_Criacao','Excluido'],
+  Doacoes_Insumos: ['ID_Doacao','ID_Item','Nome_Item','Quantidade','Unidade','Nome_Doador','Observacao','Status','Data_Criacao','Hora_Criacao','Excluido'],
   Auditoria_Universal: ['ID_Auditoria','Modulo','ID_Registro','Acao','Usuario_Email','Data','Hora','Resumo'],
   Fila_Alertas_Email: ['ID_Alerta','Titulo','Resumo_Publico','Acesso_Publico','Status','Data_Criacao','Hora_Criacao','Data_Envio','Hora_Envio','Resultado']
 };
@@ -117,15 +117,31 @@ function TZC_M08_restaurarEstoque(token,id) { return tzcM08_restore_(token,TZC_M
 function TZC_M08_registrarDoacao(token,json) {
   try {
     var user=tzcM08_requireRole_(token,['dirigente','administrador']);
-    var d=JSON.parse(String(json||'{}')), nome=tzcM08_text_(d.nome,120,true), unidade=tzcM08_text_(d.unidade,24,true);
-    var qtd=Number(d.quantidade); if(!isFinite(qtd)||qtd<=0)throw new Error('Informe uma quantidade maior que zero.');
-    var sh=tzcM08_sheet_(TZC_M08.DOACOES),id=Utilities.getUuid(),now=new Date();
-    var idItem=String(d.idItem||'');
-    tzcM08_append_(TZC_M08.DOACOES,{ID_Doacao:id,ID_Item:idItem,Nome_Item:nome,Quantidade:qtd,Unidade:unidade,
-      Nome_Doador:tzcM08_text_(d.doador,120,false),Observacao:tzcM08_text_(d.observacao,500,false),
-      Status_Caixa:'Pendente de conferência',Data_Criacao:tzcM08_date_(now),Hora_Criacao:tzcM08_time_(now),Excluido:false});
-    tzcM08_audit_('Doações',id,'Registrado','Doação registrada; lançamento financeiro aguarda conferência.',user.email);
-    return {ok:true,id:id,mensagem:'Doação registrada para conferência.'};
+    var d=JSON.parse(String(json||'{}')), idItem=String(d.idItem||'').trim(), qtd=Number(d.quantidade);
+    var doador=tzcM08_text_(d.doador,120,false), observacao=tzcM08_text_(d.observacao,500,false);
+    if(!idItem)throw new Error('Selecione o insumo recebido.');
+    if(!isFinite(qtd)||qtd<=0)throw new Error('Informe uma quantidade maior que zero.');
+    var lock=LockService.getScriptLock();lock.waitLock(10000);
+    var stock,stockRow,oldQuantity,now=new Date(),id=Utilities.getUuid();
+    try {
+      stock=tzcM08_sheet_(TZC_M08.ESTOQUE);stockRow=tzcM08_findRow_(stock,'ID_Item',idItem);
+      if(!stockRow)throw new Error('Item de estoque não encontrado.');
+      var item=tzcM08_read_(TZC_M08.ESTOQUE).filter(function(x){return String(x.ID_Item)===idItem;})[0];
+      if(!item||tzcM08_yes_(item.Excluido))throw new Error('O insumo selecionado não está ativo.');
+      oldQuantity=Number(item.Quantidade_Atual)||0;
+      var unit=String(item.Unidade||'');
+      tzcM08_set_(stock,stockRow,{Quantidade_Atual:oldQuantity+qtd,Data_Atualizacao:tzcM08_date_(now),Hora_Atualizacao:tzcM08_time_(now)});
+      try {
+        tzcM08_appendUnlocked_(TZC_M08.DOACOES,{ID_Doacao:id,ID_Item:idItem,Nome_Item:String(item.Nome_Item),
+          Quantidade:qtd,Unidade:unit,Nome_Doador:doador,Observacao:observacao,Status:'Recebida',
+          Data_Criacao:tzcM08_date_(now),Hora_Criacao:tzcM08_time_(now),Excluido:false});
+      } catch(writeError) {
+        tzcM08_set_(stock,stockRow,{Quantidade_Atual:oldQuantity,Data_Atualizacao:tzcM08_date_(now),Hora_Atualizacao:tzcM08_time_(now)});
+        throw writeError;
+      }
+    } finally { lock.releaseLock(); }
+    tzcM08_audit_('Doações',id,'Registrado','Doação em item recebida; saldo do estoque atualizado.',user.email);
+    return {ok:true,id:id,mensagem:'Doação registrada e saldo do estoque atualizado.'};
   } catch(e) { return {ok:false,mensagem:e.message || 'Não foi possível registrar a doação.'}; }
 }
 
@@ -230,6 +246,10 @@ function tzcM08_sheet_(name) {
   var headers=TZC_M08_HEADERS[name]||[];
   if(!sh.getLastRow()&&headers.length)sh.getRange(1,1,1,headers.length).setValues([headers]);
   return sh;
+}
+function tzcM08_appendUnlocked_(name,values) {
+  var sh=tzcM08_sheet_(name),headers=sh.getRange(1,1,1,sh.getLastColumn()).getDisplayValues()[0],row=headers.map(function(h){return Object.prototype.hasOwnProperty.call(values,h)?values[h]:'';});
+  sh.appendRow(row);
 }
 function tzcM08_append_(name,values) {
   var sh=tzcM08_sheet_(name),headers=sh.getRange(1,1,1,sh.getLastColumn()).getDisplayValues()[0],row=headers.map(function(h){return Object.prototype.hasOwnProperty.call(values,h)?values[h]:'';});

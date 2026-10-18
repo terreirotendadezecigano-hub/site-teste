@@ -1,12 +1,12 @@
 <!doctype html>
-<!-- TZC SITE V104 — Cabeçalho padronizado e refinamento visual da loja. Site-teste.
+<!-- TZC SITE V115 — Correção de contraste e alinhamento do modal da Agenda. Site-teste.
  * Revisão final de acesso: membro não edita cadastro próprio, não cria/altera pagamentos e não exclui dados; aplicar junto à matriz de perfis antes de publicar. -->
 <html lang="pt-BR" data-theme="claro">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <script>try{var raizTema=document.documentElement,temaSalvo=localStorage.getItem('tenda-tema');if(temaSalvo==='claro'||temaSalvo==='escuro')raizTema.setAttribute('data-theme',temaSalvo);var paletaSalva=JSON.parse(localStorage.getItem('tzc-paleta-visual-v1')||'null'),hexValido=/^#[0-9a-f]{6}$/i;if(paletaSalva){[['--brand-wine',paletaSalva.vinho],['--cor-principal',paletaSalva.vinho],['--brand-wine2',paletaSalva.vinhoSecundario],['--cor-secundaria',paletaSalva.vinhoSecundario],['--brand-gold',paletaSalva.dourado],['--cor-destaque',paletaSalva.dourado],['--gold',paletaSalva.dourado]].forEach(function(par){if(hexValido.test(String(par[1]||'')))raizTema.style.setProperty(par[0],par[1])})}}catch(e){}</script>
 <meta name="theme-color" content="#f7f3eb">
-<title>Tenda de Zé Cigano — Teste V114</title>
+<title>Tenda de Zé Cigano — Teste V115</title>
 <style>
 /* BASE VISUAL V01 — estilos claros e escuros derivados do dourado e vinho da logo. */
 :root{--cor-principal:#641d29;--cor-secundaria:#7b2934;--cor-destaque:#bd8b38;--cor-fundo-claro:#f7f3eb;--cor-superficie-clara:#fffdf8;--cor-fundo-escuro:#1a1412;--cor-superficie-escura:#2c2220;--fonte-interface:"Segoe UI",Arial,sans-serif;--fonte-titulo:Georgia,serif;--brand-wine:var(--cor-principal);--brand-gold:var(--cor-destaque);--brand-gold-soft:#f3e4c5;--brand-wine2:var(--cor-secundaria);font-family:var(--fonte-interface);color-scheme:light;--bg:var(--cor-fundo-claro);--surface:var(--cor-superficie-clara);--surface2:#efe8dc;--text:#30231f;--muted:#6f625a;--line:#e5d9c9;--primary:var(--cor-principal);--primary2:var(--cor-secundaria);--gold:var(--cor-destaque);--gold-soft:#f3e4c5;--shadow:0 12px 34px #3c20140d;--radius:18px}
@@ -2821,6 +2821,46 @@ dialog.agenda-detail-dialog .agenda-footer-right .agenda-action-secondary{backgr
  dialog.agenda-detail-dialog .agenda-modal-footer .tzc-modal-support-actions{justify-content:center}
 }
 @media print{dialog.agenda-detail-dialog{display:none!important}}
+</style>
+<style id="tzc-agenda-footer-contrast-v115">
+/* V115: contraste explícito e grupos alinhados no modal de eventos. */
+dialog.agenda-detail-dialog{width:min(960px,calc(100vw - 28px))!important;max-width:min(960px,calc(100vw - 28px))!important}
+dialog.agenda-detail-dialog .agenda-modal-footer{display:flex!important;justify-content:space-between!important;align-items:center!important;flex-wrap:wrap!important;gap:8px!important;width:100%;min-width:0}
+dialog.agenda-detail-dialog .agenda-footer-left,dialog.agenda-detail-dialog .agenda-footer-support,dialog.agenda-detail-dialog .agenda-footer-right{display:flex!important;align-items:center!important;gap:6px!important;min-width:0}
+dialog.agenda-detail-dialog .agenda-footer-left{flex:0 0 auto}
+dialog.agenda-detail-dialog .agenda-footer-support{flex:1 1 auto;justify-content:center}
+dialog.agenda-detail-dialog .agenda-footer-right{flex:0 0 auto;justify-content:flex-end}
+dialog.agenda-detail-dialog .agenda-footer-support .tzc-modal-support-actions{display:flex!important;align-items:center!important;justify-content:center!important;flex-wrap:nowrap!important;gap:6px!important;width:auto!important;min-width:0;padding:0!important;border:0!important;background:transparent!important}
+dialog.agenda-detail-dialog .agenda-modal-footer button,dialog.agenda-detail-dialog .agenda-modal-footer a{display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto;min-width:0;min-height:44px;padding:9px 10px!important;border-radius:10px!important;font:700 13px/1.2 var(--fonte-interface,"Segoe UI",Arial,sans-serif)!important;text-align:center;text-decoration:none;white-space:nowrap}
+dialog.agenda-detail-dialog .agenda-footer-left .agenda-action{background:#641d29!important;color:#fff!important;border:1px solid #641d29!important}
+dialog.agenda-detail-dialog .agenda-footer-support .tzc-modal-action{background:transparent!important;color:var(--cor-principal,#641d29)!important;border:1px solid var(--cor-destaque,#bd8b38)!important}
+dialog.agenda-detail-dialog .agenda-footer-right .agenda-action,dialog.agenda-detail-dialog .agenda-footer-right .agenda-whatsapp-button{background:#641d29!important;color:#fff!important;border:1px solid #641d29!important}
+dialog.agenda-detail-dialog .agenda-footer-right .agenda-action-secondary{background:transparent!important;color:var(--cor-principal,#641d29)!important;border:1px solid var(--cor-destaque,#bd8b38)!important}
+.tzc-agenda-tab{color:var(--text,#30231f)!important}
+.tzc-agenda-tab strong{color:var(--cor-principal,#641d29)!important}
+.tzc-agenda-tab[aria-selected="true"]{background:var(--cor-destaque,#bd8b38)!important;border-color:var(--cor-destaque,#bd8b38)!important;color:#241b19!important}
+.tzc-agenda-tab[aria-selected="true"] strong{color:#241b19!important}
+[data-theme="escuro"] .tzc-agenda-tab:not([aria-selected="true"]){color:#f8f0e8!important}
+[data-theme="escuro"] .tzc-agenda-tab:not([aria-selected="true"]) strong{color:#f8f0e8!important}
+[data-theme="escuro"] dialog.agenda-detail-dialog .agenda-footer-support .tzc-modal-action{background:transparent!important;color:#f7f3eb!important;border-color:#bd8b38!important}
+[data-theme="escuro"] dialog.agenda-detail-dialog .agenda-footer-right .agenda-action-secondary{background:transparent!important;color:#f7f3eb!important;border-color:#bd8b38!important}
+@media(min-width:761px){
+ dialog.agenda-detail-dialog .agenda-modal-footer{flex-wrap:nowrap!important}
+ dialog.agenda-detail-dialog .agenda-footer-support{flex:1 1 auto}
+ dialog.agenda-detail-dialog .agenda-footer-right{flex-wrap:nowrap!important}
+}
+@media(max-width:760px){
+ dialog.agenda-detail-dialog .agenda-modal-footer{flex-direction:column!important;align-items:stretch!important;gap:10px!important}
+ dialog.agenda-detail-dialog .agenda-footer-left,dialog.agenda-detail-dialog .agenda-footer-support,dialog.agenda-detail-dialog .agenda-footer-right{width:100%;justify-content:center!important}
+ dialog.agenda-detail-dialog .agenda-footer-left .agenda-action{min-width:120px}
+ dialog.agenda-detail-dialog .agenda-footer-support .tzc-modal-support-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;width:100%!important}
+ dialog.agenda-detail-dialog .agenda-footer-support .tzc-modal-action{width:100%;padding:8px 4px!important;font-size:12px!important;white-space:normal!important}
+ dialog.agenda-detail-dialog .agenda-footer-right{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))!important}
+ dialog.agenda-detail-dialog .agenda-footer-right>*{width:100%}
+}
+@media(max-width:360px){
+ dialog.agenda-detail-dialog .agenda-footer-support .tzc-modal-support-actions{grid-template-columns:1fr!important}
+}
 </style>
 <script id="tzc-v112-deeplink-modal-agenda">
 (function(){

@@ -1,21 +1,13 @@
 # Site-teste — Tenda de Zé Cigano
 
-Este repositório publica o ambiente de teste do site. A página é servida pelo GitHub Pages na branch `main`.
+Este repositório publica o ambiente de teste do site pela branch `main`.
 
 ## Arquivos de execução
 
-- `index.html`: página principal e ponte de comunicação com o backend.
+- `index.html`: página principal, estilos, menu e ponte de comunicação.
 - `listagens.js`, `loja.js`, `m08-ui.js`, `multicanal.js` e `qrcode.js`: módulos de interface carregados pela página.
-- `tests/multicanal.test.cjs`: testes locais do módulo multicanal.
+- Backend: a URL da implantação web do Google Apps Script está centralizada em `APP_WEB_URL`, no `index.html`.
 
-A página usa uma implantação web do Google Apps Script configurada em `APP_WEB_URL` dentro de `index.html`. O código-fonte da implantação fica no editor do Apps Script e não é uma cópia versionada neste repositório. A limpeza removeu snapshots e fragmentos antigos; não alterou a implantação nem a planilha.
+A implantação Apps Script é externa a este repositório e não foi alterada nesta limpeza. O repositório não contém cópias antigas ou fragmentos do backend. A quantidade de arquivos-fonte `.gs` na implantação deve ser conferida e consolidada no editor do Apps Script, pois o projeto implantado não está disponível por este repositório.
 
-## Verificação local
-
-Execute os testes multicanal com Node.js:
-
-```sh
-node --test tests/multicanal.test.cjs
-```
-
-Use dados fictícios no ambiente de teste. Este repositório é separado do site final.
+Este ambiente é separado do site final. Use dados fictícios durante a validação.

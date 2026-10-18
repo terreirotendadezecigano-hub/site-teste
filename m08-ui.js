@@ -122,16 +122,16 @@
     })}
     loadStock();
   }
-  function addMenuButton(nav,id,label,action){
-    if($(id))return;var b=document.createElement('button');b.type='button';b.id=id;b.setAttribute('data-page-id',id);b.appendChild(text('span','✦','ico'));b.appendChild(document.createTextNode(label));b.addEventListener('click',function(){action();if(typeof window.closeMenu==='function')window.closeMenu()});nav.appendChild(b);
+  function addMenuButton(nav,id,label,action,iconName){
+    if($(id))return;var b=document.createElement('button');b.type='button';b.id=id;b.setAttribute('data-page-id',id);var holder=text('span','','ico');if(typeof window.TZCIconeSVG==='function')holder.appendChild(window.TZCIconeSVG(iconName));else holder.textContent='•';b.appendChild(holder);b.appendChild(document.createTextNode(label));b.addEventListener('click',function(){action();if(typeof window.closeMenu==='function')window.closeMenu()});nav.appendChild(b);
   }
   function syncMenu(){
     var nav=$('nav');if(!nav)return;
-    addMenuButton(nav,'tzcM08PrayerButton','Pedido de Oração',openPrayer);
-    addMenuButton(nav,'tzcM08AlertsButton','Avisos públicos por e-mail',openAlerts);
-    if(hasSession()&&canPrayer())addMenuButton(nav,'tzcM08InboxButton','Pedidos recebidos',openPrayerInbox);
+    addMenuButton(nav,'tzcM08PrayerButton','Pedido de Oração',openPrayer,'candle');
+    addMenuButton(nav,'tzcM08AlertsButton','Avisos públicos por e-mail',openAlerts,'mail');
+    if(hasSession()&&canPrayer())addMenuButton(nav,'tzcM08InboxButton','Pedidos recebidos',openPrayerInbox,'candle');
     else if($('tzcM08InboxButton'))$('tzcM08InboxButton').remove();
-    if(hasSession()&&canManage())addMenuButton(nav,'tzcM08StockButton','Estoque e Doações',openStock);
+    if(hasSession()&&canManage())addMenuButton(nav,'tzcM08StockButton','Estoque e Doações',openStock,'inventory');
     else if($('tzcM08StockButton'))$('tzcM08StockButton').remove();
   }
   window.TZCM08UI={abrirPedido:openPrayer,abrirRecebidos:openPrayerInbox,abrirEstoque:openStock,abrirAvisos:openAlerts};

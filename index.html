@@ -2614,4 +2614,38 @@ html[data-theme="escuro"] #dynamicPage .tzc-ervas dialog .ev-dialog-actions butt
 .tzc-master-pdf .tzc-master-footer{margin-top:12mm;padding-top:6px;border-top:1px solid #e5d9c9;text-align:center;color:#6f625a;font:8pt/1.3 var(--fonte-interface,"Segoe UI",Arial,sans-serif}
 @media print{.tzc-master-pdf{width:210mm!important;max-width:210mm!important;min-height:297mm!important;margin:0!important;padding:12mm!important;background:#fff!important;color:#30231f!important;box-shadow:none!important}.tzc-master-pdf .tzc-master-header,.tzc-master-pdf .tzc-master-highlight,.tzc-master-pdf th,.tzc-master-pdf tbody tr:nth-child(even){-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 </style>
-<script src="./m08-ui.js?v=20261018-2" defer></script></body></html>
+<script src="./m08-ui.js?v=20261018-2" defer></script><script id="tzc-menu-safety-fix">
+(function(){
+  'use strict';
+  function setMenu(open){
+    var side=document.getElementById('sidebar');
+    var backdrop=document.getElementById('menuBackdrop');
+    var button=document.getElementById('menuToggle');
+    if(!side||!backdrop||!button)return;
+    side.classList.toggle('open',!!open);
+    backdrop.classList.toggle('open',!!open);
+    side.setAttribute('aria-hidden',open?'false':'true');
+    backdrop.setAttribute('aria-hidden',open?'false':'true');
+    button.setAttribute('aria-expanded',open?'true':'false');
+    button.setAttribute('aria-label',open?'Fechar menu':'Abrir menu');
+  }
+  document.addEventListener('click',function(event){
+    var toggle=event.target&&event.target.closest?event.target.closest('#menuToggle'):null;
+    if(toggle){
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      var side=document.getElementById('sidebar');
+      setMenu(!(side&&side.classList.contains('open')));
+      return;
+    }
+    var backdrop=event.target&&event.target.closest?event.target.closest('#menuBackdrop'):null;
+    var side=document.getElementById('sidebar');
+    if(backdrop){setMenu(false);return}
+    if(side&&side.classList.contains('open')&&!side.contains(event.target))setMenu(false);
+  },true);
+  document.addEventListener('keydown',function(event){
+    if(event.key==='Escape')setMenu(false);
+  },true);
+})();
+</script></body></html>

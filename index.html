@@ -1,12 +1,12 @@
 <!doctype html>
-<!-- TZC SITE V147 — prévia unificada, deeplinks e ações da Agenda padronizadas. Site-teste.
+<!-- TZC SITE V148 — prévia unificada, deeplinks e ações da Agenda padronizadas. Site-teste.
  * Revisão final de acesso: membro não edita cadastro próprio, não cria/altera pagamentos e não exclui dados; aplicar junto à matriz de perfis antes de publicar. -->
 <html lang="pt-BR" data-theme="claro">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <script>try{var raizTema=document.documentElement,temaSalvo=localStorage.getItem('tenda-tema');if(temaSalvo==='claro'||temaSalvo==='escuro')raizTema.setAttribute('data-theme',temaSalvo);var paletaSalva=JSON.parse(localStorage.getItem('tzc-paleta-visual-v1')||'null'),hexValido=/^#[0-9a-f]{6}$/i;if(paletaSalva){[['--brand-wine',paletaSalva.vinho],['--cor-principal',paletaSalva.vinho],['--brand-wine2',paletaSalva.vinhoSecundario],['--cor-secundaria',paletaSalva.vinhoSecundario],['--brand-gold',paletaSalva.dourado],['--cor-destaque',paletaSalva.dourado],['--gold',paletaSalva.dourado]].forEach(function(par){if(hexValido.test(String(par[1]||'')))raizTema.style.setProperty(par[0],par[1])})}}catch(e){}</script>
-<meta name="theme-color" content="#f7f3eb"><meta name="tzc-build" content="147">
-<title>Tenda de Zé Cigano — Teste V147</title>
+<meta name="theme-color" content="#f7f3eb"><meta name="tzc-build" content="148">
+<title>Tenda de Zé Cigano — Teste V148</title>
 <style>
 /* BASE VISUAL V01 — estilos claros e escuros derivados do dourado e vinho da logo. */
 :root{--cor-principal:#641d29;--cor-secundaria:#7b2934;--cor-destaque:#bd8b38;--cor-fundo-claro:#f7f3eb;--cor-superficie-clara:#fffdf8;--cor-fundo-escuro:#1a1412;--cor-superficie-escura:#2c2220;--fonte-interface:"Segoe UI",Arial,sans-serif;--fonte-titulo:Georgia,serif;--brand-wine:var(--cor-principal);--brand-gold:var(--cor-destaque);--brand-gold-soft:#f3e4c5;--brand-wine2:var(--cor-secundaria);font-family:var(--fonte-interface);color-scheme:light;--bg:var(--cor-fundo-claro);--surface:var(--cor-superficie-clara);--surface2:#efe8dc;--text:#30231f;--muted:#6f625a;--line:#e5d9c9;--primary:var(--cor-principal);--primary2:var(--cor-secundaria);--gold:var(--cor-destaque);--gold-soft:#f3e4c5;--shadow:0 12px 34px #3c20140d;--radius:18px}
@@ -3575,5 +3575,11 @@ html[data-theme="escuro"] dialog.tzc-modal-pdf-preview .tzc-preview-primary butt
  body.tzc-modal-printing>#tzc-modal-print-root .tzc-master-watermark{width:78mm!important;height:78mm!important;opacity:.025!important}
  body.tzc-modal-printing>#tzc-modal-print-root .tzc-master-content{max-width:100%!important;overflow:visible!important}
 }
+
+/* V148 — a ação principal fica no extremo direito; Fechar imediatamente antes dela. */
+dialog .tzc-modal-primary-group>.tzc-close-right-action{order:999!important}
+dialog .tzc-modal-primary-group>button:is([data-tzc-role="save"],[data-tzc-role="confirm"],[data-tzc-role="attendance"],[data-tzc-role="print"],.primary){order:1000!important}
+dialog .tzc-preview-primary>.tzc-close-right-action{order:0!important}
+dialog .tzc-preview-primary>[data-tzc-role="print"]{order:1!important}
 </style>
 </body></html>

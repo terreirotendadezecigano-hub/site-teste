@@ -1,12 +1,12 @@
 <!doctype html>
-<!-- TZC SITE V142 — prévia A4 da Agenda e cores de ação padronizadas. Site-teste.
+<!-- TZC SITE V143 — prévia A4 da Agenda e cores de ação padronizadas. Site-teste.
  * Revisão final de acesso: membro não edita cadastro próprio, não cria/altera pagamentos e não exclui dados; aplicar junto à matriz de perfis antes de publicar. -->
 <html lang="pt-BR" data-theme="claro">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <script>try{var raizTema=document.documentElement,temaSalvo=localStorage.getItem('tenda-tema');if(temaSalvo==='claro'||temaSalvo==='escuro')raizTema.setAttribute('data-theme',temaSalvo);var paletaSalva=JSON.parse(localStorage.getItem('tzc-paleta-visual-v1')||'null'),hexValido=/^#[0-9a-f]{6}$/i;if(paletaSalva){[['--brand-wine',paletaSalva.vinho],['--cor-principal',paletaSalva.vinho],['--brand-wine2',paletaSalva.vinhoSecundario],['--cor-secundaria',paletaSalva.vinhoSecundario],['--brand-gold',paletaSalva.dourado],['--cor-destaque',paletaSalva.dourado],['--gold',paletaSalva.dourado]].forEach(function(par){if(hexValido.test(String(par[1]||'')))raizTema.style.setProperty(par[0],par[1])})}}catch(e){}</script>
-<meta name="theme-color" content="#f7f3eb"><meta name="tzc-build" content="142">
-<title>Tenda de Zé Cigano — Teste V142</title>
+<meta name="theme-color" content="#f7f3eb"><meta name="tzc-build" content="143">
+<title>Tenda de Zé Cigano — Teste V143</title>
 <style>
 /* BASE VISUAL V01 — estilos claros e escuros derivados do dourado e vinho da logo. */
 :root{--cor-principal:#641d29;--cor-secundaria:#7b2934;--cor-destaque:#bd8b38;--cor-fundo-claro:#f7f3eb;--cor-superficie-clara:#fffdf8;--cor-fundo-escuro:#1a1412;--cor-superficie-escura:#2c2220;--fonte-interface:"Segoe UI",Arial,sans-serif;--fonte-titulo:Georgia,serif;--brand-wine:var(--cor-principal);--brand-gold:var(--cor-destaque);--brand-gold-soft:#f3e4c5;--brand-wine2:var(--cor-secundaria);font-family:var(--fonte-interface);color-scheme:light;--bg:var(--cor-fundo-claro);--surface:var(--cor-superficie-clara);--surface2:#efe8dc;--text:#30231f;--muted:#6f625a;--line:#e5d9c9;--primary:var(--cor-principal);--primary2:var(--cor-secundaria);--gold:var(--cor-destaque);--gold-soft:#f3e4c5;--shadow:0 12px 34px #3c20140d;--radius:18px}
@@ -3474,6 +3474,39 @@ html[data-theme] .agenda-calendar-layout .agenda-calendar-grid button.agenda-day
 }
 html[data-theme] .agenda-calendar-layout .agenda-calendar-grid button.agenda-day.has-events:not(.selected){
  border-color:#641d29!important;color:#641d29!important
+}
+
+/* V143 — sobrescreve estilos antigos de prioridade alta nos controles do módulo Agenda. */
+html body #dynamicPage .data-page-toolbar button.primary,
+html body #dynamicPage .agenda-calendar-layout .agenda-calendar-top button.primary,
+html body #dynamicPage .agenda-calendar-layout .agenda-event-item button.agenda-attendance-button,
+html body #dynamicPage .agenda-calendar-layout .agenda-card-actions button.tzc-icon-action,
+html body #dynamicPage .agenda-calendar-layout .agenda-event-item a.agenda-whatsapp,
+html body #dynamicPage .agenda-results-toolbar button.agenda-print-button,
+html body #dynamicPage .agenda-calendar-layout button.tzc-period-apply,
+html body #dynamicPage .agenda-calendar-layout button.tzc-period-clear{
+ background:#641d29!important;border:1.5px solid #641d29!important;color:#fff!important
+}
+html body #dynamicPage .agenda-calendar-layout .agenda-calendar-grid button.agenda-day{
+ background:#fffdf8!important;color:#30231f!important;border-color:#d9cbb8!important
+}
+html body #dynamicPage .agenda-calendar-layout .agenda-calendar-grid button.agenda-day.selected{
+ background:#641d29!important;border-color:#641d29!important;color:#fff!important
+}
+html body #dynamicPage .agenda-calendar-layout .agenda-type-cards.tzc-agenda-category-pills button.agenda-type-card{
+ background:#fffdf8!important;border:1.5px solid #641d29!important;color:#641d29!important
+}
+html body #dynamicPage .agenda-calendar-layout .agenda-type-cards.tzc-agenda-category-pills button.agenda-type-card.is-selected{
+ background:#641d29!important;border-color:#641d29!important;color:#fff!important
+}
+html body dialog.agenda-detail-dialog .agenda-modal-footer button[data-tzc-role="save"],
+html body dialog.agenda-detail-dialog .agenda-modal-footer a.agenda-whatsapp-button,
+html body dialog.events-edit-dialog .events-edit-actions button.primary{
+ background:#641d29!important;border:1.5px solid #641d29!important;color:#fff!important
+}
+html body dialog.agenda-detail-dialog .agenda-modal-footer button:not([data-tzc-role="save"]),
+html body dialog.events-edit-dialog .events-edit-actions button.secondary{
+ background:#fffdf8!important;border:1.5px solid #641d29!important;color:#641d29!important
 }
 </style>
 </body></html>

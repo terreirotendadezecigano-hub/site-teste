@@ -5,8 +5,8 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>try{var raizTema=document.documentElement,temaSalvo=localStorage.getItem('tenda-tema');if(temaSalvo==='claro'||temaSalvo==='escuro')raizTema.setAttribute('data-theme',temaSalvo);var paletaSalva=JSON.parse(localStorage.getItem('tzc-paleta-visual-v1')||'null'),hexValido=/^#[0-9a-f]{6}$/i;if(paletaSalva){[['--brand-wine',paletaSalva.vinho],['--cor-principal',paletaSalva.vinho],['--brand-wine2',paletaSalva.vinhoSecundario],['--cor-secundaria',paletaSalva.vinhoSecundario],['--brand-gold',paletaSalva.dourado],['--cor-destaque',paletaSalva.dourado],['--gold',paletaSalva.dourado]].forEach(function(par){if(hexValido.test(String(par[1]||'')))raizTema.style.setProperty(par[0],par[1])})}}catch(e){}</script>
-<meta name="theme-color" content="#f7f3eb"><meta name="tzc-build" content="156">
-<title>Tenda de Zé Cigano — Teste V156</title>
+<meta name="theme-color" content="#f7f3eb"><meta name="tzc-build" content="157">
+<title>Tenda de Zé Cigano — Teste V157</title>
 <style>
 /* BASE VISUAL V01 — estilos claros e escuros derivados do dourado e vinho da logo. */
 :root{--cor-principal:#641d29;--cor-secundaria:#7b2934;--cor-destaque:#bd8b38;--cor-fundo-claro:#f7f3eb;--cor-superficie-clara:#fffdf8;--cor-fundo-escuro:#1a1412;--cor-superficie-escura:#2c2220;--fonte-interface:"Segoe UI",Arial,sans-serif;--fonte-titulo:Georgia,serif;--brand-wine:var(--cor-principal);--brand-gold:var(--cor-destaque);--brand-gold-soft:#f3e4c5;--brand-wine2:var(--cor-secundaria);font-family:var(--fonte-interface);color-scheme:light;--bg:var(--cor-fundo-claro);--surface:var(--cor-superficie-clara);--surface2:#efe8dc;--text:#30231f;--muted:#6f625a;--line:#e5d9c9;--primary:var(--cor-principal);--primary2:var(--cor-secundaria);--gold:var(--cor-destaque);--gold-soft:#f3e4c5;--shadow:0 12px 34px #3c20140d;--radius:18px}
@@ -1046,32 +1046,96 @@ de Zé Cigano · Fé, caridade e aprendizado.</span><span>Sistema feito por <b>S
         var actions=document.createElement('div');actions.className='dialog-actions';var cancel=document.createElement('button');cancel.type='button';cancel.className='secondary';cancel.textContent='Fechar';cancel.onclick=function(){d.close()};var saveKey=document.createElement('button');saveKey.type='submit';saveKey.className='primary';saveKey.textContent='Salvar acesso';actions.append(cancel,saveKey);cfgForm.append(head,content,actions);d.appendChild(cfgForm);document.body.appendChild(d);
         cfgForm.onsubmit=function(e){e.preventDefault();if(!secret.value.trim()&&configuredBefore){status.textContent='A chave permanece configurada com segurança no servidor; não é necessário digitá-la novamente.';return}saveKey.disabled=true;status.textContent='Salvando o acesso com segurança…';authRpc('eventoIAConfigurar',[authToken,JSON.stringify({accountId:account.value.trim(),apiToken:secret.value.trim()})],function(r){saveKey.disabled=false;secret.value='';if(!r||!r.ok){status.textContent=r&&r.mensagem||'Não foi possível configurar.';return}try{localStorage.setItem('tzc-event-ai-account',account.value.trim());localStorage.setItem('tzc-event-ai-configured','1');localStorage.setItem('tzc-event-ai-prefs',JSON.stringify({incluirLogo:logoCheck.checked,opcoes:3}))}catch(ignore){}configuredBefore=true;secret.required=false;secret.placeholder='Token já configurado com segurança no servidor. Informe apenas para atualizar.';status.textContent='Integração pronta para gerar as artes.';window.setTimeout(function(){d.close()},900)})};d.addEventListener('close',function(){d.remove()});d.showModal()
       }
+      // V157: exportação limitada antes de qualquer leitura Base64.
+      function eventoLerImagem_(src){
+        return new Promise(function(resolve,reject){
+          if(!src){reject(Error('A logo oficial da casa não está disponível.'));return}
+          var image=new Image(),timer=setTimeout(function(){image.onload=image.onerror=null;reject(Error('A imagem demorou a carregar. Tente novamente.'))},15000);
+          image.crossOrigin='anonymous';
+          image.onload=function(){clearTimeout(timer);if(!image.naturalWidth||!image.naturalHeight){reject(Error('Imagem inválida.'));return}resolve(image)};
+          image.onerror=function(){clearTimeout(timer);reject(Error('Não foi possível carregar a imagem ou logo oficial. Verifique o arquivo e a permissão de acesso.'))};image.src=src;
+        })
+      }
+      function eventoCompactarCanvas_(canvas){
+        return new Promise(function(resolve,reject){
+          var qualities=[.84,.74,.64,.54,.44],attempt=0;
+          function encode(){try{canvas.toBlob(function(blob){if(!blob){reject(Error('Não foi possível compactar a imagem.'));return}if(blob.size<=34*1024){resolve(blob);return}if(++attempt<qualities.length){encode();return}if(canvas.width>400){var reduced=document.createElement('canvas');reduced.width=Math.max(400,Math.round(canvas.width*.85));reduced.height=Math.max(1,Math.round(canvas.height*reduced.width/canvas.width));reduced.getContext('2d').drawImage(canvas,0,0,reduced.width,reduced.height);canvas=reduced;attempt=0;encode();return}reject(Error('A arte continua muito pesada. Escolha uma imagem com menos detalhes.'))},'image/jpeg',qualities[attempt])}catch(error){reject(Error('Não foi possível exportar a arte. A imagem ou logo precisa permitir uso no cartaz (CORS).'))}}encode();
+        })
+      }
+      function eventoCompactarArquivo_(file){
+        var url=URL.createObjectURL(file);
+        return eventoLerImagem_(url).then(function(image){
+          var scale=Math.min(1,800/image.naturalWidth,1000/image.naturalHeight),canvas=document.createElement('canvas');
+          canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
+          var ctx=canvas.getContext('2d');if(!ctx)throw Error('Não foi possível preparar a imagem.');
+          ctx.fillStyle='#f7f3eb';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0,canvas.width,canvas.height);return eventoCompactarCanvas_(canvas)
+        }).finally(function(){URL.revokeObjectURL(url)})
+      }
       function eventoGerarComposicao_(imageData,logoData){
-        return new Promise(function(resolve,reject){var source=new Image();source.onload=function(){try{var canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');canvas.width=1080;canvas.height=1350;var sw=source.naturalWidth,sh=source.naturalHeight,targetRatio=4/5,sourceRatio=sw/sh,sx=0,sy=0,cw=sw,ch=sh;if(sourceRatio>targetRatio){cw=sh*targetRatio;sx=(sw-cw)/2}else{ch=sw/targetRatio;sy=(sh-ch)/2}ctx.drawImage(source,sx,sy,cw,ch,0,0,canvas.width,canvas.height);
-          var shade=ctx.createLinearGradient(0,780,0,1350);shade.addColorStop(0,'rgba(25,12,15,0)');shade.addColorStop(.42,'rgba(25,12,15,.56)');shade.addColorStop(1,'rgba(25,12,15,.9)');ctx.fillStyle=shade;ctx.fillRect(0,650,1080,700);
-          var finish=function(){var title=String(fields.titulo.value||'Evento').trim(),type=String(fields.tipo.value||'').trim().toLocaleUpperCase('pt-BR'),dateValue=String(fields.data.value||''),date=dateValue?new Date(dateValue+'T12:00:00'):null,dateText=date&&!isNaN(date.getTime())?new Intl.DateTimeFormat('pt-BR',{dateStyle:'long'}).format(date):'',place=String(fields.local.value||'').trim();
-            ctx.textAlign='center';ctx.fillStyle='#f0cf89';ctx.font='700 26px system-ui, sans-serif';ctx.fillText(type,540,1000,940);
-            ctx.fillStyle='#fffaf3';ctx.font='700 60px system-ui, sans-serif';var words=title.split(/\s+/),lines=[],line='';words.forEach(function(word){var next=line?line+' '+word:word;if(ctx.measureText(next).width>930&&line){lines.push(line);line=word}else line=next});if(line)lines.push(line);if(lines.length>3)lines=lines.slice(0,3);var y=1068-(lines.length-1)*66;lines.forEach(function(textLine){ctx.fillText(textLine,540,y,940);y+=68});
-            ctx.fillStyle='#fff';ctx.font='500 30px system-ui, sans-serif';if(dateText){ctx.fillText(dateText,540,1195,940)}if(fields.horario.value){ctx.fillText(fields.horario.value,540,1232,940)}if(place){ctx.font='500 25px system-ui, sans-serif';ctx.fillText(place,540,1272,940)}
-            canvas.toBlob(function(blob){if(blob)resolve(blob);else reject(Error('Não foi possível montar a imagem vertical.'))},'image/jpeg',.9)
-          };
-          if(logoData){var logo=new Image();logo.onload=function(){var maxW=190,maxH=120,ratio=Math.min(maxW/logo.naturalWidth,maxH/logo.naturalHeight),w=logo.naturalWidth*ratio,h=logo.naturalHeight*ratio;var badgeX=(1080-Math.max(w+34,150))/2,badgeW=Math.max(w+34,150),badgeH=h+34;ctx.fillStyle='#fffdf8';ctx.fillRect(badgeX,48,badgeW,badgeH);ctx.strokeStyle='#bd8b38';ctx.lineWidth=4;ctx.strokeRect(badgeX+2,50,badgeW-4,badgeH-4);ctx.drawImage(logo,(1080-w)/2,65,w,h);finish()};logo.onerror=function(){reject(Error('Não foi possível aplicar a logo.'))};logo.src=logoData}else finish()
-        }catch(err){reject(err)}};source.onerror=function(){reject(Error('Não foi possível preparar a proposta visual.'))};source.src=imageData})
+        // A logo é obrigatória e seus pixels são desenhados no mesmo bitmap do cartaz.
+        return Promise.all([eventoLerImagem_(imageData),eventoLerImagem_(logoData)]).then(function(images){
+          var source=images[0],logo=images[1],canvas=document.createElement('canvas');canvas.width=800;canvas.height=1000;
+          var ctx=canvas.getContext('2d');if(!ctx)throw Error('Não foi possível montar a arte.');
+          ctx.fillStyle='#f7f3eb';ctx.fillRect(0,0,800,1000);
+          var sw=source.naturalWidth,sh=source.naturalHeight,ratio=744/490,sx=0,sy=0,cw=sw,ch=sh;
+          if(sw/sh>ratio){cw=sh*ratio;sx=(sw-cw)/2}else{ch=sw/ratio;sy=(sh-ch)/2}
+          ctx.drawImage(source,sx,sy,cw,ch,28,190,744,490);
+          // Harmonização da ilustração à paleta; a logo permanece com suas cores originais.
+          var art=ctx.getImageData(28,190,744,490),pixels=art.data,wine=[100,29,41],gold=[189,139,56],cream=[247,243,235];
+          for(var pixel=0;pixel<pixels.length;pixel+=4){var light=(.2126*pixels[pixel]+.7152*pixels[pixel+1]+.0722*pixels[pixel+2])/255,low=light<.55?wine:gold,high=light<.55?gold:cream,mix=light<.55?light/.55:(light-.55)/.45;for(var channel=0;channel<3;channel++)pixels[pixel+channel]=Math.round(low[channel]+(high[channel]-low[channel])*mix)}
+          ctx.putImageData(art,28,190);
+          ctx.strokeStyle='#bd8b38';ctx.lineWidth=3;ctx.strokeRect(18,18,764,964);
+          var logoScale=Math.min(190/logo.naturalWidth,140/logo.naturalHeight),w=logo.naturalWidth*logoScale,h=logo.naturalHeight*logoScale;
+          ctx.drawImage(logo,(800-w)/2,35+(140-h)/2,w,h);
+          ctx.fillStyle='#641d29';ctx.fillRect(28,680,744,292);
+          ctx.fillStyle='#bd8b38';ctx.fillRect(28,675,744,5);ctx.textAlign='center';ctx.font='700 20px system-ui, sans-serif';
+          ctx.fillText(String(fields.tipo.value||'').toLocaleUpperCase('pt-BR'),400,718,680);
+          var title=String(fields.titulo.value||'Evento').trim(),size=42,lines=[];
+          // Ajusta o título completo em até três linhas, sem descartá-las silenciosamente.
+          do{ctx.font='700 '+size+'px system-ui, sans-serif';lines=[];var line='';title.split(/\s+/).forEach(function(word){var next=line?line+' '+word:word;if(ctx.measureText(next).width>680&&line){lines.push(line);line=word}else line=next});if(line)lines.push(line);if(lines.length<=3)break;size-=2}while(size>=18);
+          ctx.fillStyle='#f7f3eb';lines.forEach(function(line,i){ctx.fillText(line,400,765+i*(size+5),680)});
+          ctx.font='600 23px system-ui, sans-serif';ctx.fillText(eventoIADataLegivel_(),400,921,680);
+          ctx.font='500 20px system-ui, sans-serif';ctx.fillText(String(fields.local.value||'').trim(),400,953,680);
+          return eventoCompactarCanvas_(canvas)
+        })
+      }
+      function eventoResposta_(value){
+        try{var result=typeof value==='string'?JSON.parse(value):value;if(!result||typeof result!=='object'||Array.isArray(result))throw Error('Resposta inválida');return result}
+        catch(error){return {ok:false,mensagem:'A resposta da imagem veio incompleta ou inválida. Tente novamente; seus dados continuam no formulário.'}}
       }
       function eventoIADataLegivel_(){var value=String(fields.data.value||''),match=value.match(/^(\d{4})-(\d{2})-(\d{2})$/);return match?match[3]+'/'+match[2]+'/'+match[1]+(fields.horario.value?' · '+fields.horario.value:''):value}
       function eventoIAGerar_(){
         if(/atendimento/i.test(fields.tipo.value)){note.textContent='Artes automáticas não são usadas para atendimentos privados.';return}if(!fields.titulo.value||!fields.tipo.value||!fields.data.value||!fields.horario.value){note.textContent='Preencha nome, tipo, data e horário antes de criar a arte.';return}
         aiGenerate.disabled=true;aiGallery.replaceChildren();note.textContent='Criando três propostas visuais…';var payload={titulo:fields.titulo.value,tipo:fields.tipo.value,data:fields.data.value+'T'+fields.horario.value,local:fields.local.value,descricao:fields.descricao.value,incluirLogo:false};
-        authRpc('eventoIAGerar',[authToken,JSON.stringify(payload)],function(r){aiGenerate.disabled=false;if(!r||!r.ok){note.textContent=r&&r.mensagem||'Não foi possível criar as opções.';if(r&&r.configurar){note.textContent='Configure o acesso gratuito da Cloudflare para habilitar a criação de artes.';aiConfigure.hidden=false}return}var proposals=[],seenArt=Object.create(null),responseImages=Array.isArray(r.imagens)?r.imagens:(Array.isArray(r.artes)?r.artes:(Array.isArray(r.opcoes)?r.opcoes:[]));responseImages.forEach(function(item){var payload=String(item&&(item.base64||item.data||item.imagemBase64||item.image)||'').trim();var signature=payload.replace(/^data:[^,]+,/i,'');if(signature&&!seenArt[signature]){seenArt[signature]=true;proposals.push(Object.assign({},item,{_imageData:payload}))}});if(proposals.length<3){note.textContent='A IA retornou '+proposals.length+' opção(ões) distintas. Tente gerar novamente para obter três artes.';return}note.textContent=r.mensagem||'Escolha uma das três propostas.';proposals.slice(0,3).forEach(function(item){var card=document.createElement('article');card.className='events-ai-option';var img=document.createElement('img');img.alt='Proposta '+item.nome;var raw=/^(?:data:image\/|https?:\/\/)/i.test(item._imageData||'')?item._imageData:'data:'+(item.mimeType||item.mime||'image/jpeg')+';base64,'+String(item._imageData||'').replace(/^data:[^,]+,/i,'');img.src=raw;var use=document.createElement('button');use.type='button';use.className='primary';use.textContent='Usar '+item.nome;use.onclick=function(){use.disabled=true;note.textContent='Preparando a arte vertical para celular…';eventoGerarComposicao_(raw,(el('siteLogo').currentSrc||el('siteLogo').src||'')).then(function(blob){var file=new File([blob],'arte-evento-'+item.nome.toLowerCase()+'.jpg',{type:'image/jpeg'}),transfer=new DataTransfer();transfer.items.add(file);imageInput.files=transfer.files;var url=URL.createObjectURL(blob);preview.src=url;preview.hidden=false;imageNote.textContent='Arte vertical 4:5 · '+eventoIADataLegivel_()+' · logo oficial incluída';note.textContent='Proposta selecionada. Salve o evento para guardar a arte.';use.disabled=false}).catch(function(err){use.disabled=false;note.textContent=err&&err.message||'Não foi possível preparar a proposta.'})};card.append(img,texto('strong',item.nome),use);aiGallery.appendChild(card)})})
+        payload.paleta={vinho:'#641d29',dourado:'#bd8b38',creme:'#f7f3eb'};payload.tema='Umbanda';payload.largura=800;payload.altura=1000;
+        authRpc('eventoIAGerar',[authToken,JSON.stringify(payload)],function(response){
+          var r=eventoResposta_(response);if(!dialog.isConnected)return;
+          if(!r.ok){aiGenerate.disabled=false;note.textContent=/JSON|Unterminated|Unexpected end/i.test(r.mensagem||'')?'A resposta da IA veio incompleta. Tente novamente; seus dados continuam no formulário.':r.mensagem||'Não foi possível criar as opções.';if(r.configurar)aiConfigure.hidden=false;return}
+          var proposals=[],seen=Object.create(null),items=Array.isArray(r.imagens)?r.imagens:(Array.isArray(r.artes)?r.artes:(Array.isArray(r.opcoes)?r.opcoes:[]));
+          items.forEach(function(item){if(!item||typeof item!=='object')return;var raw=String(item.base64||item.data||item.imagemBase64||item.image||'').trim(),key=raw.replace(/^data:[^,]+,/i,'');if(key&&!seen[key]){seen[key]=true;proposals.push({item:item,raw:/^(?:data:image\/|https?:\/\/)/i.test(raw)?raw:'data:'+(item.mimeType||item.mime||'image/jpeg')+';base64,'+raw})}});
+          if(proposals.length<3){aiGenerate.disabled=false;note.textContent='A IA não retornou três artes completas e distintas. Tente novamente.';return}
+          note.textContent='Aplicando a logo oficial e preparando as três artes…';
+          var logo=el('siteLogo'),logoSrc=logo&&(logo.currentSrc||logo.src);
+          Promise.all(proposals.slice(0,3).map(function(proposal){return eventoGerarComposicao_(proposal.raw,logoSrc)})).then(function(blobs){
+            if(!dialog.isConnected)return;
+            blobs.forEach(function(blob,i){var item=proposals[i].item,name=String(item.nome||'Opção '+(i+1)),url=URL.createObjectURL(blob);eventObjectUrls.push(url);
+              var card=document.createElement('article');card.className='events-ai-option';var img=document.createElement('img');img.alt=name+' com a logo oficial';img.src=url;
+              var use=document.createElement('button');use.type='button';use.className='primary';use.textContent='Usar '+name;
+              use.onclick=function(){var file=new File([blob],'arte-evento-'+(i+1)+'.jpg',{type:'image/jpeg'}),transfer=new DataTransfer();transfer.items.add(file);imageInput.files=transfer.files;preview.src=url;preview.hidden=false;note.textContent='Arte com a logo oficial selecionada. Salve o evento para guardar.'};
+              card.append(img,texto('strong',name),use);aiGallery.appendChild(card)
+            });note.textContent='Escolha uma das três artes com a logo oficial.'
+          }).catch(function(error){note.textContent=error.message||'Não foi possível compor as artes com a logo oficial.'}).finally(function(){aiGenerate.disabled=false})
+        })
       }
-      
-      imageInput.onchange=function(){var f=this.files&&this.files[0];if(!f){preview.hidden=true;return}if(!/^image\/(jpeg|png|webp)$/.test(f.type)||f.size>5*1024*1024){this.value='';note.textContent='Escolha uma imagem JPG, PNG ou WebP de até 5 MB.';return}preview.src=URL.createObjectURL(f);preview.hidden=false};
+      var eventObjectUrls=[];
+      imageInput.onchange=function(){var f=this.files&&this.files[0];if(!f){preview.hidden=true;return}if(!/^image\/(jpeg|png|webp)$/.test(f.type)||f.size>5*1024*1024){this.value='';note.textContent='Escolha uma imagem JPG, PNG ou WebP de até 5 MB.';return}var url=URL.createObjectURL(f);eventObjectUrls.push(url);preview.src=url;preview.hidden=false};
+
       function loadAssigned_(){if(assignedList.dataset.loaded)return;assignedList.dataset.loaded='1';assignedHint.textContent='Carregando membros…';authRpc('listarMembrosAtivos',[authToken],function(r){assignedList.replaceChildren();if(!r||!r.ok){assignedHint.textContent=r&&r.mensagem||'Não foi possível carregar a lista de responsáveis.';return}assignedHint.textContent='Somente as pessoas escolhidas e a direção verão este atendimento.';(r.membros||[]).forEach(function(m){var label=document.createElement('label'),cb=document.createElement('input');cb.type='checkbox';cb.value=String(m.id);cb.checked=String(ev.responsaveis||'').split(',').indexOf(String(m.id))>=0;label.append(cb,document.createTextNode(m.nome||'Membro'));assignedList.appendChild(label)})})}
       function syncType_(){var on=/atendimento/i.test(fields.tipo.value);assignedWrap.hidden=!on;accessWrap.hidden=on;if(on){fields.acesso.value='Não';fields.acesso.disabled=true;loadAssigned_()}else{fields.acesso.disabled=false;fields.acesso.value=fields.acesso.value||'Sim'}}fields.tipo.addEventListener('change',syncType_);syncType_();
       form.appendChild(body);var footer=document.createElement('div');footer.className='dialog-actions events-edit-actions';var close=document.createElement('button');close.type='button';close.className='secondary';close.textContent='Fechar';close.onclick=function(){dialog.close()};var save=document.createElement('button');save.type='submit';save.className='primary';save.textContent='Salvar evento';footer.append(close,save);form.appendChild(footer);
       var eventData=null;function saveEvent_(){authRpc('salvarEvento',[authToken,JSON.stringify(eventData)],function(r){save.disabled=false;if(!r||!r.ok){note.textContent=r&&r.mensagem||'Não foi possível salvar.';return}dialog.close();m04ArquivoEventosCache=null;carregar_(true);aviso('Evento salvo.')})}
-      form.onsubmit=function(e){e.preventDefault();if(!form.reportValidity())return;eventData={id:ev.id||''};Object.keys(fields).forEach(function(k){if(k!=='horario')eventData[k]=fields[k].value});eventData.data=fields.data.value+'T'+fields.horario.value;eventData.responsaveis=Array.prototype.map.call(assignedList.querySelectorAll('input:checked'),function(cb){return cb.value});if(/atendimento/i.test(fields.tipo.value)&&!eventData.responsaveis.length){note.textContent='Escolha ao menos um responsável pelo atendimento.';assignedWrap.hidden=false;return}eventData.imagem=ev.imagem||'';save.disabled=true;note.textContent='Salvando evento…';var f=imageInput.files&&imageInput.files[0];if(!f){saveEvent_();return}note.textContent='Enviando arte do evento…';var reader=new FileReader();reader.onload=function(){var raw=String(reader.result||''),base64=raw.split(',')[1]||'';authRpc('eventoUploadImagem',[authToken,JSON.stringify({name:f.name,mime:f.type,base64:base64})],function(r){if(!r||!r.ok){save.disabled=false;note.textContent=r&&r.mensagem||'Não foi possível enviar a imagem.';return}eventData.imagem=r.url;saveEvent_()})};reader.onerror=function(){save.disabled=false;note.textContent='Não foi possível ler a imagem.'};reader.readAsDataURL(f)};
-      dialog.appendChild(form);document.body.appendChild(dialog);dialog.addEventListener('close',function(){dialog.remove()});dialog.showModal()
+      form.onsubmit=function(e){e.preventDefault();if(!form.reportValidity())return;eventData={id:ev.id||''};Object.keys(fields).forEach(function(k){if(k!=='horario')eventData[k]=fields[k].value});eventData.data=fields.data.value+'T'+fields.horario.value;eventData.responsaveis=Array.prototype.map.call(assignedList.querySelectorAll('input:checked'),function(cb){return cb.value});if(/atendimento/i.test(fields.tipo.value)&&!eventData.responsaveis.length){note.textContent='Escolha ao menos um responsável pelo atendimento.';assignedWrap.hidden=false;return}eventData.imagem=ev.imagem||'';save.disabled=true;note.textContent='Salvando evento…';var f=imageInput.files&&imageInput.files[0];if(!f){saveEvent_();return}note.textContent='Enviando arte do evento…';eventoCompactarArquivo_(f).then(function(compact){var reader=new FileReader();reader.onload=function(){var raw=String(reader.result||''),base64=raw.split(',')[1]||'';authRpc('eventoUploadImagem',[authToken,JSON.stringify({name:f.name.replace(/\.[^.]+$/,'')+'.jpg',mime:'image/jpeg',base64:base64})],function(response){var r=eventoResposta_(response);if(!r.ok){save.disabled=false;note.textContent=r&&r.mensagem||'Não foi possível enviar a imagem.';return}eventData.imagem=r.url;saveEvent_()})};reader.onerror=function(){save.disabled=false;note.textContent='Não foi possível ler a imagem.'};reader.readAsDataURL(compact)}).catch(function(error){save.disabled=false;note.textContent=error.message||'Não foi possível preparar a imagem.'})};
+      dialog.appendChild(form);document.body.appendChild(dialog);dialog.addEventListener('close',function(){eventObjectUrls.forEach(function(url){URL.revokeObjectURL(url)});dialog.remove()});dialog.showModal()
     }
     var box=document.createElement('section');box.className='events-archive-box';
     var controls=document.createElement('div');controls.className='events-archive-controls';

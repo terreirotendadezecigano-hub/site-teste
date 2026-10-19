@@ -3199,4 +3199,48 @@ dialog.agenda-pdf-preview::backdrop{background:#1e1514b8}
  body.m04-printing #area-impressao #m04PrintRoot td:nth-child(1){overflow-wrap:normal!important;word-break:keep-all!important}
 }
 </style>
+
+<style id="tzc-dark-agenda-modal-contrast-v134">
+/* Tema escuro: cartões de evento claros para manter o texto legível. */
+html[data-theme="escuro"] .agenda-calendar-layout .agenda-event-item{
+ background:#fffdf8!important;color:#30231f!important;border-color:#d9cbb8!important
+}
+html[data-theme="escuro"] .agenda-calendar-layout .agenda-event-item .agenda-event-open{
+ display:grid!important;background:#fffdf8!important;color:#30231f!important;border:0!important;box-shadow:none!important
+}
+html[data-theme="escuro"] .agenda-calendar-layout .agenda-event-item .agenda-event-open small,
+html[data-theme="escuro"] .agenda-calendar-layout .agenda-event-item .agenda-event-open span{
+ background:transparent!important;color:#403832!important
+}
+html[data-theme="escuro"] .agenda-calendar-layout .agenda-event-item .agenda-event-open strong{
+ background:transparent!important;color:#641d29!important
+}
+html[data-theme="escuro"] .agenda-calendar-layout .agenda-event-item .agenda-event-type{
+ color:#75520f!important
+}
+html[data-theme="escuro"] .agenda-calendar-layout .agenda-attendance-button,
+html[data-theme="escuro"] .agenda-calendar-layout .agenda-card-actions .tzc-icon-action,
+html[data-theme="escuro"] .agenda-calendar-layout .agenda-whatsapp{
+ background:#641d29!important;color:#fff!important;border:1.5px solid #bd8b38!important
+}
+/* Cores consistentes nos rodapés de todos os modais, nos dois temas. */
+html dialog :is(.tzc-modal-support-actions,.tzc-universal-modal-footer,.dialog-actions,.bath-dialog-actions,.ev-dialog-actions,.pontos-detail-actions,.tzc-msg-detail-actions,.agenda-footer-support) button:not(.tzc-close-right-action):not(.close):not([data-tzc-role="close"]){
+ min-height:42px!important;border:1.5px solid #bd8b38!important;border-radius:10px!important;
+ background:#fffdf8!important;color:#641d29!important;font-weight:700!important
+}
+html dialog :is(.tzc-modal-support-actions,.tzc-universal-modal-footer,.dialog-actions,.bath-dialog-actions,.ev-dialog-actions,.pontos-detail-actions,.tzc-msg-detail-actions,.agenda-footer-support) button:is(.primary,[data-tzc-role="save"],[data-tzc-role="confirm"],[data-tzc-role="attendance"]):not(.tzc-close-right-action){
+ background:#641d29!important;color:#fff!important;border-color:#641d29!important
+}
+html dialog :is(.tzc-modal-support-actions,.tzc-universal-modal-footer,.dialog-actions,.bath-dialog-actions,.ev-dialog-actions,.pontos-detail-actions,.tzc-msg-detail-actions,.agenda-footer-support) button.tzc-close-right-action,
+html dialog :is(.tzc-modal-support-actions,.tzc-universal-modal-footer,.dialog-actions,.bath-dialog-actions,.ev-dialog-actions,.pontos-detail-actions,.tzc-msg-detail-actions,.agenda-footer-support) button[data-tzc-role="close"]{
+ background:#fffdf8!important;color:#641d29!important;border:1.5px solid #641d29!important
+}
+html[data-theme="escuro"] dialog :is(.tzc-modal-support-actions,.tzc-universal-modal-footer,.dialog-actions,.bath-dialog-actions,.ev-dialog-actions,.pontos-detail-actions,.tzc-msg-detail-actions,.agenda-footer-support) button:not(.tzc-close-right-action):not(.close):not([data-tzc-role="close"]){
+ background:#641d29!important;color:#fff!important;border-color:#bd8b38!important
+}
+html[data-theme="escuro"] dialog :is(.tzc-modal-support-actions,.tzc-universal-modal-footer,.dialog-actions,.bath-dialog-actions,.ev-dialog-actions,.pontos-detail-actions,.tzc-msg-detail-actions,.agenda-footer-support) button.tzc-close-right-action,
+html[data-theme="escuro"] dialog :is(.tzc-modal-support-actions,.tzc-universal-modal-footer,.dialog-actions,.bath-dialog-actions,.ev-dialog-actions,.pontos-detail-actions,.tzc-msg-detail-actions,.agenda-footer-support) button[data-tzc-role="close"]{
+ background:#fffdf8!important;color:#641d29!important;border-color:#bd8b38!important
+}
+</style>
 </body></html>

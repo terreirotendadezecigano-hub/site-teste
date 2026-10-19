@@ -3243,4 +3243,70 @@ html[data-theme="escuro"] dialog :is(.tzc-modal-support-actions,.tzc-universal-m
  background:#fffdf8!important;color:#641d29!important;border-color:#bd8b38!important
 }
 </style>
+
+<style id="tzc-project-button-and-modal-print-fix-v135">
+/* Padronização global: ação principal vinho, apoio em superfície com contorno dourado. */
+html body #dynamicPage :is(button.primary,button.member-btn,button.btn-main,button.btn-primary,button.save,.primary-action,.agenda-action:not(.agenda-action-secondary),.tzc-icon-action,[data-tzc-role="save"],[data-tzc-role="confirm"]),
+html body dialog :is(.tzc-modal-primary-group button.primary,.tzc-modal-primary-group [data-tzc-role="save"],.tzc-modal-primary-group [data-tzc-role="confirm"]){
+ background:#641d29!important;border-color:#641d29!important;color:#fff!important
+}
+html[data-theme="escuro"] body #dynamicPage :is(button.primary,button.member-btn,button.btn-main,button.btn-primary,button.save,.primary-action,.agenda-action:not(.agenda-action-secondary),.tzc-icon-action,[data-tzc-role="save"],[data-tzc-role="confirm"]),
+html[data-theme="escuro"] body dialog :is(.tzc-modal-primary-group button.primary,.tzc-modal-primary-group [data-tzc-role="save"],.tzc-modal-primary-group [data-tzc-role="confirm"]){
+ background:#641d29!important;border-color:#bd8b38!important;color:#fff!important
+}
+html body #dynamicPage :is(button.secondary,.agenda-action-secondary,.tzc-m08-actions button.secondary,.loja-editor-actions button:not(.primary),.loja-order-actions button:not(.primary),.mc-actions button:not(.member-btn):not(.danger)){
+ background:#fffdf8!important;border:1.5px solid #bd8b38!important;color:#641d29!important
+}
+html[data-theme="escuro"] body #dynamicPage :is(button.secondary,.agenda-action-secondary,.tzc-m08-actions button.secondary,.loja-editor-actions button:not(.primary),.loja-order-actions button:not(.primary),.mc-actions button:not(.member-btn):not(.danger)){
+ background:#302426!important;border:1.5px solid #bd8b38!important;color:#f8f0e8!important
+}
+html body #dynamicPage :is(button.primary,button.member-btn,button.btn-main,button.btn-primary,button.save,.primary-action,.agenda-action,.tzc-icon-action,[data-tzc-role="save"],[data-tzc-role="confirm"]):focus-visible,
+html body dialog :is(button,.tzc-modal-action):focus-visible{
+ outline:3px solid #bd8b38!important;outline-offset:2px!important
+}
+/* Loja: mantém a aba ativa em dourado no tema escuro, com texto escuro legível. */
+html[data-theme="escuro"] body #dynamicPage .loja-tabs button[aria-pressed="true"]{
+ background:#bd8b38!important;border-color:#bd8b38!important;color:#24191a!important
+}
+/* Impressão de modais/eventos: elimina a tela ao redor e fixa a folha A4 no topo. */
+@page tzc-modal-page{size:A4 portrait;margin:0}
+@media print{
+ html,body{display:block!important;width:210mm!important;height:auto!important;min-height:0!important;max-height:none!important;margin:0!important;padding:0!important;overflow:visible!important;background:#fff!important}
+ body.tzc-modal-printing{position:static!important;display:block!important;width:210mm!important;height:auto!important;min-height:0!important;max-height:none!important;margin:0!important;padding:0!important;overflow:visible!important}
+ body.tzc-modal-printing>*:not(#tzc-modal-print-root){display:none!important;visibility:hidden!important}
+ body.tzc-modal-printing>#tzc-modal-print-root{
+  display:block!important;visibility:visible!important;position:absolute!important;top:0!important;left:0!important;inset:0 auto auto 0!important;
+  width:210mm!important;max-width:210mm!important;min-height:297mm!important;height:auto!important;max-height:none!important;
+  margin:0!important;padding:12mm!important;box-sizing:border-box!important;overflow:visible!important;
+  border:0!important;background:#fff!important;color:#30231f!important;box-shadow:none!important;page:tzc-modal-page!important;
+  break-before:avoid-page!important;page-break-before:avoid!important
+ }
+ body.tzc-modal-printing>#tzc-modal-print-root,
+ body.tzc-modal-printing>#tzc-modal-print-root *{visibility:visible!important;opacity:1!important;print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important}
+ body.tzc-modal-printing>#tzc-modal-print-root .tzc-master-watermark{
+  display:block!important;position:absolute!important;z-index:0!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%)!important
+ }
+ body.tzc-modal-printing>#tzc-modal-print-root .tzc-master-content{
+  display:block!important;position:relative!important;z-index:2!important;visibility:visible!important;opacity:1!important;
+  width:100%!important;height:auto!important;max-height:none!important;overflow:visible!important
+ }
+ body.tzc-modal-printing>#tzc-modal-print-root .tzc-master-header{display:grid!important;visibility:visible!important;position:relative!important}
+ body.tzc-modal-printing>#tzc-modal-print-root .tzc-master-header img{display:block!important;visibility:visible!important}
+ body.tzc-modal-printing>#tzc-modal-print-root .tzc-master-title,
+ body.tzc-modal-printing>#tzc-modal-print-root .tzc-master-content>.dialog-body,
+ body.tzc-modal-printing>#tzc-modal-print-root .tzc-master-content>.bath-dialog-content,
+ body.tzc-modal-printing>#tzc-modal-print-root .tzc-master-content>.ev-dialog-body,
+ body.tzc-modal-printing>#tzc-modal-print-root .tzc-master-content>.pontos-detail-body,
+ body.tzc-modal-printing>#tzc-modal-print-root .tzc-master-content>.tzc-msg-detail-content,
+ body.tzc-modal-printing>#tzc-modal-print-root .tzc-master-footer{
+  display:block!important;visibility:visible!important;opacity:1!important
+ }
+ body.tzc-modal-printing>#tzc-modal-print-root .agenda-day-card,
+ body.tzc-modal-printing>#tzc-modal-print-root .agenda-day-card *,
+ body.tzc-modal-printing>#tzc-modal-print-root .agenda-detail-field,
+ body.tzc-modal-printing>#tzc-modal-print-root .agenda-detail-field *{
+  display:block!important;visibility:visible!important;opacity:1!important;color:#30231f!important;background:transparent!important
+ }
+}
+</style>
 </body></html>

@@ -32,6 +32,9 @@
   .loja-pix-summary{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;color:var(--muted)}
   .loja-product-card{overflow:hidden;display:flex;flex-direction:column;min-width:0;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:var(--shadow);transition:transform .16s ease,box-shadow .16s ease}
   .loja-product-card:hover{transform:translateY(-2px);box-shadow:0 14px 32px #3c20141c}
+  .loja-study-detail{width:min(640px,calc(100vw - 28px));max-width:640px;max-height:min(88dvh,900px);padding:0;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--text);box-shadow:0 24px 70px #09111f40}
+  .loja-study-detail-form{display:flex;flex-direction:column;max-height:inherit}.loja-study-detail .dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line)}.loja-study-detail .dialog-head h2{margin:0;color:var(--primary);font:700 22px Georgia,serif}.loja-study-detail-body{overflow:auto;display:grid;justify-items:start;gap:12px;padding:20px}.loja-study-detail-body>img{display:block;width:min(100%,320px);max-height:320px;object-fit:contain;margin:0 auto 5px;border-radius:12px}.loja-study-description{margin:0;white-space:pre-wrap;line-height:1.6}.loja-study-detail .dialog-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 20px;border-top:1px solid var(--line)}.loja-product-card[role=button]{cursor:pointer}.loja-product-card:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
   .loja-card-cover{height:196px;display:grid;place-items:center;overflow:hidden;background:linear-gradient(135deg,#641d29,#8b4c39 58%,#bd8b38);color:#fff}
   .loja-card-cover img{width:100%;height:100%;object-fit:cover}
   .loja-book-mark{display:grid;gap:7px;place-items:center;width:112px;height:136px;border:1px solid #fff8;border-radius:8px;background:#fff2;box-shadow:8px 9px 18px #2d101855;transform:rotate(-3deg);font-size:36px}
@@ -214,6 +217,12 @@
     serviceButton.type=materialButton.type='button';switcher.append(serviceButton,materialButton);host.append(switcher);
     var searchWrap=el('label','Buscar atendimento ou material','loja-catalog-search'),search=el('input');search.type='search';search.placeholder='Digite nome, assunto ou descrição';search.setAttribute('aria-label','Buscar atendimentos e materiais');searchWrap.append(search);host.append(searchWrap);search.addEventListener('input',function(){paint()});
     var pane=el('div',null,'loja-catalog-pane');host.append(pane);
+    function openMaterialDetail(product){
+      var dialog=el('dialog',null,'loja-study-detail');dialog.dataset.tzcKind='estudo';dialog.dataset.tzcKey=String(product.id);dialog.dataset.tzcTitle=product.nome||'Material digital';dialog.setAttribute('aria-label','Detalhes de '+(product.nome||'material'));
+      var form=el('div',null,'loja-study-detail-form'),head=el('header',null,'dialog-head'),title=el('h2',product.nome||'Material digital'),closeTop=el('button','×','close');closeTop.type='button';closeTop.setAttribute('aria-label','Fechar detalhes');closeTop.onclick=function(){dialog.close()};head.append(title,closeTop);
+      var body=el('div',null,'dialog-body loja-study-detail-body');if(product.imagemUrl){var image=el('img');image.src=product.imagemUrl;image.alt='Capa de '+(product.nome||'material');image.loading='lazy';body.append(image)}body.append(el('span',product.categoria||'Leitura digital','loja-product-category'),el('p',product.descricao||'Material digital em PDF.','loja-study-description'),el('strong',money(product.precoCentavos),'loja-price'));
+      var actions=el('div',null,'dialog-actions');var cancel=btn('Fechar',function(){dialog.close()},'secondary'),add=btn(cart.some(function(x){return String(x)===String(product.id)})?'No carrinho':'Adicionar ao carrinho',function(){addToCart(product.id);add.textContent='No carrinho';add.disabled=true},'member-btn');add.classList.add('primary');actions.append(cancel,add);form.append(head,body,actions);dialog.append(form);document.body.append(dialog);dialog.addEventListener('click',function(e){if(e.target===dialog)dialog.close()});dialog.addEventListener('close',function(){dialog.remove()},{once:true});dialog.showModal()
+    }
     function paint(){
       if(host!==content())return;
       serviceButton.setAttribute('aria-pressed',String(mode==='atendimentos'));
@@ -236,12 +245,12 @@
         grid.replaceChildren();
         if(!shown.length){grid.append(el('p','Nenhum material corresponde à busca.','loja-empty'));return}
         shown.forEach(function(p){
-          var card=el('article',null,'loja-product-card'),cover=el('div',null,'loja-card-cover');
+          var card=el('article',null,'loja-product-card'),cover=el('div',null,'loja-card-cover');card.dataset.tzcLinkKind='estudo';card.dataset.tzcLinkKey=String(p.id);card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label','Abrir detalhes de '+(p.nome||'material'));card.addEventListener('click',function(e){if(e.target.closest('button,a'))return;openMaterialDetail(p)});card.addEventListener('keydown',function(e){if(e.target===card&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openMaterialDetail(p)}});
           if(p.imagemUrl){var img=el('img');img.src=p.imagemUrl;img.alt='Capa de '+p.nome;img.loading='lazy';cover.append(img)}
           else{var mark=el('div',null,'loja-book-mark');mark.append(el('span','▤'),el('span','PDF DIGITAL'));cover.append(mark)}
           var body=el('div',null,'loja-product-body');body.append(el('span',p.categoria||'Leitura digital','loja-product-category'),el('h3',p.nome),el('p',p.descricao||'Material digital em PDF.'));
           var buy=el('div',null,'loja-product-buy'),orderButton=btn(cart.some(function(x){return String(x)===String(p.id)})?'No carrinho':'Adicionar ao carrinho',function(){addToCart(p.id)},'member-btn');
-          orderButton.dataset.productId=String(p.id);buy.append(el('span',money(p.precoCentavos),'loja-price'),orderButton);body.append(buy);card.append(cover,body);grid.append(card)
+          orderButton.dataset.productId=String(p.id);orderButton.addEventListener('click',function(e){e.stopPropagation()});buy.append(el('span',money(p.precoCentavos),'loja-price'),orderButton);body.append(buy);card.append(cover,body);grid.append(card)
         })
       }
       catalog.append(grid);drawProducts()

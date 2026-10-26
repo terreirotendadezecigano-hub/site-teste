@@ -1773,7 +1773,7 @@ function createYouTubePlayer(container,video,title,onStatus=()=>{}){
  if(!['http:','https:'].includes(location.protocol)||location.origin==='null'){
   update('Nesta visualização de arquivo, o YouTube pode bloquear o player (erro 153). Abra o vídeo no YouTube ou use o aplicativo publicado. O link continua disponível para a transcrição quando o serviço estiver conectado.');return;
  }
- const frame=document.createElement('iframe');frame.title=title;frame.src='https://www.youtube-nocookie.com/embed/'+video+'?enablejsapi=1&origin='+encodeURIComponent(location.origin);frame.referrerPolicy='strict-origin-when-cross-origin';frame.allow='encrypted-media; picture-in-picture; fullscreen';frame.allowFullscreen=true;container.prepend(frame);
+ const frame=document.createElement('iframe');frame.title=title;frame.style.cssText='display:block;width:min(100%,560px);aspect-ratio:16/9;height:auto;border:0;border-radius:8px';frame.src='https://www.youtube-nocookie.com/embed/'+video+'?enablejsapi=1&origin='+encodeURIComponent(location.origin);frame.referrerPolicy='strict-origin-when-cross-origin';frame.allow='encrypted-media; picture-in-picture; fullscreen';frame.allowFullscreen=true;container.prepend(frame);
  update('Carregando o player do YouTube…');
  timer=setTimeout(()=>{if(!closed)update('O player ainda não confirmou o carregamento. Você pode assistir usando “Abrir no YouTube”.');},15000);
  youtubeAPI().then(YT=>{

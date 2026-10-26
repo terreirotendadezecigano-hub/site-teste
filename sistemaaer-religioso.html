@@ -315,7 +315,7 @@ button.padrao-resumo {cursor:pointer;}
 .aer-media legend {font-weight:700;color:var(--primary);padding:0 6px;}
 .aer-media label {display:block;margin:12px 0 6px;font-weight:600;}
 .aer-media .padrao-acoes,.aer-media-player {margin-top:14px;}
-.aer-media-player iframe {display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:8px;}
+.aer-media-player iframe {display:block;width:min(100%,560px);aspect-ratio:16/9;border:0;border-radius:8px;}
 .aer-media-player video,.aer-media-player audio {width:100%;max-height:360px;}
 .aer-media button {margin-top:8px;}
 .aer-media [disabled] {opacity:.6;cursor:wait;}
@@ -1453,7 +1453,7 @@ function login(signal){
  const previous=document.activeElement;
  loginPromise=new Promise((resolve,reject)=>{
   const dialog=document.createElement('dialog');dialog.className='aer-transcription-login';dialog.setAttribute('aria-labelledby','aer-transcription-login-title');
-  dialog.innerHTML='<form><h3 id="aer-transcription-login-title">Conectar transcrição</h3><p>Use o mesmo acesso da Tenda de Zé Cigano.</p><label for="aer-transcription-email">E-mail cadastrado</label><input class="form-control" id="aer-transcription-email" type="email" autocomplete="email" maxlength="254" required><div id="aer-transcription-code-box" hidden><label for="aer-transcription-code">Código recebido</label><input class="form-control" id="aer-transcription-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}"></div><p role="status" id="aer-transcription-login-status"></p><div class="modal-footer-buttons"><button type="button" class="btn-secundary" id="aer-transcription-login-cancel">Cancelar</button><button type="submit" class="btn-action">Continuar</button></div></form>';
+  dialog.innerHTML='<form><h3 id="aer-transcription-login-title">Conectar transcrição</h3><p>Entre com a conta cadastrada no SistemaAeR. Para configurar esta instituição, use o acesso institucional (sistemaaer@gmail.com).</p><p>Vídeos públicos podem ser conferidos e transcritos sem login do YouTube. Vídeos privados exigem acesso autorizado no próprio YouTube.</p><label for="aer-transcription-email">E-mail cadastrado no SistemaAeR</label><input class="form-control" id="aer-transcription-email" type="email" autocomplete="email" maxlength="254" required><div id="aer-transcription-code-box" hidden><label for="aer-transcription-code">Código recebido</label><input class="form-control" id="aer-transcription-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}"></div><p role="status" id="aer-transcription-login-status"></p><div class="modal-footer-buttons"><button type="button" class="btn-secundary" id="aer-transcription-login-cancel">Cancelar</button><button type="submit" class="btn-action">Continuar</button></div></form>';
   document.body.append(dialog);const form=dialog.querySelector('form'),email=dialog.querySelector('input[type=email]'),code=dialog.querySelector('#aer-transcription-code'),box=dialog.querySelector('#aer-transcription-code-box'),status=dialog.querySelector('[role=status]'),submit=dialog.querySelector('[type=submit]');
   let phase='verify',done=false,busy=false,revision=0;
   const close=error=>{if(done)return;done=true;revision++;signal?.removeEventListener('abort',abort);dialog.close();dialog.remove();previous?.focus();error?reject(error):resolve(token);};
@@ -1779,7 +1779,7 @@ function createYouTubePlayer(container,video,title,onStatus=()=>{}){
  youtubeAPI().then(YT=>{
   if(closed||!container.isConnected)return;
   player=new YT.Player(frame,{events:{
-   onReady:()=>{if(failed)return;clearTimeout(timer);update('Player pronto. Toque em reproduzir para conferir o vídeo. A transcrição é iniciada pelo botão Transcrever.');},
+   onReady:()=>{if(failed)return;clearTimeout(timer);update('Vídeo disponível para conferência. Para transcrever, toque em Transcrever. Vídeos públicos não exigem login do YouTube.');},
    onError:event=>{const code=Number(event.data);const text=code===153?'O YouTube bloqueou o player porque não recebeu a identificação desta página (erro 153).':(code===101||code===150)?'Este vídeo não permite reprodução dentro de outros aplicativos.':code===100?'Este vídeo está indisponível ou exige acesso no YouTube.':'Não foi possível reproduzir o vídeo no player (erro '+code+').';fail(text);}
   }});
  }).catch(()=>fail('Não foi possível carregar o player nesta visualização.'));
@@ -1911,7 +1911,7 @@ document.addEventListener('change',async ev=>{
 document.addEventListener('submit',async ev=>{if(ev.target.id==='form-api-endereco'){ev.preventDefault();const next=cloneDB();const address=ev.target.elements.apiUrl.value.trim();try{if(address){const url=new URL(address);if(url.username||url.password||!(url.protocol==='https:'||(url.protocol==='http:'&&['localhost','127.0.0.1','[::1]'].includes(url.hostname))))throw Error('Use um endereço HTTPS válido.');next.house.apiUrl=url.origin;}else next.house.apiUrl='';if(persist(next))document.getElementById('api-status').textContent='Endereço salvo. Conecte sua conta para utilizar a transcrição.';}catch(e){document.getElementById('api-status').textContent=e.message;}return;}if(ev.target.id==='form-api-login'){ev.preventDefault();const form=ev.target,button=form.querySelector('button');button.disabled=true;try{const data=await apiRequest('/api/auth/login',{username:form.elements.username.value.trim(),password:form.elements.password.value});document.getElementById('api-status').textContent='Conta conectada. Verificando a transcrição…';await verifyTranscription();}catch(e){document.getElementById('api-status').textContent=e.message;}finally{form.elements.password.value='';button.disabled=false;}return;}if(ev.target.dataset.recordForm){ev.preventDefault();saveRecord(ev.target,ev.target.dataset.recordForm);updateMessages();}if(ev.target.dataset.fieldForm){ev.preventDefault();saveFields(ev.target,ev.target.dataset.fieldForm);}if(ev.target.id==='form-identidade'){ev.preventDefault();const fd=new FormData(ev.target),next=cloneDB();next.house={...db.house,nome:String(fd.get('nome')).trim(),tipo:String(fd.get('tipo')).trim(),perfil:String(fd.get('perfil')||'neutro'),repertorioNome:String(fd.get('repertorioNome')||'').trim()};if(persist(next)){identity();mostrarToast('Identidade atualizada.');}}});
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&modal.classList.contains('active'))closePreview();},true);
 window.addEventListener('pagehide',disposeAllMedia);
-window.addEventListener('beforeunload',ev=>{if(state.dirty||Object.values(fieldDirty).some(Boolean)){ev.preventDefault();ev.returnValue='';}});
+
 // API mínima para verificações internas e extensões locais.
 window.addEventListener('aer-extras-updated',()=>{const updated=carregar();if(updated)db=updated;});
 window.AeRUI={modules:D,specials:special,open:mudarTela,preview,backup:downloadJSON,getData:()=>JSON.parse(JSON.stringify(db))};

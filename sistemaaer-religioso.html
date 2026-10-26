@@ -1392,7 +1392,7 @@ const APP='https://script.google.com/macros/s/AKfycbyC7NhtuML-xpKFXeUzDJ1OUm27J2
 const pending=new Map();let frame,peer,peerOrigin,seq=0,token='',validated=false,loginPromise,bootPromise,bootResolve,bootReject,bootTimer;
 let transportPhase='idle';
 const BOOT_TIMEOUT=90000;
-const actions=new Set(['validarSessao','verificarEmail','solicitarCodigo','validarCodigo','transcreverPontoCantado']);
+const actions=new Set(['validarSessao','verificarEmail','solicitarCodigo','validarCodigo','transcreverPontoCantado','aerTranscricaoIniciar','aerTranscricaoConsultar','aerTranscricaoEncerrar']);
 function supported(){return location.origin===ORIGIN&&window.top===window;}
 function tokenRead(){try{return localStorage.getItem('tzc-m02-token')||sessionStorage.getItem('tzc-m02-token')||'';}catch{return '';}}
 function tokenSet(value){token=value;validated=!!value;try{if(value){localStorage.setItem('tzc-m02-token',value);sessionStorage.setItem('tzc-m02-token',value);}else{localStorage.removeItem('tzc-m02-token');sessionStorage.removeItem('tzc-m02-token');}}catch{}}
@@ -1486,19 +1486,58 @@ async function authenticate(signal){
  return login(signal);
 }
 function canonical(url){const u=new URL(url);if(u.protocol!=='https:'||u.username||u.password)throw Error('Informe um link válido do YouTube.');let id;if(u.hostname==='youtu.be')id=u.pathname.split('/').filter(Boolean)[0];else if(['youtube.com','www.youtube.com','m.youtube.com','music.youtube.com'].includes(u.hostname))id=u.pathname==='/watch'?u.searchParams.get('v'):(/^\/(embed|shorts|live)\//.test(u.pathname)?u.pathname.split('/')[2]:null);if(!/^[\w-]{11}$/.test(id||''))throw Error('Informe um link válido do YouTube.');return 'https://www.youtube.com/watch?v='+id;}
+const pendingJobs=new Map();
+function jobKey(url){return 'aer-youtube-job:'+url.slice(-11);}
+function rememberJob(url,id){const job={url,id};pendingJobs.set(url,job);try{sessionStorage.setItem(jobKey(url),JSON.stringify(job));}catch{}return job;}
+function existingJob(url){if(pendingJobs.has(url))return pendingJobs.get(url);try{const job=JSON.parse(sessionStorage.getItem(jobKey(url))||'null');if(job?.url===url&&/^[A-Za-z0-9_-]{16,80}$/.test(job.id))return rememberJob(url,job.id);}catch{}return null;}
+function forgetJob(url){pendingJobs.delete(url);try{sessionStorage.removeItem(jobKey(url));}catch{}}
+function newJob(url){const id=globalThis.crypto?.randomUUID?.().replace(/-/g,'')||('tx_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)+'_'+Math.random().toString(36).slice(2));return rememberJob(url,id);}
+function assertJobResult(result,url){
+ if(result?.ok)return;
+ const message=String(result?.mensagem||'Não foi possível acompanhar esta transcrição.');
+ if(/sessão (?:inválida|expirada)|sessao (?:invalida|expirada)|autentica|entre com|acesso expirado/i.test(message)){tokenSet('');forgetJob(url);throw Error('Seu acesso expirou. Toque novamente em Transcrever para conectar sua conta.');}
+ if(!result?.retryable)forgetJob(url);throw Error(message);
+}
+async function acknowledge(id){
+ const job=[...pendingJobs.values()].find(job=>job.id===id);if(!job)return;
+ // The caller invokes this only after the reviewed text has been placed in the form.
+ forgetJob(job.url);try{await rpc('aerTranscricaoEncerrar',[token,id,'consumido'],{timeout:45000});}catch{}
+}
 async function transcribe(url,{signal,onStatus=()=>{}}={}){
  const canonicalURL=canonical(url);onStatus('Preparando a conexão de transcrição…');await connect({signal});onStatus('Conferindo seu acesso…');await authenticate(signal);
- for(let attempt=1;attempt<=3;attempt++){
-  onStatus(attempt===1?'Transcrevendo pelo serviço da Tenda…':'O serviço está ocupado. Tentativa '+attempt+' de 3…');
-  const result=await rpc('transcreverPontoCantado',[token,canonicalURL,'video'],{signal,timeout:180000});
-  if(result?.ok){const text=String(result.letra||result.transcricao||result.texto||'').trim();if(!text)throw Error('O serviço retornou uma transcrição vazia.');return {transcription:text};}
-  const message=String(result?.mensagem||'Não foi possível transcrever este vídeo.');
-  if(/sessão|sessao|autentica|entre com|acesso expirado/i.test(message)){tokenSet('');throw Error('Seu acesso expirou. Toque novamente em Transcrever para conectar sua conta.');}
-  if(attempt===3||!/(503|alta demanda|temporariamente|indispon[ií]vel|service unavailable)/i.test(message))throw Error(message);
-  await abortable(new Promise(resolve=>setTimeout(resolve,1000*Math.pow(2,attempt-1))),signal);
- }
+ const previous=existingJob(canonicalURL),job=previous||newJob(canonicalURL),accessToken=token;
+ let cancelled=false;
+ const cancel=()=>{if(cancelled)return;cancelled=true;forgetJob(canonicalURL);void rpc('aerTranscricaoEncerrar',[accessToken,job.id,'cancelar'],{timeout:45000}).catch(()=>{});};
+ if(signal?.aborted)throw new DOMException('Interrompido','AbortError');signal?.addEventListener('abort',cancel,{once:true});
+ const started=Date.now(),deadline=started+20*60*1000;
+ try{
+  onStatus(previous?'Retomando o acompanhamento da mesma transcrição…':'Enviando a solicitação de transcrição…');
+  let result;
+  for(let attempt=0;attempt<3;attempt++){
+   result=await rpc('aerTranscricaoIniciar',[accessToken,canonicalURL,job.id],{signal,timeout:90000});
+   if(result?.ok||!result?.retryable||attempt===2)break;
+   await abortable(new Promise(resolve=>setTimeout(resolve,2000)),signal);
+  }
+  assertJobResult(result,canonicalURL);
+  while(Date.now()<deadline){
+   if(['failed','cancelled','consumed'].includes(result.state)){forgetJob(canonicalURL);throw Error(result.mensagem||'Esta transcrição foi encerrada. Inicie uma nova solicitação.');}
+   if(result.state==='completed'){
+    const text=String(result.transcription||'').trim();if(!text)throw Error('O serviço retornou uma transcrição vazia.');
+    return {transcription:text,receipt:job.id};
+   }
+   const seconds=Math.floor((Date.now()-started)/1000),elapsed=Math.floor(seconds/60)+' min '+(seconds%60)+' s';
+   onStatus(result.state==='creating'?'Preparando o processamento… '+elapsed+'.':('Transcrevendo… '+elapsed+'. O processamento continua no servidor.'));
+   await abortable(new Promise(resolve=>setTimeout(resolve,Math.min(10000,Math.max(3000,Number(result.retryAfterMs)||5000)))),signal);
+   result=await rpc('aerTranscricaoConsultar',[accessToken,job.id],{signal,timeout:45000});assertJobResult(result,canonicalURL);
+  }
+  throw Error('O acompanhamento foi pausado, mas a solicitação foi preservada. Toque em Transcrever para consultar o mesmo processamento sem iniciar outro.');
+ }catch(error){
+  if(error.name==='AbortError')throw error;
+  if(existingJob(canonicalURL)&&/conexão.*aberta|não respondeu|demorou/i.test(error.message))throw Error('Não foi possível receber a atualização agora. Toque em Transcrever para retomar a mesma solicitação.');
+  throw error;
+ }finally{signal?.removeEventListener('abort',cancel);}
 }
-window.AeRTendaTranscription=Object.freeze({supported,connect,transcribe,onlineURL:ONLINE,status:()=>({phase:transportPhase,connected:!!peer,pending:pending.size})});
+window.AeRTendaTranscription=Object.freeze({supported,connect,transcribe,acknowledge,onlineURL:ONLINE,status:()=>({phase:transportPhase,connected:!!peer,pending:pending.size})});
 if(supported()){const warm=()=>{void initialize().catch(()=>{});};if(document.readyState==='loading')window.addEventListener('DOMContentLoaded',warm,{once:true});else warm();}
 })();
 
@@ -1758,8 +1797,8 @@ async function apiRequest(path,body,signal){const response=await fetch(apiBase()
 async function transcribeMedia(id){const m=mediaState(id);if(m.controller)return;if(!m.connection?.ready){await verifyTranscription(id);if(!m.connection?.ready)return;}if(m.recorder?.state==='recording')return mediaStatus(id,'Pare a gravação antes de transcrever.');const source=document.getElementById('media-source-'+id).value;let path,body;
  if(source==='youtube'){const video=ytId(document.getElementById('media-youtube-'+id).value.trim());if(!video)return mediaStatus(id,'Informe um link válido de vídeo do YouTube.');path='/api/ai/transcribe-youtube';body={url:'https://www.youtube.com/watch?v='+video};const target=document.getElementById('field-'+id+'-youtube');if(target){target.value=body.url;state.dirty=true;}}
  else {if(!m.file)return mediaStatus(id,'Selecione um arquivo ou grave o áudio antes de transcrever.');path='/api/ai/transcribe';body=new FormData();body.append('media',new Blob([m.file],{type:mediaMime(m.file)}),m.file.name);}
- m.controller=new AbortController();const job=++m.job;busyMedia(id,true);mediaStatus(id,'Transcrevendo… aguarde e mantenha esta página aberta.');const timer=setTimeout(()=>m.controller?.abort('timeout'),useTendaYouTube(id)?600000:180000);
- try{const result=useTendaYouTube(id)?await window.AeRTendaTranscription.transcribe(body.url,{signal:m.controller.signal,onStatus:text=>{if(mediaStates.get(id)===m&&job===m.job)mediaStatus(id,text);}}):await apiRequest(path,body,m.controller.signal);if(mediaStates.get(id)!==m||job!==m.job)return;const text=result.transcription;if(typeof text!=='string'||!text.trim())throw Error('O serviço retornou uma transcrição vazia.');document.getElementById('media-review-'+id).value=text;document.getElementById('media-review-box-'+id).hidden=false;state.dirty=true;mediaStatus(id,'Transcrição concluída. Revise o texto e aplique ao cadastro. Nenhum registro foi salvo automaticamente.');}
+ m.controller=new AbortController();const job=++m.job;busyMedia(id,true);mediaStatus(id,'Transcrevendo… aguarde e mantenha esta página aberta.');const timer=setTimeout(()=>m.controller?.abort('timeout'),useTendaYouTube(id)?1230000:180000);
+ try{const result=useTendaYouTube(id)?await window.AeRTendaTranscription.transcribe(body.url,{signal:m.controller.signal,onStatus:text=>{if(mediaStates.get(id)===m&&job===m.job)mediaStatus(id,text);}}):await apiRequest(path,body,m.controller.signal);if(mediaStates.get(id)!==m||job!==m.job)return;const text=result.transcription;if(typeof text!=='string'||!text.trim())throw Error('O serviço retornou uma transcrição vazia.');document.getElementById('media-review-'+id).value=text;document.getElementById('media-review-box-'+id).hidden=false;state.dirty=true;if(result.receipt)void window.AeRTendaTranscription?.acknowledge(result.receipt);mediaStatus(id,'Transcrição concluída. Revise o texto e aplique ao cadastro. Nenhum registro foi salvo automaticamente.');}
  catch(e){if(mediaStates.get(id)===m&&job===m.job)mediaStatus(id,e.name==='AbortError'||e==='timeout'?'Transcrição interrompida. Seu texto anterior foi preservado.':e.message);}
  finally{clearTimeout(timer);if(mediaStates.get(id)===m&&job===m.job){m.controller=null;busyMedia(id,false);}}
 }

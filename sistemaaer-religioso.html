@@ -323,7 +323,7 @@ button.padrao-resumo {cursor:pointer;}
 #form-api-endereco {display:grid;gap:8px;}
 @media screen and (max-width:700px) {.aer-media {padding:12px;} .aer-media .padrao-acoes {align-items:stretch;} .aer-media .padrao-acoes button {flex:1 1 100%;white-space:normal;}}
 
-.aer-transcription-login{box-sizing:border-box;width:min(460px,calc(100vw - 24px));max-height:90dvh;overflow:auto;border:1px solid var(--border);border-radius:12px;padding:20px;background:var(--surface);color:var(--text-main);}
+.aer-transcription-login{position:fixed;inset:0;margin:auto;height:fit-content;box-sizing:border-box;width:min(460px,calc(100vw - 24px));max-height:90dvh;overflow:auto;border:1px solid var(--border);border-radius:12px;padding:20px;background:var(--surface);color:var(--text-main);}
 .aer-transcription-login::backdrop{background:#0009;}
 .aer-transcription-login form{display:grid;gap:12px;}
 .aer-transcription-login h3{color:var(--primary);margin:0;}
@@ -1424,7 +1424,7 @@ function login(signal){
  const previous=document.activeElement;
  loginPromise=new Promise((resolve,reject)=>{
   const dialog=document.createElement('dialog');dialog.className='aer-transcription-login';dialog.setAttribute('aria-labelledby','aer-transcription-login-title');
-  dialog.innerHTML='<form><h3 id="aer-transcription-login-title">Conectar transcrição</h3><p>Use o mesmo acesso da Tenda de Zé Cigano. A chave de IA permanece no servidor.</p><label for="aer-transcription-email">E-mail cadastrado</label><input class="form-control" id="aer-transcription-email" type="email" autocomplete="email" maxlength="254" required><div id="aer-transcription-code-box" hidden><label for="aer-transcription-code">Código recebido</label><input class="form-control" id="aer-transcription-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}"></div><p role="status" id="aer-transcription-login-status"></p><div class="modal-footer-buttons"><button type="button" class="btn-secundary" id="aer-transcription-login-cancel">Cancelar</button><button type="submit" class="btn-action">Continuar</button></div></form>';
+  dialog.innerHTML='<form><h3 id="aer-transcription-login-title">Conectar transcrição</h3><p>Use o mesmo acesso da Tenda de Zé Cigano.</p><label for="aer-transcription-email">E-mail cadastrado</label><input class="form-control" id="aer-transcription-email" type="email" autocomplete="email" maxlength="254" required><div id="aer-transcription-code-box" hidden><label for="aer-transcription-code">Código recebido</label><input class="form-control" id="aer-transcription-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}"></div><p role="status" id="aer-transcription-login-status"></p><div class="modal-footer-buttons"><button type="button" class="btn-secundary" id="aer-transcription-login-cancel">Cancelar</button><button type="submit" class="btn-action">Continuar</button></div></form>';
   document.body.append(dialog);const form=dialog.querySelector('form'),email=dialog.querySelector('input[type=email]'),code=dialog.querySelector('#aer-transcription-code'),box=dialog.querySelector('#aer-transcription-code-box'),status=dialog.querySelector('[role=status]'),submit=dialog.querySelector('[type=submit]');
   let phase='verify',done=false,busy=false,revision=0;
   const close=error=>{if(done)return;done=true;revision++;signal?.removeEventListener('abort',abort);dialog.close();dialog.remove();previous?.focus();error?reject(error):resolve(token);};

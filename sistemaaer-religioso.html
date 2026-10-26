@@ -1389,32 +1389,61 @@ async function baixarDocumentoPDF(tipo) {
 const ORIGIN='https://terreirotendadezecigano-hub.github.io';
 const ONLINE=ORIGIN+'/site-teste/sistemaaer-religioso.html';
 const APP='https://script.google.com/macros/s/AKfycbyC7NhtuML-xpKFXeUzDJ1OUm27J22_Gj5jrAPKfnUB7uqLKd_HmxHVJidcA2_kttImUw/exec';
-const pending=new Map();let frame,peer,peerOrigin,seq=0,token='',validated=false,loginPromise;
+const pending=new Map();let frame,peer,peerOrigin,seq=0,token='',validated=false,loginPromise,bootPromise,bootResolve,bootReject,bootTimer;
+let transportPhase='idle';
+const BOOT_TIMEOUT=90000;
 const actions=new Set(['validarSessao','verificarEmail','solicitarCodigo','validarCodigo','transcreverPontoCantado']);
 function supported(){return location.origin===ORIGIN&&window.top===window;}
 function tokenRead(){try{return localStorage.getItem('tzc-m02-token')||sessionStorage.getItem('tzc-m02-token')||'';}catch{return '';}}
 function tokenSet(value){token=value;validated=!!value;try{if(value){localStorage.setItem('tzc-m02-token',value);sessionStorage.setItem('tzc-m02-token',value);}else{localStorage.removeItem('tzc-m02-token');sessionStorage.removeItem('tzc-m02-token');}}catch{}}
 function descendant(source){if(!frame||!source)return false;const visit=(win,depth)=>{if(depth>5)return false;try{if(win===source)return true;for(let i=0;i<win.length;i++)if(visit(win[i],depth+1))return true;}catch{}return false;};return visit(frame.contentWindow,0);}
 function trustedOrigin(origin){try{const u=new URL(origin);return u.protocol==='https:'&&/(?:^|\.)[a-z0-9-]+-script\.googleusercontent\.com$/i.test(u.hostname);}catch{return false;}}
-function initialize(){if(!supported())throw Error('Abra a versão conectada para usar o serviço da Tenda.');if(frame)return;frame=document.createElement('iframe');frame.title='Conexão de transcrição';frame.setAttribute('aria-hidden','true');frame.tabIndex=-1;frame.style.cssText='position:fixed;width:1px;height:1px;left:-20px;top:0;border:0;opacity:0;pointer-events:none';frame.src=APP+'?modo=ponteExternaV01';document.body.append(frame);}
-function send(item){if(!peer)return;peer.postMessage({tipo:'TZC_M02_RPC',id:item.id,acao:item.action,args:item.args},peerOrigin);item.sent=true;}
-function rpc(action,args,{signal,timeout=20000}={}){
- if(!actions.has(action)||!Array.isArray(args)||args.some(v=>typeof v!=='string'))return Promise.reject(Error('Solicitação de transcrição inválida.'));
- if(signal?.aborted)return Promise.reject(new DOMException('Interrompido','AbortError'));
+function failBoot(message){
+ if(!bootPromise)return;
+ clearTimeout(bootTimer);transportPhase='failed';const reject=bootReject;bootPromise=null;bootResolve=null;bootReject=null;peer=null;peerOrigin=null;
+ const old=frame;frame=null;old?.remove();reject?.(Error(message));
+}
+function initialize(){
+ if(!supported())return Promise.reject(Error('Abra a versão conectada para usar o serviço da Tenda.'));
+ if(peer)return Promise.resolve();if(bootPromise)return bootPromise;
+ transportPhase='loading';bootPromise=new Promise((resolve,reject)=>{bootResolve=resolve;bootReject=reject;});
+ const promise=bootPromise;
+ bootTimer=setTimeout(()=>failBoot('A conexão do Google não carregou. Toque em Verificar conexão para abrir uma nova tentativa; seu texto foi preservado.'),BOOT_TIMEOUT);
+ try{
+  frame=document.createElement('iframe');const created=frame;frame.title='Conexão de transcrição';frame.setAttribute('aria-hidden','true');frame.tabIndex=-1;
+  frame.style.cssText='position:fixed;width:1px;height:1px;left:-20px;top:0;border:0;opacity:0;pointer-events:none';
+  frame.onerror=()=>{if(frame===created)failBoot('Não foi possível abrir a conexão do Google. Confira a internet e toque em Verificar conexão.');};
+  frame.src=APP+'?modo=ponteExternaV01';document.body.append(frame);
+ }catch(error){failBoot(error.message);}
+ return promise;
+}
+function connect({signal}={}){return abortable(initialize(),signal);}
+function send(item){
+ if(!peer)throw Error('A conexão ainda está sendo preparada.');
+ peer.postMessage({tipo:'TZC_M02_RPC',id:item.id,acao:item.action,args:item.args},peerOrigin);
+}
+async function rpc(action,args,{signal,timeout=20000}={}){
+ if(!actions.has(action)||!Array.isArray(args)||args.some(v=>typeof v!=='string'))throw Error('Solicitação de transcrição inválida.');
+ if(signal?.aborted)throw new DOMException('Interrompido','AbortError');
+ // The response deadline starts only after Google's nested frames announce readiness.
+ await connect({signal});if(signal?.aborted)throw new DOMException('Interrompido','AbortError');
  return new Promise((resolve,reject)=>{
-  const id='tzc_m02_'+Date.now()+'_'+(++seq),item={id,action,args,resolve,reject,sent:false};
+  const id='tzc_m02_'+Date.now()+'_'+(++seq),item={id,action,args};
   const cleanup=()=>{clearTimeout(item.timer);signal?.removeEventListener('abort',abort);pending.delete(id);};
   const abort=()=>{cleanup();reject(new DOMException('Interrompido','AbortError'));};
   item.finish=result=>{cleanup();resolve(result);};
-  item.timer=setTimeout(()=>{cleanup();reject(Error('A conexão da Tenda demorou a responder. Seu texto foi preservado; tente novamente.'));},timeout);
+  item.timer=setTimeout(()=>{cleanup();reject(Error(action==='transcreverPontoCantado'?'A conexão está aberta, mas o serviço não retornou a transcrição no prazo. Seu texto foi preservado.':'A conexão está aberta, mas o servidor não respondeu à conferência de acesso. Seu texto foi preservado; tente novamente.'));},timeout);
   signal?.addEventListener('abort',abort,{once:true});pending.set(id,item);
-  try{initialize();send(item);}catch(e){cleanup();reject(e);}
+  try{send(item);}catch(error){cleanup();reject(error);}
  });
 }
 window.addEventListener('message',event=>{
  if(!supported()||!trustedOrigin(event.origin)||!descendant(event.source))return;
  const data=event.data;if(!data||typeof data!=='object')return;
- if(data.tipo==='TZC_PONTE_PRONTA'){peer=event.source;peerOrigin=event.origin;for(const item of pending.values())if(!item.sent){item.origin=event.origin;send(item);}return;}
+ if(data.tipo==='TZC_PONTE_PRONTA'){
+  peer=event.source;peerOrigin=event.origin;transportPhase='ready';clearTimeout(bootTimer);
+  const resolve=bootResolve;bootPromise=null;bootResolve=null;bootReject=null;resolve?.();return;
+ }
  if(data.tipo==='TZC_M02_RESULT'&&event.source===peer&&typeof data.id==='string')pending.get(data.id)?.finish(data.resultado||{ok:false,mensagem:'O serviço não retornou uma resposta.'});
 });
 function abortable(promise,signal){if(!signal)return promise;if(signal.aborted)return Promise.reject(new DOMException('Interrompido','AbortError'));return new Promise((resolve,reject)=>{const cancel=()=>reject(new DOMException('Interrompido','AbortError'));signal.addEventListener('abort',cancel,{once:true});promise.then(resolve,reject).finally(()=>signal.removeEventListener('abort',cancel));});}
@@ -1453,12 +1482,12 @@ function login(signal){
 }
 async function authenticate(signal){
  if(validated&&token)return token;
- token=tokenRead();if(token){const response=await rpc('validarSessao',[token],{signal});if(response?.ok){validated=true;return token;}if(/expir|inválid|inval|sessão|sessao/i.test(response?.mensagem||''))tokenSet('');else throw Error(response?.mensagem||'Não foi possível conferir seu acesso.');}
+ token=tokenRead();if(token){const response=await rpc('validarSessao',[token],{signal});if(response?.ok){validated=true;return token;}if(/expir|inválid|inval|sessão|sessao|entre com|autentica/i.test(response?.mensagem||''))tokenSet('');else throw Error(response?.mensagem||'Não foi possível conferir seu acesso.');}
  return login(signal);
 }
 function canonical(url){const u=new URL(url);if(u.protocol!=='https:'||u.username||u.password)throw Error('Informe um link válido do YouTube.');let id;if(u.hostname==='youtu.be')id=u.pathname.split('/').filter(Boolean)[0];else if(['youtube.com','www.youtube.com','m.youtube.com','music.youtube.com'].includes(u.hostname))id=u.pathname==='/watch'?u.searchParams.get('v'):(/^\/(embed|shorts|live)\//.test(u.pathname)?u.pathname.split('/')[2]:null);if(!/^[\w-]{11}$/.test(id||''))throw Error('Informe um link válido do YouTube.');return 'https://www.youtube.com/watch?v='+id;}
 async function transcribe(url,{signal,onStatus=()=>{}}={}){
- const canonicalURL=canonical(url);await authenticate(signal);
+ const canonicalURL=canonical(url);onStatus('Preparando a conexão de transcrição…');await connect({signal});onStatus('Conferindo seu acesso…');await authenticate(signal);
  for(let attempt=1;attempt<=3;attempt++){
   onStatus(attempt===1?'Transcrevendo pelo serviço da Tenda…':'O serviço está ocupado. Tentativa '+attempt+' de 3…');
   const result=await rpc('transcreverPontoCantado',[token,canonicalURL,'video'],{signal,timeout:180000});
@@ -1469,7 +1498,8 @@ async function transcribe(url,{signal,onStatus=()=>{}}={}){
   await abortable(new Promise(resolve=>setTimeout(resolve,1000*Math.pow(2,attempt-1))),signal);
  }
 }
-window.AeRTendaTranscription=Object.freeze({supported,transcribe,onlineURL:ONLINE});
+window.AeRTendaTranscription=Object.freeze({supported,connect,transcribe,onlineURL:ONLINE,status:()=>({phase:transportPhase,connected:!!peer,pending:pending.size})});
+if(supported()){const warm=()=>{void initialize().catch(()=>{});};if(document.readyState==='loading')window.addEventListener('DOMContentLoaded',warm,{once:true});else warm();}
 })();
 
 </script>
@@ -1642,18 +1672,19 @@ async function verifyTranscription(id){
  const m=id?mediaState(id):null;if(m?.controller)return m.connection;
  const job=m?++m.connectionJob:0;
  let result;
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+ const tenda=useTendaYouTube(id);
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),tenda?95000:12000);
  if(m){m.connection={ready:false,code:'checking'};busyMedia(id,false);}
  const statusElement=()=>id?document.getElementById('media-connection-'+id):document.getElementById('api-status');
- if(statusElement())statusElement().textContent='Verificando a conexão de transcrição…';
+ if(statusElement())statusElement().textContent=tenda?'Preparando a conexão do Google… aguarde. Você pode preencher o cadastro enquanto isso.':'Verificando a conexão de transcrição…';
  try{
-  if(useTendaYouTube(id))result={ready:true,code:'tenda',minutes:false,message:'O YouTube usa o serviço já configurado da Tenda. Toque em Transcrever; seu acesso será conferido antes de processar.'};
+  if(tenda){await window.AeRTendaTranscription.connect({signal:controller.signal});result={ready:true,code:'tenda',minutes:false,message:'Conexão pronta. Cole o link e toque em Transcrever. Seu acesso será conferido antes de processar.'};}
   else if(!['http:','https:'].includes(location.protocol))result={ready:false,code:'local',message:'Para transcrever automaticamente, abra a versão online do sistema e entre com sua conta. Nesta visualização de arquivo você pode preparar e salvar o cadastro.'};
   else {const response=await fetch(apiBase()+'/api/ai/status',{credentials:'include',signal:controller.signal,cache:'no-store'});const body=await response.json().catch(()=>({}));result=connectionResult(response.status,body.data||body);}
- }catch(e){result={ready:false,code:'network',message:'Não foi possível verificar a conexão. Confira a internet e o endereço em Integrações.'};}
+ }catch(e){result={ready:false,code:tenda?'bridge':'network',message:tenda?(e.name==='AbortError'?'A conexão do Google não ficou pronta. Toque em Verificar conexão para tentar novamente.':e.message):'Não foi possível verificar a conexão. Confira a internet e o endereço em Integrações.'};}
  finally{clearTimeout(timer);}
  if(m&&(mediaStates.get(id)!==m||job!==m.connectionJob))return result;
- if(m){m.connection=result;busyMedia(id,false);const connect=document.querySelector('#media-panel-'+id+' [data-do="abrir-conexao"]');if(connect){connect.hidden=result.ready;connect.textContent=result.code==='login'?'Conectar conta':result.code==='local'?'Abrir versão conectada':result.code==='permission'?'Ver acesso':'Ver o que falta';}}
+ if(m){m.connection=result;busyMedia(id,false);const connect=document.querySelector('#media-panel-'+id+' [data-do="abrir-conexao"]');if(connect){connect.hidden=result.ready||result.code==='bridge';connect.textContent=result.code==='login'?'Conectar conta':result.code==='local'?'Abrir versão conectada':result.code==='permission'?'Ver acesso':'Ver o que falta';}}
  if(statusElement())statusElement().textContent=result.message;
  if(m){const checks=document.querySelector('#media-panel-'+id+' [data-do="verificar-transcricao"]');if(checks)checks.hidden=result.code==='tenda';}
  return result;

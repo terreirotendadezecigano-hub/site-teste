@@ -1845,7 +1845,7 @@ window.addEventListener('beforeunload',ev=>{if(state.dirty||Object.values(fieldD
 // API mínima para verificações internas e extensões locais.
 window.addEventListener('aer-extras-updated',()=>{const updated=carregar();if(updated)db=updated;});
 window.AeRUI={modules:D,specials:special,open:mudarTela,preview,backup:downloadJSON,getData:()=>JSON.parse(JSON.stringify(db))};
-const requestedPage=new URLSearchParams(location.search).get('pagina');if(requestedPage&&allTitles[requestedPage])mudarTela(requestedPage);
+const requestedPage=new URLSearchParams(location.search).get('pagina');if(requestedPage&&allTitles[requestedPage]){if(document.readyState==='loading')window.addEventListener('DOMContentLoaded',()=>mudarTela(requestedPage),{once:true});else mudarTela(requestedPage);}
 })();
 
 </script>
